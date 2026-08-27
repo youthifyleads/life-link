@@ -9,19 +9,19 @@
 # ==============================================================================
 
 # Global Default Owner
-*                   @tech-lead
+*                   @Ahmed-esso
 
 # Backend (Python + FastAPI)
-/backend/           @backend-lead
+/backend/           @Gholamself
 
 # Database & Migrations (Microsoft SQL Server)
-/database/          @database-backend-dev
+/database/          @Ziadtk
 
 # Web Frontend (React + TypeScript)
-/web/               @web-frontend-dev
+/web/               @ZiadDev123
 
 # Mobile Application (Flutter + Dart)
-/mobile/            @mobile-dev
+/mobile/            @Toqa10
 
 # CI/CD Workflows & GitHub Repository Configuration
-/.github/           @tech-lead @devops-security-engineer
+/.github/           @Ahmed-esso @Mayar-hany-2005
