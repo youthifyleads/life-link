@@ -6,7 +6,7 @@
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Technology Stack 
 
 Life Link is engineered with modern, robust technologies tailored for high performance and cross-platform reliability:
 
@@ -47,12 +47,12 @@ Our 7-person team is structured with designated area ownership configured in [`.
 
 | Area | Directory | Responsible Role | CODEOWNERS Handle |
 | :--- | :--- | :--- | :--- |
-| **Global / Architecture** | `/` | Technical Lead | `@tech-lead` |
-| **Backend** | `/backend/` | Backend Lead | `@backend-lead` |
-| **Database** | `/database/` | Database & Backend Developer | `@database-backend-dev` |
-| **Web** | `/web/` | Web Frontend Developer | `@web-frontend-dev` |
-| **Mobile** | `/mobile/` | Mobile Developer | `@mobile-dev` |
-| **CI/CD & Security** | `/.github/` | Tech Lead + DevOps / Security Engineer | `@tech-lead` `@devops-security-engineer` |
+| **Global / Architecture** | `/` | Technical Lead | `@Ahmed-Esso` |
+| **Backend** | `/backend/` | Backend Lead | `@Gholamself` |
+| **Database** | `/database/` | Database & Backend Developer | ` @Ziadtk` |
+| **Web** | `/web/` | Web Frontend Developer | `@ZiadDev123` |
+| **Mobile** | `/mobile/` | Mobile Developer | `@Toqa10` |
+| **CI/CD & Security** | `/.github/` | Tech Lead + DevOps / Security Engineer | `@Ahmed-Esso` `@Mayar-hany-2005` |
 
 > *Note: Update placeholder handles in [`.github/CODEOWNERS`](.github/CODEOWNERS) to matching GitHub usernames/team handles.*
 
