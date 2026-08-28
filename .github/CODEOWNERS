@@ -24,4 +24,4 @@
 /mobile/            @mobile-dev
 
 # CI/CD Workflows & GitHub Repository Configuration
-/.github/           @tech-lead @devops-security-engineer
+/.github/           @tech-lead @mayar
