@@ -1,0 +1,29 @@
+# ==============================================================================
+# Life Link - Code Owners Configuration
+#
+# These owners are automatically requested for review when a Pull Request
+# modifies files matching the path patterns below.
+#
+# Replace the placeholder handles below with your team's GitHub usernames
+# or GitHub organization team handles (e.g., @org/backend-team).
+# ==============================================================================
+
+# Global Default Owner
+*                   @Ahmed-Esso
+
+# Backend (Python + FastAPI)
+/backend/           @Gholamself
+
+# Database & Migrations (Microsoft SQL Server)
+/database/          @Ziadtk
+
+# Web Frontend (React + TypeScript)
+/web/               @ZiadDev123
+
+# Mobile Application (Flutter + Dart)
+/mobile/            @Toqa10
+
+# CI/CD Workflows & GitHub Repository Configuration
+/.github/           @tech-lead @mayar-hany-2005
+
+
