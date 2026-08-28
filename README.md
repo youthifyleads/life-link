@@ -13,7 +13,7 @@ Life Link is engineered with modern, robust technologies tailored for high perfo
 | Area | Directory | Responsible Role | CODEOWNERS Handle |
 | :--- | :--- | :--- | :--- |
 | **Global / Architecture** | `/` | Technical Lead | `@Ahmed-Esso` |
-| **Backend** | `/backend/` | Backend Lead | `@Gholamself` |
+| **Backend** | `/backend/` | Backend Lead | `@gholamseif` |
 | **Database** | `/database/` | Database & Backend Developer | ` @Ziadtk` |
 | **Web** | `/web/` | Web Frontend Developer | `@ZiadDev123` |
 | **Mobile** | `/mobile/` | Mobile Developer | `@Toqa10` |
