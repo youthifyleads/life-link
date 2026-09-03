@@ -14,7 +14,7 @@ Life Link is engineered with modern, robust technologies tailored for high perfo
 | :--- | :--- | :--- | :--- |
 | **Global / Architecture** | `/` | Technical Lead | `@Ahmed-Esso` |
 | **Backend** | `/backend/` | Backend Lead | `@gholamseif` |
-| **Database** | `/database/` | Database & Backend Developer | ` @Ziadtk` |
+| **Database** | `/database/` | Database & Backend Developer | `` |
 | **Web** | `/web/` | Web Frontend Developer | `@ZiadDev123` |
 | **Mobile** | `/mobile/` | Mobile Developer | `@Toqa10` |
 | **CI/CD & Security** | `/.github/` | Tech Lead + DevOps / Security Engineer | `@Ahmed-Esso` `@Mayar-hany-2005` |
@@ -52,7 +52,7 @@ Our 7-person team is structured with designated area ownership configured in [`.
 | :--- | :--- | :--- | :--- |
 | **Global / Architecture** | `/` | Technical Lead | `@Ahmed-Esso` |
 | **Backend** | `/backend/` | Backend Lead | `@Gholamself` |
-| **Database** | `/database/` | Database & Backend Developer | ` @Ziadtk` |
+| **Database** | `/database/` | Database & Backend Developer | `` |
 | **Web** | `/web/` | Web Frontend Developer | `@ZiadDev123` |
 | **Mobile** | `/mobile/` | Mobile Developer | `@Toqa10` |
 | **CI/CD & Security** | `/.github/` | Tech Lead + DevOps / Security Engineer | `@Ahmed-Esso` `@Mayar-hany-2005` |
