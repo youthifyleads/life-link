@@ -15,7 +15,7 @@
 /backend/           @gholamseif
 
 # Database & Migrations (Microsoft SQL Server)
-/database/          @Ziadtk
+/database/          
 
 # Web Frontend (React + TypeScript)
 /web/               @ZiadDev123
