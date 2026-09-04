@@ -35,9 +35,9 @@ async def list_inventory(
     responses={404: {"description": "Inventory item not found"}},
 )
 async def get_inventory_item(
-    inventory_id: str, inventory_service: InventoryService = Depends(get_inventory_service)
+    inventory_id: str, current_user: CurrentUser, inventory_service: InventoryService = Depends(get_inventory_service), user_record=Depends(_load_user_record)
 ) -> InventoryItemPublic:
-    item = await inventory_service.get_item(inventory_id)
+    item = await inventory_service.get_item(inventory_id, user_record)
     return InventoryItemPublic.model_validate(item)
 
 

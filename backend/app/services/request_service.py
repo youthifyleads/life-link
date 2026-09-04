@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from app.core.domain import VALID_TRANSITIONS, NotificationTrigger, Role, RequestStatus
 from app.core.exceptions import ForbiddenError, InvalidStatusTransitionError, NotFoundError
 from app.repositories.interfaces.request_repository import RequestRepository
+from app.repositories.interfaces.status_history_repository import StatusHistoryRepository
+from app.repositories.models import RequestStatusHistoryRecord
 from app.repositories.models import BloodRequestRecord, UserRecord
 from app.schemas.requests import BloodRequestCreate
 from app.services.audit_service import AuditService
@@ -18,11 +20,13 @@ class RequestService:
         qr_service: QRService,
         notification_service: NotificationService,
         audit_service: AuditService,
+        status_history_repo: StatusHistoryRepository | None = None,
     ):
         self._request_repo = request_repo
         self._qr_service = qr_service
         self._notification_service = notification_service
         self._audit_service = audit_service
+        self._status_history_repo = status_history_repo
 
     async def create_request(self, payload: BloodRequestCreate, current_user: UserRecord) -> BloodRequestRecord:
         if current_user.role != Role.HOSPITAL_USER:
@@ -30,19 +34,26 @@ class RequestService:
         if not current_user.institution_id:
             raise ForbiddenError("User is not associated with a hospital", code="MISSING_INSTITUTION_SCOPE")
 
+        record_id = f"req_{uuid.uuid4().hex[:12]}"
         record = BloodRequestRecord(
-            id=f"req_{uuid.uuid4().hex[:12]}",
+            id=record_id,
             hospital_id=current_user.institution_id,
             blood_type=payload.blood_type,
             component=payload.component,
             quantity_units=payload.quantity_units,
             urgency=payload.urgency,
-            notes=payload.notes,
+            notes=payload.reason or payload.notes,
+            required_by=payload.required_by,
             status=RequestStatus.REQUESTED,
-            tracking_reference=QRService.generate_reference(),
+            tracking_reference=QRService.generate_reference(record_id),
             created_by=current_user.id,
         )
         created = await self._request_repo.create(record)
+        if self._status_history_repo:
+            await self._status_history_repo.create(RequestStatusHistoryRecord(
+                id=f"hist_{uuid.uuid4().hex[:12]}", blood_request_id=created.id,
+                status=created.status, notes="Request created", changed_by_user_id=current_user.id,
+            ))
 
         await self._audit_service.record(
             actor_user_id=current_user.id,
@@ -101,6 +112,11 @@ class RequestService:
         request.status = new_status
         request.updated_at = datetime.now(timezone.utc)
         updated = await self._request_repo.update(request)
+        if self._status_history_repo:
+            await self._status_history_repo.create(RequestStatusHistoryRecord(
+                id=f"hist_{uuid.uuid4().hex[:12]}", blood_request_id=updated.id,
+                status=new_status, notes=None, changed_by_user_id=current_user.id,
+            ))
 
         await self._audit_service.record(
             actor_user_id=current_user.id,

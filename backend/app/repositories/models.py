@@ -1,13 +1,4 @@
-"""
-Internal repository-layer records.
-
-These are plain dataclasses, deliberately NOT SQLAlchemy models and NOT
-exposed directly through the API (schemas/ handles the public shape).
-They exist so services/repositories have something concrete to work
-with today. When the real ERD arrives, the SQL Server repository
-implementation should map ORM rows into (or replace) these shapes
-without requiring changes to services or API routes.
-"""
+"""Service-layer records kept independent of SQLAlchemy ORM models."""
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -27,6 +18,10 @@ class UserRecord:
     role: Role
     institution_id: str | None = None
     is_active: bool = True
+    phone: str | None = None
+    hospital_id: str | None = None
+    blood_bank_id: str | None = None
+    created_at: datetime = field(default_factory=_utcnow)
 
 
 @dataclass
@@ -41,6 +36,7 @@ class BloodRequestRecord:
     status: RequestStatus
     tracking_reference: str
     created_by: str
+    required_by: datetime | None = None
     created_at: datetime = field(default_factory=_utcnow)
     updated_at: datetime = field(default_factory=_utcnow)
 
@@ -75,3 +71,28 @@ class AuditLogRecord:
     action: str
     details: str
     created_at: datetime = field(default_factory=_utcnow)
+
+
+@dataclass
+class SupportingDocumentRecord:
+    id: str
+    blood_request_id: str
+    file_name: str
+    status: str
+    uploaded_at: datetime
+    file_type: str | None
+    file_path: str
+    reviewed_at: datetime | None = None
+    rejection_reason: str | None = None
+    uploaded_by_user_id: str | None = None
+    reviewed_by_user_id: str | None = None
+
+
+@dataclass
+class RequestStatusHistoryRecord:
+    id: str
+    blood_request_id: str
+    status: RequestStatus
+    notes: str | None
+    changed_at: datetime = field(default_factory=_utcnow)
+    changed_by_user_id: str | None = None

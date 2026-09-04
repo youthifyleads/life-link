@@ -11,6 +11,8 @@ class BloodRequestCreate(BaseModel):
     quantity_units: int = Field(..., gt=0, le=100)
     urgency: bool = Field(default=False, description="Marks the request as urgent for escalation/notification purposes")
     notes: str | None = Field(default=None, max_length=1000)
+    reason: str | None = Field(default=None, max_length=1000)
+    required_by: datetime | None = None
 
 
 class BloodRequestPublic(BaseModel):
@@ -23,6 +25,8 @@ class BloodRequestPublic(BaseModel):
     quantity_units: int
     urgency: bool
     notes: str | None
+    reason: str | None = None
+    required_by: datetime | None = None
     status: RequestStatus
     tracking_reference: str
     created_by: str

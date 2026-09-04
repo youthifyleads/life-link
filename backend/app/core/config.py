@@ -17,8 +17,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Life Link API"
     API_V1_PREFIX: str = "/api/v1"
 
-    # Database (NOT used yet - real ERD/schema pending from Database Developer)
+    # SQL Server connection used when REPOSITORY_BACKEND=sqlserver/sql/database.
     DATABASE_URL: str = "mssql+pyodbc://placeholder"
+    REPOSITORY_BACKEND: str = "memory"  # memory for tests/demo; sqlserver for shared development/staging
+    FILE_STORAGE_ROOT: str = "./storage"
+    MAX_UPLOAD_MB: int = 10
 
     # Auth - PROVISIONAL, subject to Technical Lead review.
     SECRET_KEY: str = "CHANGE_ME_DEV_ONLY_NOT_FOR_PRODUCTION"

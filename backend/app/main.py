@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import auth, inventory, notifications, qr, requests, users
+from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
@@ -36,6 +36,8 @@ app.include_router(requests.router, prefix=settings.API_V1_PREFIX)
 app.include_router(inventory.router, prefix=settings.API_V1_PREFIX)
 app.include_router(qr.router, prefix=settings.API_V1_PREFIX)
 app.include_router(notifications.router, prefix=settings.API_V1_PREFIX)
+app.include_router(documents.router, prefix=settings.API_V1_PREFIX)
+app.include_router(institutions.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health", tags=["Health"], summary="Health check")

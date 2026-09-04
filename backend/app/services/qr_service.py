@@ -1,4 +1,4 @@
-import secrets
+from app.core.security import create_tracking_reference, decode_tracking_reference
 
 from app.core.domain import Role
 from app.core.exceptions import ForbiddenError, NotFoundError
@@ -23,14 +23,17 @@ class QRService:
         self._audit_service = audit_service
 
     @staticmethod
-    def generate_reference() -> str:
-        # Secure random reference - never a sequential/guessable database id.
-        return f"LL-{secrets.token_urlsafe(12)}"
+    def generate_reference(request_id: str) -> str:
+        # Signed opaque reference: request ID is not exposed in plaintext and no
+        # extra tracking column is added to the supplied database schema.
+        return create_tracking_reference(request_id)
 
-    async def issue_for_request(self, request_id: str) -> QRIssueResponse:
+    async def issue_for_request(self, request_id: str, current_user: UserRecord) -> QRIssueResponse:
         request = await self._request_repo.get_by_id(request_id)
         if request is None:
             raise NotFoundError("Blood request was not found", code="REQUEST_NOT_FOUND")
+        if current_user.role == Role.HOSPITAL_USER and current_user.institution_id != request.hospital_id:
+            raise ForbiddenError("Not authorized to issue QR for this request", code="FORBIDDEN_QR_ACCESS")
 
         return QRIssueResponse(
             reference=request.tracking_reference,

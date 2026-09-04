@@ -20,8 +20,8 @@ async def _load_user_record(current_user: CurrentUser, user_repo: UserRepository
     description="Returns the opaque tracking reference to be encoded as a QR image by the client.",
     responses={404: {"description": "Request not found"}},
 )
-async def issue_qr(request_id: str, qr_service: QRService = Depends(get_qr_service)) -> QRIssueResponse:
-    return await qr_service.issue_for_request(request_id)
+async def issue_qr(request_id: str, current_user: CurrentUser, qr_service: QRService = Depends(get_qr_service), user_record=Depends(_load_user_record)) -> QRIssueResponse:
+    return await qr_service.issue_for_request(request_id, user_record)
 
 
 @router.post(

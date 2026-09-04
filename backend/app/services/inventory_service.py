@@ -40,10 +40,12 @@ class InventoryService:
         )
         return created
 
-    async def get_item(self, item_id: str) -> InventoryItemRecord:
+    async def get_item(self, item_id: str, current_user: UserRecord | None = None) -> InventoryItemRecord:
         item = await self._inventory_repo.get_by_id(item_id)
         if item is None:
             raise NotFoundError("Inventory item was not found", code="INVENTORY_ITEM_NOT_FOUND")
+        if current_user is not None and current_user.role == Role.BLOOD_BANK_OPERATOR and current_user.institution_id != item.blood_bank_id:
+            raise ForbiddenError("Not authorized to view this blood bank inventory", code="FORBIDDEN_INVENTORY_ACCESS")
         return item
 
     async def list_items(self, current_user: UserRecord) -> list[InventoryItemRecord]:
@@ -55,7 +57,7 @@ class InventoryService:
     async def update_item(
         self, item_id: str, payload: InventoryItemUpdate, current_user: UserRecord
     ) -> InventoryItemRecord:
-        item = await self.get_item(item_id)
+        item = await self.get_item(item_id, current_user)
         self._assert_can_manage(current_user, item.blood_bank_id)
 
         if payload.quantity_units is not None:

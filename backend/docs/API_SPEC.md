@@ -18,6 +18,15 @@ Error envelope (all non-2xx responses): `{"error": {"code": "...", "message": ".
 | GET | `/users` | List users | Yes | Admin | 200 | 403 `FORBIDDEN_ROLE` |
 | POST | `/users` | Create user | Yes | Admin | 201 | 409 `EMAIL_ALREADY_EXISTS`, 422 |
 
+## Hospitals & Blood Banks
+
+| Method | Endpoint | Purpose | Auth | Role | Success |
+|---|---|---|---|---|---|
+| GET | `/hospitals` | List hospitals | Yes | Any | 200 |
+| POST | `/hospitals` | Create hospital | Yes | Admin | 201 |
+| GET | `/blood-banks` | List blood banks | Yes | Any | 200 |
+| POST | `/blood-banks` | Create blood bank | Yes | Admin | 201 |
+
 ## Blood Requests
 
 | Method | Endpoint | Purpose | Auth | Role | Success | Errors |
@@ -54,8 +63,7 @@ action endpoints above and are validated against the state machine in
 | GET | `/tracking/{reference}` | Direct-link tracking lookup | Yes | Any (scoped) | 200 | 404, 403 |
 
 QR/tracking responses never include patient identity or unnecessary
-medical detail — only `reference`, `status`, `blood_type`, `component`,
-`last_updated`.
+medical detail — only `reference`, `status`, `blood_type`, and the API compatibility `component` value.
 
 ## Notifications
 
@@ -80,3 +88,17 @@ medical detail — only `reference`, `status`, `blood_type`, `component`,
 | 409 | `INVALID_STATUS_TRANSITION` / `EMAIL_ALREADY_EXISTS` | Conflicts |
 | 422 | `VALIDATION_ERROR` | Pydantic validation failure |
 | 500 | `INTERNAL_SERVER_ERROR` | Unhandled error (no internal details leaked) |
+
+## Supporting Documents
+
+| Method | Endpoint | Purpose | Auth | Role | Success |
+|---|---|---|---|---|---|
+| POST | `/requests/{id}/documents` | Upload supporting PDF/JPEG/PNG | Yes | Request-access users | 201 |
+| GET | `/requests/{id}/documents` | List supporting documents | Yes | Request-access users | 200 |
+| POST | `/documents/{id}/review` | Approve/reject document | Yes | Blood Bank / Medical Lead / Admin | 200 |
+
+Uploads are size-limited by `MAX_UPLOAD_MB`. Rejection requires a reason. File storage is abstracted by the service boundary and defaults to local development storage.
+
+## Database mode
+
+Set `REPOSITORY_BACKEND=sqlserver` to use the SQLAlchemy/Azure SQL repositories. Set `REPOSITORY_BACKEND=memory` for deterministic local demos and unit tests. The SQL models and initial migration are derived from the supplied Chen ERD; see `docs/ERD_MAPPING.md`.

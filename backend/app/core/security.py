@@ -28,6 +28,8 @@ __all__ = [
     "get_current_user",
     "CurrentUser",
     "require_roles",
+    "create_tracking_reference",
+    "decode_tracking_reference",
 ]
 
 
@@ -46,12 +48,30 @@ def decode_access_token(token: str) -> dict:
         raise UnauthorizedError("Invalid or expired access token", code="INVALID_TOKEN")
 
 
-def _get_user_repo_dep() -> UserRepository:
+def create_tracking_reference(request_id: str) -> str:
+    """Create a signed opaque tracking token without adding a column to the supplied schema."""
+    settings = get_settings()
+    return jwt.encode({"sub": request_id, "typ": "tracking"}, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def decode_tracking_reference(reference: str) -> str | None:
+    settings = get_settings()
+    try:
+        payload = jwt.decode(reference, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("typ") != "tracking" or not payload.get("sub"):
+            return None
+        return str(payload["sub"])
+    except JWTError:
+        return None
+
+
+async def _get_user_repo_dep():
     # Imported lazily to avoid a module-level circular import:
     # core.security <-> services.dependencies <-> services.auth_service <-> core.security
     from app.services.dependencies import get_user_repository
 
-    return get_user_repository()
+    async for repo in get_user_repository():
+        yield repo
 
 
 async def get_current_user(

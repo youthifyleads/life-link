@@ -17,7 +17,7 @@ logging — for the Life Link MVP.
 ```
 Router (app/api/v1) → Schema (app/schemas) → Service (app/services)
     → Repository Interface (app/repositories/interfaces)
-    → [in-memory today] → SQL Server implementation later
+    → memory OR SQL Server (select with REPOSITORY_BACKEND)
 ```
 
 Business logic lives in services; routes stay thin; validation lives in
@@ -34,13 +34,20 @@ app/
 ├── api/v1/                  # route handlers (thin)
 ├── schemas/                 # Pydantic input/output models
 ├── services/                # business logic + dependency wiring
+├── db/                     # SQLAlchemy engine/session + ERD ORM models
 ├── repositories/
 │   ├── interfaces/          # abstract contracts
-│   └── memory/              # PROVISIONAL in-memory implementations
+│   ├── memory/              # deterministic test/demo implementations
+│   └── sqlalchemy/          # SQL Server/Azure SQL implementations
 └── tests/                   # pytest suite
 docs/
 ├── API_SPEC.md
-└── RBAC.md
+├── RBAC.md
+├── ERD_MAPPING.md
+└── DATABASE.md
+alembic/
+alembic.ini
+scripts/seed_dev.py
 postman/LifeLink_API.json
 .env.example
 requirements.txt
@@ -80,9 +87,7 @@ Seeded dev users (password `password123` for all):
 python3 -m pytest app/tests -v
 ```
 
-32 tests covering auth, RBAC, request lifecycle/state machine, inventory,
-QR/tracking, and notifications, all against the in-memory repositories
-(no database dependency).
+The repository contains the original 32 in-memory unit tests covering auth, RBAC, request lifecycle/state machine, inventory, QR/tracking, and notifications. Run them after installing the current requirements; a full post-change pytest run was not available in this sandbox because `jose`, `passlib`, and `aioodbc` were not installed here.
 
 ## 7. Swagger location
 
@@ -92,8 +97,7 @@ responses.
 
 ## 8. Environment variables
 
-See `.env.example`: `ENVIRONMENT`, `DATABASE_URL` (unused until SQL
-Server is wired in), `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`. Never
+See `.env.example`: `ENVIRONMENT`, `DATABASE_URL`, `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`. Never
 commit real secrets — use a secret manager for anything beyond local dev.
 
 ## 9. API versioning
@@ -114,56 +118,44 @@ See `docs/RBAC.md` for the full role/permission matrix. Enforced via the
 `require_roles()` dependency plus per-service scoping checks (e.g.
 hospital users only see their own hospital's requests).
 
-## 12. Current limitations due to missing final ERD
+## 12. Persistence modes
 
-- All persistence is **in-memory** (`app/repositories/memory/`) and reset
-  whenever the process restarts. This is intentional — it lets the whole
-  API layer be built, tested, and demoed without the final SQL Server
-  schema.
-- `app/repositories/models.py` holds plain dataclasses standing in for
-  what will eventually be ORM-backed rows. Field names were chosen to be
-  reasonable, not final.
-- No SQLAlchemy models, no Alembic/other migrations exist yet — none
-  were created, per the constraint against inventing a schema.
-- Auth uses a JWT/bearer scheme with no refresh tokens; this is flagged
-  PROVISIONAL and awaits Technical Lead sign-off.
+The supplied `schema.pdf` is mapped by SQLAlchemy ORM models under `app/db/models.py`; table and column names follow the supplied physical schema.
+The application supports two modes:
 
-## 13. What needs to be replaced/connected when the final ERD arrives
+- `REPOSITORY_BACKEND=memory`: fast local demo and unit-test mode.
+- `REPOSITORY_BACKEND=sqlserver`: real SQL Server/Azure SQL persistence through the repository interfaces.
 
-1. Implement each interface in `app/repositories/interfaces/` with a real
-   SQL Server (SQLAlchemy) repository — `UserRepository`,
-   `RequestRepository`, `InventoryRepository`, `NotificationRepository`,
-   `AuditRepository`.
-2. Swap the constructors in `app/services/dependencies.py` to return the
-   new SQL Server repositories (e.g. branch on `settings.ENVIRONMENT`).
-   No router or service code should need to change.
-3. Reconcile `app/repositories/models.py` dataclass fields against the
-   final ERD's actual columns/foreign keys (e.g. hospital/blood bank
-   institution ids, user table shape).
-4. Revisit the auth/token strategy with the Technical Lead once the final
-   user/session model is agreed.
-5. Decide on a real notification delivery provider and add a `_deliver()`
-   hook in `NotificationService` (currently in-app-record only).
+The repository interfaces keep services and routes independent from the storage implementation. See `docs/ERD_MAPPING.md` and `docs/DATABASE.md`.
 
----
+## 13. Database setup
 
-### Provisional decisions (flagged for Technical Lead review)
+```bash
+# configure DATABASE_URL and REPOSITORY_BACKEND=sqlserver
+alembic upgrade head
+python scripts/seed_dev.py
+uvicorn app.main:app --reload
+```
 
-- JWT bearer auth, HS256, no refresh token flow yet.
-- Password hashing via `pbkdf2_sha256` (passlib) — chosen over bcrypt
-  only to avoid a native-binding version conflict in this dev sandbox;
-  either is fine for the MVP, but confirm before production.
-- In-memory repositories as the only implementation so far.
-- QR payload is currently just the plain secure reference string (`LL-...`);
-  encoding it as an actual QR image is left to the client apps.
+A real SQL Server/Azure SQL connection cannot be verified from this package without the team's shared database host, credentials/secrets and network access. No secrets are included.
+
+## 14. Supporting documents
+
+The request workflow now includes secure local development storage and document review endpoints. Production deployments should replace the storage implementation with the team's approved object/file storage provider without exposing raw file paths to clients.
+
+## 15. Final schema mapping
+
+See `docs/ERD_MAPPING.md` for the exact 24-table mapping from `schema.pdf`. The only non-persisted compatibility concern is the API-level `tracking_reference`/`component` behavior documented there.
+
+### Operational decisions
+
+- JWT bearer auth, HS256, with secret and expiry controlled by environment variables.
+- Password hashing via `pbkdf2_sha256` (passlib).
+- SQL Server is the real persistence mode; in-memory mode remains for tests/demo.
+- QR clients encode the signed tracking payload returned by the API.
 
 ### Assumptions made
 
-- `institution_id` on a user is a simple string scoping id (hospital or
-  blood bank), matched against the same field on requests/inventory. The
-  real ERD may model this as an FK to a proper Institution/Hospital/
-  BloodBank table — the comparison logic won't need to change, just the
-  type/source of the id.
 - Cancellation is allowed from `requested`, `acknowledged`, `confirmed`,
   and `prepared`, but not from a terminal state (`completed`, `cancelled`,
   `expired`). `expired` is modeled as a possible transition from
