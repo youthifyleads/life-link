@@ -6,8 +6,9 @@ on:
       - main
       - develop
     paths:
-      - 'backend/**' 
-      - 'Dockerfile'
+      - 'backend/**'
+      - 'Dockerfile'  
+  workflow_dispatch:
 
 jobs:
   build-and-push:
