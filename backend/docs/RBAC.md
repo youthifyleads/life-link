@@ -63,3 +63,4 @@ hospital's data"), add the check inside the relevant service method, the
 same way `RequestService._assert_can_view` and
 `InventoryService._assert_can_manage` do it — do not duplicate scoping
 logic inline in routers.
+  
