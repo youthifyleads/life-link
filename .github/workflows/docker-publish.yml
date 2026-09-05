@@ -1,0 +1,33 @@
+name: Build and Push Docker to ACR
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'backend/**' 
+      - 'Dockerfile'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend 
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.AZURE_ACR_LOGIN_SERVER }}
+          username: ${{ secrets.AZURE_ACR_USERNAME }}
+          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ vars.AZURE_ACR_LOGIN_SERVER }}/lifelink-backend:latest .
+          docker push ${{ vars.AZURE_ACR_LOGIN_SERVER }}/lifelink-backend:latest
