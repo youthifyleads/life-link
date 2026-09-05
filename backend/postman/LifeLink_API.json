@@ -1,0 +1,325 @@
+{
+  "info": {
+    "name": "Life Link API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "access_token", "value": "" },
+    { "key": "bloodbank_token", "value": "" },
+    { "key": "admin_token", "value": "" },
+    { "key": "request_id", "value": "" },
+    { "key": "tracking_reference", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login - success",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\": \"hospital@lifelink.dev\", \"password\": \"password123\"}" },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Login - invalid credentials",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\": \"hospital@lifelink.dev\", \"password\": \"wrong\"}" },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Get current user",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/auth/me"
+          }
+        },
+        {
+          "name": "Get current user - unauthorized (no token)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List users - admin",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/users"
+          }
+        },
+        {
+          "name": "List users - forbidden (non-admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/users"
+          }
+        },
+        {
+          "name": "Create user - admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"newhospital@lifelink.dev\", \"full_name\": \"New Hospital User\", \"password\": \"password123\", \"role\": \"hospital_user\", \"institution_id\": \"hospital_2\"}"
+            },
+            "url": "{{base_url}}/users"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Requests",
+      "item": [
+        {
+          "name": "Create request - success",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"blood_type\": \"O+\", \"component\": \"whole_blood\", \"quantity_units\": 2, \"urgency\": false}"
+            },
+            "url": "{{base_url}}/requests"
+          }
+        },
+        {
+          "name": "Create request - validation error (bad quantity)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"blood_type\": \"O+\", \"component\": \"whole_blood\", \"quantity_units\": 0}"
+            },
+            "url": "{{base_url}}/requests"
+          }
+        },
+        {
+          "name": "Create request - forbidden (non-hospital role)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bloodbank_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"blood_type\": \"O+\", \"component\": \"whole_blood\", \"quantity_units\": 2}"
+            },
+            "url": "{{base_url}}/requests"
+          }
+        },
+        {
+          "name": "List requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/requests"
+          }
+        },
+        {
+          "name": "Get request by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/requests/{{request_id}}"
+          }
+        },
+        {
+          "name": "Acknowledge request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "url": "{{base_url}}/requests/{{request_id}}/acknowledge"
+          }
+        },
+        {
+          "name": "Confirm request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "url": "{{base_url}}/requests/{{request_id}}/confirm"
+          }
+        },
+        {
+          "name": "Prepare request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "url": "{{base_url}}/requests/{{request_id}}/prepare"
+          }
+        },
+        {
+          "name": "Complete request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "url": "{{base_url}}/requests/{{request_id}}/complete"
+          }
+        },
+        {
+          "name": "Complete request - invalid transition",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "url": "{{base_url}}/requests/{{request_id}}/complete"
+          }
+        },
+        {
+          "name": "Cancel request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/requests/{{request_id}}/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "Create inventory item - success",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bloodbank_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"blood_bank_id\": \"bloodbank_1\", \"blood_type\": \"A+\", \"component\": \"plasma\", \"quantity_units\": 10}"
+            },
+            "url": "{{base_url}}/inventory"
+          }
+        },
+        {
+          "name": "Create inventory item - forbidden (wrong bank)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bloodbank_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"blood_bank_id\": \"bloodbank_2\", \"blood_type\": \"A+\", \"component\": \"plasma\", \"quantity_units\": 10}"
+            },
+            "url": "{{base_url}}/inventory"
+          }
+        },
+        {
+          "name": "List inventory",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "url": "{{base_url}}/inventory"
+          }
+        },
+        {
+          "name": "Update inventory item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{bloodbank_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"quantity_units\": 5}" },
+            "url": "{{base_url}}/inventory/REPLACE_WITH_ITEM_ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "QR / Tracking",
+      "item": [
+        {
+          "name": "Issue QR for request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/requests/{{request_id}}/qr"
+          }
+        },
+        {
+          "name": "Scan QR - success",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"reference\": \"{{tracking_reference}}\"}" },
+            "url": "{{base_url}}/qr/scan"
+          }
+        },
+        {
+          "name": "Scan QR - invalid reference",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"reference\": \"LL-does-not-exist\"}" },
+            "url": "{{base_url}}/qr/scan"
+          }
+        },
+        {
+          "name": "Get tracking by reference",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/tracking/{{tracking_reference}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List my notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/notifications"
+          }
+        },
+        {
+          "name": "Mark notification read",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/notifications/REPLACE_WITH_NOTIFICATION_ID/read"
+          }
+        }
+      ]
+    }
+  ]
+}
