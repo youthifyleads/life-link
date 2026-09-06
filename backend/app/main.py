@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials # <--- ضيفي دي
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions, donors, caregiver, payments, otp
@@ -9,15 +10,16 @@ from app.core.logging import configure_logging
 settings = get_settings()
 configure_logging()
 
+security_scheme = HTTPBearer()
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description=(
         "Life Link backend API layer. Blood-donation request/inventory/QR/notification "
-        "management for hospitals and blood banks. NOTE: database-backed repositories are "
-        "provisional in-memory implementations pending the final ERD from the Database "
-        "Developer - see README for details."
+        "management for hospitals and blood banks."
     ),
     version="0.1.0",
+    swagger_ui_parameters={"persistAuthorization": True},
 )
 
 app.add_middleware(
