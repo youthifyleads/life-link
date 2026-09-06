@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 
 from app.api.v1 import (
     auth,
@@ -10,7 +11,6 @@ from app.api.v1 import (
     users,
     documents,
     institutions,
-
 )
 
 try:
@@ -38,7 +38,35 @@ app = FastAPI(
     ),
     version="0.1.0",
     swagger_ui_parameters={"persistAuthorization": True},
+    swagger_ui_init_oauth=None,
 )
+
+# تخصيص الـ OpenAPI لإظهار زرار الـ Authorize للـ Bearer Token تلقائياً في الـ Swagger
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    if "components" not in openapi_schema:
+        openapi_schema["components"] = {}
+    openapi_schema["components"]["securitySchemes"] = {
+        "HTTPBearer": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    for path in openapi_schema["paths"]:
+        for method in openapi_schema["paths"][path]:
+            openapi_schema["paths"][path][method]["security"] = [{"HTTPBearer": []}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 app.add_middleware(
     CORSMiddleware,
