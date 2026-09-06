@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,9 +14,16 @@ class SQLAlchemyAuditRepository(AuditRepository):
 
     async def create(self, entry: AuditLogRecord) -> AuditLogRecord:
         entity_type, _, entity_id = entry.details.partition(":")
+        try:
+            parsed_audit_id = uuid.UUID(entry.id)
+        except (ValueError, TypeError):
+            parsed_audit_id = uuid.uuid4()
+
         obj = AuditLogModel(
-            audit_id=entry.id, user_id=entry.actor_user_id,
-            entity_type=entity_type or "system", entity_id=entity_id or None,
+            audit_id=parsed_audit_id, 
+            user_id=entry.actor_user_id,
+            entity_type=entity_type or "system", 
+            entity_id=entity_id or None,
             action=entry.action, 
             logged_at=entry.created_at,
         )
@@ -24,5 +32,5 @@ class SQLAlchemyAuditRepository(AuditRepository):
         return entry
 
     async def list_all(self) -> list[AuditLogRecord]:
-        result = await self.session.execute(select(AuditLogModel).order_by(AuditLogModel.timestamp.desc()))
+        result = await self.session.execute(select(AuditLogModel).order_by(AuditLogModel.logged_at.desc()))
         return [audit_to_record(o) for o in result.scalars().all()]
