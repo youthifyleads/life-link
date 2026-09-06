@@ -10,8 +10,7 @@ from app.api.v1 import (
     users,
     documents,
     institutions,
-    
-    otp,
+
 )
 
 try:
@@ -59,7 +58,6 @@ app.include_router(qr.router, prefix=settings.API_V1_PREFIX)
 app.include_router(notifications.router, prefix=settings.API_V1_PREFIX)
 app.include_router(documents.router, prefix=settings.API_V1_PREFIX)
 app.include_router(institutions.router, prefix=settings.API_V1_PREFIX)
-app.include_router(otp.router, prefix=settings.API_V1_PREFIX)
 
 if caregiver is not None:
     app.include_router(caregiver.router, prefix=settings.API_V1_PREFIX)
