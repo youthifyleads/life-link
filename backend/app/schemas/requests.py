@@ -12,7 +12,7 @@ class BloodRequestCreate(BaseModel):
     urgency: bool = Field(default=False, description="Marks the request as urgent for escalation/notification purposes")
     notes: str | None = Field(default=None, max_length=1000)
     reason: str | None = Field(default=None, max_length=1000)
-    required_by: datetime | None = None
+    required_by: datetime | None = Field(default=None, examples=["2026-12-31T23:59:59Z"])
 
 
 class BloodRequestPublic(BaseModel):

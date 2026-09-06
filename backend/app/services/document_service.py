@@ -32,12 +32,44 @@ class DocumentService:
         if len(data) > get_settings().MAX_UPLOAD_MB * 1024 * 1024:
             raise ValidationAppError("Document exceeds the configured upload limit", code="DOCUMENT_TOO_LARGE")
         safe_name = Path(filename or "document").name
-        root = Path(get_settings().FILE_STORAGE_ROOT) / request_id
-        root.mkdir(parents=True, exist_ok=True)
         document_id = str(uuid.uuid4())
-        stored = root / f"{document_id}_{safe_name}"
-        stored.write_bytes(data)
-        record = SupportingDocumentRecord(document_id, request_id, safe_name, "pending", datetime.now(timezone.utc), content_type, str(stored), uploaded_by_user_id=user.id)
+        settings = get_settings()
+
+        file_path: str
+        if settings.AZURE_STORAGE_CONNECTION_STRING:
+            try:
+                from azure.storage.blob import BlobServiceClient, ContentSettings
+
+                blob_service = BlobServiceClient.from_connection_string(settings.AZURE_STORAGE_CONNECTION_STRING)
+                container_client = blob_service.get_container_client(settings.AZURE_STORAGE_CONTAINER_NAME)
+                try:
+                    container_client.create_container()
+                except Exception:
+                    pass
+
+                blob_name = f"{request_id}/{document_id}_{safe_name}"
+                blob_client = container_client.get_blob_client(blob_name)
+                content_settings = ContentSettings(content_type=content_type) if content_type else None
+                blob_client.upload_blob(data, overwrite=True, content_settings=content_settings)
+                file_path = blob_client.url
+            except Exception as exc:
+                # If Azure upload fails, fallback to local storage
+                root = Path(settings.FILE_STORAGE_ROOT) / request_id
+                root.mkdir(parents=True, exist_ok=True)
+                stored = root / f"{document_id}_{safe_name}"
+                stored.write_bytes(data)
+                file_path = str(stored)
+        else:
+            root = Path(settings.FILE_STORAGE_ROOT) / request_id
+            root.mkdir(parents=True, exist_ok=True)
+            stored = root / f"{document_id}_{safe_name}"
+            stored.write_bytes(data)
+            file_path = str(stored)
+
+        record = SupportingDocumentRecord(
+            document_id, request_id, safe_name, "pending", datetime.now(timezone.utc),
+            content_type, file_path, uploaded_by_user_id=user.id
+        )
         return await self._repo.create(record)
 
     async def list_for_request(self, request_id: str, user: UserRecord):

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from app.core.domain import VALID_TRANSITIONS, NotificationTrigger, Role, RequestStatus
-from app.core.exceptions import ForbiddenError, InvalidStatusTransitionError, NotFoundError
+from app.core.exceptions import ForbiddenError, InvalidStatusTransitionError, NotFoundError, ValidationAppError
 from app.repositories.interfaces.request_repository import RequestRepository
 from app.repositories.interfaces.status_history_repository import StatusHistoryRepository
 from app.repositories.models import RequestStatusHistoryRecord
@@ -33,6 +33,13 @@ class RequestService:
             raise ForbiddenError("Only hospital users can create blood requests", code="FORBIDDEN_ROLE")
         if not current_user.institution_id:
             raise ForbiddenError("User is not associated with a hospital", code="MISSING_INSTITUTION_SCOPE")
+
+        now = datetime.now(timezone.utc)
+        if payload.required_by and payload.required_by <= now:
+            raise ValidationAppError(
+                "Field 'required_by' must be a future date/time, it cannot be in the past",
+                code="INVALID_REQUIRED_BY",
+            )
 
         record_id = str(uuid.uuid4())
         record = BloodRequestRecord(
