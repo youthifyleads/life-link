@@ -52,7 +52,6 @@ app.add_middleware(
 
 register_exception_handlers(app)
 
-# تسجيل الـ Routers الأساسية
 app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
 app.include_router(users.router, prefix=settings.API_V1_PREFIX)
 app.include_router(requests.router, prefix=settings.API_V1_PREFIX)
@@ -61,7 +60,6 @@ app.include_router(qr.router, prefix=settings.API_V1_PREFIX)
 app.include_router(notifications.router, prefix=settings.API_V1_PREFIX)
 app.include_router(documents.router, prefix=settings.API_V1_PREFIX)
 app.include_router(institutions.router, prefix=settings.API_V1_PREFIX)
-app.include_router(payments.router, prefix=settings.API_V1_PREFIX)
 app.include_router(otp.router, prefix=settings.API_V1_PREFIX)
 
 if caregiver is not None:
