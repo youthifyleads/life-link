@@ -14,13 +14,17 @@ class SQLAlchemyAuditRepository(AuditRepository):
 
     async def create(self, entry: AuditLogRecord) -> AuditLogRecord:
         entity_type, _, entity_id = entry.details.partition(":")
+        
         try:
-            parsed_audit_id = uuid.UUID(entry.id)
+            if len(entry.id) == 36 and "-" in entry.id:
+                parsed_audit_id = uuid.UUID(entry.id)
+            else:
+                parsed_audit_id = uuid.uuid4()
         except (ValueError, TypeError):
             parsed_audit_id = uuid.uuid4()
 
         obj = AuditLogModel(
-            audit_id=parsed_audit_id, 
+            audit_id=str(parsed_audit_id),    
             user_id=entry.actor_user_id,
             entity_type=entity_type or "system", 
             entity_id=entity_id or None,
