@@ -13,8 +13,12 @@ class SQLAlchemyUserRepository(UserRepository):
         self.session = session
 
     async def get_by_id(self, user_id: str) -> UserRecord | None:
-        result = await self.session.execute(select(UserModel).options(joinedload(UserModel.role), joinedload(UserModel.phones)).where(UserModel.user_id == user_id))
-        obj = result.scalar_one_or_none()
+        result = await self.session.execute(
+            select(UserModel)
+            .options(joinedload(UserModel.role), joinedload(UserModel.phones))
+            .where(UserModel.user_id == user_id)
+        )
+        obj = result.unique().scalar_one_or_none()  
         return user_to_record(obj) if obj else None
 
     async def get_by_email(self, email: str) -> UserRecord | None:
