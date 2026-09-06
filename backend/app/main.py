@@ -1,7 +1,8 @@
 from fastapi import FastAPI
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials # <--- ضيفي دي
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions
+from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions, donors, caregiver, payments, otp
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
@@ -9,15 +10,16 @@ from app.core.logging import configure_logging
 settings = get_settings()
 configure_logging()
 
+security_scheme = HTTPBearer()
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description=(
         "Life Link backend API layer. Blood-donation request/inventory/QR/notification "
-        "management for hospitals and blood banks. NOTE: database-backed repositories are "
-        "provisional in-memory implementations pending the final ERD from the Database "
-        "Developer - see README for details."
+        "management for hospitals and blood banks."
     ),
     version="0.1.0",
+    swagger_ui_parameters={"persistAuthorization": True},
 )
 
 app.add_middleware(
@@ -38,6 +40,10 @@ app.include_router(qr.router, prefix=settings.API_V1_PREFIX)
 app.include_router(notifications.router, prefix=settings.API_V1_PREFIX)
 app.include_router(documents.router, prefix=settings.API_V1_PREFIX)
 app.include_router(institutions.router, prefix=settings.API_V1_PREFIX)
+app.include_router(donors.router, prefix=settings.API_V1_PREFIX)
+app.include_router(caregiver.router, prefix=settings.API_V1_PREFIX)
+app.include_router(payments.router, prefix=settings.API_V1_PREFIX)
+app.include_router(otp.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health", tags=["Health"], summary="Health check")
