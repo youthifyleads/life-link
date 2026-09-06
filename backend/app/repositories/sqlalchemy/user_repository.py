@@ -29,12 +29,20 @@ class SQLAlchemyUserRepository(UserRepository):
     async def create(self, user: UserRecord) -> UserRecord:
         role_result = await self.session.execute(select(RoleModel).where(RoleModel.name == user.role.value))
         role = role_result.scalar_one_or_none()
+        import uuid
         if role is None:
-            role = RoleModel(role_id=f"role_{user.role.value}", name=user.role.value, description=user.role.value.replace("_", " ").title())
+            role = RoleModel(role_id=str(uuid.uuid4()), name=user.role.value, description=user.role.value.replace("_", " ").title())
             self.session.add(role)
             await self.session.flush()
+
+        try:
+            uid = str(uuid.UUID(user.id))
+        except (ValueError, TypeError):
+            uid = str(uuid.uuid4())
+            user.id = uid
+
         obj = UserModel(
-            user_id=user.id, email=user.email.lower(), password_hash=user.hashed_password,
+            user_id=uid, email=user.email.lower(), password_hash=user.hashed_password,
             name=user.full_name, status="active" if user.is_active else "inactive",
             created_at=user.created_at if hasattr(user, "created_at") else __import__('datetime').datetime.now(__import__('datetime').timezone.utc),
             role_id=role.role_id,

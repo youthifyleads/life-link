@@ -13,8 +13,22 @@ class SQLAlchemyDocumentRepository(DocumentRepository):
     def __init__(self, session: AsyncSession): self.session = session
 
     async def create(self, document):
-        self.session.add(SupportingDocumentModel(document_id=document.id, blood_request_id=document.blood_request_id, file_name=document.file_name, status=document.status, uploaded_at=document.uploaded_at, file_type=document.file_type, file_path=document.file_path, reviewed_at=document.reviewed_at, rejection_reason=document.rejection_reason, uploaded_by_user_id=document.uploaded_by_user_id, reviewed_by_user_id=document.reviewed_by_user_id))
-        await self.session.commit(); return document
+        import uuid
+        try:
+            doc_id = str(uuid.UUID(document.id))
+        except (ValueError, TypeError):
+            doc_id = str(uuid.uuid4())
+            document.id = doc_id
+
+        self.session.add(SupportingDocumentModel(
+            document_id=doc_id, blood_request_id=document.blood_request_id,
+            file_name=document.file_name, status=document.status, uploaded_at=document.uploaded_at,
+            file_type=document.file_type, file_path=document.file_path, reviewed_at=document.reviewed_at,
+            rejection_reason=document.rejection_reason, uploaded_by_user_id=document.uploaded_by_user_id,
+            reviewed_by_user_id=document.reviewed_by_user_id,
+        ))
+        await self.session.commit()
+        return document
 
     async def get_by_id(self, document_id):
         o=(await self.session.execute(select(SupportingDocumentModel).where(SupportingDocumentModel.document_id==document_id))).scalar_one_or_none()

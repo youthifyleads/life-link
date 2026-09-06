@@ -34,7 +34,7 @@ class DocumentService:
         safe_name = Path(filename or "document").name
         root = Path(get_settings().FILE_STORAGE_ROOT) / request_id
         root.mkdir(parents=True, exist_ok=True)
-        document_id = f"doc_{uuid.uuid4().hex[:12]}"
+        document_id = str(uuid.uuid4())
         stored = root / f"{document_id}_{safe_name}"
         stored.write_bytes(data)
         record = SupportingDocumentRecord(document_id, request_id, safe_name, "pending", datetime.now(timezone.utc), content_type, str(stored), uploaded_by_user_id=user.id)

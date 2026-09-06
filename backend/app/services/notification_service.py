@@ -28,7 +28,7 @@ class NotificationService:
         related_request_id: str | None = None,
     ) -> NotificationRecord:
         record = NotificationRecord(
-            id=f"notif_{uuid.uuid4().hex[:12]}",
+            id=str(uuid.uuid4()),
             user_id=user_id,
             trigger=trigger,
             message=message,

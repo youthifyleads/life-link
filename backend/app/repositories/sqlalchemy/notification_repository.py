@@ -13,8 +13,15 @@ class SQLAlchemyNotificationRepository(NotificationRepository):
         self.session = session
 
     async def create(self, notification: NotificationRecord) -> NotificationRecord:
+        import uuid
+        try:
+            notif_id = str(uuid.UUID(notification.id))
+        except (ValueError, TypeError):
+            notif_id = str(uuid.uuid4())
+            notification.id = notif_id
+
         obj = NotificationModel(
-            notification_id=notification.id, user_id=notification.user_id,
+            notification_id=notif_id, user_id=notification.user_id,
             title=notification.trigger.value.replace("_", " ").title(),
             type=notification.trigger.value, message=notification.message,
             status="read" if notification.is_read else "unread",

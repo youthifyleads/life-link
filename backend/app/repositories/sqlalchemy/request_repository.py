@@ -13,12 +13,18 @@ class SQLAlchemyRequestRepository(RequestRepository):
         self.session = session
 
     async def create(self, request: BloodRequestRecord) -> BloodRequestRecord:
+        import uuid
+        try:
+            req_id = str(uuid.UUID(request.id))
+        except (ValueError, TypeError):
+            req_id = str(uuid.uuid4())
+            request.id = req_id
+
         obj = BloodRequestModel(
-            blood_request_id=request.id, hospital_id=request.hospital_id, created_by_user_id=request.created_by,
+            blood_request_id=req_id, hospital_id=request.hospital_id, created_by_user_id=request.created_by,
             blood_type=request.blood_type, requested_quantity=request.quantity_units,
             urgency="urgent" if request.urgency else "normal", status=request.status.value, reason=request.notes,
             created_at=request.created_at, required_by=request.required_by,
-
         )
         self.session.add(obj)
         await self.session.commit()
