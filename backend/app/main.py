@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials # <--- ضيفي دي
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions, donors, caregiver, payments, otp
+from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions, caregiver, payments, otp
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
@@ -40,7 +39,6 @@ app.include_router(qr.router, prefix=settings.API_V1_PREFIX)
 app.include_router(notifications.router, prefix=settings.API_V1_PREFIX)
 app.include_router(documents.router, prefix=settings.API_V1_PREFIX)
 app.include_router(institutions.router, prefix=settings.API_V1_PREFIX)
-app.include_router(donors.router, prefix=settings.API_V1_PREFIX)
 app.include_router(caregiver.router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments.router, prefix=settings.API_V1_PREFIX)
 app.include_router(otp.router, prefix=settings.API_V1_PREFIX)
