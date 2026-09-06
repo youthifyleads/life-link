@@ -19,8 +19,7 @@ class SQLAlchemyAuditRepository(AuditRepository):
         except (ValueError, TypeError):
             parsed_audit_id = uuid.uuid4()
 
-        obj = AuditLogModel(
-            audit_id=parsed_audit_id, 
+       obj = AuditLogModel(
             user_id=entry.actor_user_id,
             entity_type=entity_type or "system", 
             entity_id=entity_id or None,
