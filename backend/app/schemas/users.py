@@ -17,6 +17,7 @@ class UserPublic(BaseModel):
         description="Scoping id for the user's hospital/blood bank. Final shape depends on the ERD.",
     )
     is_active: bool = True
+    status: str = "active"
 
 
 class UserCreate(BaseModel):

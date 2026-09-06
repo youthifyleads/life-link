@@ -17,29 +17,25 @@ class InMemoryUserRepository(UserRepository):
         self._seed_dev_users()
 
     def _seed_dev_users(self) -> None:
+        # Four ready-to-use QA accounts. Passwords are intentionally different.
         seed = [
             UserRecord(
-                id="usr_hospital_1",
-                email="hospital@lifelink.dev",
-                full_name="Hospital Staff Demo",
-                hashed_password=hash_password("password123"),
-                role=Role.HOSPITAL_USER,
-                institution_id="hospital_1",
+                id="usr_hospital_1", email="hospital@lifelink.dev", full_name="Hospital Staff Demo",
+                hashed_password=hash_password("Hospital@123"), role=Role.HOSPITAL_USER, institution_id="hospital_1",
+                hospital_id="hospital_1", status="active", is_active=True,
             ),
             UserRecord(
-                id="usr_bloodbank_1",
-                email="bloodbank@lifelink.dev",
-                full_name="Blood Bank Operator Demo",
-                hashed_password=hash_password("password123"),
-                role=Role.BLOOD_BANK_OPERATOR,
-                institution_id="bloodbank_1",
+                id="usr_bloodbank_1", email="bloodbank@lifelink.dev", full_name="Blood Bank Demo",
+                hashed_password=hash_password("BloodBank@123"), role=Role.BLOOD_BANK_OPERATOR, institution_id="bloodbank_1",
+                blood_bank_id="bloodbank_1", status="active", is_active=True,
             ),
             UserRecord(
-                id="usr_admin_1",
-                email="admin@lifelink.dev",
-                full_name="Admin Demo",
-                hashed_password=hash_password("password123"),
-                role=Role.ADMIN,
+                id="usr_normal_1", email="user@lifelink.dev", full_name="Normal User Demo",
+                hashed_password=hash_password("NormalUser@123"), role=Role.NORMAL_USER, status="active", is_active=True, phone="01000000003",
+            ),
+            UserRecord(
+                id="usr_banned_1", email="banned@lifelink.dev", full_name="Banned User Demo",
+                hashed_password=hash_password("BannedUser@123"), role=Role.NORMAL_USER, status="banned", is_active=False, phone="01000000004",
             ),
         ]
         for user in seed:
@@ -51,6 +47,12 @@ class InMemoryUserRepository(UserRepository):
     async def get_by_email(self, email: str) -> UserRecord | None:
         for user in self._users.values():
             if user.email.lower() == email.lower():
+                return user
+        return None
+
+    async def get_by_phone(self, phone: str) -> UserRecord | None:
+        for user in self._users.values():
+            if user.phone == phone:
                 return user
         return None
 

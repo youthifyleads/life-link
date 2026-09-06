@@ -15,6 +15,9 @@ from app.repositories.interfaces.user_repository import UserRepository
 from app.repositories.interfaces.document_repository import DocumentRepository
 from app.repositories.interfaces.status_history_repository import StatusHistoryRepository
 from app.repositories.interfaces.institution_repository import InstitutionRepository
+from app.repositories.interfaces.donor_repository import DonorRepository
+from app.repositories.interfaces.caregiver_repository import CaregiverRepository
+from app.repositories.interfaces.payment_repository import PaymentRepository
 from app.repositories.memory.audit_repository import InMemoryAuditRepository
 from app.repositories.memory.inventory_repository import InMemoryInventoryRepository
 from app.repositories.memory.notification_repository import InMemoryNotificationRepository
@@ -23,6 +26,9 @@ from app.repositories.memory.user_repository import InMemoryUserRepository
 from app.repositories.memory.document_repository import InMemoryDocumentRepository
 from app.repositories.memory.status_history_repository import InMemoryStatusHistoryRepository
 from app.repositories.memory.institution_repository import InMemoryInstitutionRepository
+from app.repositories.memory.donor_repository import InMemoryDonorRepository
+from app.repositories.memory.caregiver_repository import InMemoryCaregiverRepository
+from app.repositories.memory.payment_repository import InMemoryPaymentRepository
 from app.repositories.sqlalchemy.audit_repository import SQLAlchemyAuditRepository
 from app.repositories.sqlalchemy.inventory_repository import SQLAlchemyInventoryRepository
 from app.repositories.sqlalchemy.notification_repository import SQLAlchemyNotificationRepository
@@ -31,6 +37,9 @@ from app.repositories.sqlalchemy.user_repository import SQLAlchemyUserRepository
 from app.repositories.sqlalchemy.document_repository import SQLAlchemyDocumentRepository
 from app.repositories.sqlalchemy.status_history_repository import SQLAlchemyStatusHistoryRepository
 from app.repositories.sqlalchemy.institution_repository import SQLAlchemyInstitutionRepository
+from app.repositories.sqlalchemy.donor_repository import SQLAlchemyDonorRepository
+from app.repositories.sqlalchemy.caregiver_repository import SQLAlchemyCaregiverRepository
+from app.repositories.sqlalchemy.payment_repository import SQLAlchemyPaymentRepository
 
 
 @lru_cache
@@ -134,6 +143,7 @@ def reset_all_repositories() -> None:
     _memory_document_repository.cache_clear()
     _memory_status_history_repository.cache_clear()
     _memory_institution_repository.cache_clear()
+    _memory_donor_repository.cache_clear(); _memory_caregiver_repository.cache_clear(); _memory_payment_repository.cache_clear()
 
 
 from app.services.audit_service import AuditService
@@ -189,3 +199,25 @@ def get_document_service(
     request_repo: RequestRepository = Depends(get_request_repository),
 ) -> DocumentService:
     return DocumentService(document_repo, request_repo)
+
+
+@lru_cache
+def _memory_donor_repository(): return InMemoryDonorRepository()
+@lru_cache
+def _memory_caregiver_repository(): return InMemoryCaregiverRepository()
+@lru_cache
+def _memory_payment_repository(): return InMemoryPaymentRepository()
+async def get_donor_repository():
+    async for repo in _repo_or_memory(SQLAlchemyDonorRepository,_memory_donor_repository): yield repo
+async def get_caregiver_repository():
+    async for repo in _repo_or_memory(SQLAlchemyCaregiverRepository,_memory_caregiver_repository): yield repo
+async def get_payment_repository():
+    async for repo in _repo_or_memory(SQLAlchemyPaymentRepository,_memory_payment_repository): yield repo
+from app.services.donor_service import DonorService
+from app.services.caregiver_service import CaregiverService
+from app.services.payment_service import PaymentService
+from app.services.otp_service import OTPService
+def get_donor_service(repo:DonorRepository=Depends(get_donor_repository), user_repo:UserRepository=Depends(get_user_repository)): return DonorService(repo,user_repo)
+def get_caregiver_service(repo:CaregiverRepository=Depends(get_caregiver_repository), user_repo:UserRepository=Depends(get_user_repository)): return CaregiverService(repo,user_repo)
+def get_payment_service(repo:PaymentRepository=Depends(get_payment_repository), request_repo:RequestRepository=Depends(get_request_repository)): return PaymentService(repo,request_repo)
+def get_otp_service(user_repo:UserRepository=Depends(get_user_repository)): return OTPService(user_repo)

@@ -102,3 +102,11 @@ Uploads are size-limited by `MAX_UPLOAD_MB`. Rejection requires a reason. File s
 ## Database mode
 
 Set `REPOSITORY_BACKEND=sqlserver` to use the SQLAlchemy/Azure SQL repositories. Set `REPOSITORY_BACKEND=memory` for deterministic local demos and unit tests. The SQL models and initial migration are derived from the supplied Chen ERD; see `docs/ERD_MAPPING.md`.
+
+
+## Mobile additions (Dev/MVP)
+OTP: POST /api/v1/auth/otp/request, POST /api/v1/auth/otp/verify. Development fixed OTP: 123456.
+Donor: /api/v1/donors/me, /api/v1/donors/me/donations, /api/v1/donors/me/responses, /api/v1/donors/me/consents plus admin/medical donor lookup.
+Caregiver: /api/v1/caregiver/assignments CRUD/update endpoints.
+Payments: POST /api/v1/payments, GET /api/v1/payments/{id}, GET /api/v1/payments/request/{request_id}, PATCH /api/v1/payments/{id}.
+Full examples are in docs/MOBILE_API_CONTRACT.md.

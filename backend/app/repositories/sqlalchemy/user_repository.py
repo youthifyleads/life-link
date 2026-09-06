@@ -22,7 +22,12 @@ class SQLAlchemyUserRepository(UserRepository):
         obj = result.scalar_one_or_none()
         return user_to_record(obj) if obj else None
 
-    async def create(self, user: UserRecord) -> UserRecord:
+    async def get_by_phone(self, phone: str) -> UserRecord | None:
+        result = await self.session.execute(select(UserModel).options(joinedload(UserModel.role), joinedload(UserModel.phones)).join(UserPhoneModel).where(UserPhoneModel.phone == phone))
+        obj = result.unique().scalar_one_or_none()
+        return user_to_record(obj) if obj else None
+
+    async def create(self, user: UserRecord):
         role_result = await self.session.execute(select(RoleModel).where(RoleModel.name == user.role.value))
         role = role_result.scalar_one_or_none()
         if role is None:
@@ -34,8 +39,8 @@ class SQLAlchemyUserRepository(UserRepository):
             name=user.full_name, status="active" if user.is_active else "inactive",
             created_at=user.created_at if hasattr(user, "created_at") else __import__('datetime').datetime.now(__import__('datetime').timezone.utc),
             role_id=role.role_id,
-            hospital_id=user.institution_id if user.role.value == "hospital_user" else None,
-            blood_bank_id=user.institution_id if user.role.value == "blood_bank_operator" else None,
+            hospital_id=user.hospital_id or (user.institution_id if user.role.value == "hospital_user" else None),
+            blood_bank_id=user.blood_bank_id or (user.institution_id if user.role.value == "blood_bank_operator" else None),
         )
         self.session.add(obj)
         if user.phone:

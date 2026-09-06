@@ -18,6 +18,7 @@ class UserRecord:
     role: Role
     institution_id: str | None = None
     is_active: bool = True
+    status: str = "active"
     phone: str | None = None
     hospital_id: str | None = None
     blood_bank_id: str | None = None
@@ -96,3 +97,72 @@ class RequestStatusHistoryRecord:
     notes: str | None
     changed_at: datetime = field(default_factory=_utcnow)
     changed_by_user_id: str | None = None
+
+
+@dataclass
+class DonorRecord:
+    id: str
+    user_id: str
+    blood_type: str | None = None
+    date_of_birth: object | None = None
+    governorate: str | None = None
+    eligibility_status: str = "pending"
+    last_donation_date: object | None = None
+
+@dataclass
+class DonationRecord:
+    id: str
+    blood_type: str
+    quantity: int
+    donation_date: object
+    status: str
+    created_at: datetime = field(default_factory=_utcnow)
+    donor_id: str = ""
+    blood_bank_id: str = ""
+
+@dataclass
+class DonationResponseRecord:
+    id: str
+    response_date: datetime
+    status: str
+    notes: str | None
+    blood_request_id: str
+    donor_id: str
+
+@dataclass
+class ConsentRecord:
+    id: str
+    donor_id: str
+    consent_type: str
+    granted: bool
+    granted_at: datetime | None = None
+    revoked_at: datetime | None = None
+
+@dataclass
+class DonationVoucherRecord:
+    id: str
+    voucher_number: str
+    issued_at: datetime
+    status: str
+    donation_id: str
+
+@dataclass
+class CaregiverAssignmentRecord:
+    id: str
+    assignment_date: datetime | None
+    status: str
+    notes: str | None
+    blood_bag_id: str
+    caregiver_user_id: str
+    hospital_id: str
+
+@dataclass
+class PaymentRecord:
+    id: str
+    amount: float
+    payment_status: str
+    payment_method: str | None
+    paid_at: datetime | None
+    transaction_reference: str | None
+    created_at: datetime
+    blood_request_id: str

@@ -15,6 +15,7 @@ async def main() -> None:
         roles = {}
         descriptions = {
             Role.HOSPITAL_USER: "Hospital staff",
+            Role.NORMAL_USER: "Patient / donor",
             Role.BLOOD_BANK_OPERATOR: "Blood bank staff",
             Role.MEDICAL_LEAD: "Clinical decision maker",
             Role.ADMIN: "System administrator",
@@ -46,6 +47,7 @@ async def main() -> None:
             Role.MEDICAL_LEAD: ["requests:view", "requests:manage", "qr:scan"],
             Role.ADMIN: permission_names,
             Role.PLATFORM_SUPPORT: ["requests:view", "inventory:view", "notifications:view", "audit:view"],
+            Role.NORMAL_USER: ["notifications:view"],
         }
         for role, names in role_permissions_map.items():
             roles[role].permissions = [permissions[n] for n in names]
@@ -63,20 +65,27 @@ async def main() -> None:
         await session.flush()
 
         users = [
-            ("usr_hospital_1", "hospital@lifelink.dev", "Hospital Staff Demo", Role.HOSPITAL_USER, hospital.hospital_id, None),
-            ("usr_bloodbank_1", "bloodbank@lifelink.dev", "Blood Bank Operator Demo", Role.BLOOD_BANK_OPERATOR, None, blood_bank.blood_bank_id),
-            ("usr_admin_1", "admin@lifelink.dev", "Admin Demo", Role.ADMIN, None, None),
+            ("usr_hospital_1", "hospital@lifelink.dev", "Hospital Staff Demo", Role.HOSPITAL_USER, hospital.hospital_id, None, "Hospital@123", "active"),
+            ("usr_bloodbank_1", "bloodbank@lifelink.dev", "Blood Bank Demo", Role.BLOOD_BANK_OPERATOR, None, blood_bank.blood_bank_id, "BloodBank@123", "active"),
+            ("usr_normal_1", "user@lifelink.dev", "Normal User Demo", Role.NORMAL_USER, None, None, "NormalUser@123", "active"),
+            ("usr_banned_1", "banned@lifelink.dev", "Banned User Demo", Role.NORMAL_USER, None, None, "BannedUser@123", "banned"),
         ]
-        for uid, email, name, role, hospital_id, bank_id in users:
+        for uid, email, name, role, hospital_id, bank_id, password, user_status in users:
             exists = (await session.execute(select(UserModel).where(UserModel.user_id == uid))).scalar_one_or_none()
             if exists is None:
                 session.add(UserModel(
-                    user_id=uid, email=email, password_hash=hash_password("password123"), name=name,
-                    status="active", created_at=datetime.now(timezone.utc), role_id=roles[role].role_id,
+                    user_id=uid, email=email, password_hash=hash_password(password), name=name,
+                    status=user_status, created_at=datetime.now(timezone.utc), role_id=roles[role].role_id,
                     hospital_id=hospital_id, blood_bank_id=bank_id,
                 ))
+        # Dev OTP phone mappings for mobile QA.
+        phone_map = {"usr_normal_1":"01000000003", "usr_banned_1":"01000000004"}
+        for uid, phone in phone_map.items():
+            exists_phone = (await session.execute(select(UserPhoneModel).where(UserPhoneModel.user_id == uid, UserPhoneModel.phone == phone))).scalar_one_or_none()
+            if exists_phone is None:
+                session.add(UserPhoneModel(user_id=uid, phone=phone))
         await session.commit()
-    print("Seed complete. Demo password: password123")
+    print("Seed complete. QA accounts are documented in docs/QA_TEST_ACCOUNTS.md")
 
 
 if __name__ == "__main__":
