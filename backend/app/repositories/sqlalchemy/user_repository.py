@@ -19,7 +19,7 @@ class SQLAlchemyUserRepository(UserRepository):
 
     async def get_by_email(self, email: str) -> UserRecord | None:
         result = await self.session.execute(select(UserModel).options(joinedload(UserModel.role), joinedload(UserModel.phones)).where(UserModel.email == email.lower()))
-        obj = result.scalar_one_or_none()
+        obj = result.unique().scalar_one_or_none()
         return user_to_record(obj) if obj else None
 
     async def create(self, user: UserRecord) -> UserRecord:
