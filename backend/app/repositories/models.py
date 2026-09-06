@@ -71,6 +71,7 @@ class AuditLogRecord:
     actor_user_id: str | None
     action: str
     details: str
+    reason: str | None = None    
     created_at: datetime = field(default_factory=_utcnow)
 
 

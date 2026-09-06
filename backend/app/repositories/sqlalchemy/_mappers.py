@@ -4,18 +4,56 @@ from app.db.models import AuditLogModel, BloodRequestModel, NotificationModel, U
 from app.repositories.models import AuditLogRecord, BloodRequestRecord, InventoryItemRecord, NotificationRecord, UserRecord
 
 
-def role_from_db(name: str) -> Role:
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def role_from_db(name: str | None) -> Role:
+    if not name:
+        return Role.PLATFORM_SUPPORT
+    
+    # Try exact match first
     try:
         return Role(name)
     except ValueError:
+        pass
+
+    # Normalize: lowercase, replace spaces/hyphens with underscores
+    cleaned = name.strip().lower().replace(" ", "_").replace("-", "_")
+    try:
+        return Role(cleaned)
+    except ValueError:
+        pass
+
+    # Heuristic mapping for common DB naming conventions
+    if "hospital" in cleaned or "er" in cleaned or "clinic" in cleaned:
+        return Role.HOSPITAL_USER
+    if "blood" in cleaned or "bank" in cleaned or "operator" in cleaned:
+        return Role.BLOOD_BANK_OPERATOR
+    if "admin" in cleaned:
+        return Role.ADMIN
+    if "lead" in cleaned or "doctor" in cleaned or "medical" in cleaned:
+        return Role.MEDICAL_LEAD
+    if "support" in cleaned:
         return Role.PLATFORM_SUPPORT
+
+    logger.warning("Unknown role name '%s' from database; defaulting to PLATFORM_SUPPORT", name)
+    return Role.PLATFORM_SUPPORT
 
 
 def user_to_record(m: UserModel) -> UserRecord:
     institution_id = m.hospital_id or m.blood_bank_id
+    role = role_from_db(m.role.name if m.role else None)
+    if role == Role.PLATFORM_SUPPORT:
+        if m.hospital_id:
+            role = Role.HOSPITAL_USER
+        elif m.blood_bank_id:
+            role = Role.BLOOD_BANK_OPERATOR
+
     return UserRecord(
         id=m.user_id, email=m.email, full_name=m.name, hashed_password=m.password_hash,
-        role=role_from_db(m.role.name if m.role else Role.PLATFORM_SUPPORT.value),
+        role=role,
         institution_id=institution_id, hospital_id=m.hospital_id, blood_bank_id=m.blood_bank_id,
         phone=(m.phones[0].phone if m.phones else None), is_active=(m.status or "active").lower() == "active", status=(m.status or "active").lower(),
     )

@@ -24,7 +24,7 @@ class InventoryService:
         self._assert_can_manage(current_user, payload.blood_bank_id)
 
         record = InventoryItemRecord(
-            id=f"inv_{uuid.uuid4().hex[:12]}",
+            id=str(uuid.uuid4()),
             blood_bank_id=payload.blood_bank_id,
             blood_type=payload.blood_type,
             component=payload.component,

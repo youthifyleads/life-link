@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     REPOSITORY_BACKEND: str = "memory"  # memory for tests/demo; sqlserver for shared development/staging
     FILE_STORAGE_ROOT: str = "./storage"
     MAX_UPLOAD_MB: int = 10
+    AZURE_STORAGE_CONNECTION_STRING: str | None = None
+    AZURE_STORAGE_CONTAINER_NAME: str = "medical-docs"
 
     # Auth - PROVISIONAL, subject to Technical Lead review.
     SECRET_KEY: str = "CHANGE_ME_DEV_ONLY_NOT_FOR_PRODUCTION"

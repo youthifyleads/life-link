@@ -41,7 +41,7 @@ async def create_user(payload: UserCreate, user_repo: UserRepository = Depends(g
         raise ConflictError("A user with this email already exists", code="EMAIL_ALREADY_EXISTS")
 
     record = UserRecord(
-        id=f"usr_{uuid.uuid4().hex[:12]}",
+        id=str(uuid.uuid4()),
         email=payload.email,
         full_name=payload.full_name,
         hashed_password=hash_password(payload.password),

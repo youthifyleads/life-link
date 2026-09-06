@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from app.core.domain import VALID_TRANSITIONS, NotificationTrigger, Role, RequestStatus
-from app.core.exceptions import ForbiddenError, InvalidStatusTransitionError, NotFoundError
+from app.core.exceptions import ForbiddenError, InvalidStatusTransitionError, NotFoundError, ValidationAppError
 from app.repositories.interfaces.request_repository import RequestRepository
 from app.repositories.interfaces.status_history_repository import StatusHistoryRepository
 from app.repositories.models import RequestStatusHistoryRecord
@@ -34,7 +34,14 @@ class RequestService:
         if not current_user.institution_id:
             raise ForbiddenError("User is not associated with a hospital", code="MISSING_INSTITUTION_SCOPE")
 
-        record_id = f"req_{uuid.uuid4().hex[:12]}"
+        now = datetime.now(timezone.utc)
+        if payload.required_by and payload.required_by <= now:
+            raise ValidationAppError(
+                "Field 'required_by' must be a future date/time, it cannot be in the past",
+                code="INVALID_REQUIRED_BY",
+            )
+
+        record_id = str(uuid.uuid4())
         record = BloodRequestRecord(
             id=record_id,
             hospital_id=current_user.institution_id,
@@ -51,7 +58,7 @@ class RequestService:
         created = await self._request_repo.create(record)
         if self._status_history_repo:
             await self._status_history_repo.create(RequestStatusHistoryRecord(
-                id=f"hist_{uuid.uuid4().hex[:12]}", blood_request_id=created.id,
+                id=str(uuid.uuid4()), blood_request_id=created.id,
                 status=created.status, notes="Request created", changed_by_user_id=current_user.id,
             ))
 
@@ -114,7 +121,7 @@ class RequestService:
         updated = await self._request_repo.update(request)
         if self._status_history_repo:
             await self._status_history_repo.create(RequestStatusHistoryRecord(
-                id=f"hist_{uuid.uuid4().hex[:12]}", blood_request_id=updated.id,
+                id=str(uuid.uuid4()), blood_request_id=updated.id,
                 status=new_status, notes=None, changed_by_user_id=current_user.id,
             ))
 

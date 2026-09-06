@@ -20,8 +20,15 @@ class SQLAlchemyInventoryRepository(InventoryRepository):
         # availability through BLOOD_BAG, so a manually reported row is represented
         # as a bag without a donation_id; a later donation flow can populate it.
         now = datetime.now(timezone.utc)
+        import uuid
+        try:
+            bag_id = str(uuid.UUID(item.id))
+        except (ValueError, TypeError):
+            bag_id = str(uuid.uuid4())
+            item.id = bag_id
+
         obj = BloodBagModel(
-            blood_bag_id=item.id, donation_id=None, current_blood_bank_id=item.blood_bank_id,
+            blood_bag_id=bag_id, donation_id=None, current_blood_bank_id=item.blood_bank_id,
             collection_date=now, created_at=now, blood_type=item.blood_type,
             qr_code=f"LL-BAG-{secrets.token_urlsafe(12)}",
             status="available" if item.is_available else "unavailable",
