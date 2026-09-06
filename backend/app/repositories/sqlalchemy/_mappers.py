@@ -55,7 +55,7 @@ def user_to_record(m: UserModel) -> UserRecord:
         id=m.user_id, email=m.email, full_name=m.name, hashed_password=m.password_hash,
         role=role,
         institution_id=institution_id, hospital_id=m.hospital_id, blood_bank_id=m.blood_bank_id,
-        phone=(m.phones[0].phone if m.phones else None), is_active=(m.status or "active").lower() == "active",
+        phone=(m.phones[0].phone if m.phones else None), is_active=(m.status or "active").lower() == "active", status=(m.status or "active").lower(),
     )
 
 

@@ -12,6 +12,7 @@ from enum import Enum
 
 class Role(str, Enum):
     HOSPITAL_USER = "hospital_user"
+    NORMAL_USER = "normal_user"
     BLOOD_BANK_OPERATOR = "blood_bank_operator"
     MEDICAL_LEAD = "medical_lead"
     ADMIN = "admin"

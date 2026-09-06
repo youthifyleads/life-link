@@ -12,8 +12,12 @@ class AuthService:
 
     async def authenticate(self, email: str, password: str) -> tuple[UserRecord, str]:
         user = await self._user_repo.get_by_email(email)
-        if user is None or not user.is_active or not verify_password(password, user.hashed_password):
+        if user is None or not verify_password(password, user.hashed_password):
             raise UnauthorizedError("Invalid email or password", code="INVALID_CREDENTIALS")
+        if user.status.lower() == "banned":
+            raise UnauthorizedError("This account has been banned.", code="ACCOUNT_BANNED")
+        if not user.is_active:
+            raise UnauthorizedError("This account is inactive.", code="ACCOUNT_INACTIVE")
 
         token = create_access_token(subject=user.id, role=user.role.value)
         await self._audit_service.record(actor_user_id=user.id, action="LOGIN", details=f"user {user.email} logged in")

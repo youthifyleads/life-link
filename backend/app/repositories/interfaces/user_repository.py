@@ -17,6 +17,9 @@ class UserRepository(ABC):
     async def get_by_email(self, email: str) -> UserRecord | None: ...
 
     @abstractmethod
+    async def get_by_phone(self, phone: str) -> UserRecord | None: ...
+
+    @abstractmethod
     async def create(self, user: UserRecord) -> UserRecord: ...
 
     @abstractmethod

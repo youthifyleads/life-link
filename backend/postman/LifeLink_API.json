@@ -4,12 +4,30 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
-    { "key": "access_token", "value": "" },
-    { "key": "bloodbank_token", "value": "" },
-    { "key": "admin_token", "value": "" },
-    { "key": "request_id", "value": "" },
-    { "key": "tracking_reference", "value": "" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "bloodbank_token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "request_id",
+      "value": ""
+    },
+    {
+      "key": "tracking_reference",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -19,8 +37,16 @@
           "name": "Login - success",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\"email\": \"hospital@lifelink.dev\", \"password\": \"password123\"}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"hospital@lifelink.dev\", \"password\": \"password123\"}"
+            },
             "url": "{{base_url}}/auth/login"
           }
         },
@@ -28,8 +54,16 @@
           "name": "Login - invalid credentials",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\"email\": \"hospital@lifelink.dev\", \"password\": \"wrong\"}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"hospital@lifelink.dev\", \"password\": \"wrong\"}"
+            },
             "url": "{{base_url}}/auth/login"
           }
         },
@@ -37,7 +71,12 @@
           "name": "Get current user",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/auth/me"
           }
         },
@@ -57,7 +96,12 @@
           "name": "List users - admin",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
             "url": "{{base_url}}/users"
           }
         },
@@ -65,7 +109,12 @@
           "name": "List users - forbidden (non-admin)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/users"
           }
         },
@@ -74,8 +123,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -94,8 +149,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -109,8 +170,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -124,8 +191,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{bloodbank_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -138,7 +211,12 @@
           "name": "List requests",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/requests"
           }
         },
@@ -146,7 +224,12 @@
           "name": "Get request by id",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/requests/{{request_id}}"
           }
         },
@@ -154,7 +237,12 @@
           "name": "Acknowledge request",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              }
+            ],
             "url": "{{base_url}}/requests/{{request_id}}/acknowledge"
           }
         },
@@ -162,7 +250,12 @@
           "name": "Confirm request",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              }
+            ],
             "url": "{{base_url}}/requests/{{request_id}}/confirm"
           }
         },
@@ -170,7 +263,12 @@
           "name": "Prepare request",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              }
+            ],
             "url": "{{base_url}}/requests/{{request_id}}/prepare"
           }
         },
@@ -178,7 +276,12 @@
           "name": "Complete request",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              }
+            ],
             "url": "{{base_url}}/requests/{{request_id}}/complete"
           }
         },
@@ -186,7 +289,12 @@
           "name": "Complete request - invalid transition",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              }
+            ],
             "url": "{{base_url}}/requests/{{request_id}}/complete"
           }
         },
@@ -194,7 +302,12 @@
           "name": "Cancel request",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/requests/{{request_id}}/cancel"
           }
         }
@@ -208,8 +321,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{bloodbank_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -223,8 +342,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{bloodbank_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -237,7 +362,12 @@
           "name": "List inventory",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{bloodbank_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              }
+            ],
             "url": "{{base_url}}/inventory"
           }
         },
@@ -246,10 +376,19 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{bloodbank_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bloodbank_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\"quantity_units\": 5}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"quantity_units\": 5}"
+            },
             "url": "{{base_url}}/inventory/REPLACE_WITH_ITEM_ID"
           }
         }
@@ -262,7 +401,12 @@
           "name": "Issue QR for request",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/requests/{{request_id}}/qr"
           }
         },
@@ -271,10 +415,19 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\"reference\": \"{{tracking_reference}}\"}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reference\": \"{{tracking_reference}}\"}"
+            },
             "url": "{{base_url}}/qr/scan"
           }
         },
@@ -283,10 +436,19 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{access_token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "body": { "mode": "raw", "raw": "{\"reference\": \"LL-does-not-exist\"}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reference\": \"LL-does-not-exist\"}"
+            },
             "url": "{{base_url}}/qr/scan"
           }
         },
@@ -294,7 +456,12 @@
           "name": "Get tracking by reference",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/tracking/{{tracking_reference}}"
           }
         }
@@ -307,7 +474,12 @@
           "name": "List my notifications",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/notifications"
           }
         },
@@ -315,8 +487,467 @@
           "name": "Mark notification read",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/notifications/REPLACE_WITH_NOTIFICATION_ID/read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mobile APIs - New",
+      "item": [
+        {
+          "name": "OTP Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/otp/request",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "otp",
+                "request"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"01000000003\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "OTP Verify",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/otp/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "otp",
+                "verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"01000000003\",\n  \"otp\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get My Donor Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create My Donor Profile",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "me"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"blood_type\": \"O+\",\n  \"date_of_birth\": \"2000-01-01\",\n  \"governorate\": \"Cairo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update My Donor Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "me"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eligibility_status\": \"eligible\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Donor By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/usr_normal_1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "usr_normal_1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Donations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/me/donations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "me",
+                "donations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Donation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/me/donations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "me",
+                "donations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"blood_type\": \"O+\",\n  \"quantity\": 1,\n  \"donation_date\": \"2026-09-06T12:00:00Z\",\n  \"blood_bank_id\": \"bloodbank_1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get My Donation Responses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/me/responses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "me",
+                "responses"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Donation Response",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/me/responses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "me",
+                "responses"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"blood_request_id\": \"request_1\",\n  \"status\": \"accepted\",\n  \"notes\": \"Available\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get My Consents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/me/consents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "me",
+                "consents"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Consent",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/donors/me/consents",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "donors",
+                "me",
+                "consents"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consent_type\": \"donor_notifications\",\n  \"granted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create Caregiver Assignment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/caregiver/assignments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "caregiver",
+                "assignments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"blood_bag_id\": \"bag_1\",\n  \"caregiver_user_id\": \"usr_hospital_1\",\n  \"hospital_id\": \"hospital_1\",\n  \"assignment_date\": \"2026-09-06T12:00:00Z\",\n  \"status\": \"assigned\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List Caregiver Assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/caregiver/assignments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "caregiver",
+                "assignments"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Caregiver Assignment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/caregiver/assignments/assignment_1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "caregiver",
+                "assignments",
+                "assignment_1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Caregiver Assignment",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/caregiver/assignments/assignment_1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "caregiver",
+                "assignments",
+                "assignment_1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"notes\": \"Delivered\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"blood_request_id\": \"request_1\",\n  \"amount\": 100.0,\n  \"payment_method\": \"card\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Payment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/payment_1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "payment_1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Request Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/request/request_1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "request",
+                "request_1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Payment",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/payment_1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payments",
+                "payment_1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_status\": \"paid\",\n  \"transaction_reference\": \"TX-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         }
       ]

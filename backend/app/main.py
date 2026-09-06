@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials # <--- ضيفي دي
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
@@ -23,12 +24,15 @@ try:
 except ImportError:
     donors = None
 
+from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions, donors, caregiver, payments, otp
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 
 settings = get_settings()
 configure_logging()
+
+security_scheme = HTTPBearer()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -86,6 +90,10 @@ app.include_router(qr.router, prefix=settings.API_V1_PREFIX)
 app.include_router(notifications.router, prefix=settings.API_V1_PREFIX)
 app.include_router(documents.router, prefix=settings.API_V1_PREFIX)
 app.include_router(institutions.router, prefix=settings.API_V1_PREFIX)
+app.include_router(donors.router, prefix=settings.API_V1_PREFIX)
+app.include_router(caregiver.router, prefix=settings.API_V1_PREFIX)
+app.include_router(payments.router, prefix=settings.API_V1_PREFIX)
+app.include_router(otp.router, prefix=settings.API_V1_PREFIX)
 
 if caregiver is not None:
     app.include_router(caregiver.router, prefix=settings.API_V1_PREFIX)
