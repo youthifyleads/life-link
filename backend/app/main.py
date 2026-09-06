@@ -10,11 +10,10 @@ from app.api.v1 import (
     users,
     documents,
     institutions,
-    payments,
+    
     otp,
 )
 
-# محاولة تحميل الموديولات الإضافية بأمان لو وجدت
 try:
     from app.api.v1 import caregiver
 except ImportError:
