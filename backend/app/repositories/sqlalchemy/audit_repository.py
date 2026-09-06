@@ -17,7 +17,7 @@ class SQLAlchemyAuditRepository(AuditRepository):
             audit_id=entry.id, user_id=entry.actor_user_id,
             entity_type=entity_type or "system", entity_id=entity_id or None,
             action=entry.action, 
-            timestamp=entry.created_at,
+            logged_at=entry.created_at,
         )
         self.session.add(obj)
         await self.session.commit()
