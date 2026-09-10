@@ -1,6 +1,6 @@
 from app.core.security import create_tracking_reference, decode_tracking_reference
 
-from app.core.domain import Role
+from app.core.domain import Role, AuditAction
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.repositories.interfaces.request_repository import RequestRepository
 from app.repositories.models import UserRecord
@@ -55,8 +55,9 @@ class QRService:
 
         await self._audit_service.record(
             actor_user_id=current_user.id,
-            action="QR_ACCESSED",
-            details=f"reference {reference} scanned",
+            action=AuditAction.QR_ACCESSED,
+            entity_type="blood_request",
+            entity_id=request.id,
         )
 
         # Only permitted tracking/status information - no patient identity.

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from app.core.domain import VALID_TRANSITIONS, NotificationTrigger, Role, RequestStatus
+from app.core.domain import VALID_TRANSITIONS, AuditAction, NotificationTrigger, Role, RequestStatus
 from app.core.exceptions import ForbiddenError, InvalidStatusTransitionError, NotFoundError, ValidationAppError
 from app.repositories.interfaces.request_repository import RequestRepository
 from app.repositories.interfaces.status_history_repository import StatusHistoryRepository
@@ -64,8 +64,9 @@ class RequestService:
 
         await self._audit_service.record(
             actor_user_id=current_user.id,
-            action="REQUEST_CREATED",
-            details=f"request {created.id} created by {current_user.id}",
+            action=AuditAction.REQUEST_CREATED,
+            entity_type="blood_request",
+            entity_id=created.id,
         )
         await self._notification_service.notify(
             user_id=current_user.id,
@@ -127,8 +128,9 @@ class RequestService:
 
         await self._audit_service.record(
             actor_user_id=current_user.id,
-            action="REQUEST_STATUS_CHANGED",
-            details=f"request {request.id} -> {new_status.value}",
+            action=AuditAction.REQUEST_STATUS_CHANGED,
+            entity_type="blood_request",
+            entity_id=request.id,
         )
         await self._notification_service.notify(
             user_id=updated.created_by if updated.created_by else current_user.id,

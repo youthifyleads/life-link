@@ -10,8 +10,13 @@ decisions" section.
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-from fastapi import Depends, Header
-from jose import JWTError, jwt
+from fastapi import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+try:
+    from jose import JWTError, jwt
+except ImportError:  # local test fallback; production uses python-jose from requirements.txt
+    import jwt
+    JWTError = (jwt.InvalidTokenError, jwt.PyJWTError)
 
 from app.core.config import get_settings
 from app.core.domain import Role
@@ -74,30 +79,35 @@ async def _get_user_repo_dep():
         yield repo
 
 
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
 async def get_current_user(
-    authorization: Annotated[str | None, Header()] = None,
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     user_repo: UserRepository = Depends(_get_user_repo_dep),
 ) -> UserPublic:
-    """
-    Reusable dependency: extracts and validates the bearer token, then
-    loads the current user. Use this instead of duplicating auth logic
-    in every endpoint.
-    """
-    if not authorization or not authorization.lower().startswith("bearer "):
+    """Validate a bearer JWT and load the current user from the repository."""
+    if credentials is None or credentials.scheme.lower() != "bearer":
         raise UnauthorizedError("Missing bearer token", code="MISSING_TOKEN")
 
-    token = authorization.split(" ", 1)[1]
-    payload = decode_access_token(token)
+    payload = decode_access_token(credentials.credentials)
     user_id = payload.get("sub")
     if user_id is None:
         raise UnauthorizedError("Invalid token payload", code="INVALID_TOKEN")
 
-    user = await user_repo.get_by_id(user_id)
+    try:
+        user = await user_repo.get_by_id(user_id)
+    except ValueError:
+        raise UnauthorizedError("User role configuration is invalid", code="INVALID_USER_ROLE")
     if user is None:
         raise UnauthorizedError("User no longer exists", code="INVALID_TOKEN")
 
-    return UserPublic.model_validate(user)
+    if user.status.lower() == "banned":
+        raise UnauthorizedError("This account has been banned.", code="ACCOUNT_BANNED")
+    if not user.is_active:
+        raise UnauthorizedError("This account is inactive.", code="ACCOUNT_INACTIVE")
 
+    return UserPublic.model_validate(user)
 
 CurrentUser = Annotated[UserPublic, Depends(get_current_user)]
 

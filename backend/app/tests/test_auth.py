@@ -2,7 +2,7 @@ from app.tests.conftest import auth_headers
 
 
 def test_valid_login_returns_token(client):
-    resp = client.post("/api/v1/auth/login", json={"email": "hospital@lifelink.dev", "password": "password123"})
+    resp = client.post("/api/v1/auth/login", json={"email": "hospital@lifelink.dev", "password": "Hospital@123"})
     assert resp.status_code == 200
     body = resp.json()
     assert "access_token" in body

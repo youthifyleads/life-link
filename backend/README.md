@@ -165,3 +165,15 @@ See `docs/ERD_MAPPING.md` for the exact 24-table mapping from `schema.pdf`. The 
   two identical requests simply produce two independent tracking
   references, since the team guide didn't specify hard deduplication
   rules.
+
+
+## Recent integration fixes
+- Swagger security is attached only to protected endpoints. Login, OTP and health are public.
+- 422 validation responses keep the standard error envelope and include safe field-level details.
+- OTP development mode is short-lived, single-use and attempt-limited; production explicitly requires an SMS provider.
+- Unknown database roles are rejected instead of falling back to `platform_support`.
+- SQLAlchemy models were aligned with the agreed SQL nullability/types for the reviewed donation/blood-bag fields.
+- `database/migrations` is the shared database schema source of truth; Alembic is not a second production migration stream.
+
+- Public registration is not part of the current confirmed API contract; `/users` is Admin-only user creation.
+- See `docs/MIGRATION_STRATEGY.md` for the single-source database migration rule.

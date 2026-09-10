@@ -1,28 +1,6 @@
 from fastapi import FastAPI
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials # <--- ضيفي دي
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-
-from app.api.v1 import (
-    auth,
-    inventory,
-    notifications,
-    qr,
-    requests,
-    users,
-    documents,
-    institutions,
-)
-
-try:
-    from app.api.v1 import caregiver
-except ImportError:
-    caregiver = None
-
-try:
-    from app.api.v1 import donors
-except ImportError:
-    donors = None
 
 from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions, donors, caregiver, payments, otp
 from app.core.config import get_settings
@@ -31,8 +9,6 @@ from app.core.logging import configure_logging
 
 settings = get_settings()
 configure_logging()
-
-security_scheme = HTTPBearer()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -45,32 +21,9 @@ app = FastAPI(
     swagger_ui_init_oauth=None,
 )
 
-# تخصيص الـ OpenAPI لإظهار زرار الـ Authorize للـ Bearer Token تلقائياً في الـ Swagger
-def custom_openapi():
-    if app.openapi_schema:
-        return app.openapi_schema
-    openapi_schema = get_openapi(
-        title=app.title,
-        version=app.version,
-        description=app.description,
-        routes=app.routes,
-    )
-    if "components" not in openapi_schema:
-        openapi_schema["components"] = {}
-    openapi_schema["components"]["securitySchemes"] = {
-        "HTTPBearer": {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT",
-        }
-    }
-    for path in openapi_schema["paths"]:
-        for method in openapi_schema["paths"][path]:
-            openapi_schema["paths"][path][method]["security"] = [{"HTTPBearer": []}]
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
-
-app.openapi = custom_openapi
+# FastAPI derives Swagger security requirements from the actual HTTPBearer
+# dependency used by protected endpoints. Public endpoints such as login, OTP,
+# and health therefore remain unauthenticated in OpenAPI.
 
 app.add_middleware(
     CORSMiddleware,
@@ -94,12 +47,6 @@ app.include_router(donors.router, prefix=settings.API_V1_PREFIX)
 app.include_router(caregiver.router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments.router, prefix=settings.API_V1_PREFIX)
 app.include_router(otp.router, prefix=settings.API_V1_PREFIX)
-
-if caregiver is not None:
-    app.include_router(caregiver.router, prefix=settings.API_V1_PREFIX)
-
-if donors is not None:
-    app.include_router(donors.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health", tags=["Health"], summary="Health check")

@@ -55,6 +55,11 @@ class ConflictError(AppError):
     status_code = status.HTTP_409_CONFLICT
 
 
+class ServiceUnavailableError(AppError):
+    code = "SERVICE_UNAVAILABLE"
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
+
 class InvalidStatusTransitionError(AppError):
     code = "INVALID_STATUS_TRANSITION"
     status_code = status.HTTP_409_CONFLICT
@@ -71,9 +76,18 @@ def register_exception_handlers(app) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError):
+        # Keep the documented error envelope, but expose safe field-level
+        # validation information so Mobile/Web can diagnose 422 responses.
+        details = []
+        for error in exc.errors():
+            location = ".".join(str(part) for part in error.get("loc", []) if part != "body") or "request"
+            details.append(f"{location}: {error.get('msg', 'Invalid value')}")
+        message = "Request validation failed"
+        if details:
+            message += ". " + "; ".join(details)
         return JSONResponse(
             status_code=422,
-            content=_error_body("VALIDATION_ERROR", "Request validation failed"),
+            content=_error_body("VALIDATION_ERROR", message),
         )
 
     @app.exception_handler(StarletteHTTPException)

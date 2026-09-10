@@ -26,6 +26,7 @@ class SQLAlchemyNotificationRepository(NotificationRepository):
             type=notification.trigger.value, message=notification.message,
             status="read" if notification.is_read else "unread",
             read_at=None, created_at=notification.created_at,
+            related_request_id=notification.related_request_id,
         )
         self.session.add(obj)
         await self.session.commit()

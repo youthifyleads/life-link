@@ -5,4 +5,5 @@ class InMemoryCaregiverRepository(CaregiverRepository):
     async def get_by_id(self,i): return self.items.get(i)
     async def list_for_user(self,u): return [x for x in self.items.values() if x.caregiver_user_id==u]
     async def list_for_hospital(self,h): return [x for x in self.items.values() if x.hospital_id==h]
+    async def list_all(self): return list(self.items.values())
     async def update(self,r): self.items[r.id]=r; return r

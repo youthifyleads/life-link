@@ -18,6 +18,7 @@ class UserPublic(BaseModel):
     )
     is_active: bool = True
     status: str = "active"
+    phone: str | None = None
 
 
 class UserCreate(BaseModel):
@@ -26,3 +27,13 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     role: Role
     institution_id: str | None = None
+    phone: str | None = Field(
+        default=None,
+        min_length=7,
+        max_length=30,
+        description=(
+            "Optional phone number, stored in user_phones. Required in practice "
+            "for any account (e.g. a donor) that needs to sign in via OTP, since "
+            "POST /auth/otp/request looks the user up by phone."
+        ),
+    )

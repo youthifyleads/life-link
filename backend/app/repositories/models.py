@@ -1,5 +1,6 @@
 """Service-layer records kept independent of SQLAlchemy ORM models."""
 from dataclasses import dataclass, field
+from decimal import Decimal
 from datetime import datetime, timezone
 
 from app.core.domain import NotificationTrigger, RequestStatus, Role
@@ -67,11 +68,18 @@ class NotificationRecord:
 
 @dataclass
 class AuditLogRecord:
+    """Mirrors the SQL `audit_logs` table exactly: entity_type/entity_id/action.
+
+    There is no free-text description column in the supplied schema, so the
+    service layer must supply a structured entity_type/entity_id pair rather
+    than a human-readable sentence - a sentence cannot be losslessly
+    round-tripped through those two columns.
+    """
     id: str
     actor_user_id: str | None
     action: str
-    details: str
-    reason: str | None = None    
+    entity_type: str
+    entity_id: str | None = None
     created_at: datetime = field(default_factory=_utcnow)
 
 
@@ -114,7 +122,7 @@ class DonorRecord:
 class DonationRecord:
     id: str
     blood_type: str
-    quantity: int
+    quantity: Decimal
     donation_date: object
     status: str
     created_at: datetime = field(default_factory=_utcnow)

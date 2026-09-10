@@ -10,46 +10,31 @@ logger = logging.getLogger(__name__)
 
 
 def role_from_db(name: str | None) -> Role:
+    """Map only explicitly supported DB role names; never guess a role."""
     if not name:
-        return Role.PLATFORM_SUPPORT
-    
-    # Try exact match first
-    try:
-        return Role(name)
-    except ValueError:
-        pass
+        raise ValueError("User role is missing from the database")
 
-    # Normalize: lowercase, replace spaces/hyphens with underscores
     cleaned = name.strip().lower().replace(" ", "_").replace("-", "_")
+    aliases = {
+        "hospital_staff": Role.HOSPITAL_USER,
+        "hospital_user": Role.HOSPITAL_USER,
+        "blood_bank_staff": Role.BLOOD_BANK_OPERATOR,
+        "blood_bank_operator": Role.BLOOD_BANK_OPERATOR,
+        "normal_user": Role.NORMAL_USER,
+        "donor": Role.NORMAL_USER,
+        "medical_lead": Role.MEDICAL_LEAD,
+        "admin": Role.ADMIN,
+        "platform_support": Role.PLATFORM_SUPPORT,
+    }
     try:
-        return Role(cleaned)
-    except ValueError:
-        pass
-
-    # Heuristic mapping for common DB naming conventions
-    if "hospital" in cleaned or "er" in cleaned or "clinic" in cleaned:
-        return Role.HOSPITAL_USER
-    if "blood" in cleaned or "bank" in cleaned or "operator" in cleaned:
-        return Role.BLOOD_BANK_OPERATOR
-    if "admin" in cleaned:
-        return Role.ADMIN
-    if "lead" in cleaned or "doctor" in cleaned or "medical" in cleaned:
-        return Role.MEDICAL_LEAD
-    if "support" in cleaned:
-        return Role.PLATFORM_SUPPORT
-
-    logger.warning("Unknown role name '%s' from database; defaulting to PLATFORM_SUPPORT", name)
-    return Role.PLATFORM_SUPPORT
+        return aliases[cleaned]
+    except KeyError as exc:
+        raise ValueError(f"Unknown database role: {name}") from exc
 
 
 def user_to_record(m: UserModel) -> UserRecord:
     institution_id = m.hospital_id or m.blood_bank_id
     role = role_from_db(m.role.name if m.role else None)
-    if role == Role.PLATFORM_SUPPORT:
-        if m.hospital_id:
-            role = Role.HOSPITAL_USER
-        elif m.blood_bank_id:
-            role = Role.BLOOD_BANK_OPERATOR
 
     return UserRecord(
         id=m.user_id, email=m.email, full_name=m.name, hashed_password=m.password_hash,
@@ -86,10 +71,13 @@ def notification_to_record(m: NotificationModel) -> NotificationRecord:
     return NotificationRecord(
         id=m.notification_id, user_id=m.user_id, trigger=trigger, message=m.message,
         is_read=(m.status or "unread").lower() == "read" or m.read_at is not None,
-        related_request_id=None, created_at=m.created_at,
+        related_request_id=m.related_request_id, created_at=m.created_at,
     )
 
 
 def audit_to_record(m: AuditLogModel) -> AuditLogRecord:
-    return AuditLogRecord(id=m.audit_id, actor_user_id=m.user_id, action=m.action,
-                          details=m.reason or f"{m.entity_type}:{m.entity_id}", created_at=m.timestamp)
+    # 1:1 with the SQL audit_logs columns - no lossy string packing/unpacking.
+    return AuditLogRecord(
+        id=m.audit_id, actor_user_id=m.user_id, action=m.action,
+        entity_type=m.entity_type, entity_id=m.entity_id, created_at=m.logged_at,
+    )

@@ -8,7 +8,7 @@ Error envelope (all non-2xx responses): `{"error": {"code": "...", "message": ".
 
 | Method | Endpoint | Purpose | Auth | Role | Success | Errors |
 |---|---|---|---|---|---|---|
-| POST | `/auth/login` | Login, get bearer token | No | Any | 200 | 401 `INVALID_CREDENTIALS` |
+| POST | `/auth/login` | Login, get bearer token | No | Any | 200 | 401 `INVALID_CREDENTIALS`, 422 `VALIDATION_ERROR` |
 | GET | `/auth/me` | Get current user | Yes | Any | 200 | 401 `MISSING_TOKEN`/`INVALID_TOKEN` |
 
 ## Users
@@ -17,6 +17,8 @@ Error envelope (all non-2xx responses): `{"error": {"code": "...", "message": ".
 |---|---|---|---|---|---|---|
 | GET | `/users` | List users | Yes | Admin | 200 | 403 `FORBIDDEN_ROLE` |
 | POST | `/users` | Create user | Yes | Admin | 201 | 409 `EMAIL_ALREADY_EXISTS`, 422 |
+
+There is intentionally no public registration endpoint in the current confirmed product contract; `/users` is administrative user creation. `POST /users` accepts an optional `phone` - set it for any account (e.g. a donor) that needs to sign in later via `POST /auth/otp/*`, since OTP looks the user up by phone and there is currently no other way to attach one to an account.
 
 ## Hospitals & Blood Banks
 
@@ -86,7 +88,7 @@ medical detail — only `reference`, `status`, `blood_type`, and the API compati
 | 403 | `FORBIDDEN_ROLE` / `FORBIDDEN_REQUEST_ACCESS` / `FORBIDDEN_TRACKING_ACCESS` / `FORBIDDEN_INVENTORY_ACCESS` | Authorization failures |
 | 404 | `REQUEST_NOT_FOUND` / `INVENTORY_ITEM_NOT_FOUND` / `REFERENCE_NOT_FOUND` / `NOTIFICATION_NOT_FOUND` | Resource not found |
 | 409 | `INVALID_STATUS_TRANSITION` / `EMAIL_ALREADY_EXISTS` | Conflicts |
-| 422 | `VALIDATION_ERROR` | Pydantic validation failure |
+| 422 | `VALIDATION_ERROR` | Request validation failure; message includes safe field-level details |
 | 500 | `INTERNAL_SERVER_ERROR` | Unhandled error (no internal details leaked) |
 
 ## Supporting Documents

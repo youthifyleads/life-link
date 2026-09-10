@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal
 from pydantic import BaseModel, Field
 
 class DonorCreate(BaseModel):
@@ -23,7 +24,7 @@ class DonorPublic(BaseModel):
 
 class DonationCreate(BaseModel):
     blood_type: str = Field(min_length=2, max_length=3)
-    quantity: int = Field(gt=0, le=10)
+    quantity: Decimal = Field(gt=0, le=1000)
     donation_date: date
     donor_id: str | None = None
     blood_bank_id: str
@@ -32,7 +33,7 @@ class DonationCreate(BaseModel):
 class DonationPublic(BaseModel):
     id: str
     blood_type: str
-    quantity: int
+    quantity: Decimal
     donation_date: date
     status: str
     created_at: datetime

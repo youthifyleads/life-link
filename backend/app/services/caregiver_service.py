@@ -11,12 +11,20 @@ class CaregiverService:
         if not user: raise NotFoundError("Caregiver user not found",code="CAREGIVER_NOT_FOUND")
         return await self.repo.create(CaregiverAssignmentRecord(str(uuid4()),data.assignment_date or datetime.now(timezone.utc),data.status,data.notes,data.blood_bag_id,data.caregiver_user_id,data.hospital_id))
     async def list(self,current):
-        if current.role.value in {"admin","medical_lead","platform_support"}: return await self.repo.list_for_hospital(current.hospital_id) if current.hospital_id else []
+        # Admin/Medical Lead/Platform Support have oversight visibility and are
+        # not necessarily scoped to one hospital (e.g. Admin usually has no
+        # hospital_id at all) - filtering by current.hospital_id here used to
+        # silently return an empty list for them instead of everything.
+        if current.role.value in {"admin","medical_lead","platform_support"}: return await self.repo.list_all()
         return await self.repo.list_for_user(current.id)
     async def get(self,i,current):
         r=await self.repo.get_by_id(i)
         if not r: raise NotFoundError("Assignment not found",code="ASSIGNMENT_NOT_FOUND")
-        if current.role.value not in {"admin","medical_lead","platform_support"} and r.caregiver_user_id!=current.id and r.hospital_id!=current.hospital_id: raise ForbiddenError("You cannot access this assignment",code="FORBIDDEN_ASSIGNMENT_ACCESS")
+        # `current` is the UserPublic API schema, which exposes `institution_id`
+        # (not `hospital_id`/`blood_bank_id`) - using the wrong attribute name
+        # crashed with an unhandled 500 for any hospital/blood-bank/normal user
+        # who was not themselves the assigned caregiver.
+        if current.role.value not in {"admin","medical_lead","platform_support"} and r.caregiver_user_id!=current.id and r.hospital_id!=current.institution_id: raise ForbiddenError("You cannot access this assignment",code="FORBIDDEN_ASSIGNMENT_ACCESS")
         return r
     async def update(self,i,data,current):
         r=await self.get(i,current)
