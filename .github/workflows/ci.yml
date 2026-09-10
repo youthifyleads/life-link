@@ -12,12 +12,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ----------------------------------------------------------------------------
+
+  # ============================================================================
   # 1. PR Sanity & Branch Convention Check
-  # ----------------------------------------------------------------------------
+  # ============================================================================
   pr-validation:
     name: Validate PR & Conventions
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -25,32 +27,43 @@ jobs:
       - name: Verify Branch Naming Convention
         run: |
           HEAD_REF="${{ github.head_ref }}"
+
           echo "Checking branch: $HEAD_REF"
-          if [[ "$HEAD_REF" =~ ^(feature|bugfix|release)\/ ]] || [[ "$HEAD_REF" == "develop" ]]; then
+
+          if [[ "$HEAD_REF" =~ ^(feature|bugfix|release)/ ]] || [[ "$HEAD_REF" == "develop" ]]; then
             echo "Branch name conforms to conventions: $HEAD_REF"
           else
-            echo "::warning::Branch '$HEAD_REF' does not match naming convention (feature/*, bugfix/*, release/*)."
+            echo "::warning::Branch '$HEAD_REF' does not match naming convention."
+            echo "Expected: feature/*, bugfix/*, release/*"
           fi
 
       - name: Check for Disallowed Files & Secrets
         run: |
-          echo "Scanning for accidental secret or environment file commits..."
-          DISALLOWED=$(find . -maxdepth 3 -name ".env" -o -name "*.key" -o -name "*.pem" -o -name "*.pfx" | grep -v "\.env\.example" || true)
+          echo "Scanning for accidental secret or environment files..."
+
+          DISALLOWED=$(find . -maxdepth 3 \
+            \( -name ".env" -o -name "*.key" -o -name "*.pem" -o -name "*.pfx" \) \
+            ! -name ".env.example" 2>/dev/null || true)
+
           if [ -n "$DISALLOWED" ]; then
-            echo "::error::Sensitive files detected in PR: $DISALLOWED"
+            echo "::error::Sensitive files detected:"
+            echo "$DISALLOWED"
             exit 1
           fi
+
           echo "No sensitive files detected."
 
-  # ----------------------------------------------------------------------------
-  # 2. Backend CI (Python / FastAPI)
-  # ----------------------------------------------------------------------------
+  # ============================================================================
+  # 2. Backend CI - FastAPI / Python
+  # ============================================================================
   backend-ci:
     name: Backend CI (FastAPI / Python)
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: backend
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -58,50 +71,76 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: 'backend/requirements*.txt'
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
 
       - name: Install Backend Dependencies
         run: |
           python -m pip install --upgrade pip
+
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
+
           elif [ -f pyproject.toml ]; then
             pip install .
+
           else
-            echo "No requirements.txt or pyproject.toml found yet. Skipping dependency installation."
+            echo "No requirements.txt or pyproject.toml found."
+            echo "Skipping dependency installation."
           fi
 
       - name: Validate Python Syntax & Lint
         run: |
-          echo "Compiling Python source code to verify syntax..."
+          echo "Checking Python syntax..."
+
           python -m compileall .
-          if command -v flake8 &> /dev/null; then
-            flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+          if command -v flake8 >/dev/null 2>&1; then
+            echo "Running flake8..."
+
+            flake8 . \
+              --count \
+              --select=E9,F63,F7,F82 \
+              --show-source \
+              --statistics
+          else
+            echo "flake8 not installed. Skipping lint."
           fi
 
       - name: Run Backend Tests
         run: |
-          if [ -d "tests" ] || [ -f "pytest.ini" ]; then
-            if command -v pytest &> /dev/null; then
+          if [ -d "tests" ] || [ -f "pytest.ini" ] || [ -f "pyproject.toml" ]; then
+
+            if command -v pytest >/dev/null 2>&1; then
+              echo "Running pytest..."
               pytest --maxfail=5 --disable-warnings -v
+
             else
-              python -m unittest discover -s tests -p "*test*.py"
+              echo "pytest is not installed."
+              echo "Trying unittest..."
+
+              python -m unittest discover \
+                -s tests \
+                -p "*test*.py"
             fi
+
           else
-            echo "No backend tests directory found yet. Validation passed."
+            echo "No backend tests found."
+            echo "Skipping backend tests."
           fi
 
-  # ----------------------------------------------------------------------------
-  # 3. Web CI (React / TypeScript)
-  # ----------------------------------------------------------------------------
+  # ============================================================================
+  # 3. Web CI - React / TypeScript
+  # ============================================================================
   web-ci:
     name: Web CI (React / TypeScript)
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: web
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -109,48 +148,125 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: 'web/package-lock.json'
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Check Web Project
+        run: |
+          if [ ! -f package.json ]; then
+            echo "No package.json found."
+            echo "Web project is not initialized yet."
+            exit 0
+          fi
+
+          echo "Web package detected."
 
       - name: Install Web Dependencies
         run: |
-          if [ -f package.json ]; then
-            if [ -f package-lock.json ]; then
-              npm ci
+          if [ -f package-lock.json ]; then
+            echo "Installing dependencies using npm ci..."
+            npm ci
+          else
+            echo "package-lock.json not found."
+            echo "Installing dependencies using npm install..."
+            npm install
+          fi
+
+      # ------------------------------------------------------------------------
+      # LINT
+      # ------------------------------------------------------------------------
+      - name: Run Web Lint
+        run: |
+          if npm run | grep -qE '^[[:space:]]+lint'; then
+            echo "Lint script found."
+            npm run lint
+          else
+            echo "No lint script found."
+            echo "Skipping lint."
+          fi
+
+      # ------------------------------------------------------------------------
+      # TYPESCRIPT TYPECHECK
+      # ------------------------------------------------------------------------
+      - name: Run TypeScript Typecheck
+        run: |
+          if npm run | grep -qE '^[[:space:]]+typecheck'; then
+            echo "Typecheck script found."
+            npm run typecheck
+          else
+            echo "No typecheck script found."
+
+            if [ -f tsconfig.json ]; then
+              echo "tsconfig.json found."
+
+              if npx tsc --noEmit; then
+                echo "TypeScript typecheck passed."
+              else
+                echo "::error::TypeScript typecheck failed."
+                exit 1
+              fi
+
             else
-              npm install
+              echo "No tsconfig.json found."
+              echo "Skipping TypeScript typecheck."
             fi
-          else
-            echo "No web/package.json found yet. Skipping npm install."
           fi
 
-      - name: Run Web Lint & Typecheck
-        run: |
-          if [ -f package.json ]; then
-            npm run lint --if-present
-            npm run typecheck --if-present
-          else
-            echo "Web package not initialized yet. Skipping lint."
-          fi
-
+      # ------------------------------------------------------------------------
+      # TESTS
+      # ------------------------------------------------------------------------
       - name: Run Web Tests
+        env:
+          CI: true
         run: |
-          if [ -f package.json ]; then
-            npm test -- --watchAll=false --passWithNoTests --if-present
+          echo "Checking for test script..."
+
+          if npm run | grep -qE '^[[:space:]]+test'; then
+
+            echo "Test script found."
+            echo "Running web tests in CI mode..."
+
+            npm run test --if-present
+
           else
-            echo "No web tests found yet. Validation passed."
+
+            echo "No test script found in package.json."
+            echo "No web tests configured."
+            echo "Skipping web tests."
+
           fi
 
-  # ----------------------------------------------------------------------------
-  # 4. Mobile CI (Flutter / Dart)
-  # ----------------------------------------------------------------------------
+      # ------------------------------------------------------------------------
+      # BUILD
+      # ------------------------------------------------------------------------
+      - name: Build Web Application
+        run: |
+          if npm run | grep -qE '^[[:space:]]+build'; then
+
+            echo "Build script found."
+            echo "Building web application..."
+
+            npm run build
+
+          else
+
+            echo "No build script found."
+            echo "Skipping web build."
+
+          fi
+
+  # ============================================================================
+  # 4. Mobile CI - Flutter / Dart
+  # ============================================================================
   mobile-ci:
     name: Mobile CI (Flutter / Dart)
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: mobile
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -158,72 +274,142 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
-          channel: 'stable'
+          flutter-version: "3.x"
+          channel: stable
 
       - name: Install Mobile Dependencies
         run: |
           if [ -f pubspec.yaml ]; then
             flutter pub get
           else
-            echo "No mobile/pubspec.yaml found yet. Skipping pub get."
+            echo "No pubspec.yaml found."
+            echo "Skipping Flutter dependencies."
           fi
 
-      - name: Run Flutter Analyze & Tests
+      - name: Run Flutter Analyze
         run: |
           if [ -f pubspec.yaml ]; then
             flutter analyze
-            if [ -d "test" ]; then
-              flutter test
-            fi
           else
-            echo "Mobile app not initialized yet. Validation passed."
+            echo "No Flutter project found."
+            echo "Skipping analyze."
           fi
 
-  # ----------------------------------------------------------------------------
-  # 5. Database Migration Validation (MSSQL)
-  # ----------------------------------------------------------------------------
+      - name: Run Flutter Tests
+        run: |
+          if [ -f pubspec.yaml ] && [ -d "test" ]; then
+            flutter test
+          else
+            echo "No Flutter tests found."
+            echo "Skipping Flutter tests."
+          fi
+
+  # ============================================================================
+  # 5. Database Migration Validation
+  # ============================================================================
   database-validation:
     name: Database Migration Validation
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Validate Migration Scripts
         run: |
-          echo "Validating database migration scripts in database/migrations/..."
-          SQL_FILES=$(find database/migrations -maxdepth 1 -name "*.sql" 2>/dev/null || true)
+          echo "Validating database migration scripts..."
+
+          if [ ! -d "database/migrations" ]; then
+            echo "database/migrations directory not found."
+            echo "Skipping migration validation."
+            exit 0
+          fi
+
+          SQL_FILES=$(find database/migrations \
+            -maxdepth 1 \
+            -type f \
+            -name "*.sql" \
+            2>/dev/null || true)
+
           if [ -n "$SQL_FILES" ]; then
+
             for f in $SQL_FILES; do
+
               echo "Checking migration script: $f"
+
               if [ ! -s "$f" ]; then
                 echo "::error::Migration file $f is empty!"
                 exit 1
               fi
+
             done
+
             echo "All migration scripts are valid."
+
           else
-            echo "No SQL migration files present yet. Validation passed."
+
+            echo "No SQL migration files found."
+            echo "Skipping migration validation."
+
           fi
 
-  # ----------------------------------------------------------------------------
-  # 6. Overall Status Check Aggregator
-  # ----------------------------------------------------------------------------
+  # ============================================================================
+  # 6. Overall CI Status Check
+  # ============================================================================
   ci-success:
     name: CI Status Check
-    needs: [pr-validation, backend-ci, web-ci, mobile-ci, database-validation]
+
+    needs:
+      - pr-validation
+      - backend-ci
+      - web-ci
+      - mobile-ci
+      - database-validation
+
     runs-on: ubuntu-latest
+
     if: always()
+
     steps:
       - name: Evaluate Job Results
         run: |
-          if [[ "${{ needs.pr-validation.result }}" != "success" || \
-                "${{ needs.backend-ci.result }}" != "success" || \
-                "${{ needs.web-ci.result }}" != "success" || \
-                "${{ needs.mobile-ci.result }}" != "success" || \
-                "${{ needs.database-validation.result }}" != "success" ]]; then
-            echo "One or more CI checks failed."
+          echo "========================================="
+          echo "Life Link CI Results"
+          echo "========================================="
+
+          echo "PR Validation:      ${{ needs.pr-validation.result }}"
+          echo "Backend CI:         ${{ needs.backend-ci.result }}"
+          echo "Web CI:             ${{ needs.web-ci.result }}"
+          echo "Mobile CI:          ${{ needs.mobile-ci.result }}"
+          echo "Database:           ${{ needs.database-validation.result }}"
+
+          echo "========================================="
+
+          if [[ "${{ needs.pr-validation.result }}" != "success" ]]; then
+            echo "::error::PR Validation failed."
             exit 1
           fi
-          echo "All Life Link PR checks passed successfully!"
+
+          if [[ "${{ needs.backend-ci.result }}" != "success" ]]; then
+            echo "::error::Backend CI failed."
+            exit 1
+          fi
+
+          if [[ "${{ needs.web-ci.result }}" != "success" ]]; then
+            echo "::error::Web CI failed."
+            exit 1
+          fi
+
+          if [[ "${{ needs.mobile-ci.result }}" != "success" ]]; then
+            echo "::error::Mobile CI failed."
+            exit 1
+          fi
+
+          if [[ "${{ needs.database-validation.result }}" != "success" ]]; then
+            echo "::error::Database validation failed."
+            exit 1
+          fi
+
+          echo "========================================="
+          echo "All Life Link CI checks passed!"
+          echo "========================================="
