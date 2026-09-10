@@ -131,7 +131,7 @@ class NotificationModel(Base):
     # audit_logs.entity_id. Needs Database Developer sign-off/migration
     # before this is applied to the shared SQL Server database - see
     # docs/ERD_MAPPING.md "Flagged additions pending Database Developer sign-off".
-    related_request_id: Mapped[Optional[str]] = mapped_column(ForeignKey("blood_requests.blood_request_id"), index=True)
+    related_request_id: Mapped[Optional[str]] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="SET NULL"), index=True)
     user: Mapped[UserModel] = relationship(back_populates="notifications")
 
 class AuditLogModel(Base):

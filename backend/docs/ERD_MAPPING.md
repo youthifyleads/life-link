@@ -45,18 +45,9 @@ and column names below match it, including the separate phone tables.
    they are present in the supplied schema. Provider/payment and advanced
    donor business behavior is not invented without an approved workflow.
 
-## Flagged additions pending Database Developer sign-off
+## Resolved additions (Approved & Migrated)
 
-These are NOT in the originally supplied `schema.pdf`. They are additive,
-nullable, backward-compatible columns proposed by the backend to close a
-concrete data-loss bug found during review. They must not be treated as
-already agreed/applied to the shared database until the Database Developer
-reviews and adds them to `database/migrations`.
-
-1. `notifications.related_request_id` (nullable FK -> `blood_requests.blood_request_id`).
-   Without it, every notification fetched from SQL Server via
-   `GET /api/v1/notifications` returned `related_request_id: null`, even
-   though the API contract (`docs/MOBILE_API_CONTRACT.md`) documents this
-   field as available - the mobile app could not deep-link a notification
-   back to its request. This mirrors the generic entity-linking pattern the
-   supplied schema already uses for `audit_logs.entity_id`.
+1. `notifications.related_request_id` (nullable FK -> `blood_requests.blood_request_id`, ON DELETE SET NULL).
+   - Approved and implemented via migration `006_add_notifications_related_request_id.sql`.
+   - Populated on request creation and status transitions to allow clients to deep-link directly from a notification to the associated blood request.
+   - Nullable so that generic/system notifications can still exist without being tied to a specific blood request.

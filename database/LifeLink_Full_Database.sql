@@ -733,11 +733,15 @@ BEGIN
         created_at        DATETIME2        NOT NULL DEFAULT SYSUTCDATETIME(),
         read_at           DATETIME2        NULL,
         user_id           UNIQUEIDENTIFIER NOT NULL,
+        related_request_id UNIQUEIDENTIFIER NULL,
 
         CONSTRAINT pk_notifications PRIMARY KEY (notification_id),
 
         CONSTRAINT fk_notifications_user
             FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE NO ACTION,
+
+        CONSTRAINT fk_notifications_blood_request
+            FOREIGN KEY (related_request_id) REFERENCES blood_requests(blood_request_id) ON DELETE SET NULL,
 
         CONSTRAINT ck_notifications_status
             CHECK (status IN ('unread','read','dismissed')),
@@ -780,6 +784,11 @@ CREATE NONCLUSTERED INDEX ix_notifications_unread_fast
 ON dbo.notifications(user_id, created_at DESC) 
 INCLUDE (title, message, type)
 WHERE status = 'unread';
+
+DROP INDEX IF EXISTS ix_notifications_related_request_id ON dbo.notifications;
+CREATE NONCLUSTERED INDEX ix_notifications_related_request_id 
+ON dbo.notifications(related_request_id) 
+WHERE related_request_id IS NOT NULL;
 
 DROP INDEX IF EXISTS ix_audit_logs_user_time ON dbo.audit_logs;
 CREATE NONCLUSTERED INDEX ix_audit_logs_user_time ON dbo.audit_logs(user_id, logged_at DESC);
