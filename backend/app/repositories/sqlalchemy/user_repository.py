@@ -2,10 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.domain import Role
 from app.db.models import RoleModel, UserModel, UserPhoneModel
 from app.repositories.interfaces.user_repository import UserRepository
 from app.repositories.models import UserRecord
-from app.repositories.sqlalchemy._mappers import user_to_record
+from app.repositories.sqlalchemy._mappers import role_to_db_aliases, user_to_record
 
 
 class SQLAlchemyUserRepository(UserRepository):
@@ -32,11 +33,13 @@ class SQLAlchemyUserRepository(UserRepository):
         return user_to_record(obj) if obj else None
 
     async def create(self, user: UserRecord):
-        role_result = await self.session.execute(select(RoleModel).where(RoleModel.name == user.role.value))
-        role = role_result.scalar_one_or_none()
+        aliases = role_to_db_aliases(user.role)
+        role_result = await self.session.execute(select(RoleModel).where(RoleModel.name.in_(aliases)))
+        role = role_result.scalars().first()
         import uuid
         if role is None:
-            role = RoleModel(role_id=str(uuid.uuid4()), name=user.role.value, description=user.role.value.replace("_", " ").title())
+            db_name = aliases[0]
+            role = RoleModel(role_id=str(uuid.uuid4()), name=db_name, description=db_name.replace("_", " ").title())
             self.session.add(role)
             await self.session.flush()
 
@@ -51,8 +54,8 @@ class SQLAlchemyUserRepository(UserRepository):
             name=user.full_name, status="active" if user.is_active else "inactive",
             created_at=user.created_at if hasattr(user, "created_at") else __import__('datetime').datetime.now(__import__('datetime').timezone.utc),
             role_id=role.role_id,
-            hospital_id=user.hospital_id or (user.institution_id if user.role.value == "hospital_user" else None),
-            blood_bank_id=user.blood_bank_id or (user.institution_id if user.role.value == "blood_bank_operator" else None),
+            hospital_id=user.hospital_id or (user.institution_id if user.role == Role.HOSPITAL_USER else None),
+            blood_bank_id=user.blood_bank_id or (user.institution_id if user.role == Role.BLOOD_BANK_OPERATOR else None),
         )
         self.session.add(obj)
         if user.phone:

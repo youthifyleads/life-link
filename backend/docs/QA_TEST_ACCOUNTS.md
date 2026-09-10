@@ -4,11 +4,14 @@ These accounts are for development/QA only. Do not use them in production.
 
 | Account | Email | Password | Role | Status |
 |---|---|---|---|---|
-| Admin | admin@lifelink.dev | Admin@123 | admin | active |
-| Blood Bank | bloodbank@lifelink.dev | BloodBank@123 | blood_bank_operator | active |
-| Hospital Staff | hospital@lifelink.dev | Hospital@123 | hospital_user | active |
-| Normal User | user@lifelink.dev | NormalUser@123 | normal_user | active |
-| Banned User | banned@lifelink.dev | BannedUser@123 | normal_user | banned |
+| System Admin | admin@lifelink.dev | Test@123 | admin | active |
+| Hospital Staff | hospital@lifelink.dev | Test@123 | hospital_user | active |
+| Blood Bank | bloodbank@lifelink.dev | Test@123 | blood_bank_operator | active |
+| Medical Lead | medicallead@lifelink.dev | Test@123 | medical_lead | active |
+| Platform Support | support@lifelink.dev | Test@123 | platform_support | active |
+| Donor & Caregiver | donor@lifelink.dev | Test@123 | normal_user | active |
+| Normal User | user@lifelink.dev | Test@123 | normal_user | active |
+| Banned User | banned@lifelink.dev | Test@123 | normal_user | banned |
 
 ## Expected banned-login behavior
 

@@ -21,6 +21,9 @@ BEGIN
     DECLARE @role_admin_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @role_hospital_staff_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @role_bank_staff_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @role_medical_lead_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @role_support_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @role_normal_user_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @role_donor_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @role_caregiver_id UNIQUEIDENTIFIER = NEWID();
 
@@ -29,8 +32,11 @@ BEGIN
         (@role_admin_id, 'SystemAdmin', 'Full administrative system access'),
         (@role_hospital_staff_id, 'HospitalStaff', 'Hospital staff responsible for blood requests'),
         (@role_bank_staff_id, 'BloodBankStaff', 'Blood bank personnel managing inventory and allocations'),
-        (@role_donor_id, 'Donor', 'Registered blood donor'),
-        (@role_caregiver_id, 'Caregiver', 'Caregiver / Nurse administering blood units');
+        (@role_medical_lead_id, 'MedicalLead', 'Clinical decision maker for blood suitability and release'),
+        (@role_support_id, 'PlatformSupport', 'Technical platform maintenance and support'),
+        (@role_normal_user_id, 'NormalUser', 'Regular user account (donors and caregivers)'),
+        (@role_donor_id, 'Donor', 'Registered blood donor profile role alias'),
+        (@role_caregiver_id, 'Caregiver', 'Caregiver / Nurse administering blood units alias');
 
     -- 2. Permissions
     DECLARE @p1 UNIQUEIDENTIFIER = NEWID();
@@ -59,6 +65,7 @@ BEGIN
         (@role_bank_staff_id, @p2),
         (@role_bank_staff_id, @p3),
         (@role_bank_staff_id, @p4),
+        (@role_medical_lead_id, @p3),
         (@role_caregiver_id, @p3);
 
     -- 4. Sample Hospital & Blood Bank
@@ -77,22 +84,33 @@ BEGIN
     INSERT INTO blood_bank_phones (blood_bank_id, phone)
     VALUES (@blood_bank_id, '+20237618991');
 
-    -- 5. Sample Users
+    -- 5. Sample Users (Password for all demo accounts: Test@123)
     DECLARE @admin_user_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @bank_user_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @hospital_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @medical_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @support_user_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @donor_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @normal_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @banned_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @pwd_hash NVARCHAR(255) = '$pbkdf2-sha256$29000$8T6nNCbEmNNaS2mtlZLSWg$qJ2bWTCh61M8faL3nbxMOuEgFsOBEVgrw9ppUkvVGh8';
 
     INSERT INTO users (user_id, name, email, password_hash, status, role_id, hospital_id, blood_bank_id)
     VALUES
-        (@admin_user_id, N'System Admin', 'admin@lifelink.org', '$2a$12$e8Y6l9cT2r4qW...', 'active', @role_admin_id, NULL, NULL),
-        (@bank_user_id, N'Dr. Ahmed Ali (Bank Lab)', 'bank.lab@lifelink.org', '$2a$12$e8Y6l9cT2r4qW...', 'active', @role_bank_staff_id, NULL, @blood_bank_id),
-        (@hospital_user_id, N'Dr. Sarah Mahmoud (ER)', 'sarah.er@hospital.org', '$2a$12$e8Y6l9cT2r4qW...', 'active', @role_hospital_staff_id, @hospital_id, NULL),
-        (@donor_user_id, N'Mohamed Youssef', 'donor.mohamed@gmail.com', '$2a$12$e8Y6l9cT2r4qW...', 'active', @role_donor_id, NULL, NULL);
+        (@admin_user_id, N'System Admin', 'admin@lifelink.dev', @pwd_hash, 'active', @role_admin_id, NULL, NULL),
+        (@hospital_user_id, N'Dr. Sarah Mahmoud (ER Staff)', 'hospital@lifelink.dev', @pwd_hash, 'active', @role_hospital_staff_id, @hospital_id, NULL),
+        (@bank_user_id, N'Dr. Ahmed Ali (Blood Bank Lab)', 'bloodbank@lifelink.dev', @pwd_hash, 'active', @role_bank_staff_id, NULL, @blood_bank_id),
+        (@medical_user_id, N'Dr. Tamer Khaled (Medical Lead)', 'medicallead@lifelink.dev', @pwd_hash, 'active', @role_medical_lead_id, @hospital_id, NULL),
+        (@support_user_id, N'Eng. Mostafa (Support)', 'support@lifelink.dev', @pwd_hash, 'active', @role_support_id, NULL, NULL),
+        (@donor_user_id, N'Mohamed Youssef (Donor & Caregiver)', 'donor@lifelink.dev', @pwd_hash, 'active', @role_normal_user_id, NULL, NULL),
+        (@normal_user_id, N'Normal User Demo', 'user@lifelink.dev', @pwd_hash, 'active', @role_normal_user_id, NULL, NULL),
+        (@banned_user_id, N'Banned User Demo', 'banned@lifelink.dev', @pwd_hash, 'banned', @role_normal_user_id, NULL, NULL);
 
     INSERT INTO user_phones (user_id, phone)
     VALUES
         (@donor_user_id, '+201012345678'),
+        (@normal_user_id, '+20100000005'),
+        (@banned_user_id, '+20100000004'),
         (@hospital_user_id, '+201198765432');
 
     -- 6. Sample Donor Record & Consent

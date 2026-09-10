@@ -12,21 +12,30 @@ from app.db.session import get_session_factory
 # Module-level so it can be diffed against docs/QA_TEST_ACCOUNTS.md and the
 # in-memory dev repository (app/repositories/memory/user_repository.py) in a
 # test, without needing a live SQL Server connection. Keeping this list and
+from app.repositories.sqlalchemy._mappers import role_to_db_aliases
+
 # that repository in sync by hand previously caused the admin account to be
 # missing from this script while tests/docs assumed it existed everywhere.
 # (uid, email, name, role, hospital_id_ref, blood_bank_id_ref, password, status)
 # hospital_id_ref/blood_bank_id_ref are "hospital_1"/"bloodbank_1" markers,
 # resolved to the actual seeded row IDs in main() below.
 SEED_USERS = [
-    ("usr_admin_1", "admin@lifelink.dev", "Admin Demo", Role.ADMIN, None, None, "Admin@123", "active"),
-    ("usr_hospital_1", "hospital@lifelink.dev", "Hospital Staff Demo", Role.HOSPITAL_USER, "hospital_1", None, "Hospital@123", "active"),
-    ("usr_bloodbank_1", "bloodbank@lifelink.dev", "Blood Bank Demo", Role.BLOOD_BANK_OPERATOR, None, "bloodbank_1", "BloodBank@123", "active"),
-    ("usr_normal_1", "user@lifelink.dev", "Normal User Demo", Role.NORMAL_USER, None, None, "NormalUser@123", "active"),
-    ("usr_banned_1", "banned@lifelink.dev", "Banned User Demo", Role.NORMAL_USER, None, None, "BannedUser@123", "banned"),
+    ("usr_admin_1", "admin@lifelink.dev", "System Admin Demo", Role.ADMIN, None, None, "Test@123", "active"),
+    ("usr_hospital_1", "hospital@lifelink.dev", "Hospital Staff Demo", Role.HOSPITAL_USER, "hospital_1", None, "Test@123", "active"),
+    ("usr_bloodbank_1", "bloodbank@lifelink.dev", "Blood Bank Demo", Role.BLOOD_BANK_OPERATOR, None, "bloodbank_1", "Test@123", "active"),
+    ("usr_medical_1", "medicallead@lifelink.dev", "Medical Lead Demo", Role.MEDICAL_LEAD, "hospital_1", None, "Test@123", "active"),
+    ("usr_support_1", "support@lifelink.dev", "Platform Support Demo", Role.PLATFORM_SUPPORT, None, None, "Test@123", "active"),
+    ("usr_donor_1", "donor@lifelink.dev", "Donor & Caregiver Demo", Role.NORMAL_USER, None, None, "Test@123", "active"),
+    ("usr_normal_1", "user@lifelink.dev", "Normal User Demo", Role.NORMAL_USER, None, None, "Test@123", "active"),
+    ("usr_banned_1", "banned@lifelink.dev", "Banned User Demo", Role.NORMAL_USER, None, None, "Test@123", "banned"),
 ]
 
 # Dev OTP phone mappings for mobile QA.
-SEED_PHONE_MAP = {"usr_normal_1": "01000000003", "usr_banned_1": "01000000004"}
+SEED_PHONE_MAP = {
+    "usr_donor_1": "01000000003",
+    "usr_normal_1": "01000000005",
+    "usr_banned_1": "01000000004",
+}
 
 
 async def main() -> None:
@@ -41,9 +50,11 @@ async def main() -> None:
             Role.PLATFORM_SUPPORT: "Platform support",
         }
         for role in Role:
-            obj = (await session.execute(select(RoleModel).where(RoleModel.name == role.value))).scalar_one_or_none()
+            aliases = role_to_db_aliases(role)
+            obj = (await session.execute(select(RoleModel).where(RoleModel.name.in_(aliases)))).scalars().first()
             if obj is None:
-                obj = RoleModel(role_id=f"role_{role.value}", name=role.value, description=descriptions[role])
+                db_name = aliases[0]
+                obj = RoleModel(role_id=f"role_{role.value}", name=db_name, description=descriptions[role])
                 session.add(obj)
             roles[role] = obj
 

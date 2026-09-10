@@ -17,29 +17,42 @@ class InMemoryUserRepository(UserRepository):
         self._seed_dev_users()
 
     def _seed_dev_users(self) -> None:
-        # Four ready-to-use QA accounts. Passwords are intentionally different.
+        pwd = hash_password("Test@123")
         seed = [
             UserRecord(
-                id="usr_admin_1", email="admin@lifelink.dev", full_name="Admin Demo",
-                hashed_password=hash_password("Admin@123"), role=Role.ADMIN, status="active", is_active=True,
+                id="usr_admin_1", email="admin@lifelink.dev", full_name="System Admin Demo",
+                hashed_password=pwd, role=Role.ADMIN, status="active", is_active=True,
             ),
             UserRecord(
                 id="usr_hospital_1", email="hospital@lifelink.dev", full_name="Hospital Staff Demo",
-                hashed_password=hash_password("Hospital@123"), role=Role.HOSPITAL_USER, institution_id="hospital_1",
+                hashed_password=pwd, role=Role.HOSPITAL_USER, institution_id="hospital_1",
                 hospital_id="hospital_1", status="active", is_active=True,
             ),
             UserRecord(
                 id="usr_bloodbank_1", email="bloodbank@lifelink.dev", full_name="Blood Bank Demo",
-                hashed_password=hash_password("BloodBank@123"), role=Role.BLOOD_BANK_OPERATOR, institution_id="bloodbank_1",
+                hashed_password=pwd, role=Role.BLOOD_BANK_OPERATOR, institution_id="bloodbank_1",
                 blood_bank_id="bloodbank_1", status="active", is_active=True,
             ),
             UserRecord(
+                id="usr_medical_1", email="medicallead@lifelink.dev", full_name="Medical Lead Demo",
+                hashed_password=pwd, role=Role.MEDICAL_LEAD, institution_id="hospital_1",
+                hospital_id="hospital_1", status="active", is_active=True,
+            ),
+            UserRecord(
+                id="usr_support_1", email="support@lifelink.dev", full_name="Platform Support Demo",
+                hashed_password=pwd, role=Role.PLATFORM_SUPPORT, status="active", is_active=True,
+            ),
+            UserRecord(
+                id="usr_donor_1", email="donor@lifelink.dev", full_name="Donor & Caregiver Demo",
+                hashed_password=pwd, role=Role.NORMAL_USER, status="active", is_active=True, phone="01000000003",
+            ),
+            UserRecord(
                 id="usr_normal_1", email="user@lifelink.dev", full_name="Normal User Demo",
-                hashed_password=hash_password("NormalUser@123"), role=Role.NORMAL_USER, status="active", is_active=True, phone="01000000003",
+                hashed_password=pwd, role=Role.NORMAL_USER, status="active", is_active=True, phone="01000000005",
             ),
             UserRecord(
                 id="usr_banned_1", email="banned@lifelink.dev", full_name="Banned User Demo",
-                hashed_password=hash_password("BannedUser@123"), role=Role.NORMAL_USER, status="banned", is_active=False, phone="01000000004",
+                hashed_password=pwd, role=Role.NORMAL_USER, status="banned", is_active=False, phone="01000000004",
             ),
         ]
         for user in seed:

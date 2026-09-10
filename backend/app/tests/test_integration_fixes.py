@@ -35,7 +35,7 @@ def test_validation_error_exposes_field_without_leaking_internals(client):
 
 
 def test_admin_seed_account_is_available(client):
-    resp = client.post("/api/v1/auth/login", json={"email": "admin@lifelink.dev", "password": "Admin@123"})
+    resp = client.post("/api/v1/auth/login", json={"email": "admin@lifelink.dev", "password": "Test@123"})
     assert resp.status_code == 200
 
 
