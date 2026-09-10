@@ -26,6 +26,7 @@ jobs:
         run: |
           HEAD_REF="${{ github.head_ref }}"
           echo "Checking branch: $HEAD_REF"
+
           if [[ "$HEAD_REF" =~ ^(feature|bugfix|release)\/ ]] || [[ "$HEAD_REF" == "develop" ]]; then
             echo "Branch name conforms to conventions: $HEAD_REF"
           else
@@ -35,11 +36,17 @@ jobs:
       - name: Check for Disallowed Files & Secrets
         run: |
           echo "Scanning for accidental secret or environment file commits..."
-          DISALLOWED=$(find . -maxdepth 3 -name ".env" -o -name "*.key" -o -name "*.pem" -o -name "*.pfx" | grep -v "\.env\.example" || true)
+
+          DISALLOWED=$(find . -maxdepth 3 \
+            \( -name ".env" -o -name "*.key" -o -name "*.pem" -o -name "*.pfx" \) \
+            ! -name ".env.example" || true)
+
           if [ -n "$DISALLOWED" ]; then
-            echo "::error::Sensitive files detected in PR: $DISALLOWED"
+            echo "::error::Sensitive files detected in PR:"
+            echo "$DISALLOWED"
             exit 1
           fi
+
           echo "No sensitive files detected."
 
   # ----------------------------------------------------------------------------
@@ -48,9 +55,11 @@ jobs:
   backend-ci:
     name: Backend CI (FastAPI / Python)
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: backend
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -65,6 +74,7 @@ jobs:
       - name: Install Backend Dependencies
         run: |
           python -m pip install --upgrade pip
+
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           elif [ -f pyproject.toml ]; then
@@ -76,19 +86,27 @@ jobs:
       - name: Validate Python Syntax & Lint
         run: |
           echo "Compiling Python source code to verify syntax..."
+
           python -m compileall .
+
           if command -v flake8 &> /dev/null; then
-            flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+            flake8 . \
+              --count \
+              --select=E9,F63,F7,F82 \
+              --show-source \
+              --statistics
           fi
 
       - name: Run Backend Tests
         run: |
           if [ -d "tests" ] || [ -f "pytest.ini" ]; then
+
             if command -v pytest &> /dev/null; then
               pytest --maxfail=5 --disable-warnings -v
             else
               python -m unittest discover -s tests -p "*test*.py"
             fi
+
           else
             echo "No backend tests directory found yet. Validation passed."
           fi
@@ -99,9 +117,11 @@ jobs:
   web-ci:
     name: Web CI (React / TypeScript)
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: web
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -116,11 +136,13 @@ jobs:
       - name: Install Web Dependencies
         run: |
           if [ -f package.json ]; then
+
             if [ -f package-lock.json ]; then
               npm ci
             else
               npm install
             fi
+
           else
             echo "No web/package.json found yet. Skipping npm install."
           fi
@@ -128,18 +150,38 @@ jobs:
       - name: Run Web Lint & Typecheck
         run: |
           if [ -f package.json ]; then
+
+            echo "Running ESLint..."
             npm run lint --if-present
+
+            echo "Running TypeScript typecheck..."
             npm run typecheck --if-present
+
           else
-            echo "Web package not initialized yet. Skipping lint."
+            echo "Web package not initialized yet. Skipping lint and typecheck."
           fi
 
+      # ------------------------------------------------------------------------
+      # FIXED WEB TEST COMMAND
+      # ------------------------------------------------------------------------
       - name: Run Web Tests
         run: |
           if [ -f package.json ]; then
-            npm test -- --watchAll=false --passWithNoTests --if-present
+
+            echo "Checking for test script..."
+
+            if npm run | grep -qE '^[[:space:]]+test'; then
+              echo "Test script found. Running tests..."
+
+              npm run test --if-present -- --watchAll=false --passWithNoTests
+
+            else
+              echo "No test script found in package.json."
+              echo "No web tests configured yet. Validation passed."
+            fi
+
           else
-            echo "No web tests found yet. Validation passed."
+            echo "No web package found. Validation passed."
           fi
 
   # ----------------------------------------------------------------------------
@@ -148,9 +190,11 @@ jobs:
   mobile-ci:
     name: Mobile CI (Flutter / Dart)
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: mobile
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -172,10 +216,15 @@ jobs:
       - name: Run Flutter Analyze & Tests
         run: |
           if [ -f pubspec.yaml ]; then
+
             flutter analyze
+
             if [ -d "test" ]; then
               flutter test
+            else
+              echo "No Flutter test directory found. Skipping tests."
             fi
+
           else
             echo "Mobile app not initialized yet. Validation passed."
           fi
@@ -186,6 +235,7 @@ jobs:
   database-validation:
     name: Database Migration Validation
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -193,16 +243,27 @@ jobs:
       - name: Validate Migration Scripts
         run: |
           echo "Validating database migration scripts in database/migrations/..."
-          SQL_FILES=$(find database/migrations -maxdepth 1 -name "*.sql" 2>/dev/null || true)
+
+          SQL_FILES=$(find database/migrations \
+            -maxdepth 1 \
+            -name "*.sql" \
+            2>/dev/null || true)
+
           if [ -n "$SQL_FILES" ]; then
+
             for f in $SQL_FILES; do
+
               echo "Checking migration script: $f"
+
               if [ ! -s "$f" ]; then
                 echo "::error::Migration file $f is empty!"
                 exit 1
               fi
+
             done
+
             echo "All migration scripts are valid."
+
           else
             echo "No SQL migration files present yet. Validation passed."
           fi
@@ -212,18 +273,36 @@ jobs:
   # ----------------------------------------------------------------------------
   ci-success:
     name: CI Status Check
-    needs: [pr-validation, backend-ci, web-ci, mobile-ci, database-validation]
+
+    needs:
+      - pr-validation
+      - backend-ci
+      - web-ci
+      - mobile-ci
+      - database-validation
+
     runs-on: ubuntu-latest
+
     if: always()
+
     steps:
       - name: Evaluate Job Results
         run: |
+          echo "PR Validation:       ${{ needs.pr-validation.result }}"
+          echo "Backend CI:           ${{ needs.backend-ci.result }}"
+          echo "Web CI:               ${{ needs.web-ci.result }}"
+          echo "Mobile CI:            ${{ needs.mobile-ci.result }}"
+          echo "Database Validation:  ${{ needs.database-validation.result }}"
+
           if [[ "${{ needs.pr-validation.result }}" != "success" || \
                 "${{ needs.backend-ci.result }}" != "success" || \
                 "${{ needs.web-ci.result }}" != "success" || \
                 "${{ needs.mobile-ci.result }}" != "success" || \
                 "${{ needs.database-validation.result }}" != "success" ]]; then
-            echo "One or more CI checks failed."
+
+            echo "::error::One or more CI checks failed."
             exit 1
+
           fi
+
           echo "All Life Link PR checks passed successfully!"
