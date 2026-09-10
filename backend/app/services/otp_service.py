@@ -107,7 +107,7 @@ class OTPService:
                 code="OTP_PROVIDER_NOT_CONFIGURED",
             )
 
-        if user.status.lower() == "banned":
+        if user.status.lower() in ("banned", "suspended"):
             raise UnauthorizedError("This account has been banned.", code="ACCOUNT_BANNED")
         if not user.is_active:
             raise UnauthorizedError("This account is inactive.", code="ACCOUNT_INACTIVE")

@@ -102,7 +102,7 @@ async def get_current_user(
     if user is None:
         raise UnauthorizedError("User no longer exists", code="INVALID_TOKEN")
 
-    if user.status.lower() == "banned":
+    if user.status.lower() in ("banned", "suspended"):
         raise UnauthorizedError("This account has been banned.", code="ACCOUNT_BANNED")
     if not user.is_active:
         raise UnauthorizedError("This account is inactive.", code="ACCOUNT_INACTIVE")

@@ -1280,7 +1280,7 @@ BEGIN
         (@support_user_id, N'Eng. Mostafa (Support)', 'support@lifelink.dev', @pwd_hash, 'active', @role_support_id, NULL, NULL),
         (@donor_user_id, N'Mohamed Youssef (Donor & Caregiver)', 'donor@lifelink.dev', @pwd_hash, 'active', @role_normal_user_id, NULL, NULL),
         (@normal_user_id, N'Normal User Demo', 'user@lifelink.dev', @pwd_hash, 'active', @role_normal_user_id, NULL, NULL),
-        (@banned_user_id, N'Banned User Demo', 'banned@lifelink.dev', @pwd_hash, 'banned', @role_normal_user_id, NULL, NULL);
+        (@banned_user_id, N'Banned User Demo', 'banned@lifelink.dev', @pwd_hash, 'suspended', @role_normal_user_id, NULL, NULL);
 
     INSERT INTO user_phones (user_id, phone)
     VALUES

@@ -18,7 +18,7 @@ class AuthService:
             raise UnauthorizedError("User role configuration is invalid", code="INVALID_USER_ROLE")
         if user is None or not verify_password(password, user.hashed_password):
             raise UnauthorizedError("Invalid email or password", code="INVALID_CREDENTIALS")
-        if user.status.lower() == "banned":
+        if user.status.lower() in ("banned", "suspended"):
             raise UnauthorizedError("This account has been banned.", code="ACCOUNT_BANNED")
         if not user.is_active:
             raise UnauthorizedError("This account is inactive.", code="ACCOUNT_INACTIVE")
