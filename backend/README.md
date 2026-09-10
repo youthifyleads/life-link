@@ -73,21 +73,28 @@ API base: `http://localhost:8000/api/v1`
 Swagger UI: `http://localhost:8000/docs`
 Health check: `http://localhost:8000/health`
 
-Seeded dev users (password `password123` for all):
+Seeded dev users (password `Test@123` for all):
 
-| Email | Role |
-|---|---|
-| hospital@lifelink.dev | hospital_user |
-| bloodbank@lifelink.dev | blood_bank_operator |
-| admin@lifelink.dev | admin |
+| Account | Email | Backend Role | DB Role Alias | Status |
+|---|---|---|---|---|
+| System Admin | `admin@lifelink.dev` | `admin` | `SystemAdmin` | `active` |
+| Hospital Staff | `hospital@lifelink.dev` | `hospital_user` | `HospitalStaff` | `active` |
+| Blood Bank Staff | `bloodbank@lifelink.dev` | `blood_bank_operator` | `BloodBankStaff` | `active` |
+| Medical Lead | `medicallead@lifelink.dev` | `medical_lead` | `MedicalLead` | `active` |
+| Platform Support | `support@lifelink.dev` | `platform_support` | `PlatformSupport` | `active` |
+| Donor & Caregiver | `donor@lifelink.dev` | `normal_user` | `NormalUser` | `active` |
+| Normal User | `user@lifelink.dev` | `normal_user` | `NormalUser` | `active` |
+| Banned User | `banned@lifelink.dev` | `normal_user` | `NormalUser` | `suspended` (banned) |
+
+> For comprehensive testing details, example payloads, and banned account behavior, see [`docs/QA_TEST_ACCOUNTS.md`](docs/QA_TEST_ACCOUNTS.md).
 
 ## 6. Run tests
 
 ```bash
-python3 -m pytest app/tests -v
+python -m pytest app/tests -v
 ```
 
-The repository contains the original 32 in-memory unit tests covering auth, RBAC, request lifecycle/state machine, inventory, QR/tracking, and notifications. Run them after installing the current requirements; a full post-change pytest run was not available in this sandbox because `jose`, `passlib`, and `aioodbc` were not installed here.
+The repository contains 55 automated unit and integration tests covering authentication, RBAC authorization matrix, role mapping (DB PascalCase & snake_case), all 8 QA test accounts, request lifecycle & state machine, inventory, QR/tracking, and notifications linking (`related_request_id`). All 55 tests run and pass cleanly.
 
 ## 7. Swagger location
 
@@ -171,8 +178,12 @@ See `docs/ERD_MAPPING.md` for the exact 24-table mapping from `schema.pdf`. The 
 - Swagger security is attached only to protected endpoints. Login, OTP and health are public.
 - 422 validation responses keep the standard error envelope and include safe field-level details.
 - OTP development mode is short-lived, single-use and attempt-limited; production explicitly requires an SMS provider.
-- Unknown database roles are rejected instead of falling back to `platform_support`.
-- SQLAlchemy models were aligned with the agreed SQL nullability/types for the reviewed donation/blood-bag fields.
+- Role mapping layer supports both database PascalCase (`HospitalStaff`, `SystemAdmin`, `BloodBankStaff`, `MedicalLead`, `PlatformSupport`, `NormalUser`) and backend snake_case aliases.
+- Canonical QA test accounts unified across in-memory repository, `scripts/seed_dev.py`, and `database/migrations/005_seed_data.sql` with default password `Test@123`.
+- Banned/suspended accounts are blocked on login with HTTP 401 `ACCOUNT_BANNED` (`user.status.lower() in ("banned", "suspended")` adhering to database constraint `ck_users_status`).
+- Donor and Caregiver roles are aligned as `NormalUser` role, with caregiver assignments managed via `caregiver_assignments`.
+- Blood request creation restricted to `HospitalStaff` (`Role.HOSPITAL_USER`); Admins can monitor, confirm, or cancel requests, but cannot create requests directly.
+- Migration `006_add_notifications_related_request_id.sql` added to link notifications to blood requests via `related_request_id UNIQUEIDENTIFIER NULL` with index.
 - `database/migrations` is the shared database schema source of truth; Alembic is not a second production migration stream.
 
 - Public registration is not part of the current confirmed API contract; `/users` is Admin-only user creation.

@@ -67,4 +67,4 @@ From the backend root:
 python scripts/seed_dev.py
 ```
 
-This creates the demo roles, permissions, demo hospital/blood bank, and the five QA users in SQL Server when `REPOSITORY_BACKEND=sqlserver` is configured.
+This creates the demo roles, permissions, demo hospital/blood bank, and the eight QA users in SQL Server when `REPOSITORY_BACKEND=sqlserver` is configured.

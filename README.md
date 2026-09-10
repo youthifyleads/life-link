@@ -108,12 +108,13 @@ feature/*                       ●───●             \         /
 ### Migration Guidelines
 1. **Versioned Scripts**: Store all SQL migration files in [`database/migrations/`](database/migrations/) following the naming convention:
    ```
-   V<NUMBER>__<descriptive_name>.sql
+   <NUMBER>_<descriptive_name>.sql    (e.g., 001_initial_schema.sql, 006_add_notifications_related_request_id.sql)
+   V<NUMBER>__<descriptive_name>.sql  (e.g., V001__initial_schema.sql)
    ```
-   *Examples:* `V001__create_initial_schema.sql`, `V002__add_blood_inventory_table.sql`.
 2. **Co-located with Code**: Submit the database migration script in the exact same Pull Request that introduces the backend/web/mobile changes requiring it.
 3. **Idempotent & Safe**: Write SQL scripts with defensive checks (e.g., `IF NOT EXISTS ...`) to avoid accidental failure on re-runs.
 4. **MSSQL Specifics**: Use standard T-SQL DDL syntax. Do not store sensitive database credentials or production connection strings inside migration files.
+
 
 ---
 
@@ -175,6 +176,26 @@ git commit -m "feat(backend): add emergency request dispatch endpoint"
 
 ---
 
+## 🧪 Development & QA Test Accounts
+
+For testing across Web, Mobile, and Backend, 8 standardized QA accounts are seeded with password `Test@123`:
+
+| Account | Email | Password | Role |
+|---|---|---|---|
+| System Admin | `admin@lifelink.dev` | `Test@123` | `admin` |
+| Hospital Staff | `hospital@lifelink.dev` | `Test@123` | `hospital_user` |
+| Blood Bank Staff | `bloodbank@lifelink.dev` | `Test@123` | `blood_bank_operator` |
+| Medical Lead | `medicallead@lifelink.dev` | `Test@123` | `medical_lead` |
+| Platform Support | `support@lifelink.dev` | `Test@123` | `platform_support` |
+| Donor & Caregiver | `donor@lifelink.dev` | `Test@123` | `normal_user` |
+| Normal User | `user@lifelink.dev` | `Test@123` | `normal_user` |
+| Banned User | `banned@lifelink.dev` | `Test@123` | `normal_user` (status: `suspended`) |
+
+See [`backend/docs/QA_TEST_ACCOUNTS.md`](backend/docs/QA_TEST_ACCOUNTS.md) for full credentials, role mappings, and sample API requests.
+
+---
+
 ## 📄 License
 
 This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
+
