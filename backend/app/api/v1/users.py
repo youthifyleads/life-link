@@ -47,6 +47,7 @@ async def create_user(payload: UserCreate, user_repo: UserRepository = Depends(g
         hashed_password=hash_password(payload.password),
         role=payload.role,
         institution_id=payload.institution_id,
+        phone=payload.phone,
     )
     created = await user_repo.create(record)
     return UserPublic.model_validate(created)

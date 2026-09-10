@@ -31,14 +31,14 @@ def test_unauthorized_scan_rejected(client, hospital_token, admin_token):
         json={
             "email": "hospital3@lifelink.dev",
             "full_name": "Third Hospital",
-            "password": "password123",
+            "password": "Hospital@123",
             "role": "hospital_user",
             "institution_id": "hospital_3",
         },
         headers=auth_headers(admin_token),
     )
     other_token = client.post(
-        "/api/v1/auth/login", json={"email": "hospital3@lifelink.dev", "password": "password123"}
+        "/api/v1/auth/login", json={"email": "hospital3@lifelink.dev", "password": "Hospital@123"}
     ).json()["access_token"]
 
     created = client.post(

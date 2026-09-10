@@ -20,6 +20,10 @@ class InMemoryUserRepository(UserRepository):
         # Four ready-to-use QA accounts. Passwords are intentionally different.
         seed = [
             UserRecord(
+                id="usr_admin_1", email="admin@lifelink.dev", full_name="Admin Demo",
+                hashed_password=hash_password("Admin@123"), role=Role.ADMIN, status="active", is_active=True,
+            ),
+            UserRecord(
                 id="usr_hospital_1", email="hospital@lifelink.dev", full_name="Hospital Staff Demo",
                 hashed_password=hash_password("Hospital@123"), role=Role.HOSPITAL_USER, institution_id="hospital_1",
                 hospital_id="hospital_1", status="active", is_active=True,

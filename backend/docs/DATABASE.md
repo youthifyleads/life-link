@@ -17,12 +17,17 @@ For local API demos/tests, keep `REPOSITORY_BACKEND=memory`.
 
 ## Migration
 
+The shared SQL Server/Azure SQL schema source of truth is `database/migrations/`, maintained by the Database Developer.
+
+`backend/alembic/` is retained for local/bootstrap compatibility only. Do not use Alembic as a second independent production schema history. See `docs/MIGRATION_STRATEGY.md`.
+
+For local/bootstrap environments where Alembic is intentionally used:
+
 ```bash
 alembic upgrade head
-python scripts/seed_dev.py
 ```
 
-The initial migration creates the tables represented by the supplied ERD. Future schema changes must be added as new Alembic revisions rather than editing an already-applied revision.
+After an authoritative SQL migration is approved, update the SQLAlchemy models and tests to match it.
 
 ## SQL Server driver
 

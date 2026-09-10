@@ -1,7 +1,7 @@
 # Life Link Mobile API Contract — Dev/MVP
 
 Base prefix: `/api/v1`
-Swagger: `/api/v1/docs`
+Swagger: `/docs`
 Auth: `Authorization: Bearer <access_token>`
 Time: ISO 8601, UTC (`Z`).
 
@@ -11,7 +11,7 @@ Time: ISO 8601, UTC (`Z`).
 {"phone":"01000000003"}
 ```
 Development response includes `dev_otp: "123456"`.
-`POST /auth/otp/verify` accepts `123456` in development and returns the normal bearer JWT. Production OTP delivery/provider is not implemented here.
+`POST /auth/otp/verify` accepts `123456` in development and returns the normal bearer JWT. Production OTP delivery/provider is intentionally blocked until an SMS provider is configured; the API returns `OTP_PROVIDER_NOT_CONFIGURED` instead of pretending that production OTP is delivered.
 
 ## Donor
 - `GET /donors/me`

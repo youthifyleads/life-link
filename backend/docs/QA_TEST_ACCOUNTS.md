@@ -4,6 +4,7 @@ These accounts are for development/QA only. Do not use them in production.
 
 | Account | Email | Password | Role | Status |
 |---|---|---|---|---|
+| Admin | admin@lifelink.dev | Admin@123 | admin | active |
 | Blood Bank | bloodbank@lifelink.dev | BloodBank@123 | blood_bank_operator | active |
 | Hospital Staff | hospital@lifelink.dev | Hospital@123 | hospital_user | active |
 | Normal User | user@lifelink.dev | NormalUser@123 | normal_user | active |
@@ -63,4 +64,4 @@ From the backend root:
 python scripts/seed_dev.py
 ```
 
-This creates the demo roles, permissions, demo hospital/blood bank, and the four QA users in SQL Server when `REPOSITORY_BACKEND=sqlserver` is configured.
+This creates the demo roles, permissions, demo hospital/blood bank, and the five QA users in SQL Server when `REPOSITORY_BACKEND=sqlserver` is configured.

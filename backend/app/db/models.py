@@ -79,7 +79,7 @@ class ConsentModel(Base):
 
 class DonationModel(Base):
     __tablename__ = "donations"
-    donation_id: Mapped[str] = id_col(); blood_type: Mapped[str] = mapped_column(String(3), nullable=False); quantity: Mapped[int] = mapped_column(Integer, nullable=False); donation_date: Mapped[date] = mapped_column(Date, nullable=False); status: Mapped[Optional[str]] = mapped_column(String(40)); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); donor_id: Mapped[str] = mapped_column(ForeignKey("donors.donor_id"), index=True); blood_bank_id: Mapped[str] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True)
+    donation_id: Mapped[str] = id_col(); blood_type: Mapped[str] = mapped_column(String(3), nullable=False); quantity: Mapped[Decimal] = mapped_column(Numeric(8, 2), nullable=False); donation_date: Mapped[date] = mapped_column(Date, nullable=False); status: Mapped[Optional[str]] = mapped_column(String(40)); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); donor_id: Mapped[str] = mapped_column(ForeignKey("donors.donor_id"), index=True); blood_bank_id: Mapped[str] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True)
     donor: Mapped[DonorModel] = relationship(back_populates="donations"); blood_bank: Mapped[BloodBankModel] = relationship(back_populates="donations"); blood_bags: Mapped[list[BloodBagModel]] = relationship(back_populates="donation"); voucher: Mapped[Optional[DonationVoucherModel]] = relationship(back_populates="donation", uselist=False)
 
 class DonationResponseModel(Base):
@@ -99,7 +99,7 @@ class BloodRequestModel(Base):
 
 class BloodBagModel(Base):
     __tablename__ = "blood_bags"
-    blood_bag_id: Mapped[str] = id_col(); blood_type: Mapped[str] = mapped_column(String(3), nullable=False); quantity: Mapped[int] = mapped_column(Integer, nullable=False); collection_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); expiry_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); qr_code: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True); status: Mapped[str] = mapped_column(String(50), nullable=False); current_location: Mapped[Optional[str]] = mapped_column(String(255)); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); donation_id: Mapped[Optional[str]] = mapped_column(ForeignKey("donations.donation_id"), index=True); current_blood_bank_id: Mapped[str] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True)
+    blood_bag_id: Mapped[str] = id_col(); blood_type: Mapped[str] = mapped_column(String(3), nullable=False); quantity: Mapped[int] = mapped_column(Integer, nullable=False); collection_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); expiry_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); qr_code: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True); status: Mapped[str] = mapped_column(String(50), nullable=False); current_location: Mapped[Optional[str]] = mapped_column(String(255)); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); donation_id: Mapped[Optional[str]] = mapped_column(ForeignKey("donations.donation_id"), index=True); current_blood_bank_id: Mapped[Optional[str]] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True)
     donation: Mapped[Optional[DonationModel]] = relationship(back_populates="blood_bags"); current_blood_bank: Mapped[BloodBankModel] = relationship(back_populates="blood_bags"); allocations: Mapped[list[RequestAllocationModel]] = relationship(back_populates="blood_bag"); scan_events: Mapped[list[ScanEventModel]] = relationship(back_populates="blood_bag", cascade="all, delete-orphan"); caregiver_assignments: Mapped[list[CaregiverAssignmentModel]] = relationship(back_populates="blood_bag")
 
 class RequestAllocationModel(Base):
@@ -125,6 +125,13 @@ class RequestStatusHistoryModel(Base):
 class NotificationModel(Base):
     __tablename__ = "notifications"
     notification_id: Mapped[str] = id_col(); title: Mapped[Optional[str]] = mapped_column(String(200)); message: Mapped[str] = mapped_column(Text, nullable=False); type: Mapped[str] = mapped_column(String(80), nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); read_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), index=True)
+    # FLAGGED ADDITION (not in the originally supplied schema.pdf): nullable FK
+    # so a notification can be traced back to the request it is about, the
+    # same generic-linking pattern the supplied schema already uses for
+    # audit_logs.entity_id. Needs Database Developer sign-off/migration
+    # before this is applied to the shared SQL Server database - see
+    # docs/ERD_MAPPING.md "Flagged additions pending Database Developer sign-off".
+    related_request_id: Mapped[Optional[str]] = mapped_column(ForeignKey("blood_requests.blood_request_id"), index=True)
     user: Mapped[UserModel] = relationship(back_populates="notifications")
 
 class AuditLogModel(Base):

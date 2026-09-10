@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from app.core.domain import Role
+from app.core.domain import Role, AuditAction
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.repositories.interfaces.inventory_repository import InventoryRepository
 from app.repositories.models import InventoryItemRecord, UserRecord
@@ -35,8 +35,9 @@ class InventoryService:
         created = await self._inventory_repo.create(record)
         await self._audit_service.record(
             actor_user_id=current_user.id,
-            action="INVENTORY_UPDATED",
-            details=f"inventory item {created.id} created",
+            action=AuditAction.INVENTORY_CREATED,
+            entity_type="blood_bag",
+            entity_id=created.id,
         )
         return created
 
@@ -69,8 +70,9 @@ class InventoryService:
         updated = await self._inventory_repo.update(item)
         await self._audit_service.record(
             actor_user_id=current_user.id,
-            action="INVENTORY_UPDATED",
-            details=f"inventory item {updated.id} updated",
+            action=AuditAction.INVENTORY_UPDATED,
+            entity_type="blood_bag",
+            entity_id=updated.id,
         )
         return updated
 

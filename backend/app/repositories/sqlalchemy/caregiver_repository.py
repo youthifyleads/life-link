@@ -10,4 +10,5 @@ class SQLAlchemyCaregiverRepository(CaregiverRepository):
     async def get_by_id(self,i): o=(await self.session.execute(select(CaregiverAssignmentModel).where(CaregiverAssignmentModel.assignment_id==i))).scalar_one_or_none(); return self.m(o) if o else None
     async def list_for_user(self,u): return [self.m(o) for o in (await self.session.execute(select(CaregiverAssignmentModel).where(CaregiverAssignmentModel.caregiver_user_id==u))).scalars().all()]
     async def list_for_hospital(self,h): return [self.m(o) for o in (await self.session.execute(select(CaregiverAssignmentModel).where(CaregiverAssignmentModel.hospital_id==h))).scalars().all()]
+    async def list_all(self): return [self.m(o) for o in (await self.session.execute(select(CaregiverAssignmentModel))).scalars().all()]
     async def update(self,r): o=(await self.session.execute(select(CaregiverAssignmentModel).where(CaregiverAssignmentModel.assignment_id==r.id))).scalar_one(); o.status=r.status; o.notes=r.notes; o.assignment_date=r.assignment_date; await self.session.commit(); return r
