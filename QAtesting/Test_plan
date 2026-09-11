@@ -1,0 +1,205 @@
+Project Planning & Management
+1. Testing Scope
+In Scope
+Functional Testing
+Testing the core functionalities of the Hospital and Blood Bank System to ensure that all features work according to the specified requirements.
+•	User registration and login
+•	Password reset and account management
+•	Donor registration and donor profile management
+•	Hospital and institution registration and profile management
+•	Donation request creation and management
+•	Donation response creation and management
+•	Blood donation recording and management
+•	Blood bag registration and tracking
+•	Blood bag status management
+•	Blood type and blood component management
+•	Blood request creation and management
+•	Blood availability checking
+•	Blood request approval and status tracking
+•	Matching blood requests with available blood bags
+•	Donation voucher creation and management
+•	Supporting document upload and validation
+•	Caregiver assignment and management
+•	QR code scanning and blood bag verification
+•	Payment processing where applicable
+•	Notifications and status updates
+•	User profile management
+•	Role-based access and permissions
+•	Hospital and blood bank data management
+UI/UX Testing
+Testing the user interface and user experience of the Hospital and Blood Bank System to ensure that it is clear, consistent, accessible, and easy to use.
+•	Layout consistency across the system
+•	Clear navigation between hospital and blood bank functions
+•	Responsive design
+•	Proper alignment of fields, tables, buttons, and forms
+•	Consistency of colors, fonts, labels, and icons
+•	Clear display of blood types and blood bag information
+•	User-friendly donation and blood request forms
+•	Clear status indicators for donations, blood requests, and blood bags
+•	Proper error and validation messages
+•	Accessibility and readability of important medical information
+•	Consistent interface across different system modules
+Security Testing
+Testing the system to ensure that sensitive healthcare, donor, hospital, and blood bank information is properly protected.
+•	Secure authentication and login
+•	Authorization and role-based access control
+•	Protection of donor and patient information
+•	Protection of hospital and blood bank information
+•	Password security
+•	Data encryption
+•	SQL Injection testing
+•	Cross-Site Scripting (XSS) testing
+•	Cross-Site Request Forgery (CSRF) testing
+•	Session management and timeout
+•	Prevention of unauthorized access to medical and blood bank data
+•	Validation of user permissions for different roles
+Performance Testing
+Testing the system performance under normal and high workloads.
+•	Page and screen loading time
+•	API response time
+•	Blood availability search response time
+•	Blood request processing performance
+•	Blood bag search and tracking performance
+•	Database query performance
+•	Load testing with multiple users
+•	Stress testing under high numbers of requests
+•	Performance of QR code scanning and verification
+•	System stability during concurrent hospital and blood bank operations
+Mobile Compatibility Testing
+Testing the system on mobile devices to ensure that hospital staff, donors, and other users can access the system effectively.
+•	Android compatibility
+•	iOS compatibility
+•	Different mobile screen sizes
+•	Responsive layouts
+•	Touch interactions
+•	Buttons and forms on mobile screens
+•	QR code scanning functionality
+•	Mobile navigation
+•	Blood request and donation functionality on mobile devices
+•	Proper display of blood bag and donation information
+Out of Scope
+The following areas are outside the scope of testing:
+•	Functionality of third-party systems
+•	Testing of non-production environments beyond the required test environment
+•	Physical hardware and hospital infrastructure testing
+•	Medical equipment functionality
+•	Blood storage equipment and refrigeration systems
+•	Internet service provider infrastructure
+•	SEO and digital marketing
+•	Content quality unrelated to system functionality
+•	Physical blood testing and laboratory procedures
+•	Medical diagnosis or clinical decision-making
+•	Physical blood collection procedures
+________________________________________
+2. Testing Roles
+Testing Activity	Responsible  member
+Manual Testing	  Ahmed Ehab Kamal
+API Testing	  Ahmed Ehab Kamal
+Mobile App Testing	  Ahmed Ehab Kamal
+Security Testing	  Ahmed Ehab Kamal
+Performance Testing	  Ahmed Ehab Kamal
+	
+Manual Testing
+Responsible for validating the functionality of the Hospital and Blood Bank System through manual test cases, including donor registration, donation requests, blood requests, blood bag management, hospital operations, and user management.
+API Testing
+Responsible for validating APIs related to users, donors, hospitals, institutions, donations, blood bags, blood requests, payments, QR scanning, and other system services.
+Mobile App Testing
+Responsible for testing the mobile version of the system across different devices, screen sizes, operating systems, and touch interactions.
+Security Testing
+Responsible for testing authentication, authorization, data protection, role-based access, and common web security vulnerabilities.
+Performance Testing
+Responsible for evaluating system performance, API response times, load handling, stress conditions, and database performance.
+________________________________________
+3. Risk Identification
+Personal / Human Risks
+•	Lack of experience or training in healthcare and blood bank systems
+•	Human errors during test execution
+•	Incorrect test data entry
+•	Unavailability of team members
+•	Poor communication between team members
+•	Misunderstanding of hospital and blood bank requirements
+•	Incorrect interpretation of blood-related business rules
+•	Lack of knowledge of specific user roles and permissions
+Environmental Risks
+•	Power outages or hardware failures
+•	Natural disasters
+•	Unstable internet connection
+•	Inaccessible testing environment
+•	Server downtime
+•	Database connection failures
+•	Problems with mobile devices used for testing
+•	QR scanning problems caused by device cameras
+•	Limited access to test environments or required services
+Project Risks
+•	Unclear or changing requirements
+•	Scope creep
+•	Tight deadlines
+•	Insufficient testing resources
+•	Limited test data
+•	Budget limitations
+•	Delays in development
+•	Lack of stakeholder engagement
+•	Changes in hospital or blood bank workflows
+•	Integration issues between system modules
+•	Defects discovered late in the development lifecycle
+________________________________________
+4. KPIs
+Manual Testing
+•	Number of test suites
+•	Number of test cases
+•	Number of executed test cases
+•	Number of passed test cases
+•	Number of failed test cases
+•	Number of blocked test cases
+•	Number of reported bugs
+•	Test execution rate
+•	Test pass rate
+•	Defect detection rate
+•	Test coverage percentage
+API Testing
+•	Number of API test cases
+•	Number of tested endpoints
+•	API test pass rate
+•	API test coverage
+•	API response time
+•	Number of API defects
+•	Number of failed API requests
+•	API availability and reliability
+Mobile App Testing
+•	Number of tested devices
+•	Number of tested Android versions
+•	Number of tested iOS versions
+•	Mobile test cases executed
+•	Mobile test pass rate
+•	Mobile compatibility coverage
+•	Number of mobile-specific defects
+•	QR scanning success rate
+Traceability Matrix
+The Requirements Traceability Matrix (RTM) will be used to ensure that every system requirement is linked to one or more test cases.
+Key KPI:
+•	Requirements Traceability Coverage %
+This ensures that important requirements such as donor registration, donation requests, blood requests, blood bag tracking, QR verification, hospital management, and user authorization are covered by testing.
+Checklist
+A testing checklist will be maintained to verify that all critical Hospital and Blood Bank System functionalities have been tested before release.
+The checklist will cover:
+•	User registration and authentication
+•	Donor profile management
+•	Hospital and institution management
+•	Donation requests
+•	Donation responses
+•	Blood bag management
+•	Blood requests
+•	Blood availability
+•	Blood bag tracking
+•	Supporting documents
+•	Donation vouchers
+•	Caregiver assignments
+•	QR scanning and verification
+•	Payments
+•	Notifications
+•	Security
+•	Performance
+•	Mobile compatibility
+•	Regression testing
+•	Critical defect verification
+

@@ -1,0 +1,41 @@
+import uuid
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models import AuditLogModel
+from app.repositories.interfaces.audit_repository import AuditRepository
+from app.repositories.models import AuditLogRecord
+from app.repositories.sqlalchemy._mappers import audit_to_record
+
+
+class SQLAlchemyAuditRepository(AuditRepository):
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def create(self, entry: AuditLogRecord) -> AuditLogRecord:
+        entity_type = entry.entity_type or "system"
+        entity_id = entry.entity_id
+
+        try:
+            if len(entry.id) == 36 and "-" in entry.id:
+                parsed_audit_id = uuid.UUID(entry.id)
+            else:
+                parsed_audit_id = uuid.uuid4()
+        except (ValueError, TypeError):
+            parsed_audit_id = uuid.uuid4()
+
+        obj = AuditLogModel(
+            audit_id=str(parsed_audit_id),    
+            user_id=entry.actor_user_id,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            action=entry.action, 
+            logged_at=entry.created_at,
+        )
+        self.session.add(obj)
+        await self.session.commit()
+        return entry
+
+    async def list_all(self) -> list[AuditLogRecord]:
+        result = await self.session.execute(select(AuditLogModel).order_by(AuditLogModel.logged_at.desc()))
+        return [audit_to_record(o) for o in result.scalars().all()]

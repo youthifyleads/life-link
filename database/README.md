@@ -11,17 +11,35 @@ Life Link uses **Microsoft SQL Server (MSSQL)** for its persistent relational da
 5. **No Secrets**: Never commit database connection strings containing passwords or credentials into SQL files or repository code.
 
 ## Migration File Naming Convention
+Migrations use standard sequential numbering or Flyway versioning:
 ```
-V<VERSION>__<DESCRIPTION>.sql
+<NUMBER>_<description>.sql   (e.g., 001_initial_schema.sql)
+V<VERSION>__<DESCRIPTION>.sql (e.g., V001__initial_schema.sql)
 ```
-Examples:
-- `V001__initial_schema.sql`
-- `V002__create_users_table.sql`
-- `V003__add_emergency_contact_columns.sql`
 
-## Structure
+## Structure & Existing Migrations
 ```
 database/
-├── migrations/       # Versioned SQL migration scripts
-└── README.md         # Database documentation and migration policy
+├── migrations/                                     # Versioned SQL migration scripts
+│   ├── 000_create_schema_migrations.sql            # Schema migration tracking table
+│   ├── 001_initial_schema.sql                      # Complete 24-table DDL schema
+│   ├── 002_indexes.sql                             # Performance & FK indexes
+│   ├── 003_views.sql                               # Reporting & inventory views
+│   ├── 004_procedures_and_triggers.sql             # Stored procedures & audit triggers
+│   ├── 005_seed_data.sql                           # Seed roles, permissions & QA users
+│   └── 006_add_notifications_related_request_id.sql # Notification FK to blood_requests
+├── LifeLink_Full_Database.sql                      # Consolidated all-in-one database script
+└── README.md                                       # Database documentation & migration policy
 ```
+
+### Migrations Inventory
+1. **`000_create_schema_migrations.sql`**: Creates `dbo.schema_migrations` table for idempotency tracking.
+2. **`001_initial_schema.sql`**: Full physical schema covering all core tables: `roles`, `permissions`, `role_permissions`, `users`, `hospitals`, `blood_banks`, `blood_requests`, `blood_bags`, `caregiver_assignments`, `notifications`, `audit_logs`, etc.
+3. **`002_indexes.sql`**: Indexes for high-frequency queries and foreign key constraints.
+4. **`003_views.sql`**: SQL views for quick inventory querying and reporting.
+5. **`004_procedures_and_triggers.sql`**: Stored procedures and automatic audit trail triggers.
+6. **`005_seed_data.sql`**: Default system roles (`SystemAdmin`, `HospitalStaff`, `BloodBankStaff`, `MedicalLead`, `PlatformSupport`, `NormalUser`), sample institutions, and QA test accounts with password `Test@123`.
+7. **`006_add_notifications_related_request_id.sql`**: Adds nullable `related_request_id UNIQUEIDENTIFIER NULL` to `dbo.notifications` referencing `dbo.blood_requests(blood_request_id) ON DELETE SET NULL` with index `ix_notifications_related_request_id`.
+
+## QA Test Accounts
+All seed accounts configured in `005_seed_data.sql` use the standardized password `Test@123`. See [`backend/docs/QA_TEST_ACCOUNTS.md`](../backend/docs/QA_TEST_ACCOUNTS.md) for full credentials, role mappings, and login test cases.

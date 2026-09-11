@@ -1,0 +1,28 @@
+from app.core.domain import AuditAction
+from app.core.exceptions import UnauthorizedError
+from app.core.security import create_access_token, verify_password
+from app.repositories.interfaces.user_repository import UserRepository
+from app.repositories.models import UserRecord
+from app.services.audit_service import AuditService
+
+
+class AuthService:
+    def __init__(self, user_repo: UserRepository, audit_service: AuditService):
+        self._user_repo = user_repo
+        self._audit_service = audit_service
+
+    async def authenticate(self, email: str, password: str) -> tuple[UserRecord, str]:
+        try:
+            user = await self._user_repo.get_by_email(email)
+        except ValueError:
+            raise UnauthorizedError("User role configuration is invalid", code="INVALID_USER_ROLE")
+        if user is None or not verify_password(password, user.hashed_password):
+            raise UnauthorizedError("Invalid email or password", code="INVALID_CREDENTIALS")
+        if user.status.lower() in ("banned", "suspended"):
+            raise UnauthorizedError("This account has been banned.", code="ACCOUNT_BANNED")
+        if not user.is_active:
+            raise UnauthorizedError("This account is inactive.", code="ACCOUNT_INACTIVE")
+
+        token = create_access_token(subject=user.id, role=user.role.value)
+        await self._audit_service.record(actor_user_id=user.id, action=AuditAction.LOGIN, entity_type="user", entity_id=user.id)
+        return user, token
