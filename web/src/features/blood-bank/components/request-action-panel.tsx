@@ -43,8 +43,8 @@ export function RequestActionPanel({
 
   if (actions.length === 0) {
     return (
-      <span className="text-xs leading-5 text-muted-foreground">
-        {t("common.none", "No action required")}
+      <span className="text-xs text-muted-foreground italic tabular-nums">
+        {t("common.none", "—")}
       </span>
     );
   }
@@ -52,36 +52,38 @@ export function RequestActionPanel({
   if (isConfirmingReject) {
     return (
       <div
-        className="min-w-52 border border-destructive/25 bg-emergency-subtle p-2.5"
+        className="inline-flex flex-col gap-1.5 rounded-md border border-destructive/30 bg-emergency-subtle p-2 text-start shadow-xs animate-in fade-in-50 duration-150"
         role="group"
         aria-label={t("bloodBank.confirmRejectionOf", { id: request.id })}
       >
-        <p className="text-xs font-semibold text-[#7a1a13]">
-          {t("bloodBank.rejectionModalTitle", "Reject this request?")}
-        </p>
-        <div className="mt-2 flex gap-2">
+        <span className="text-[11px] font-semibold text-destructive">
+          {t("bloodBank.rejectionModalTitle", "Reject requisition?")}
+        </span>
+        <div className="flex items-center gap-1.5">
           <Button
             type="button"
             size="sm"
             variant="destructive"
+            className="h-6 px-2 text-[11px]"
             disabled={isPending}
             onClick={() => onAction(request, "reject")}
           >
             {isPending ? (
-              <LoaderCircle aria-hidden="true" className="animate-spin" />
+              <LoaderCircle aria-hidden="true" className="size-3 animate-spin" />
             ) : (
-              <X aria-hidden="true" />
+              <X aria-hidden="true" className="size-3" />
             )}
-            {t("common.confirm", "Confirm reject")}
+            {t("common.confirm", "Confirm")}
           </Button>
           <Button
             type="button"
             size="sm"
-            variant="secondary"
+            variant="ghost"
+            className="h-6 px-2 text-[11px]"
             disabled={isPending}
             onClick={() => setIsConfirmingReject(false)}
           >
-            {t("common.cancel", "Keep request")}
+            {t("common.cancel", "Cancel")}
           </Button>
         </div>
       </div>
@@ -91,18 +93,19 @@ export function RequestActionPanel({
   const PrimaryIcon = primaryAction ? actionIcons[primaryAction] : null;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex items-center gap-1.5">
       {primaryAction && PrimaryIcon ? (
         <Button
           type="button"
           size="sm"
           disabled={isPending}
+          className="h-8 px-2.5 text-xs font-semibold shadow-xs"
           onClick={() => onAction(request, primaryAction)}
         >
           {isPending ? (
-            <LoaderCircle aria-hidden="true" className="animate-spin" />
+            <LoaderCircle aria-hidden="true" className="size-3.5 animate-spin" />
           ) : (
-            <PrimaryIcon aria-hidden="true" />
+            <PrimaryIcon aria-hidden="true" className="size-3.5" />
           )}
           {getBloodBankActionLabel(primaryAction)}
         </Button>
@@ -111,13 +114,16 @@ export function RequestActionPanel({
         <Button
           type="button"
           size="sm"
-          variant="secondary"
+          variant="ghost"
           disabled={isPending}
-          className="text-destructive hover:text-destructive"
+          className="h-8 px-2 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          title={t("bloodBank.rejectRequest", "Reject request")}
           onClick={() => setIsConfirmingReject(true)}
         >
-          <X aria-hidden="true" />
-          {t("common.rejected", "Reject")}
+          <X aria-hidden="true" className="size-3.5" />
+          <span className="sr-only sm:not-sr-only sm:inline-block">
+            {t("common.rejected", "Reject")}
+          </span>
         </Button>
       ) : null}
     </div>

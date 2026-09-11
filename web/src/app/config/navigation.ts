@@ -57,12 +57,6 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
           enabled: true,
         },
         {
-          label: "System activity",
-          href: "/activity",
-          icon: Activity,
-          enabled: true,
-        },
-        {
           label: "Documents",
           href: "/hospital/documents",
           icon: FileCheck2,
@@ -103,12 +97,6 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
           label: "Notifications",
           href: "/notifications",
           icon: Bell,
-          enabled: true,
-        },
-        {
-          label: "System activity",
-          href: "/activity",
-          icon: Activity,
           enabled: true,
         },
         {

@@ -17,15 +17,20 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
+import { i18n } from "@/app/i18n/i18n";
 import { BloodBankPageFrame } from "@/features/blood-bank/components/blood-bank-page-frame";
+import {
+  formatBloodBankComponent,
+  formatDocumentTitle,
+  formatHospitalName,
+} from "@/features/blood-bank/components/blood-bank-formatters";
 import {
   useBloodBankAllDocuments,
   useUpdateDocumentReviewStatus,
 } from "@/features/blood-bank/hooks/use-blood-bank-requests";
-import {
-  bloodBankComponentLabels,
-  type BloodBankDocumentItem,
-  type DocumentReviewStatus,
+import type {
+  BloodBankDocumentItem,
+  DocumentReviewStatus,
 } from "@/features/blood-bank/types/blood-bank.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
 import {
@@ -87,12 +92,20 @@ function ReviewStatusBadge({ status }: { status: DocumentReviewStatus }) {
   }
 }
 
-const rejectionPresets = [
+const rejectionPresetsEn = [
   "Document is illegible or has low scanning resolution.",
   "Missing physician clinical signature or licensing stamp.",
   "Patient serological cross-match details are incomplete.",
   "Discrepancy detected between patient blood group and requisition details.",
   "Emergency justification letter is expired or superseded.",
+];
+
+const rejectionPresetsAr = [
+  "المستند غير مقروء أو دقة المسح الضوئي منخفضة.",
+  "توقيع الطبيب السريري أو ختم الترخيص مفقود.",
+  "تفاصيل التوافق السيرولوجي للمريض غير مكتملة.",
+  "رصد عدم تطابق بين فصيلة دم المريض وبيانات الطلب.",
+  "خطاب التبرير الطارئ منتهي الصلاحية أو تم استبداله.",
 ];
 
 export function BloodBankDocumentsPage() {
@@ -129,6 +142,9 @@ export function BloodBankDocumentsPage() {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [allDocuments]);
 
+  const isArabic = i18n.language.startsWith("ar");
+  const rejectionPresets = isArabic ? rejectionPresetsAr : rejectionPresetsEn;
+
   const filteredDocuments = useMemo(() => {
     return allDocuments.filter((doc) => {
       if (statusFilter !== "all" && doc.reviewStatus !== statusFilter) {
@@ -140,9 +156,21 @@ export function BloodBankDocumentsPage() {
       if (search.trim()) {
         const q = search.toLowerCase();
         const matchName = doc.name.toLowerCase().includes(q);
+        const matchLocalizedTitle = formatDocumentTitle(doc.name).toLowerCase().includes(q);
         const matchReq = doc.requestId.toLowerCase().includes(q);
         const matchHosp = doc.hospital.name.toLowerCase().includes(q);
-        if (!matchName && !matchReq && !matchHosp) return false;
+        const matchLocalizedHosp = formatHospitalName(doc.hospital.name, doc.hospital.id).toLowerCase().includes(q);
+        const matchComp = formatBloodBankComponent(doc.component).toLowerCase().includes(q);
+        if (
+          !matchName &&
+          !matchLocalizedTitle &&
+          !matchReq &&
+          !matchHosp &&
+          !matchLocalizedHosp &&
+          !matchComp
+        ) {
+          return false;
+        }
       }
       return true;
     });
@@ -332,7 +360,7 @@ export function BloodBankDocumentsPage() {
                 <option value="all">{t("bloodBank.allHospitals")}</option>
                 {hospitalOptions.map((h) => (
                   <option key={h.id} value={h.id}>
-                    {h.name}
+                    {formatHospitalName(h.name, h.id)}
                   </option>
                 ))}
               </select>
@@ -424,10 +452,10 @@ export function BloodBankDocumentsPage() {
                             />
                             <div className="min-w-0">
                               <span className="block truncate font-semibold">
-                                {doc.name}
+                                {formatDocumentTitle(doc.name)}
                               </span>
                               <span className="text-[11px] text-muted-foreground font-mono">
-                                <bdi dir="ltr">{formatFileSize(doc.sizeBytes)} • {doc.mimeType}</bdi>
+                                <bdi dir="ltr">{doc.name} • {formatFileSize(doc.sizeBytes)} • {doc.mimeType}</bdi>
                               </span>
                             </div>
                           </div>
@@ -436,7 +464,7 @@ export function BloodBankDocumentsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5 text-foreground font-medium">
                             <Building2 className="size-3.5 text-primary shrink-0" aria-hidden="true" />
-                            <span>{doc.hospital.name}</span>
+                            <span>{formatHospitalName(doc.hospital.name, doc.hospital.id)}</span>
                           </div>
                           <span className="font-mono text-[10px] text-muted-foreground">
                             <bdi dir="ltr">{doc.hospital.facilityCode}</bdi>
@@ -457,7 +485,7 @@ export function BloodBankDocumentsPage() {
                           <div className="flex items-center gap-2">
                             <BloodGroupBadge group={doc.bloodGroup} />
                             <span className="text-muted-foreground truncate">
-                              {bloodBankComponentLabels[doc.component]}
+                              {formatBloodBankComponent(doc.component)}
                             </span>
                           </div>
                         </td>
@@ -536,7 +564,7 @@ export function BloodBankDocumentsPage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-base">
                   <FileText className="size-4 text-primary" aria-hidden="true" />
-                  {inspectDoc.name}
+                  <span>{formatDocumentTitle(inspectDoc.name)}</span>
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
                   {t("bloodBank.documentsTriageDesc")}
@@ -551,7 +579,7 @@ export function BloodBankDocumentsPage() {
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <span className="text-muted-foreground">{t("bloodBank.hospitalCol")}</span>
                   <span className="font-medium text-foreground">
-                    {inspectDoc.hospital.name} (<bdi dir="ltr">{inspectDoc.hospital.facilityCode}</bdi>)
+                    {formatHospitalName(inspectDoc.hospital.name, inspectDoc.hospital.id)} (<bdi dir="ltr">{inspectDoc.hospital.facilityCode}</bdi>)
                   </span>
                 </div>
                 <div className="flex items-center justify-between border-b border-border pb-2">
@@ -568,7 +596,7 @@ export function BloodBankDocumentsPage() {
                   <span className="text-muted-foreground">{t("bloodBank.transfusionProfileCol")}</span>
                   <div className="flex items-center gap-1.5">
                     <BloodGroupBadge group={inspectDoc.bloodGroup} />
-                    <span>{bloodBankComponentLabels[inspectDoc.component]}</span>
+                    <span>{formatBloodBankComponent(inspectDoc.component)}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-b border-border pb-2">
@@ -644,7 +672,7 @@ export function BloodBankDocumentsPage() {
                   <span className="font-semibold text-foreground">
                     {t("bloodBank.documentFileCol")}:
                   </span>{" "}
-                  {rejectDocTarget.name} • {t("bloodBank.requisitionCol")}:{" "}
+                  {formatDocumentTitle(rejectDocTarget.name)} • {t("bloodBank.requisitionCol")}:{" "}
                   <span className="font-mono font-semibold text-foreground">
                     <bdi dir="ltr">{rejectDocTarget.requestId}</bdi>
                   </span>
@@ -714,4 +742,3 @@ export function BloodBankDocumentsPage() {
   );
 }
 export default BloodBankDocumentsPage;
-import { i18n } from "@/app/i18n/i18n";

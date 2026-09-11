@@ -9,6 +9,10 @@ import {
   NotificationTypeBadge,
 } from "@/features/notifications/components/notification-badges";
 import {
+  getLocalizedNotificationMessage,
+  getLocalizedNotificationTitle,
+} from "@/features/notifications/components/notifications-formatters";
+import {
   useEventBusListener,
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
@@ -173,11 +177,11 @@ export function HeaderNotificationPopover({
                   </div>
 
                   <p className="mt-1 text-xs font-semibold text-foreground leading-snug line-clamp-1">
-                    {item.title}
+                    {getLocalizedNotificationTitle(item)}
                   </p>
 
                   <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                    {item.message}
+                    {getLocalizedNotificationMessage(item)}
                   </p>
 
                   <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">

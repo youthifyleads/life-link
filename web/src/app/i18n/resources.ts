@@ -499,6 +499,18 @@ export const resources = {
         incomingQueueDesc: "Immediate operational requests requiring action or active monitoring.",
         findQueueRequests: "Filter queue",
         searchQueuePlaceholder: "Search ID, hospital, or component",
+        queueActiveRequisitions: "Active in Queue",
+        queueStatEmergency: "STAT Emergency",
+        queueUrgentTriage: "Urgent Triage",
+        queueNeedsAllocation: "Needs Allocation",
+        queueReadyOrPreparing: "Preparing & Ready",
+        resetAllFilters: "Reset all filters",
+        showingOf: "Showing {{shown}} of {{total}} requisitions",
+        requiredBy: "Required by",
+        createdOn: "Created",
+        allocatedProgress: "{{allocated}} / {{total}} alloc.",
+        triageAll: "All Requisitions",
+        quickTriage: "Quick Triage",
         matrixTitle: "Blood Stock Matrix",
         matrixSubtitle: "Aggregated unit counts across ABO/RhD groups and prepared therapeutic components.",
         kpiTitle: "Inventory KPIs",
@@ -982,6 +994,60 @@ export const resources = {
         savingPreferences: "Saving...",
         failedToLoadPreferences: "Failed to load preferences",
         failedToLoadPreferencesDesc: "Could not retrieve your stored notification settings.",
+        items: {
+          "NOTIF-2026-001": {
+            title: "Urgent O- request received",
+            message: "Cairo General Hospital submitted emergency requisition BR-2026-2194 for 2 units O- Red Blood Cells.",
+          },
+          "NOTIF-2026-002": {
+            title: "Inventory alert: O- stock critical",
+            message: "Regional reserve of O- Red Blood Cells has dropped to 3 units, falling below the required minimum safety buffer.",
+          },
+          "NOTIF-2026-003": {
+            title: "Donor response received",
+            message: "Omar Donor confirmed availability for emergency pediatric appeal DR-2026-0811 at Regional Blood Bank Center.",
+          },
+          "NOTIF-2026-004": {
+            title: "Blood request BR-2026-2194 confirmed",
+            message: "Central Blood Bank acknowledged and confirmed clinical requisition BR-2026-2194. Unit allocation in progress.",
+          },
+          "NOTIF-2026-005": {
+            title: "Units allocated for BR-2026-2194",
+            message: "2 units (UNT-O-NEG-0992, UNT-O-NEG-0993) serologically verified and reserved for patient crossmatch.",
+          },
+          "NOTIF-2026-006": {
+            title: "Blood units dispatched for BR-2026-2189",
+            message: "Carrier escort has departed Central Cold Storage. Estimated arrival at Cairo General Emergency Bay is 25 minutes.",
+          },
+          "NOTIF-2026-007": {
+            title: "Unit UNT-B-POS-0331 is ready for transfer",
+            message: "Biological unit UNT-B-POS-0331 has passed crossmatch verification and is packaged in certified thermal transit container.",
+          },
+          "NOTIF-2026-008": {
+            title: "Courier dispatched: 2°C–6°C continuous verified",
+            message: "Clinical courier is en route to Cairo General Hospital. Cold-chain sensor confirms constant 3.8°C stability.",
+          },
+          "NOTIF-2026-009": {
+            title: "Your donation response was accepted",
+            message: "Cairo University Pediatric Hospital confirmed your appointment slot for appeal DR-2026-0811 tomorrow at 10:00 AM.",
+          },
+          "NOTIF-2026-010": {
+            title: "New certificate VCH-2026-9901 issued",
+            message: "Thank you for your life-saving platelet contribution! Your verified digital voucher certificate is now ready.",
+          },
+          "NOTIF-2026-011": {
+            title: "Urgent community shortage: O+ blood needed",
+            message: "Regional blood stock for O+ blood has entered critical shortage status. Donors are warmly invited to schedule a walk-in.",
+          },
+          "NOTIF-2026-012": {
+            title: "New user account provisioned (USR-008)",
+            message: "Technical support officer Youssef Fahmy was provisioned with platform_support credentials by Nour System Admin.",
+          },
+          "NOTIF-2026-013": {
+            title: "System maintenance window scheduled",
+            message: "Platform database indexing and cold-chain sensor firmware synchronization will execute on Sunday at 02:00 AM.",
+          },
+        },
       },
       activity: {
         ledgerTitle: "System Activity Ledger",
@@ -1532,6 +1598,18 @@ export const resources = {
         incomingQueueDesc: "طلبات تشغيلية تتطلب إجراءً فورياً أو متابعة نشطة.",
         findQueueRequests: "تصفية قائمة الطلبات",
         searchQueuePlaceholder: "ابحث بالرقم، المستشفى، أو المكون",
+        queueActiveRequisitions: "النشطة بالقائمة",
+        queueStatEmergency: "طوارئ قصوى (STAT)",
+        queueUrgentTriage: "فرز عاجل",
+        queueNeedsAllocation: "بانتظار التخصيص",
+        queueReadyOrPreparing: "قيد التحضير والجاهزة",
+        resetAllFilters: "إعادة ضبط الفلاتر",
+        showingOf: "عرض {{shown}} من أصل {{total}} طلب",
+        requiredBy: "الموعد المطلوب",
+        createdOn: "تاريخ الطلب",
+        allocatedProgress: "تم تخصيص {{allocated}} من {{total}}",
+        triageAll: "كافة الطلبات",
+        quickTriage: "الفرز السريع",
         matrixTitle: "مصفوفة مخزون الدم",
         matrixSubtitle: "أعداد الوحدات المجمعة عبر فصائل الدم والمكونات العلاجية المحضرة.",
         kpiTitle: "مؤشرات المخزون الرئيسية",
@@ -2015,6 +2093,60 @@ export const resources = {
         savingPreferences: "جاري الحفظ...",
         failedToLoadPreferences: "فشل في تحميل التفضيلات",
         failedToLoadPreferencesDesc: "تعذر استرجاع إعدادات الإشعارات المحفوظة الخاصة بك.",
+        items: {
+          "NOTIF-2026-001": {
+            title: "استلام طلب عاجل لفصيلة O-",
+            message: "قدم مستشفى القاهرة العام طلب دم طارئ BR-2026-2194 لعدد 2 وحدة من كريات الدم الحمراء فصيلة O-.",
+          },
+          "NOTIF-2026-002": {
+            title: "إنذار مخزون: رصيد فصيلة O- حرج",
+            message: "انخفض الاحتياطي الإقليمي لكريات الدم الحمراء فصيلة O- إلى 3 وحدات، وهو أقل من حد الأمان الأدنى المطلوب.",
+          },
+          "NOTIF-2026-003": {
+            title: "تم استلام استجابة المتبرع",
+            message: "أكد المتبرع عمر جاهزيته لنداء الطوارئ للأطفال DR-2026-0811 في مركز بنك الدم الإقليمي.",
+          },
+          "NOTIF-2026-004": {
+            title: "تم تأكيد طلب الدم BR-2026-2194",
+            message: "أكد بنك الدم المركزي استلام الطلب السريري BR-2026-2194 واعتماده. جاري تخصيص الوحدات.",
+          },
+          "NOTIF-2026-005": {
+            title: "تم تخصيص الوحدات للطلب BR-2026-2194",
+            message: "تم التحقق المصلي من وحدتين (UNT-O-NEG-0992، UNT-O-NEG-0993) وحجزهما لاختبار التوافق للمريض.",
+          },
+          "NOTIF-2026-006": {
+            title: "تم شحن وحدات الدم للطلب BR-2026-2189",
+            message: "انطلق الناقل الطبي من مستودع التبريد المركزي. الوقت المتوقع للوصول إلى طوارئ مستشفى القاهرة العام هو 25 دقيقة.",
+          },
+          "NOTIF-2026-007": {
+            title: "الوحدة UNT-B-POS-0331 جاهزة للنقل",
+            message: "اجتازت الوحدة الحيوية UNT-B-POS-0331 فحص التوافق وتم تغليفها في حاوية نقل حرارية معتمدة.",
+          },
+          "NOTIF-2026-008": {
+            title: "انطلاق الناقل الطبي: تم التحقق من استقرار 2° إلى 6° مئوية",
+            message: "الناقل الطبي في الطريق إلى مستشفى القاهرة العام. يؤكد مستشعر سلسلة التبريد ثبات الحرارة عند 3.8° مئوية.",
+          },
+          "NOTIF-2026-009": {
+            title: "تم قبول استجابتك للتبرع",
+            message: "أكد مستشفى جامعة القاهرة للأطفال موعدك لنداء التبرع DR-2026-0811 غداً في تمام الساعة 10:00 صباحاً.",
+          },
+          "NOTIF-2026-010": {
+            title: "تم إصدار شهادة جديدة VCH-2026-9901",
+            message: "شكراً لمساهمتك المنقذة للحياة بالصفائح الدموية! شهادة القسيمة الرقمية المعتمدة جاهزة الآن.",
+          },
+          "NOTIF-2026-011": {
+            title: "نقص عاجل في المجتمع: مطلوب دم فصيلة O+",
+            message: "دخل المخزون الإقليمي لفصيلة O+ في حالة نقص حرج. ندعو المتبرعين لحجز موعد أو الحضور المباشر.",
+          },
+          "NOTIF-2026-012": {
+            title: "تم إنشاء حساب مستخدم جديد (USR-008)",
+            message: "تم إنشاء حساب مسؤول الدعم الفني يوسف فهمي بصلاحيات platform_support بواسطة مسؤول النظام نور.",
+          },
+          "NOTIF-2026-013": {
+            title: "تم جدولة فترة صيانة للنظام",
+            message: "سيتم إجراء فهرسة قاعدة بيانات المنصة ومزامنة برمجيات مستشعرات سلسلة التبريد يوم الأحد الساعة 02:00 صباحاً.",
+          },
+        },
       },
       activity: {
         ledgerTitle: "سجل النشاط العام والامتثال",

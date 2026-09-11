@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { OrganizationSummary } from "@/features/authentication/model/auth.types";
 import { Button } from "@/shared/components/ui/button";
 import { BidiText } from "@/shared/components/i18n/bidi-text";
+import { formatOrganizationName } from "@/shared/lib/formatters";
 import {
   Popover,
   PopoverContent,
@@ -46,11 +47,13 @@ export function OrganizationContext({
     return null;
   }
 
+  const activeOrgDisplayName = formatOrganizationName(activeOrganization.name);
+
   if (compact) {
     return (
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-foreground">
-          <BidiText>{activeOrganization.name}</BidiText>
+          <BidiText>{activeOrgDisplayName}</BidiText>
         </p>
         <p className="truncate text-xs text-muted-foreground">
           {t(getOrganizationTypeKey(activeOrganization.type))}
@@ -73,8 +76,8 @@ export function OrganizationContext({
             className="h-auto min-h-14 w-full justify-start gap-3 border border-sidebar-border bg-white/[0.04] px-3 py-2 text-start text-white hover:bg-sidebar-accent hover:text-white disabled:pointer-events-none disabled:opacity-100"
             aria-label={
               canSwitch
-                ? t("nav.changeOrganizationCurrent", { name: activeOrganization.name })
-                : t("nav.currentOrganization", { name: activeOrganization.name })
+                ? t("nav.changeOrganizationCurrent", { name: activeOrgDisplayName })
+                : t("nav.currentOrganization", { name: activeOrgDisplayName })
             }
           >
             <Building2
@@ -83,7 +86,7 @@ export function OrganizationContext({
             />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold">
-                <BidiText>{activeOrganization.name}</BidiText>
+                <BidiText>{activeOrgDisplayName}</BidiText>
               </span>
               <span className="mt-0.5 block truncate text-xs font-normal text-sidebar-muted">
                 {t(getOrganizationTypeKey(activeOrganization.type))}
@@ -102,6 +105,7 @@ export function OrganizationContext({
             <div className="space-y-1">
               {organizations.map((organization) => {
                 const isActive = organization.id === activeOrganization.id;
+                const orgDisplayName = formatOrganizationName(organization.name);
 
                 return (
                   <button
@@ -115,7 +119,7 @@ export function OrganizationContext({
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">
-                        <BidiText>{organization.name}</BidiText>
+                        <BidiText>{orgDisplayName}</BidiText>
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {t(getOrganizationTypeKey(organization.type))}
@@ -137,3 +141,4 @@ export function OrganizationContext({
     </div>
   );
 }
+

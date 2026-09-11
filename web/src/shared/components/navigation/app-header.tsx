@@ -16,6 +16,7 @@ import { HeaderNotificationPopover } from "@/features/notifications/components/h
 import { LanguageSwitcher } from "@/shared/components/navigation/language-switcher";
 import { OrganizationContext } from "@/shared/components/navigation/organization-context";
 import { BidiText, TechnicalText } from "@/shared/components/i18n/bidi-text";
+import { formatOrganizationName, formatUserName } from "@/shared/lib/formatters";
 import { Button } from "@/shared/components/ui/button";
 import {
   Popover,
@@ -31,12 +32,11 @@ interface AppHeaderProps {
 }
 
 function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
+  const cleaned = name.replace(/[^\p{L}\s]/gu, "").trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "U";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 export function AppHeader({
@@ -47,6 +47,13 @@ export function AppHeader({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const roleLabel = t(`roles.${user.primary_role}`, user.primary_role.replaceAll("_", " "));
+  const activeOrgName = user.organizations.find(
+    (organization) => organization.id === user.active_organization_id,
+  )?.name;
+  const localizedOrgName = activeOrgName
+    ? formatOrganizationName(activeOrgName)
+    : t("nav.assignedOrganization");
+  const userDisplayName = formatUserName(user.display_name);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface">
@@ -76,9 +83,7 @@ export function AppHeader({
             {t("nav.activeOrganization", "Active organization")}
           </p>
           <p className="truncate text-sm font-semibold text-foreground">
-            <BidiText>{user.organizations.find(
-              (organization) => organization.id === user.active_organization_id,
-            )?.name ?? t("nav.assignedOrganization")}</BidiText>
+            <BidiText>{localizedOrgName}</BidiText>
           </p>
         </div>
 
@@ -96,15 +101,15 @@ export function AppHeader({
                 type="button"
                 variant="ghost"
                 className="h-12 min-h-12 gap-2 px-2 sm:px-3"
-                aria-label={t("nav.openUserMenu", { name: user.display_name })}
+                aria-label={t("nav.openUserMenu", { name: userDisplayName })}
                 id="header-user-menu-trigger"
               >
                 <span className="flex size-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">
-                  {getInitials(user.display_name)}
+                  {getInitials(userDisplayName)}
                 </span>
                 <span className="hidden min-w-0 text-start md:block">
                   <span className="block max-w-40 truncate text-sm font-semibold">
-                    <BidiText>{user.display_name}</BidiText>
+                    <BidiText>{userDisplayName}</BidiText>
                   </span>
                   <span className="block text-xs font-normal capitalize text-muted-foreground">
                     {roleLabel}
@@ -119,7 +124,7 @@ export function AppHeader({
             <PopoverContent className="w-72 p-0 shadow-lg" align="end">
               <div className="border-b border-border px-4 py-4">
                 <p className="truncate text-sm font-semibold">
-                  <BidiText>{user.display_name}</BidiText>
+                  <BidiText>{userDisplayName}</BidiText>
                 </p>
                 <p className="mt-1 truncate text-xs text-muted-foreground">
                   <TechnicalText>{user.email}</TechnicalText>
@@ -149,14 +154,16 @@ export function AppHeader({
                   <Bell className="size-3.5 text-muted-foreground" />
                   <span>{t("nav.notificationCenter", "Notification Center")}</span>
                 </Link>
-                <Link
-                  to="/activity"
-                  onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-foreground hover:bg-muted transition-colors"
-                >
-                  <Activity className="size-3.5 text-muted-foreground" />
-                  <span>{t("nav.systemActivity", "System Activity Ledger")}</span>
-                </Link>
+                {user.primary_role === "admin" && (
+                  <Link
+                    to="/activity"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Activity className="size-3.5 text-muted-foreground" />
+                    <span>{t("nav.systemActivity", "System Activity Ledger")}</span>
+                  </Link>
+                )}
                 <Link
                   to="/settings/notifications"
                   onClick={() => setUserMenuOpen(false)}
