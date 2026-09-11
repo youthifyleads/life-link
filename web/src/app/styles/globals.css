@@ -1,0 +1,187 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: light;
+
+  --background: #f4f7f9;
+  --foreground: #102a3a;
+  --surface: #ffffff;
+  --surface-subtle: #f8fafb;
+  --card: #ffffff;
+  --card-foreground: #102a3a;
+  --popover: #ffffff;
+  --popover-foreground: #102a3a;
+
+  --primary: #0b5f7a;
+  --primary-hover: #084b61;
+  --primary-foreground: #ffffff;
+  --secondary: #dceff5;
+  --secondary-foreground: #12344d;
+  --muted: #edf2f5;
+  --muted-foreground: #526675;
+  --accent: #dceff5;
+  --accent-foreground: #12344d;
+
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --emergency: #b42318;
+  --emergency-subtle: #feeceb;
+  --success: #16794a;
+  --success-subtle: #e8f5ee;
+  --warning: #946200;
+  --warning-subtle: #fff4d6;
+
+  --border: #d8e2e8;
+  --input: #c7d5de;
+  --ring: #2563eb;
+  --clinical-navy: #12344d;
+  --clinical-canvas: #f4f7f9;
+  --sidebar: #12344d;
+  --sidebar-foreground: #ffffff;
+  --sidebar-muted: #bfd4df;
+  --sidebar-accent: #1c4a64;
+  --sidebar-border: #31566d;
+
+  --radius: 0.5rem;
+  --shadow-overlay: 0 12px 32px -12px rgb(16 42 58 / 0.25);
+}
+
+@theme inline {
+  --font-sans:
+    "IBM Plex Sans Variable", "Noto Sans Arabic Variable", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono:
+    ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-emergency: var(--emergency);
+  --color-emergency-subtle: var(--emergency-subtle);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-clinical-navy: var(--clinical-navy);
+  --color-clinical-canvas: var(--clinical-canvas);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    min-width: 320px;
+    background: var(--background);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html[dir="rtl"] body {
+    font-family: "Noto Sans Arabic Variable", "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
+    line-height: 1.65;
+  }
+
+  html[dir="rtl"] :is(h1, h2, h3, h4, h5, h6, button, label, th) {
+    letter-spacing: 0;
+    line-height: 1.5;
+  }
+
+  html[dir="rtl"] .rtl-flip {
+    transform: scaleX(-1);
+  }
+
+  .unicode-isolate {
+    unicode-bidi: isolate;
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    text-align: start;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  * {
+    scrollbar-color: #9fb2bd transparent;
+    scrollbar-width: thin;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
