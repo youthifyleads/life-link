@@ -127,9 +127,9 @@ export function LoginPage() {
             ? t("auth.invalidCredentials")
             : apiError.correlationId
               ? t("auth.apiErrorWithReference", {
-                  message: apiError.message,
-                  reference: apiError.correlationId,
-                })
+                message: apiError.message,
+                reference: apiError.correlationId,
+              })
               : apiError.message,
       });
     }
