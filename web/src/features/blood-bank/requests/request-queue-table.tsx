@@ -1,21 +1,17 @@
-import {
-  ArrowRight,
-  Check,
-  Clock,
-} from "lucide-react";
+import { ArrowRight, Check, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
-import type {
-  BloodBankRequest,
-  BloodBankRequestAction,
-} from "@/features/blood-bank/types/blood-bank.types";
 import {
   formatBloodBankComponent,
   formatBloodBankDateTime,
   formatHospitalName,
 } from "@/features/blood-bank/components/blood-bank-formatters";
 import { RequestActionPanel } from "@/features/blood-bank/components/request-action-panel";
+import type {
+  BloodBankRequest,
+  BloodBankRequestAction,
+} from "@/features/blood-bank/types/blood-bank.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
 import { RequestStatusBadge } from "@/shared/components/clinical/request-status-badge";
 import { UrgencyBadge } from "@/shared/components/clinical/urgency-badge";
@@ -41,193 +37,201 @@ export function RequestQueueTable({
   const showActions = Boolean(onAction) && !compact;
 
   return (
-    <div className="border border-border bg-surface shadow-xs">
-      {/* Desktop & Tablet Clinical Dispatch Ledger */}
+    <div className="overflow-hidden rounded-md border border-border bg-surface">
       <div
-        className="hidden overflow-x-auto md:block"
-        tabIndex={0}
+        className={compact ? "hidden overflow-x-auto md:block" : "hidden xl:block"}
+        tabIndex={compact ? 0 : undefined}
         role="region"
         aria-label={t("bloodBank.requestsTableLabel")}
       >
-        <table className="w-full min-w-[64rem] border-collapse text-start text-xs sm:text-sm">
+        <table
+          className={
+            compact
+              ? "w-full min-w-[64rem] border-collapse text-sm"
+              : "w-full table-fixed border-collapse text-sm"
+          }
+        >
           <thead>
-            <tr className="border-b border-border bg-surface-subtle/80 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              <th scope="col" className="ps-4 pe-2 py-2.5 text-start w-[14%]">
-                {t("hospital.requestId", "Requisition & Urgency")}
+            <tr className="border-b border-border bg-surface-subtle text-xs font-semibold text-muted-foreground">
+              <th scope="col" className="w-[14%] px-4 py-3 text-start">
+                {t("bloodBank.queueRequestColumn")}
               </th>
-              <th scope="col" className="px-3 py-2.5 text-start w-[19%]">
-                {t("healthcare.hospital", "Hospital & Facility")}
+              <th scope="col" className="w-[18%] px-4 py-3 text-start">
+                {t("bloodBank.queueHospitalColumn")}
               </th>
-              <th scope="col" className="px-3 py-2.5 text-start w-[15%]">
-                {t("common.bloodGroup", "Product & Group")}
+              <th scope="col" className="w-[22%] px-4 py-3 text-start">
+                {t("bloodBank.queueBloodColumn")}
               </th>
-              <th scope="col" className="px-3 py-2.5 text-start w-[12%]">
-                {t("common.quantity", "Demanded & Alloc.")}
+              <th scope="col" className="w-[13%] px-4 py-3 text-start">
+                {t("common.status")}
               </th>
-              <th scope="col" className="px-3 py-2.5 text-start w-[12%]">
-                {t("common.status", "Workflow Status")}
+              <th scope="col" className="w-[17%] px-4 py-3 text-start">
+                {t("bloodBank.queueScheduleColumn")}
               </th>
-              <th scope="col" className="px-3 py-2.5 text-start w-[14%]">
-                {t("bloodBank.requiredBy", "Required & Timeline")}
+              <th scope="col" className="w-[16%] px-4 py-3 text-end">
+                {showActions
+                  ? t("bloodBank.queueNextActionColumn")
+                  : t("common.actions")}
               </th>
-              {showActions ? (
-                <th scope="col" className="px-3 pe-4 py-2.5 text-end w-[14%]">
-                  {t("common.actions", "Dispatch Actions")}
-                </th>
-              ) : compact ? (
-                <th scope="col" className="px-3 pe-4 py-2.5 text-end w-[6%]">
-                  <span className="sr-only">{t("common.view", "View")}</span>
-                </th>
-              ) : null}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border font-normal">
+          <tbody className="divide-y divide-border">
             {requests.map((request) => {
               const allocatedCount = request.allocatedUnitIds.length;
               const isFulfilled = allocatedCount >= request.quantity;
               const isUrgentOrEmergency =
                 request.urgency === "emergency" || request.urgency === "urgent";
-
-              // Clinical dispatch urgency styling: subtle tinted surface with high contrast typography
-              const triageRowStyle =
+              const rowTone =
                 request.urgency === "emergency"
-                  ? "bg-destructive/[0.04] hover:bg-destructive/[0.08]"
+                  ? "bg-destructive/[0.035] hover:bg-destructive/[0.065]"
                   : request.urgency === "urgent"
-                    ? "bg-amber-500/[0.03] hover:bg-amber-500/[0.06]"
+                    ? "bg-amber-500/[0.025] hover:bg-amber-500/[0.05]"
                     : "hover:bg-surface-subtle/70";
 
               return (
-                <tr
-                  key={request.id}
-                  className={`transition-colors duration-100 ${triageRowStyle}`}
-                >
-                  {/* Column 1: ID & Urgency */}
-                  <td className="ps-3 pe-2 py-3 align-middle">
-                    <div className="flex flex-col gap-1">
+                <tr key={request.id} className={rowTone}>
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex flex-col items-start gap-2">
                       <Link
                         to={`/blood-bank/requests/${request.id}`}
-                        className="font-bold text-primary hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary tabular-nums"
+                        className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        <bdi dir="ltr">{request.id}</bdi>
+                        <bdi dir="ltr" className="tabular-nums">
+                          {request.id}
+                        </bdi>
                       </Link>
-                      <UrgencyBadge urgency={request.urgency} className="w-fit" />
+                      <UrgencyBadge urgency={request.urgency} />
                     </div>
                   </td>
 
-                  {/* Column 2: Facility */}
-                  <td className="px-3 py-3 align-middle">
-                    <div className="min-w-0">
-                      <span className="block truncate font-semibold text-foreground">
-                        {formatHospitalName(request.hospital.name, request.hospital.id)}
-                      </span>
-                      <span className="mt-0.5 inline-block text-xs text-muted-foreground font-mono tabular-nums">
-                        <bdi dir="ltr">{request.hospital.facilityCode}</bdi>
-                      </span>
-                    </div>
+                  <td className="px-4 py-4 align-top">
+                    <span className="block font-semibold leading-5 text-foreground">
+                      {formatHospitalName(request.hospital.name, request.hospital.id)}
+                    </span>
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      <bdi dir="ltr" className="tabular-nums">
+                        {request.hospital.facilityCode}
+                      </bdi>
+                    </span>
                   </td>
 
-                  {/* Column 3: Blood Group & Component */}
-                  <td className="px-3 py-3 align-middle">
-                    <div className="flex items-center gap-2">
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex items-start gap-2.5">
                       <BloodGroupBadge group={request.bloodGroup} size="compact" />
-                      <div className="min-w-0">
-                        <span className="block truncate text-xs font-medium text-foreground">
+                      <div className="min-w-0 space-y-1.5">
+                        <span className="block font-medium leading-5 text-foreground">
                           {formatBloodBankComponent(request.component)}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {t("bloodBank.queueRequestedUnits", {
+                            count: request.quantity,
+                          })}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 text-xs font-medium ${
+                            isFulfilled
+                              ? "text-success"
+                              : allocatedCount > 0
+                                ? "text-amber-700 dark:text-amber-400"
+                                : "text-muted-foreground"
+                          }`}
+                        >
+                          {isFulfilled ? (
+                            <Check aria-hidden="true" className="size-3.5" />
+                          ) : null}
+                          {t("bloodBank.allocatedProgress", {
+                            allocated: allocatedCount,
+                            total: request.quantity,
+                          })}
                         </span>
                       </div>
                     </div>
                   </td>
 
-                  {/* Column 4: Quantity & Allocation Status */}
-                  <td className="px-3 py-3 align-middle">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-bold text-foreground tabular-nums">
-                        {request.quantity}{" "}
-                        <span className="text-xs font-normal text-muted-foreground">
-                          {request.quantity === 1 ? t("common.unit") : t("common.units")}
-                        </span>
-                      </span>
-                      <span
-                        className={`inline-flex items-center gap-1 text-[11px] font-medium tabular-nums ${
-                          isFulfilled
-                            ? "text-success"
-                            : allocatedCount > 0
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-muted-foreground"
-                        }`}
-                      >
-                        {isFulfilled ? (
-                          <Check aria-hidden="true" className="size-3 shrink-0" />
-                        ) : null}
-                        <bdi dir="ltr">
-                          {allocatedCount}/{request.quantity}
-                        </bdi>{" "}
-                        {isFulfilled ? t("status.allocated", "Allocated") : t("common.pending", "Alloc.")}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Column 5: Status */}
-                  <td className="px-3 py-3 align-middle">
+                  <td className="px-4 py-4 align-top">
                     <RequestStatusBadge status={request.status} />
                   </td>
 
-                  {/* Column 6: Required & Created Timeline */}
-                  <td className="px-3 py-3 align-middle">
-                    <div className="flex flex-col gap-0.5">
-                      <span
-                        className={`text-xs font-semibold tabular-nums flex items-center gap-1 ${
+                  <td className="px-4 py-4 align-top">
+                    <div className="space-y-2">
+                      <div
+                        className={`flex items-start gap-1.5 ${
                           isUrgentOrEmergency
-                            ? "text-destructive font-bold"
-                            : "text-foreground"
+                            ? "font-semibold text-destructive"
+                            : "font-medium text-foreground"
                         }`}
                       >
-                        <Clock aria-hidden="true" className="size-3 shrink-0" />
-                        <bdi dir="ltr">{formatBloodBankDateTime(request.requiredAt)}</bdi>
-                      </span>
-                      <span className="text-[11px] text-muted-foreground tabular-nums">
-                        {t("bloodBank.createdOn", "Created:")}{" "}
-                        <bdi dir="ltr">{formatBloodBankDateTime(request.createdAt)}</bdi>
+                        <Clock
+                          aria-hidden="true"
+                          className="mt-0.5 size-3.5 shrink-0"
+                        />
+                        <time dateTime={request.requiredAt}>
+                          <bdi dir="auto">
+                            {formatBloodBankDateTime(request.requiredAt)}
+                          </bdi>
+                        </time>
+                      </div>
+                      <span className="block text-xs leading-5 text-muted-foreground">
+                        {t("bloodBank.createdOn")}: {" "}
+                        <time dateTime={request.createdAt}>
+                          <bdi dir="auto">
+                            {formatBloodBankDateTime(request.createdAt)}
+                          </bdi>
+                        </time>
                       </span>
                     </div>
                   </td>
 
-                  {/* Column 7: Dispatch Action Dock */}
-                  {showActions && onAction ? (
-                    <td className="px-3 pe-4 py-3 text-end align-middle">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {!isFulfilled && request.status !== "completed" && request.status !== "rejected" && (
+                  <td className="px-4 py-4 align-top">
+                    {showActions && onAction ? (
+                      <div className="ms-auto flex max-w-48 flex-col gap-2">
+                        {!isFulfilled &&
+                        request.status !== "completed" &&
+                        request.status !== "cancelled" &&
+                        request.status !== "rejected" ? (
                           <Button
                             asChild
                             size="sm"
                             variant="secondary"
-                            className="h-8 px-2.5 text-xs font-medium border border-border"
+                            className="h-9 w-full justify-center px-3 text-xs"
                           >
                             <Link to={`/blood-bank/requests/${request.id}`}>
-                              {t("bloodBank.allocateUnits", "Allocate")}
-                              <ArrowRight aria-hidden="true" className="size-3 rtl:rotate-180" />
+                              {t("bloodBank.allocateUnits")}
+                              <ArrowRight
+                                aria-hidden="true"
+                                className="size-3.5 rtl:rotate-180"
+                              />
                             </Link>
                           </Button>
-                        )}
+                        ) : null}
                         <RequestActionPanel
                           request={request}
                           isPending={activeRequestId === request.id}
                           onAction={onAction}
+                          className="w-full flex-col items-stretch [&>button]:w-full [&>button]:justify-center"
                         />
                       </div>
-                    </td>
-                  ) : compact ? (
-                    <td className="px-3 pe-4 py-3 text-end align-middle">
-                      <Button asChild size="sm" variant="ghost" className="size-8 p-0">
+                    ) : (
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="ghost"
+                        className="ms-auto size-9 p-0"
+                      >
                         <Link
                           to={`/blood-bank/requests/${request.id}`}
-                          aria-label={`View requisition ${request.id}`}
+                          aria-label={t("bloodBank.openRequest", {
+                            id: request.id,
+                          })}
                         >
-                          <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
+                          <ArrowRight
+                            aria-hidden="true"
+                            className="size-4 rtl:rotate-180"
+                          />
                         </Link>
                       </Button>
-                    </td>
-                  ) : null}
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -235,15 +239,15 @@ export function RequestQueueTable({
         </table>
       </div>
 
-      {/* Mobile Responsive Clinical Dispatch Cards */}
-      <div className="divide-y divide-border md:hidden">
+      <div
+        className={compact ? "divide-y divide-border md:hidden" : "divide-y divide-border xl:hidden"}
+      >
         {requests.map((request) => {
           const allocatedCount = request.allocatedUnitIds.length;
           const isFulfilled = allocatedCount >= request.quantity;
           const isUrgentOrEmergency =
             request.urgency === "emergency" || request.urgency === "urgent";
-
-          const triageCardBg =
+          const cardTone =
             request.urgency === "emergency"
               ? "bg-destructive/[0.03]"
               : request.urgency === "urgent"
@@ -251,105 +255,141 @@ export function RequestQueueTable({
                 : "";
 
           return (
-            <article key={request.id} className={`p-4 transition-colors ${triageCardBg}`}>
-              {/* Header: ID, Urgency, and Status */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
+            <article key={request.id} className={`p-4 sm:p-5 ${cardTone}`}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <Link
                     to={`/blood-bank/requests/${request.id}`}
-                    className="text-sm font-bold text-primary hover:underline tabular-nums"
+                    className="font-semibold text-primary underline-offset-4 hover:underline"
                   >
-                    <bdi dir="ltr">{request.id}</bdi>
+                    <bdi dir="ltr" className="tabular-nums">
+                      {request.id}
+                    </bdi>
                   </Link>
                   <UrgencyBadge urgency={request.urgency} />
                 </div>
                 <RequestStatusBadge status={request.status} />
               </div>
 
-              {/* Hospital & Facility */}
-              <div className="mt-2.5">
-                <p className="font-semibold text-sm text-foreground">
+              <div className="mt-3">
+                <p className="font-semibold leading-5 text-foreground">
                   {formatHospitalName(request.hospital.name, request.hospital.id)}
                 </p>
-                <p className="text-xs text-muted-foreground font-mono tabular-nums">
-                  <bdi dir="ltr">{request.hospital.facilityCode}</bdi>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  <bdi dir="ltr" className="tabular-nums">
+                    {request.hospital.facilityCode}
+                  </bdi>
                 </p>
               </div>
 
-              {/* Clinical Specs Grid */}
-              <div className="mt-3.5 grid grid-cols-2 gap-2.5 rounded-md border border-border bg-surface-subtle/50 p-2.5 text-xs">
-                <div>
-                  <span className="text-[11px] text-muted-foreground block mb-1">
-                    {t("common.bloodGroup", "Blood Spec")}
-                  </span>
-                  <div className="flex items-center gap-1.5">
+              <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y border-border py-3 text-sm sm:grid-cols-3">
+                <div className="min-w-0">
+                  <dt className="text-xs text-muted-foreground">
+                    {t("bloodBank.queueBloodColumn")}
+                  </dt>
+                  <dd className="mt-1 flex items-center gap-2">
                     <BloodGroupBadge group={request.bloodGroup} size="compact" />
-                    <span className="text-xs font-medium truncate">
+                    <span className="truncate text-sm font-medium">
                       {formatBloodBankComponent(request.component)}
                     </span>
-                  </div>
+                  </dd>
                 </div>
-
                 <div>
-                  <span className="text-[11px] text-muted-foreground block mb-1">
-                    {t("common.quantity", "Demanded")}
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="font-bold tabular-nums">
-                      {request.quantity}{" "}
-                      {request.quantity === 1 ? t("common.unit") : t("common.units")}
-                    </span>
-                    <span
-                      className={`text-[11px] tabular-nums ${
-                        isFulfilled
-                          ? "text-success font-medium"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      <bdi dir="ltr">{allocatedCount}/{request.quantity}</bdi> {t("status.allocated", "Allocated")}
-                    </span>
-                  </div>
+                  <dt className="text-xs text-muted-foreground">
+                    {t("bloodBank.queueRequestedLabel")}
+                  </dt>
+                  <dd className="mt-1 font-semibold tabular-nums">
+                    {t("bloodBank.queueRequestedUnits", {
+                      count: request.quantity,
+                    })}
+                  </dd>
                 </div>
-              </div>
-
-              {/* Required Timeline */}
-              <div className="mt-2.5 flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Clock aria-hidden="true" className="size-3" />
-                  <span>{t("bloodBank.requiredBy", "Required:")}</span>
-                  <span className={`font-semibold tabular-nums ${isUrgentOrEmergency ? "text-destructive" : "text-foreground"}`}>
-                    <bdi dir="ltr">{formatBloodBankDateTime(request.requiredAt)}</bdi>
-                  </span>
+                <div>
+                  <dt className="text-xs text-muted-foreground">
+                    {t("bloodBank.queueAllocationLabel")}
+                  </dt>
+                  <dd
+                    className={`mt-1 font-medium ${
+                      isFulfilled ? "text-success" : "text-muted-foreground"
+                    }`}
+                  >
+                    {t("bloodBank.allocatedProgress", {
+                      allocated: allocatedCount,
+                      total: request.quantity,
+                    })}
+                  </dd>
                 </div>
-              </div>
+                <div className="col-span-2 sm:col-span-3">
+                  <dt className="text-xs text-muted-foreground">
+                    {t("bloodBank.requiredBy")}
+                  </dt>
+                  <dd
+                    className={`mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 ${
+                      isUrgentOrEmergency
+                        ? "font-semibold text-destructive"
+                        : "font-medium text-foreground"
+                    }`}
+                  >
+                    <Clock aria-hidden="true" className="size-3.5" />
+                    <time dateTime={request.requiredAt}>
+                      <bdi dir="auto">
+                        {formatBloodBankDateTime(request.requiredAt)}
+                      </bdi>
+                    </time>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {t("bloodBank.createdOn")}: {" "}
+                      <time dateTime={request.createdAt}>
+                        <bdi dir="auto">
+                          {formatBloodBankDateTime(request.createdAt)}
+                        </bdi>
+                      </time>
+                    </span>
+                  </dd>
+                </div>
+              </dl>
 
-              {/* Actions Dock */}
               {showActions && onAction ? (
-                <div className="mt-3.5 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-3">
-                  {!isFulfilled && request.status !== "completed" && request.status !== "rejected" && (
-                    <Button asChild size="sm" variant="secondary" className="h-8 text-xs flex-1 sm:flex-none">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                  {!isFulfilled &&
+                  request.status !== "completed" &&
+                  request.status !== "cancelled" &&
+                  request.status !== "rejected" ? (
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="secondary"
+                      className="h-9 w-full justify-center text-xs sm:w-auto"
+                    >
                       <Link to={`/blood-bank/requests/${request.id}`}>
-                        {t("bloodBank.allocateUnits", "Allocate")}
-                        <ArrowRight aria-hidden="true" className="size-3 rtl:rotate-180" />
+                        {t("bloodBank.allocateUnits")}
+                        <ArrowRight
+                          aria-hidden="true"
+                          className="size-3.5 rtl:rotate-180"
+                        />
                       </Link>
                     </Button>
-                  )}
+                  ) : null}
                   <RequestActionPanel
                     request={request}
                     isPending={activeRequestId === request.id}
                     onAction={onAction}
+                    className="w-full [&>button]:flex-1 [&>button]:justify-center sm:w-auto sm:[&>button]:flex-none"
                   />
                 </div>
-              ) : compact ? (
-                <div className="mt-3 flex justify-end border-t border-border pt-2.5">
-                  <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
+              ) : (
+                <div className="mt-3 flex justify-end">
+                  <Button asChild size="sm" variant="ghost" className="h-8 text-xs">
                     <Link to={`/blood-bank/requests/${request.id}`}>
-                      {t("common.details", "View Requisition")}
-                      <ArrowRight aria-hidden="true" className="size-3 rtl:rotate-180" />
+                      {t("common.details")}
+                      <ArrowRight
+                        aria-hidden="true"
+                        className="size-3.5 rtl:rotate-180"
+                      />
                     </Link>
                   </Button>
                 </div>
-              ) : null}
+              )}
             </article>
           );
         })}

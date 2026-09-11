@@ -20,6 +20,7 @@ import { RequestQueueFilters } from "@/features/blood-bank/requests/request-queu
 import { RequestQueueTable } from "@/features/blood-bank/requests/request-queue-table";
 import {
   formatBloodBankComponent,
+  formatBloodBankStatus,
   formatHospitalName,
 } from "@/features/blood-bank/components/blood-bank-formatters";
 import {
@@ -161,7 +162,10 @@ export function RequestQueuePage() {
         onSuccess: (updated) => {
           setActiveRequestId(null);
           setFeedback({
-            message: `Request ${updated.id} is now ${updated.status}.`,
+            message: t("bloodBank.queueTransitionSuccess", {
+              id: updated.id,
+              status: formatBloodBankStatus(updated.status),
+            }),
             tone: "success",
           });
         },
@@ -199,9 +203,11 @@ export function RequestQueuePage() {
           onRetry={() => void requestsQuery.refetch()}
         />
       ) : (
-        <div className="space-y-4">
-          {/* Operational Dispatch Cadence Tiles */}
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="space-y-6">
+          <section
+            aria-label={t("bloodBank.queueSummaryLabel")}
+            className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-3 md:grid-cols-5"
+          >
             {/* Tile 1: Total Active */}
             <button
               type="button"
@@ -212,17 +218,17 @@ export function RequestQueuePage() {
                   urgency: "all",
                 }))
               }
-              className={`flex flex-col justify-between rounded-md border p-3 text-start transition-colors ${
+              className={`flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
                 filters.status === "all" && filters.urgency === "all"
-                  ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                  : "border-border bg-surface hover:border-border-hover hover:bg-surface-subtle"
+                  ? "bg-primary/8 shadow-[inset_0_0_0_1px_var(--primary)]"
+                  : "hover:bg-surface-subtle"
               }`}
             >
               <div className="flex items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
                 <span>{t("bloodBank.queueActiveRequisitions", "Active in Queue")}</span>
                 <Layers aria-hidden="true" className="size-3.5 text-primary" />
               </div>
-              <span className="mt-1.5 text-xl font-bold tracking-tight text-foreground tabular-nums">
+              <span className="mt-2 text-2xl font-semibold tracking-tight text-foreground tabular-nums">
                 {telemetry.activeCount}
               </span>
             </button>
@@ -237,17 +243,17 @@ export function RequestQueuePage() {
                   status: "all",
                 }))
               }
-              className={`flex flex-col justify-between rounded-md border p-3 text-start transition-colors ${
+              className={`flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
                 filters.urgency === "emergency"
-                  ? "border-destructive bg-destructive/10 ring-1 ring-destructive/40"
-                  : "border-border bg-surface hover:border-destructive/40 hover:bg-destructive/[0.03]"
+                  ? "bg-destructive/10 shadow-[inset_0_0_0_1px_var(--destructive)]"
+                  : "hover:bg-destructive/[0.04]"
               }`}
             >
               <div className="flex items-center justify-between gap-2 text-xs font-semibold text-destructive">
                 <span>{t("bloodBank.queueStatEmergency", "STAT Emergency")}</span>
                 <AlertTriangle aria-hidden="true" className="size-3.5" />
               </div>
-              <span className="mt-1.5 text-xl font-bold tracking-tight text-destructive tabular-nums">
+              <span className="mt-2 text-2xl font-semibold tracking-tight text-destructive tabular-nums">
                 {telemetry.emergencyCount}
               </span>
             </button>
@@ -262,17 +268,17 @@ export function RequestQueuePage() {
                   status: "all",
                 }))
               }
-              className={`flex flex-col justify-between rounded-md border p-3 text-start transition-colors ${
+              className={`flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
                 filters.urgency === "urgent"
-                  ? "border-amber-600 bg-amber-500/15 ring-1 ring-amber-500/40"
-                  : "border-border bg-surface hover:border-amber-500/40 hover:bg-amber-500/[0.03]"
+                  ? "bg-amber-500/15 shadow-[inset_0_0_0_1px_rgb(217_119_6)]"
+                  : "hover:bg-amber-500/[0.05]"
               }`}
             >
               <div className="flex items-center justify-between gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
                 <span>{t("bloodBank.queueUrgentTriage", "Urgent Triage")}</span>
                 <AlarmClock aria-hidden="true" className="size-3.5" />
               </div>
-              <span className="mt-1.5 text-xl font-bold tracking-tight text-amber-700 dark:text-amber-400 tabular-nums">
+              <span className="mt-2 text-2xl font-semibold tracking-tight text-amber-700 dark:text-amber-400 tabular-nums">
                 {telemetry.urgentCount}
               </span>
             </button>
@@ -287,17 +293,17 @@ export function RequestQueuePage() {
                   urgency: "all",
                 }))
               }
-              className={`flex flex-col justify-between rounded-md border p-3 text-start transition-colors ${
+              className={`flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
                 filters.status === "submitted"
-                  ? "border-secondary-foreground bg-secondary ring-1 ring-secondary-foreground/30"
-                  : "border-border bg-surface hover:border-border-hover hover:bg-surface-subtle"
+                  ? "bg-secondary shadow-[inset_0_0_0_1px_var(--secondary-foreground)]"
+                  : "hover:bg-surface-subtle"
               }`}
             >
               <div className="flex items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
                 <span>{t("bloodBank.queueNeedsAllocation", "Needs Allocation")}</span>
                 <PackageOpen aria-hidden="true" className="size-3.5 text-secondary-foreground" />
               </div>
-              <span className="mt-1.5 text-xl font-bold tracking-tight text-foreground tabular-nums">
+              <span className="mt-2 text-2xl font-semibold tracking-tight text-foreground tabular-nums">
                 {telemetry.needsAllocationCount}
               </span>
             </button>
@@ -312,27 +318,27 @@ export function RequestQueuePage() {
                   urgency: "all",
                 }))
               }
-              className={`flex flex-col justify-between rounded-md border p-3 text-start transition-colors col-span-2 sm:col-span-1 ${
+              className={`col-span-2 flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 sm:col-span-2 md:col-span-1 ${
                 filters.status === "preparing"
-                  ? "border-success bg-success/10 ring-1 ring-success/40"
-                  : "border-border bg-surface hover:border-success/40 hover:bg-success/[0.03]"
+                  ? "bg-success/10 shadow-[inset_0_0_0_1px_var(--success)]"
+                  : "hover:bg-success/[0.04]"
               }`}
             >
               <div className="flex items-center justify-between gap-2 text-xs font-medium text-success">
                 <span>{t("bloodBank.queueReadyOrPreparing", "Preparing & Ready")}</span>
                 <PackageCheck aria-hidden="true" className="size-3.5" />
               </div>
-              <span className="mt-1.5 text-xl font-bold tracking-tight text-success tabular-nums">
+              <span className="mt-2 text-2xl font-semibold tracking-tight text-success tabular-nums">
                 {telemetry.readyOrPreparingCount}
               </span>
             </button>
-          </div>
+          </section>
 
           {/* Feedback Transaction Receipt Banner */}
           {feedback ? (
             <div
               role={feedback.tone === "error" ? "alert" : "status"}
-              className={`flex items-center justify-between gap-3 rounded-md border px-4 py-2.5 text-xs font-medium shadow-xs animate-in fade-in-50 duration-150 ${
+              className={`flex items-center justify-between gap-3 rounded-md border px-4 py-3 text-sm font-medium ${
                 feedback.tone === "error"
                   ? "border-destructive/30 bg-emergency-subtle text-destructive"
                   : "border-success/30 bg-success-subtle text-success"
@@ -344,7 +350,7 @@ export function RequestQueuePage() {
                 ) : (
                   <CheckCircle2 aria-hidden="true" className="size-4 shrink-0" />
                 )}
-                <span>{feedback.message}</span>
+                <span className="leading-5">{feedback.message}</span>
               </div>
               <button
                 type="button"
