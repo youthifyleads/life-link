@@ -4,9 +4,7 @@ import {
   ArrowRight,
   Building2,
   Droplets,
-  HeartHandshake,
   LockKeyhole,
-  QrCode,
   ShieldCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -337,79 +335,6 @@ export function LoginPage() {
                   </Button>
                 </section>
 
-                <section
-                  className="py-4"
-                  aria-labelledby="donor-demo-access"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
-                      <HeartHandshake aria-hidden="true" className="size-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <h3
-                        id="donor-demo-access"
-                        className="text-sm font-semibold"
-                      >
-                        {t("auth.donorName", "Omar Hassan")}
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {t("auth.donorDesc", "Voluntary Donor • Life-Saver Member")}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    className="mt-3 w-full"
-                    type="button"
-                    size="lg"
-                    variant="secondary"
-                    disabled={isDemoSubmitting}
-                    onClick={() => void handleDemoSignIn("donor")}
-                  >
-                    {isDemoSubmitting
-                      ? t("common.loading", "Opening workspace…")
-                      : t("auth.enterDonorWorkspace")}
-                    {!isDemoSubmitting ? (
-                      <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
-                    ) : null}
-                  </Button>
-                </section>
-
-                <section
-                  className="py-4"
-                  aria-labelledby="caregiver-demo-access"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
-                      <QrCode aria-hidden="true" className="size-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <h3
-                        id="caregiver-demo-access"
-                        className="text-sm font-semibold"
-                      >
-                        {t("auth.caregiverName", "Sara Mostafa")}
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {t("auth.caregiverDesc", "Patient Caregiver • Transit Tracking")}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    className="mt-3 w-full"
-                    type="button"
-                    size="lg"
-                    variant="secondary"
-                    disabled={isDemoSubmitting}
-                    onClick={() => void handleDemoSignIn("caregiver")}
-                  >
-                    {isDemoSubmitting
-                      ? t("common.loading", "Opening workspace…")
-                      : t("auth.enterCaregiverWorkspace")}
-                    {!isDemoSubmitting ? (
-                      <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
-                    ) : null}
-                  </Button>
-                </section>
               </div>
 
               <p className="flex items-start gap-3 border-t border-border pt-5 text-xs leading-5 text-muted-foreground">
