@@ -6,16 +6,19 @@
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Technology Stack 
 
 Life Link is engineered with modern, robust technologies tailored for high performance and cross-platform reliability:
 
-| Layer | Technology | Key Highlights |
-| :--- | :--- | :--- |
-| **Web Frontend** | **React + TypeScript** | Component-driven UI, strong typing, Vite/Next toolchain |
-| **Mobile Application** | **Flutter + Dart** | Cross-platform iOS & Android, high frame-rate UX |
-| **Backend Service** | **Python + FastAPI** | High-performance asynchronous RESTful APIs & data validation |
-| **Database** | **Microsoft SQL Server (MSSQL)** | Enterprise relational database, ACID compliance, stored procedures |
+| Area | Directory | Responsible Role | CODEOWNERS Handle |
+| :--- | :--- | :--- | :--- |
+| **Global / Architecture** | `/` | Technical Lead | `@Ahmed-Esso` |
+| **Backend** | `/backend/` | Backend Lead | `@gholamseif` |
+| **Database** | `/database/` | Database & Backend Developer | `` |
+| **Web** | `/web/` | Web Frontend Developer | `@ZiadDev123` |
+| **Mobile** | `/mobile/` | Mobile Developer | `@Toqa10` |
+| **CI/CD & Security** | `/.github/` | Tech Lead + DevOps / Security Engineer | `@Ahmed-Esso` `@Mayar-hany-2005` |
+
 
 ---
 
@@ -48,11 +51,13 @@ Our 7-person team is structured with designated area ownership configured in [`.
 | Area | Directory | Responsible Role | CODEOWNERS Handle |
 | :--- | :--- | :--- | :--- |
 | **Global / Architecture** | `/` | Technical Lead | `@Ahmed-Esso` |
-| **Backend** | `/backend/` | Backend Lead | `@gholamseif` |
+| **Backend** | `/backend/` | Backend Lead | `@Gholamself` |
 | **Database** | `/database/` | Database & Backend Developer | `` |
 | **Web** | `/web/` | Web Frontend Developer | `@ZiadDev123` |
 | **Mobile** | `/mobile/` | Mobile Developer | `@Toqa10` |
 | **CI/CD & Security** | `/.github/` | Tech Lead + DevOps / Security Engineer | `@Ahmed-Esso` `@Mayar-hany-2005` |
+
+> *Note: Update placeholder handles in [`.github/CODEOWNERS`](.github/CODEOWNERS) to matching GitHub usernames/team handles.*
 
 ---
 
@@ -106,10 +111,10 @@ feature/*                       ●───●             \         /
    <NUMBER>_<descriptive_name>.sql    (e.g., 001_initial_schema.sql, 006_add_notifications_related_request_id.sql)
    V<NUMBER>__<descriptive_name>.sql  (e.g., V001__initial_schema.sql)
    ```
-   *Examples:* `001_initial_schema.sql`, `V001__create_initial_schema.sql`, `V002__add_blood_inventory_table.sql`.
 2. **Co-located with Code**: Submit the database migration script in the exact same Pull Request that introduces the backend/web/mobile changes requiring it.
 3. **Idempotent & Safe**: Write SQL scripts with defensive checks (e.g., `IF NOT EXISTS ...`) to avoid accidental failure on re-runs.
 4. **MSSQL Specifics**: Use standard T-SQL DDL syntax. Do not store sensitive database credentials or production connection strings inside migration files.
+
 
 ---
 
@@ -193,3 +198,4 @@ See [`backend/docs/QA_TEST_ACCOUNTS.md`](backend/docs/QA_TEST_ACCOUNTS.md) for f
 ## 📄 License
 
 This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
+

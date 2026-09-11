@@ -19,6 +19,3 @@ Welcome to the Life Link project documentation directory.
 - [Database Guidelines & Migrations](../database/README.md): MSSQL setup, migration naming conventions, and inventory of migrations (`000` through `006`).
 - [Consolidated Database Script](../database/LifeLink_Full_Database.sql): All-in-one T-SQL script for fresh Azure SQL / SSMS database deployment.
 
-### Onboarding & Deployment
-- **Web & Mobile**: Setup instructions for React (web) and Flutter (mobile).
-- **Deployment & DevOps**: CI/CD workflows, environment configuration, and release procedures.
