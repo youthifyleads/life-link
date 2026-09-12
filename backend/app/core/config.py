@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list[str] = ["*"]
 
+    # Paymob Gateway (Set via .env locally or Azure App Service Application Settings in Production)
+    PAYMOB_API_KEY: str = ""
+    PAYMOB_SECRET_KEY: str = ""
+    PAYMOB_PUBLIC_KEY: str = ""
+    PAYMOB_HMAC_SECRET: str = ""
+    PAYMOB_BASE_URL: str = "https://accept.paymob.com"
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -110,5 +110,11 @@ Set `REPOSITORY_BACKEND=sqlserver` to use the SQLAlchemy/Azure SQL repositories.
 OTP: POST /api/v1/auth/otp/request, POST /api/v1/auth/otp/verify. Development fixed OTP: 123456.
 Donor: /api/v1/donors/me, /api/v1/donors/me/donations, /api/v1/donors/me/responses, /api/v1/donors/me/consents plus admin/medical donor lookup.
 Caregiver: /api/v1/caregiver/assignments CRUD/update endpoints.
-Payments: POST /api/v1/payments, GET /api/v1/payments/{id}, GET /api/v1/payments/request/{request_id}, PATCH /api/v1/payments/{id}.
+Payments:
+- POST /api/v1/payments/initiate (Hospital User / Admin: Initiates Paymob payment session and returns checkout_url)
+- POST /api/v1/payments/webhook (Public Paymob callback endpoint verified by HMAC-SHA512)
+- POST /api/v1/payments (Manual record creation)
+- GET /api/v1/payments/{id}
+- GET /api/v1/payments/request/{request_id}
+- PATCH /api/v1/payments/{id}
 Full examples are in docs/MOBILE_API_CONTRACT.md.

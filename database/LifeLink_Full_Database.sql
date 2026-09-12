@@ -549,6 +549,7 @@ BEGIN
     CREATE TABLE request_allocations (
         allocation_id       UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
         quantity            NUMERIC(8,2)     NOT NULL,
+        unit_price          NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
         status              VARCHAR(30)      NOT NULL DEFAULT 'allocated',
         allocated_at        DATETIME2        NOT NULL DEFAULT SYSUTCDATETIME(),
         blood_request_id    UNIQUEIDENTIFIER NOT NULL,
@@ -570,6 +571,9 @@ BEGIN
         CONSTRAINT ck_request_allocations_quantity
             CHECK (quantity > 0),
 
+        CONSTRAINT ck_request_allocations_unit_price
+            CHECK (unit_price >= 0),
+
         CONSTRAINT ck_request_allocations_status
             CHECK (status IN ('allocated','released','fulfilled','cancelled'))
     );
@@ -582,6 +586,9 @@ BEGIN
     CREATE TABLE payments (
         payment_id               UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
         amount                   NUMERIC(10,2)    NOT NULL,
+        currency                 VARCHAR(3)       NOT NULL DEFAULT 'EGP',
+        provider                 VARCHAR(50)      NOT NULL DEFAULT 'paymob',
+        provider_order_id        NVARCHAR(100)    NULL,
         payment_status           VARCHAR(30)      NOT NULL DEFAULT 'pending',
         payment_method           VARCHAR(40)      NULL,
         paid_at                  DATETIME2        NULL,
@@ -590,7 +597,6 @@ BEGIN
         blood_request_id         UNIQUEIDENTIFIER NOT NULL,
 
         CONSTRAINT pk_payments PRIMARY KEY (payment_id),
-        CONSTRAINT uq_payments_blood_request_id UNIQUE (blood_request_id),
 
         CONSTRAINT fk_payments_blood_request
             FOREIGN KEY (blood_request_id) REFERENCES blood_requests(blood_request_id) ON DELETE NO ACTION,
@@ -609,6 +615,20 @@ DROP INDEX IF EXISTS ux_payments_transaction_reference ON dbo.payments;
 CREATE UNIQUE INDEX ux_payments_transaction_reference
     ON dbo.payments(transaction_reference)
     WHERE transaction_reference IS NOT NULL;
+
+DROP INDEX IF EXISTS ix_payments_provider_order_id ON dbo.payments;
+CREATE NONCLUSTERED INDEX ix_payments_provider_order_id
+    ON dbo.payments(provider_order_id)
+    WHERE provider_order_id IS NOT NULL;
+
+DROP INDEX IF EXISTS ix_payments_blood_request_id ON dbo.payments;
+CREATE NONCLUSTERED INDEX ix_payments_blood_request_id
+    ON dbo.payments(blood_request_id);
+
+DROP INDEX IF EXISTS ux_payments_single_paid_per_request ON dbo.payments;
+CREATE UNIQUE NONCLUSTERED INDEX ux_payments_single_paid_per_request
+    ON dbo.payments(blood_request_id)
+    WHERE payment_status = 'paid';
 
 -- 21. Supporting Documents
 IF OBJECT_ID('dbo.supporting_documents', 'U') IS NULL

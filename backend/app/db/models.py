@@ -104,7 +104,7 @@ class BloodBagModel(Base):
 
 class RequestAllocationModel(Base):
     __tablename__ = "request_allocations"
-    allocation_id: Mapped[str] = id_col(); quantity: Mapped[int] = mapped_column(Integer, nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); allocated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="CASCADE"), index=True); blood_bank_id: Mapped[str] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True); blood_bag_id: Mapped[str] = mapped_column(ForeignKey("blood_bags.blood_bag_id"), index=True)
+    allocation_id: Mapped[str] = id_col(); quantity: Mapped[int] = mapped_column(Integer, nullable=False); unit_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"), nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); allocated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="CASCADE"), index=True); blood_bank_id: Mapped[str] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True); blood_bag_id: Mapped[str] = mapped_column(ForeignKey("blood_bags.blood_bag_id"), index=True)
     blood_request: Mapped[BloodRequestModel] = relationship(back_populates="allocations"); blood_bag: Mapped[BloodBagModel] = relationship(back_populates="allocations")
 
 class ScanEventModel(Base):
@@ -141,7 +141,7 @@ class AuditLogModel(Base):
 
 class PaymentModel(Base):
     __tablename__ = "payments"
-    payment_id: Mapped[str] = id_col(); amount: Mapped[Decimal] = mapped_column(Numeric(12,2), nullable=False); payment_status: Mapped[str] = mapped_column(String(40), nullable=False); payment_method: Mapped[Optional[str]] = mapped_column(String(100)); paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); transaction_reference: Mapped[Optional[str]] = mapped_column(String(255), unique=True); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id"), index=True)
+    payment_id: Mapped[str] = id_col(); amount: Mapped[Decimal] = mapped_column(Numeric(12,2), nullable=False); currency: Mapped[str] = mapped_column(String(3), default="EGP", nullable=False); provider: Mapped[str] = mapped_column(String(50), default="paymob", nullable=False); provider_order_id: Mapped[Optional[str]] = mapped_column(String(100), index=True); payment_status: Mapped[str] = mapped_column(String(40), nullable=False); payment_method: Mapped[Optional[str]] = mapped_column(String(100)); paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); transaction_reference: Mapped[Optional[str]] = mapped_column(String(255), unique=True); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id"), index=True)
     blood_request: Mapped[BloodRequestModel] = relationship(back_populates="payments")
 
 class CaregiverAssignmentModel(Base):

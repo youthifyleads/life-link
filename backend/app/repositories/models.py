@@ -175,3 +175,6 @@ class PaymentRecord:
     transaction_reference: str | None
     created_at: datetime
     blood_request_id: str
+    currency: str = "EGP"
+    provider: str = "paymob"
+    provider_order_id: str | None = None
