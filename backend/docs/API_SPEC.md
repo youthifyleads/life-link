@@ -76,9 +76,9 @@ medical detail — only `reference`, `status`, `blood_type`, and the API compati
 
 ## Health
 
-| Method | Endpoint | Purpose | Auth |
-|---|---|---|---|
-| GET | `/health` | Liveness check | No |
+| Method | Endpoint | Purpose | Auth | Success (200) | Failure (503) |
+|---|---|---|---|---|---|
+| GET | `/health` | Liveness and database connectivity check (`SELECT 1`) | No | `{"status": "ok", "database": "connected"}` | `{"status": "error", "database": "disconnected"}` |
 
 ## Standard error codes
 
