@@ -1,9 +1,69 @@
 import hashlib
 import hmac
 from unittest.mock import AsyncMock, patch
+import pytest
 
 from app.core.paymob import PaymobClient
 from app.tests.conftest import auth_headers
+
+
+_orig_create_intention = PaymobClient.create_intention
+
+
+@pytest.fixture(autouse=True)
+def mock_paymob_intention_api():
+    with patch.object(
+        PaymobClient,
+        "create_intention",
+        new_callable=AsyncMock,
+    ) as mock_create:
+        mock_create.return_value = {
+            "provider_order_id": "609337263",
+            "client_secret": "egy_csk_test_mock123",
+            "checkout_url": "https://accept.paymob.com/unifiedcheckout/?publicKey=egy_pk_test_bKtkvo5X9GTf2RO1Kwyvk11apqc7yQbG&clientSecret=egy_csk_test_mock123",
+            "raw_response": {"intention_order_id": 609337263, "id": "pi_test_mock123"},
+        }
+        yield mock_create
+
+
+@pytest.mark.asyncio
+async def test_paymob_client_create_intention_resolves_card_integration():
+    client = PaymobClient(
+        secret_key="egy_sk_test_mock",
+        public_key="egy_pk_test_mock",
+        card_integration_id=5912806,
+    )
+
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_resp = AsyncMock()
+        mock_resp.status_code = 201
+        mock_resp.raise_for_status = lambda: None
+        mock_resp.json = lambda: {
+            "id": "pi_test_123",
+            "intention_order_id": 998877,
+            "client_secret": "egy_csk_test_abc",
+        }
+        mock_post.return_value = mock_resp
+
+        # Call the original unpatched method to test real parameter preparation logic
+        res = await _orig_create_intention(
+            client,
+            amount=250.0,
+            blood_request_id="req-test-1",
+            currency="EGP",
+            payment_methods=["card"],
+        )
+
+        assert res["provider_order_id"] == "998877"
+        assert res["client_secret"] == "egy_csk_test_abc"
+        assert "clientSecret=egy_csk_test_abc" in res["checkout_url"]
+
+        call_kwargs = mock_post.call_args.kwargs
+        sent_json = call_kwargs["json"]
+        assert sent_json["amount"] == 25000
+        assert sent_json["payment_methods"] == [5912806]
+        assert sent_json["special_reference"] == "req-test-1"
+        assert sent_json["extras"]["blood_request_id"] == "req-test-1"
 
 
 def _generate_hmac(obj: dict, hmac_secret: str) -> str:

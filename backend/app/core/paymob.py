@@ -19,6 +19,7 @@ class PaymobClient:
         public_key: str | None = None,
         hmac_secret: str | None = None,
         base_url: str | None = None,
+        card_integration_id: int | None = None,
     ):
         settings = get_settings()
         self.api_key = api_key or settings.PAYMOB_API_KEY
@@ -26,16 +27,19 @@ class PaymobClient:
         self.public_key = public_key or settings.PAYMOB_PUBLIC_KEY
         self.hmac_secret = hmac_secret or settings.PAYMOB_HMAC_SECRET
         self.base_url = (base_url or settings.PAYMOB_BASE_URL).rstrip("/")
+        self.card_integration_id = card_integration_id or settings.PAYMOB_CARD_INTEGRATION_ID
 
     async def create_intention(
         self,
         amount: float,
         blood_request_id: str,
         currency: str = "EGP",
-        payment_methods: list[str] | None = None,
+        payment_methods: list[int | str] | None = None,
         billing_data: dict[str, Any] | None = None,
         customer: dict[str, Any] | None = None,
         items: list[dict[str, Any]] | None = None,
+        notification_url: str | None = None,
+        redirection_url: str | None = None,
     ) -> dict[str, Any]:
         """Creates a payment intention via Paymob Unified Checkout API."""
         amount_cents = int(round(amount * 100))
@@ -62,17 +66,38 @@ class PaymobClient:
             }
         ]
 
+        # Resolve payment methods: Paymob Unified Checkout expects integration IDs (e.g. [5912806])
+        resolved_methods: list[int | str] = []
+        raw_methods = payment_methods or ["card"]
+        for m in raw_methods:
+            if isinstance(m, int):
+                resolved_methods.append(m)
+            elif isinstance(m, str) and m.isdigit():
+                resolved_methods.append(int(m))
+            elif m == "card":
+                if self.card_integration_id:
+                    resolved_methods.append(int(self.card_integration_id))
+                else:
+                    resolved_methods.append(m)
+            else:
+                resolved_methods.append(m)
+
         payload = {
             "amount": amount_cents,
             "currency": currency,
-            "payment_methods": payment_methods or ["card"],
+            "payment_methods": resolved_methods,
             "items": items or default_items,
             "billing_data": billing_data or default_billing,
             "customer": customer or default_customer,
+            "special_reference": str(blood_request_id),
             "extras": {
-                "blood_request_id": blood_request_id,
+                "blood_request_id": str(blood_request_id),
             },
         }
+        if notification_url:
+            payload["notification_url"] = notification_url
+        if redirection_url:
+            payload["redirection_url"] = redirection_url
 
         headers = {
             "Authorization": f"Token {self.secret_key}",
@@ -80,20 +105,31 @@ class PaymobClient:
         }
 
         url = f"{self.base_url}/v1/intention/"
-        logger.info("Initiating Paymob intention for blood_request %s (amount: %s %s)", blood_request_id, amount, currency)
+        logger.info(
+            "Initiating Paymob intention for blood_request %s (amount: %s %s, methods: %s)",
+            blood_request_id,
+            amount,
+            currency,
+            resolved_methods,
+        )
 
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.post(url, json=payload, headers=headers)
                 response.raise_for_status()
                 data = response.json()
+        except httpx.HTTPStatusError as exc:
+            error_body = exc.response.text
+            logger.error("Paymob API HTTP %s error: %s", exc.response.status_code, error_body)
+            raise RuntimeError(f"Paymob intention creation failed ({exc.response.status_code}): {error_body}") from exc
         except httpx.HTTPError as exc:
-            logger.error("Paymob API error: %s", exc)
-            # Raise with descriptive message so the service layer handles it cleanly
-            raise RuntimeError(f"Paymob intention creation failed: {exc}") from exc
+            logger.error("Paymob API network error: %s", exc)
+            raise RuntimeError(f"Paymob intention creation network error: {exc}") from exc
 
         client_secret = data.get("client_secret")
+        intention_order_id = data.get("intention_order_id")
         intention_id = data.get("id")
+        provider_order_id = str(intention_order_id or intention_id) if (intention_order_id or intention_id) else None
 
         # Paymob Unified Checkout hosted URL:
         checkout_url = (
@@ -103,7 +139,7 @@ class PaymobClient:
         )
 
         return {
-            "provider_order_id": str(intention_id) if intention_id else None,
+            "provider_order_id": provider_order_id,
             "client_secret": client_secret,
             "checkout_url": checkout_url,
             "raw_response": data,
