@@ -1,4 +1,4 @@
-import { Droplets, LockKeyhole } from "lucide-react";
+import { LockKeyhole } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -57,9 +57,11 @@ export function AppSidebar({
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex min-h-16 items-center gap-3 border-b border-sidebar-border px-5">
-        <span className="flex size-9 items-center justify-center rounded-md border border-white/20 bg-white/[0.06]">
-          <Droplets aria-hidden="true" className="size-5" strokeWidth={1.8} />
-        </span>
+        <img
+          src="/logo.webp"
+          alt="Life Link Logo"
+          className="size-9 rounded-md object-contain bg-white/10 p-0.5 border border-white/20 shadow-sm"
+        />
         <span className="text-base font-semibold tracking-[-0.015em]">
           {t("common.appName", env.appName)}
         </span>

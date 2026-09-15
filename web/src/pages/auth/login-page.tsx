@@ -3,7 +3,6 @@ import {
   Activity,
   ArrowRight,
   Building2,
-  Droplets,
   HeartHandshake,
   LockKeyhole,
   QrCode,
@@ -156,13 +155,11 @@ export function LoginPage() {
       <section className="relative overflow-hidden bg-clinical-navy px-6 py-8 text-white sm:px-10 lg:flex lg:flex-col lg:justify-between lg:px-12 lg:py-12">
         <div>
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-md border border-white/25 bg-white/10">
-              <Droplets
-                aria-hidden="true"
-                className="size-6"
-                strokeWidth={1.8}
-              />
-            </span>
+            <img
+              src="/logo.webp"
+              alt="Life Link Logo"
+              className="size-11 rounded-lg object-contain bg-white/10 p-1 border border-white/25 shadow-sm"
+            />
             <span className="text-xl font-semibold tracking-[-0.02em]">
               {t("common.appName", env.appName)}
             </span>
