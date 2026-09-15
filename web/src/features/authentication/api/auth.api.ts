@@ -52,13 +52,13 @@ export function adaptBackendUser(data: unknown): AuthenticatedUser {
   const roleStr = String(raw.role || raw.primary_role || "hospital_user");
   const primaryRole = mapBackendRoleToFrontendRole(roleStr);
   const orgType =
-    primaryRole === "hospital_staff"
+    primaryRole === "hospital_staff" || primaryRole === "medical_lead"
       ? "hospital"
       : primaryRole === "blood_bank_staff"
         ? "blood_bank"
         : "platform";
   const orgName =
-    primaryRole === "hospital_staff"
+    primaryRole === "hospital_staff" || primaryRole === "medical_lead"
       ? "Al-Qasr Al-Aini Hospital"
       : primaryRole === "blood_bank_staff"
         ? "National Blood Transfusion Center"

@@ -73,7 +73,7 @@ export const router = createBrowserRouter([
                 },
               },
               {
-                element: <ProtectedRoute allowedRoles={["hospital_staff"]} />,
+                element: <ProtectedRoute allowedRoles={["hospital_staff", "medical_lead"]} />,
                 children: [
                   {
                     path: "hospital/dashboard",
@@ -179,7 +179,7 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                element: <ProtectedRoute allowedRoles={["admin"]} />,
+                element: <ProtectedRoute allowedRoles={["admin", "platform_support"]} />,
                 children: [
                   {
                     path: "admin/dashboard",

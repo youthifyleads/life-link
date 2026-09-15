@@ -67,7 +67,7 @@ export function LoginPage() {
 
   if (status === "authenticated") {
     const authenticatedDestination =
-      user?.primary_role === "admin"
+      user?.primary_role === "admin" || user?.primary_role === "platform_support"
         ? "/admin/dashboard"
         : user?.primary_role === "blood_bank_staff"
           ? "/blood-bank/dashboard"
@@ -91,7 +91,7 @@ export function LoginPage() {
       return requestedPath;
     }
     const targetRole = role || user?.primary_role || "hospital_staff";
-    if (targetRole === "admin") return "/admin/dashboard";
+    if (targetRole === "admin" || targetRole === "platform_support") return "/admin/dashboard";
     if (targetRole === "blood_bank_staff") return "/blood-bank/dashboard";
     if (targetRole === "donor") return "/donor/dashboard";
     if (targetRole === "caregiver") return "/caregiver/dashboard";
