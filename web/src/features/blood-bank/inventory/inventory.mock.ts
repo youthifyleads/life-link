@@ -191,7 +191,7 @@ const initialUnits: BloodUnit[] = [
     bloodGroup: "A+",
     component: "platelets",
     collectionDate: "2026-09-05",
-    expiryDate: "2026-09-10T14:00:00+03:00", // within 24h
+    expiryDate: new Date(Date.now() + 18 * 60 * 60 * 1000).toISOString(), // within 24h
     storageLocation: "Agitator 1 — Tray B",
     status: "available",
     registeredAt: "2026-09-05T09:00:00+03:00",
@@ -214,7 +214,7 @@ const initialUnits: BloodUnit[] = [
     bloodGroup: "A+",
     component: "platelets",
     collectionDate: "2026-09-06",
-    expiryDate: "2026-09-11T16:00:00+03:00", // within 48h
+    expiryDate: new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString(), // within 48h
     storageLocation: "Agitator 1 — Tray B",
     status: "available",
     registeredAt: "2026-09-06T10:00:00+03:00",
@@ -1072,4 +1072,8 @@ export function deallocateUnitInSharedStore(
  */
 export function resetInventoryMock() {
   sharedBloodUnits = structuredClone(initialUnits);
+  const u211 = sharedBloodUnits.find((u) => u.id === "UNT-A-POS-0211");
+  if (u211) u211.expiryDate = new Date(Date.now() + 18 * 60 * 60 * 1000).toISOString();
+  const u212 = sharedBloodUnits.find((u) => u.id === "UNT-A-POS-0212");
+  if (u212) u212.expiryDate = new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString();
 }
