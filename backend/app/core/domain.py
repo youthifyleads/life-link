@@ -58,3 +58,21 @@ class AuditAction(str, Enum):
     INVENTORY_UPDATED = "INVENTORY_UPDATED"
     QR_ACCESSED = "QR_ACCESSED"
     AUTHORIZATION_DENIED = "AUTHORIZATION_DENIED"
+
+
+class BloodBagStatus(str, Enum):
+    AVAILABLE = "available"
+    RESERVED = "reserved"
+    ALLOCATED = "allocated"
+    IN_TRANSIT = "in_transit"
+    DELIVERED = "delivered"
+    RECEIVED = "received"
+
+BLOOD_BAG_TRANSITIONS: dict[BloodBagStatus, set[BloodBagStatus]] = {
+    BloodBagStatus.AVAILABLE: {BloodBagStatus.RESERVED},
+    BloodBagStatus.RESERVED: {BloodBagStatus.ALLOCATED},
+    BloodBagStatus.ALLOCATED: {BloodBagStatus.IN_TRANSIT},
+    BloodBagStatus.IN_TRANSIT: {BloodBagStatus.DELIVERED},
+    BloodBagStatus.DELIVERED: {BloodBagStatus.RECEIVED},
+    BloodBagStatus.RECEIVED: set(),
+}

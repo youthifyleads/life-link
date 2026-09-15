@@ -36,3 +36,7 @@ The Dockerfile installs Microsoft ODBC Driver 18. On a local machine, install th
 ## What cannot be verified in this package
 
 A real SQL Server/Azure SQL connection requires the team's actual host, database, credentials/secrets, network access, and shared development environment. Those values are intentionally not included in source control.
+
+
+## Additive MVP schema changes
+The current backend models/migration proposal adds: `users.date_of_birth`, `users.email_verified`, hospital latitude/longitude, donor latitude/longitude and `is_available`, plus `refresh_tokens`, `password_reset_tokens`, `device_tokens`, and `blood_bag_status_history`. These are additive changes and should be reviewed/applied by the Database Developer on Azure SQL.

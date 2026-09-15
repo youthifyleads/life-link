@@ -110,5 +110,47 @@ Set `REPOSITORY_BACKEND=sqlserver` to use the SQLAlchemy/Azure SQL repositories.
 OTP: POST /api/v1/auth/otp/request, POST /api/v1/auth/otp/verify. Development fixed OTP: 123456.
 Donor: /api/v1/donors/me, /api/v1/donors/me/donations, /api/v1/donors/me/responses, /api/v1/donors/me/consents plus admin/medical donor lookup.
 Caregiver: /api/v1/caregiver/assignments CRUD/update endpoints.
-Payments: POST /api/v1/payments, GET /api/v1/payments/{id}, GET /api/v1/payments/request/{request_id}, PATCH /api/v1/payments/{id}.
+Payments:
+- POST /api/v1/payments/initiate (Hospital User / Admin: Initiates Paymob payment session and returns checkout_url)
+- POST /api/v1/payments/webhook (Public Paymob callback endpoint verified by HMAC-SHA512)
+- POST /api/v1/payments (Manual record creation)
+- GET /api/v1/payments/{id}
+- GET /api/v1/payments/request/{request_id}
+- PATCH /api/v1/payments/{id}
 Full examples are in docs/MOBILE_API_CONTRACT.md.
+
+
+## MVP additions implemented in current backend
+### Authentication
+- `POST /auth/signup`: public Normal User registration. Required: name, email, phone, password, date_of_birth. Optional: governorate, blood_type.
+- `POST /auth/signup/verify`: verifies the email OTP. OTP is random 6 digits, hashed, single-use, 60-second expiry, attempt-limited and resend-rate-limited.
+- `POST /auth/signup/resend-otp`: resend verification code.
+- `POST /auth/login`: email/password; returns access and refresh tokens. Unverified accounts cannot sign in.
+- `POST /auth/refresh`: rotating server-side refresh token flow.
+- `POST /auth/logout`: revokes the supplied refresh token.
+- `POST /auth/forgot-password` and `POST /auth/reset-password`: email-based password reset; account existence is not disclosed.
+
+### Blood Bags
+- `POST/GET /blood-bags`
+- `PATCH /blood-bags/{id}/status`
+- `GET /blood-bags/{id}/history`
+- Lifecycle: `available -> reserved -> allocated -> in_transit -> delivered -> received`.
+- MVP bags are atomic; the lifecycle endpoint does not support splitting one bag across multiple requests.
+
+### Blood Bag QR
+- `GET /blood-bags/{id}/qr` returns an opaque QR payload.
+- `POST /blood-bags/scan` resolves the QR server-side to the real bag record.
+- QR does not embed patient identity or unnecessary medical data.
+
+### Push provider architecture
+- `POST/GET/DELETE /notifications/devices` manages device tokens for `fcm` or `onesignal`.
+- Provider delivery is intentionally not faked while the team decides between FCM and OneSignal.
+- SMS/TextBee/messaging is out of current scope.
+
+### Blood Bag QR (official flow)
+- `GET /blood-bags/{id}/qr` returns the opaque QR payload tied to the real `blood_bags` row.
+- `POST /blood-bags/scan` accepts that payload and resolves it server-side to the real Blood Bag.
+- The scan response includes the current Blood Bag record (`blood_bag`) and `movement_history` ordered oldest-to-newest.
+- Movement history reflects the Blood Bag lifecycle: `available -> reserved -> allocated -> in_transit -> delivered -> received`.
+- The QR payload does not contain the bag's business data; the backend resolves the payload to the database record.
+- The old request-tracking QR endpoints remain available for backward compatibility only and are not the official Blood Bag QR flow.

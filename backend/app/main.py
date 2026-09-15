@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions, donors, caregiver, payments, otp
+from app.api.v1 import auth, inventory, notifications, qr, requests, users, documents, institutions, donors, caregiver, payments, blood_bags, device_tokens
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
@@ -46,7 +46,8 @@ app.include_router(institutions.router, prefix=settings.API_V1_PREFIX)
 app.include_router(donors.router, prefix=settings.API_V1_PREFIX)
 app.include_router(caregiver.router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments.router, prefix=settings.API_V1_PREFIX)
-app.include_router(otp.router, prefix=settings.API_V1_PREFIX)
+app.include_router(blood_bags.router, prefix=settings.API_V1_PREFIX)
+app.include_router(device_tokens.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health", tags=["Health"], summary="Health check")

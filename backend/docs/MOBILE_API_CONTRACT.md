@@ -10,8 +10,7 @@ Time: ISO 8601, UTC (`Z`).
 ```json
 {"phone":"01000000003"}
 ```
-Development response includes `dev_otp: "123456"`.
-`POST /auth/otp/verify` accepts `123456` in development and returns the normal bearer JWT. Production OTP delivery/provider is intentionally blocked until an SMS provider is configured; the API returns `OTP_PROVIDER_NOT_CONFIGURED` instead of pretending that production OTP is delivered.
+Current OTP is email-based for signup/password reset. No development OTP is returned by the API.
 
 ## Donor
 - `GET /donors/me`
@@ -66,3 +65,19 @@ Common statuses: 401 auth, 403 permission, 404 not found, 409 conflict, 422 vali
 
 ## Important MVP boundary
 OTP is development-only. Payment is a database record only. Clinical suitability/cross-match/release remains a clinical decision, not automated by these APIs.
+
+
+## Current MVP additions
+- `POST /auth/signup` creates a Normal User and starts email verification.
+- `POST /auth/signup/verify` verifies the random 6-digit email OTP (60 seconds).
+- `POST /auth/refresh` rotates refresh tokens; `POST /auth/logout` revokes them.
+- `POST /auth/forgot-password` and `POST /auth/reset-password` implement password reset by email.
+- Blood Bag lifecycle: Available -> Reserved -> Allocated -> In Transit -> Delivered -> Received.
+- Blood Bag QR is tied to the real bag record; scan resolves server-side data and history.
+- SMS/TextBee is not part of the current scope.
+
+### Official Blood Bag QR flow
+- `GET /blood-bags/{blood_bag_id}/qr` returns `blood_bag_id` and `qr_payload`.
+- `POST /blood-bags/scan` with `{ "qr_code": "..." }` returns the real `blood_bag` plus `movement_history`.
+- The scan response includes the current status and the complete server-side status/movement history; clients must not trust data embedded in the QR itself.
+- The Blood Bag lifecycle is `available -> reserved -> allocated -> in_transit -> delivered -> received`.

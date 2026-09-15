@@ -9,27 +9,63 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+ROLE_DB_ALIASES: dict[str, Role] = {
+    # System Admin
+    "systemadmin": Role.ADMIN,
+    "system_admin": Role.ADMIN,
+    "admin": Role.ADMIN,
+    # Hospital Staff
+    "hospitalstaff": Role.HOSPITAL_USER,
+    "hospital_staff": Role.HOSPITAL_USER,
+    "hospitaluser": Role.HOSPITAL_USER,
+    "hospital_user": Role.HOSPITAL_USER,
+    # Blood Bank Staff
+    "bloodbankstaff": Role.BLOOD_BANK_OPERATOR,
+    "blood_bank_staff": Role.BLOOD_BANK_OPERATOR,
+    "bloodbankoperator": Role.BLOOD_BANK_OPERATOR,
+    "blood_bank_operator": Role.BLOOD_BANK_OPERATOR,
+    # Medical Lead
+    "medicallead": Role.MEDICAL_LEAD,
+    "medical_lead": Role.MEDICAL_LEAD,
+    # Platform Support
+    "platformsupport": Role.PLATFORM_SUPPORT,
+    "platform_support": Role.PLATFORM_SUPPORT,
+    # Normal User / Donor / Caregiver
+    "normaluser": Role.NORMAL_USER,
+    "normal_user": Role.NORMAL_USER,
+    "donor": Role.NORMAL_USER,
+    "caregiver": Role.NORMAL_USER,
+}
+
+ROLE_TO_DB_ALIASES: dict[Role, list[str]] = {
+    Role.ADMIN: ["SystemAdmin", "admin", "system_admin"],
+    Role.HOSPITAL_USER: ["HospitalStaff", "hospital_user", "hospital_staff"],
+    Role.BLOOD_BANK_OPERATOR: ["BloodBankStaff", "blood_bank_operator", "blood_bank_staff"],
+    Role.MEDICAL_LEAD: ["MedicalLead", "medical_lead"],
+    Role.PLATFORM_SUPPORT: ["PlatformSupport", "platform_support"],
+    Role.NORMAL_USER: ["NormalUser", "normal_user", "Donor", "Caregiver"],
+}
+
+
 def role_from_db(name: str | None) -> Role:
     """Map only explicitly supported DB role names; never guess a role."""
     if not name:
         raise ValueError("User role is missing from the database")
 
     cleaned = name.strip().lower().replace(" ", "_").replace("-", "_")
-    aliases = {
-        "hospital_staff": Role.HOSPITAL_USER,
-        "hospital_user": Role.HOSPITAL_USER,
-        "blood_bank_staff": Role.BLOOD_BANK_OPERATOR,
-        "blood_bank_operator": Role.BLOOD_BANK_OPERATOR,
-        "normal_user": Role.NORMAL_USER,
-        "donor": Role.NORMAL_USER,
-        "medical_lead": Role.MEDICAL_LEAD,
-        "admin": Role.ADMIN,
-        "platform_support": Role.PLATFORM_SUPPORT,
-    }
-    try:
-        return aliases[cleaned]
-    except KeyError as exc:
-        raise ValueError(f"Unknown database role: {name}") from exc
+    no_underscore = cleaned.replace("_", "")
+
+    if cleaned in ROLE_DB_ALIASES:
+        return ROLE_DB_ALIASES[cleaned]
+    if no_underscore in ROLE_DB_ALIASES:
+        return ROLE_DB_ALIASES[no_underscore]
+
+    raise ValueError(f"Unknown database role: {name}")
+
+
+def role_to_db_aliases(role: Role) -> list[str]:
+    """Return list of acceptable DB role names for a domain Role enum."""
+    return ROLE_TO_DB_ALIASES.get(role, [role.value])
 
 
 def user_to_record(m: UserModel) -> UserRecord:
@@ -40,7 +76,7 @@ def user_to_record(m: UserModel) -> UserRecord:
         id=m.user_id, email=m.email, full_name=m.name, hashed_password=m.password_hash,
         role=role,
         institution_id=institution_id, hospital_id=m.hospital_id, blood_bank_id=m.blood_bank_id,
-        phone=(m.phones[0].phone if m.phones else None), is_active=(m.status or "active").lower() == "active", status=(m.status or "active").lower(),
+        phone=(m.phones[0].phone if m.phones else None), is_active=(m.status or "active").lower() == "active", status=(m.status or "active").lower(), date_of_birth=getattr(m, "date_of_birth", None), email_verified=getattr(m, "email_verified", True),
     )
 
 

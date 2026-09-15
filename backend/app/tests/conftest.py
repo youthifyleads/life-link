@@ -30,22 +30,37 @@ def _login(client: TestClient, email: str, password: str) -> str:
 
 @pytest.fixture
 def hospital_token(client):
-    return _login(client, "hospital@lifelink.dev", "Hospital@123")
+    return _login(client, "hospital@lifelink.dev", "Test@123")
 
 
 @pytest.fixture
 def bloodbank_token(client):
-    return _login(client, "bloodbank@lifelink.dev", "BloodBank@123")
+    return _login(client, "bloodbank@lifelink.dev", "Test@123")
 
 
 @pytest.fixture
 def admin_token(client):
-    return _login(client, "admin@lifelink.dev", "Admin@123")
+    return _login(client, "admin@lifelink.dev", "Test@123")
 
 
 @pytest.fixture
 def normal_user_token(client):
-    return _login(client, "user@lifelink.dev", "NormalUser@123")
+    return _login(client, "user@lifelink.dev", "Test@123")
+
+
+@pytest.fixture
+def donor_token(client):
+    return _login(client, "donor@lifelink.dev", "Test@123")
+
+
+@pytest.fixture
+def medicallead_token(client):
+    return _login(client, "medicallead@lifelink.dev", "Test@123")
+
+
+@pytest.fixture
+def support_token(client):
+    return _login(client, "support@lifelink.dev", "Test@123")
 
 
 def auth_headers(token: str) -> dict:

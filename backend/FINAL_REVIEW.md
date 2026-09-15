@@ -135,3 +135,7 @@ public registration endpoint (documented deliberately in `docs/API_SPEC.md`).
 3. Web + Mobile: integrate their apps against `/api/v1`.
 4. QA: execute API, integration, system, security and regression tests.
 5. Technical Lead: perform code/architecture/integration review and approve release.
+
+
+## Current implementation scope note
+Paymob integration is preserved and was not changed in this work. Location + Donor Matching is intentionally not implemented here because it is owned by the matching workstream. Current additions cover public email signup/verification, rotating refresh tokens, password reset, push-device provider architecture, blood-bag lifecycle/history, and blood-bag QR resolution.

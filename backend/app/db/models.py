@@ -36,6 +36,7 @@ class PermissionModel(Base):
 class UserModel(Base):
     __tablename__ = "users"
     user_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(String(200), nullable=False); email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
+    date_of_birth: Mapped[Optional[date]] = mapped_column(Date); email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False); status: Mapped[Optional[str]] = mapped_column(String(40), default="active"); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     role_id: Mapped[str] = mapped_column(ForeignKey("roles.role_id"), nullable=False, index=True); hospital_id: Mapped[Optional[str]] = mapped_column(ForeignKey("hospitals.hospital_id"), index=True); blood_bank_id: Mapped[Optional[str]] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True)
     role: Mapped[RoleModel] = relationship(back_populates="users"); hospital: Mapped[Optional[HospitalModel]] = relationship(back_populates="users"); blood_bank: Mapped[Optional[BloodBankModel]] = relationship(back_populates="users")
@@ -49,7 +50,7 @@ class UserPhoneModel(Base):
 
 class HospitalModel(Base):
     __tablename__ = "hospitals"
-    hospital_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(String(200), nullable=False); governorate: Mapped[Optional[str]] = mapped_column(String(100)); address: Mapped[Optional[str]] = mapped_column(String(500)); status: Mapped[Optional[str]] = mapped_column(String(40), default="active")
+    hospital_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(String(200), nullable=False); governorate: Mapped[Optional[str]] = mapped_column(String(100)); address: Mapped[Optional[str]] = mapped_column(String(500)); status: Mapped[Optional[str]] = mapped_column(String(40), default="active"); latitude: Mapped[Optional[float]] = mapped_column(); longitude: Mapped[Optional[float]] = mapped_column()
     phones: Mapped[list[HospitalPhoneModel]] = relationship(back_populates="hospital", cascade="all, delete-orphan"); users: Mapped[list[UserModel]] = relationship(back_populates="hospital"); requests: Mapped[list[BloodRequestModel]] = relationship(back_populates="hospital")
 
 class HospitalPhoneModel(Base):
@@ -69,7 +70,7 @@ class BloodBankPhoneModel(Base):
 
 class DonorModel(Base):
     __tablename__ = "donors"
-    donor_id: Mapped[str] = id_col(); user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), unique=True, nullable=False, index=True); blood_type: Mapped[Optional[str]] = mapped_column(String(3)); date_of_birth: Mapped[Optional[date]] = mapped_column(Date); governorate: Mapped[Optional[str]] = mapped_column(String(100)); eligibility_status: Mapped[Optional[str]] = mapped_column(String(60)); last_donation_date: Mapped[Optional[date]] = mapped_column(Date)
+    donor_id: Mapped[str] = id_col(); user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), unique=True, nullable=False, index=True); blood_type: Mapped[Optional[str]] = mapped_column(String(3)); date_of_birth: Mapped[Optional[date]] = mapped_column(Date); governorate: Mapped[Optional[str]] = mapped_column(String(100)); eligibility_status: Mapped[Optional[str]] = mapped_column(String(60)); latitude: Mapped[Optional[float]] = mapped_column(); longitude: Mapped[Optional[float]] = mapped_column(); is_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     user: Mapped[UserModel] = relationship(back_populates="donor"); consents: Mapped[list[ConsentModel]] = relationship(back_populates="donor", cascade="all, delete-orphan"); donations: Mapped[list[DonationModel]] = relationship(back_populates="donor"); responses: Mapped[list[DonationResponseModel]] = relationship(back_populates="donor")
 
 class ConsentModel(Base):
@@ -104,7 +105,7 @@ class BloodBagModel(Base):
 
 class RequestAllocationModel(Base):
     __tablename__ = "request_allocations"
-    allocation_id: Mapped[str] = id_col(); quantity: Mapped[int] = mapped_column(Integer, nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); allocated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="CASCADE"), index=True); blood_bank_id: Mapped[str] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True); blood_bag_id: Mapped[str] = mapped_column(ForeignKey("blood_bags.blood_bag_id"), index=True)
+    allocation_id: Mapped[str] = id_col(); quantity: Mapped[int] = mapped_column(Integer, nullable=False); unit_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"), nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); allocated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="CASCADE"), index=True); blood_bank_id: Mapped[str] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True); blood_bag_id: Mapped[str] = mapped_column(ForeignKey("blood_bags.blood_bag_id"), index=True)
     blood_request: Mapped[BloodRequestModel] = relationship(back_populates="allocations"); blood_bag: Mapped[BloodBagModel] = relationship(back_populates="allocations")
 
 class ScanEventModel(Base):
@@ -131,7 +132,7 @@ class NotificationModel(Base):
     # audit_logs.entity_id. Needs Database Developer sign-off/migration
     # before this is applied to the shared SQL Server database - see
     # docs/ERD_MAPPING.md "Flagged additions pending Database Developer sign-off".
-    related_request_id: Mapped[Optional[str]] = mapped_column(ForeignKey("blood_requests.blood_request_id"), index=True)
+    related_request_id: Mapped[Optional[str]] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="SET NULL"), index=True)
     user: Mapped[UserModel] = relationship(back_populates="notifications")
 
 class AuditLogModel(Base):
@@ -139,9 +140,25 @@ class AuditLogModel(Base):
     audit_id: Mapped[str] = id_col(); entity_type: Mapped[str] = mapped_column(String(100), nullable=False); entity_id: Mapped[Optional[str]] = mapped_column(String(100), index=True); action: Mapped[str] = mapped_column(String(100), nullable=False); logged_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); user_id: Mapped[Optional[str]] = mapped_column(ForeignKey("users.user_id"), index=True)
     user: Mapped[Optional[UserModel]] = relationship(back_populates="audit_logs")
 
+class RefreshTokenModel(Base):
+    __tablename__ = "refresh_tokens"
+    token_id: Mapped[str] = id_col(); user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), index=True); token_hash: Mapped[str] = mapped_column(String(128), unique=True, nullable=False, index=True); expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); replaced_by_token_id: Mapped[Optional[str]] = mapped_column(String(50), index=True)
+
+class PasswordResetTokenModel(Base):
+    __tablename__ = "password_reset_tokens"
+    token_id: Mapped[str] = id_col(); user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), index=True); token_hash: Mapped[str] = mapped_column(String(128), unique=True, nullable=False, index=True); expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); used_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+class DeviceTokenModel(Base):
+    __tablename__ = "device_tokens"
+    device_token_id: Mapped[str] = id_col(); user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), index=True); token: Mapped[str] = mapped_column(String(500), unique=True, nullable=False); provider: Mapped[str] = mapped_column(String(40), nullable=False); active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+class BloodBagStatusHistoryModel(Base):
+    __tablename__ = "blood_bag_status_history"
+    history_id: Mapped[str] = id_col(); blood_bag_id: Mapped[str] = mapped_column(ForeignKey("blood_bags.blood_bag_id", ondelete="CASCADE"), index=True); status: Mapped[str] = mapped_column(String(40), nullable=False); changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); changed_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), index=True); location: Mapped[Optional[str]] = mapped_column(String(255)); notes: Mapped[Optional[str]] = mapped_column(Text)
+
 class PaymentModel(Base):
     __tablename__ = "payments"
-    payment_id: Mapped[str] = id_col(); amount: Mapped[Decimal] = mapped_column(Numeric(12,2), nullable=False); payment_status: Mapped[str] = mapped_column(String(40), nullable=False); payment_method: Mapped[Optional[str]] = mapped_column(String(100)); paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); transaction_reference: Mapped[Optional[str]] = mapped_column(String(255), unique=True); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id"), index=True)
+    payment_id: Mapped[str] = id_col(); amount: Mapped[Decimal] = mapped_column(Numeric(12,2), nullable=False); currency: Mapped[str] = mapped_column(String(3), default="EGP", nullable=False); provider: Mapped[str] = mapped_column(String(50), default="paymob", nullable=False); provider_order_id: Mapped[Optional[str]] = mapped_column(String(100), index=True); payment_status: Mapped[str] = mapped_column(String(40), nullable=False); payment_method: Mapped[Optional[str]] = mapped_column(String(100)); paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); transaction_reference: Mapped[Optional[str]] = mapped_column(String(255), unique=True); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id"), index=True)
     blood_request: Mapped[BloodRequestModel] = relationship(back_populates="payments")
 
 class CaregiverAssignmentModel(Base):
