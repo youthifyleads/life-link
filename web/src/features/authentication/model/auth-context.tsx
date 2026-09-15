@@ -129,6 +129,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         await import("@/features/authentication/model/demo-session");
       const user = startDemoSession(role);
       setAccessToken(null);
+      queryClient.clear();
       dispatch({ type: "authenticated", user });
     },
     [],

@@ -53,16 +53,6 @@ export const router = createBrowserRouter([
                 },
               },
               {
-                path: "activity",
-                lazy: async () => {
-                  const { ActivityPage } =
-                    await import(
-                      "@/features/notifications/activity/activity-page"
-                    );
-                  return { Component: ActivityPage };
-                },
-              },
-              {
                 path: "settings/notifications",
                 lazy: async () => {
                   const { NotificationPreferencesPage } =
@@ -235,6 +225,16 @@ export const router = createBrowserRouter([
                       const { AuditPage } =
                         await import("@/features/admin/audit/audit-page");
                       return { Component: AuditPage };
+                    },
+                  },
+                  {
+                    path: "activity",
+                    lazy: async () => {
+                      const { ActivityPage } =
+                        await import(
+                          "@/features/notifications/activity/activity-page"
+                        );
+                      return { Component: ActivityPage };
                     },
                   },
                 ],
