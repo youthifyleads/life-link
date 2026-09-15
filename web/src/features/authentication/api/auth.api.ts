@@ -26,6 +26,7 @@ export function mapBackendRoleToFrontendRole(role?: string): UserRole {
       return "hospital_staff";
     case "blood_bank_operator":
     case "blood_bank_staff":
+    case "lab_technician":
       return "blood_bank_staff";
     case "admin":
       return "admin";
@@ -37,6 +38,7 @@ export function mapBackendRoleToFrontendRole(role?: string): UserRole {
       return "caregiver";
     case "donor":
     case "normal_user":
+      return "donor";
     default:
       return "hospital_staff";
   }

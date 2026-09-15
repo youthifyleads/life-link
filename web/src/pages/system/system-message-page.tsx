@@ -2,6 +2,7 @@ import { ArrowLeft, ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
+import { useAuth } from "@/features/authentication/model/use-auth";
 import { Button } from "@/shared/components/ui/button";
 
 interface SystemMessagePageProps {
@@ -10,7 +11,17 @@ interface SystemMessagePageProps {
 
 export function SystemMessagePage({ type }: SystemMessagePageProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const forbidden = type === "forbidden";
+
+  const getDashboardPath = () => {
+    const role = user?.primary_role;
+    if (role === "admin" || role === "platform_support") return "/admin/dashboard";
+    if (role === "blood_bank_staff") return "/blood-bank/dashboard";
+    if (role === "donor") return "/donor/dashboard";
+    if (role === "caregiver") return "/caregiver/dashboard";
+    return "/hospital/dashboard";
+  };
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-6 py-12">
@@ -29,12 +40,14 @@ export function SystemMessagePage({ type }: SystemMessagePageProps) {
               : "errors.notFoundDescription",
           )}
         </p>
-        <Button asChild className="mt-7">
-          <Link to="/">
-            <ArrowLeft aria-hidden="true" className="rtl:rotate-180" />
-            {t("errors.returnHome")}
-          </Link>
-        </Button>
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <Button asChild>
+            <Link to={forbidden && user ? getDashboardPath() : "/"}>
+              <ArrowLeft aria-hidden="true" className="rtl:rotate-180" />
+              {forbidden && user ? t("system.goToDashboard", "Go to your dashboard") : t("errors.returnHome")}
+            </Link>
+          </Button>
+        </div>
       </section>
     </main>
   );

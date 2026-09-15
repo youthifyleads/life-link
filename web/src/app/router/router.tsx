@@ -1,8 +1,30 @@
-import { createBrowserRouter, Outlet } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 
+import { useAuth } from "@/features/authentication/model/use-auth";
 import { ProtectedRoute } from "@/features/authentication/ui/protected-route";
 import { ProtectedLayout } from "@/layouts/protected-layout";
 import { PageLoader } from "@/shared/components/feedback/page-loader";
+
+function RootRedirect() {
+  const { user, status } = useAuth();
+  if (status === "loading") {
+    return <PageLoader />;
+  }
+  const role = user?.primary_role;
+  if (role === "admin" || role === "platform_support") {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  if (role === "blood_bank_staff") {
+    return <Navigate to="/blood-bank/dashboard" replace />;
+  }
+  if (role === "donor") {
+    return <Navigate to="/donor/dashboard" replace />;
+  }
+  if (role === "caregiver") {
+    return <Navigate to="/caregiver/dashboard" replace />;
+  }
+  return <Navigate to="/hospital/dashboard" replace />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -24,11 +46,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                lazy: async () => {
-                  const { FoundationPage } =
-                    await import("@/pages/system/foundation-page");
-                  return { Component: FoundationPage };
-                },
+                element: <RootRedirect />,
               },
               ...(import.meta.env.DEV
                 ? [

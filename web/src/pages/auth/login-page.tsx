@@ -2,11 +2,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Activity,
   ArrowRight,
-  Building2,
   LockKeyhole,
   ShieldCheck,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -14,14 +13,12 @@ import { z } from "zod";
 
 import { env } from "@/app/config/env";
 import { useAuth } from "@/features/authentication/model/use-auth";
-import type { DemoSessionRole } from "@/features/authentication/model/demo-session";
+import type { UserRole } from "@/features/authentication/model/auth.types";
 import { normalizeApiError } from "@/shared/api/api-error";
 import { LanguageSwitcher } from "@/shared/components/navigation/language-switcher";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-
-const isDemoAuthenticationEnabled = import.meta.env.DEV;
 
 type LoginFormValues = { email: string; password: string };
 
@@ -29,8 +26,41 @@ interface LoginLocationState {
   from?: string;
 }
 
+export function getDestinationForRole(role?: UserRole): string {
+  if (role === "admin" || role === "platform_support") return "/admin/dashboard";
+  if (role === "blood_bank_staff") return "/blood-bank/dashboard";
+  if (role === "donor") return "/donor/dashboard";
+  if (role === "caregiver") return "/caregiver/dashboard";
+  return "/hospital/dashboard";
+}
+
+export function isPathAllowedForRole(path: string, role?: UserRole): boolean {
+  if (!role) return false;
+  if (path.startsWith("/hospital") && role !== "hospital_staff" && role !== "medical_lead") {
+    return false;
+  }
+  if (path.startsWith("/blood-bank") && role !== "blood_bank_staff") {
+    return false;
+  }
+  if (path.startsWith("/admin") && role !== "admin" && role !== "platform_support") {
+    return false;
+  }
+  if (path.startsWith("/donor") && role !== "donor") {
+    return false;
+  }
+  if (path.startsWith("/caregiver") && role !== "caregiver") {
+    return false;
+  }
+  return true;
+}
+
 export function LoginPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn, status, user } = useAuth();
+  const locationState = location.state as LoginLocationState | null;
+
   const loginSchema = useMemo(
     () =>
       z.object({
@@ -39,12 +69,6 @@ export function LoginPage() {
       }),
     [t],
   );
-  const { signIn, signInDemo, status, user } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const locationState = location.state as LoginLocationState | null;
-  const [isDemoSubmitting, setIsDemoSubmitting] = useState(false);
-  const [demoError, setDemoError] = useState<string | null>(null);
 
   const {
     register,
@@ -63,43 +87,28 @@ export function LoginPage() {
     document.title = `${t("auth.signIn")} | ${env.appName}`;
   }, [t]);
 
-  if (status === "authenticated") {
-    const authenticatedDestination =
-      user?.primary_role === "admin" || user?.primary_role === "platform_support"
-        ? "/admin/dashboard"
-        : user?.primary_role === "blood_bank_staff"
-          ? "/blood-bank/dashboard"
-          : user?.primary_role === "donor"
-            ? "/donor/dashboard"
-            : user?.primary_role === "caregiver"
-              ? "/caregiver/dashboard"
-              : "/hospital/dashboard";
-
+  if (status === "authenticated" && user) {
+    const role = user.primary_role;
+    const requestedPath = locationState?.from;
     const targetPath =
-      locationState?.from?.startsWith("/") && locationState.from !== "/"
-        ? locationState.from
-        : authenticatedDestination;
+      requestedPath && isPathAllowedForRole(requestedPath, role)
+        ? requestedPath
+        : getDestinationForRole(role);
 
     return <Navigate to={targetPath} replace />;
   }
 
-  const getDestination = (role?: DemoSessionRole) => {
-    const requestedPath = locationState?.from;
-    if (requestedPath?.startsWith("/") && requestedPath !== "/") {
-      return requestedPath;
-    }
-    const targetRole = role || user?.primary_role || "hospital_staff";
-    if (targetRole === "admin" || targetRole === "platform_support") return "/admin/dashboard";
-    if (targetRole === "blood_bank_staff") return "/blood-bank/dashboard";
-    if (targetRole === "donor") return "/donor/dashboard";
-    if (targetRole === "caregiver") return "/caregiver/dashboard";
-    return "/hospital/dashboard";
-  };
-
   const onSubmit = handleSubmit(async (values) => {
     try {
-      await signIn(values);
-      navigate(getDestination(), { replace: true });
+      const authenticatedUser = await signIn(values);
+      const role = authenticatedUser?.primary_role;
+      const requestedPath = locationState?.from;
+      const targetPath =
+        requestedPath && isPathAllowedForRole(requestedPath, role)
+          ? requestedPath
+          : getDestinationForRole(role);
+
+      navigate(targetPath, { replace: true });
     } catch (error) {
       const apiError = normalizeApiError(error);
       setError("root", {
@@ -115,20 +124,6 @@ export function LoginPage() {
       });
     }
   });
-
-  const handleDemoSignIn = async (role: DemoSessionRole = "hospital_staff") => {
-    setDemoError(null);
-    setIsDemoSubmitting(true);
-
-    try {
-      await signInDemo(role);
-      navigate(getDestination(role), { replace: true });
-    } catch {
-      setDemoError(t("auth.demoStartError"));
-    } finally {
-      setIsDemoSubmitting(false);
-    }
-  };
 
   return (
     <main className="grid min-h-svh bg-background lg:grid-cols-[minmax(20rem,38%)_1fr]">
@@ -181,220 +176,78 @@ export function LoginPage() {
 
           <div className="mb-8">
             <h2 className="text-2xl font-semibold tracking-[-0.02em] text-foreground">
-              {isDemoAuthenticationEnabled
-                ? t("auth.switchRole", "Development preview access")
-                : t("auth.title")}
+              {t("auth.title")}
             </h2>
             <p className="mt-3 max-w-[52ch] text-sm leading-6 text-muted-foreground">
-              {isDemoAuthenticationEnabled
-                ? t("auth.demoNotice", "Enter the operational shell with an isolated demonstration session.")
-                : t("auth.description")}
+              {t("auth.description")}
             </p>
           </div>
 
-          {isDemoAuthenticationEnabled ? (
-            <div className="space-y-5">
-              {demoError ? (
-                <div
-                  className="rounded-md border border-destructive/30 bg-emergency-subtle px-4 py-3 text-sm leading-6 text-[#7a1a13]"
-                  role="alert"
-                >
-                  {demoError}
-                </div>
-              ) : null}
-
-              <div className="divide-y divide-border border-y border-border">
-                <section
-                  className="py-4"
-                  aria-labelledby="hospital-demo-access"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
-                      <Activity aria-hidden="true" className="size-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <h3
-                        id="hospital-demo-access"
-                        className="text-sm font-semibold"
-                      >
-                        {t("auth.hospitalStaffName", "Dr. Sarah Chen")}
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {t("auth.hospitalStaffDesc", "Hospital Staff • General Hospital")}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    className="mt-3 w-full"
-                    type="button"
-                    size="lg"
-                    disabled={isDemoSubmitting}
-                    onClick={() => void handleDemoSignIn("hospital_staff")}
-                  >
-                    {isDemoSubmitting
-                      ? t("common.loading", "Opening workspace…")
-                      : t("auth.enterHospitalWorkspace")}
-                    {!isDemoSubmitting ? (
-                      <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
-                    ) : null}
-                  </Button>
-                </section>
-
-                <section
-                  className="py-4"
-                  aria-labelledby="blood-bank-demo-access"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
-                      <Building2 aria-hidden="true" className="size-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <h3
-                        id="blood-bank-demo-access"
-                        className="text-sm font-semibold"
-                      >
-                        {t("auth.bloodBankStaffName", "Mariam Al-Mansoor")}
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {t("auth.bloodBankStaffDesc", "Blood Bank Technician • Central Blood Bank")}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    className="mt-3 w-full"
-                    type="button"
-                    size="lg"
-                    variant="secondary"
-                    disabled={isDemoSubmitting}
-                    onClick={() => void handleDemoSignIn("blood_bank_staff")}
-                  >
-                    {isDemoSubmitting
-                      ? t("common.loading", "Opening workspace…")
-                      : t("auth.enterBloodBankWorkspace")}
-                    {!isDemoSubmitting ? (
-                      <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
-                    ) : null}
-                  </Button>
-                </section>
-
-                <section
-                  className="py-4"
-                  aria-labelledby="admin-demo-access"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary text-primary">
-                      <ShieldCheck aria-hidden="true" className="size-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <h3
-                        id="admin-demo-access"
-                        className="text-sm font-semibold"
-                      >
-                        {t("auth.adminName", "System Administrator")}
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {t("auth.adminDesc", "Platform Operations • Governance")}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    className="mt-3 w-full"
-                    type="button"
-                    size="lg"
-                    variant="secondary"
-                    disabled={isDemoSubmitting}
-                    onClick={() => void handleDemoSignIn("admin")}
-                  >
-                    {isDemoSubmitting
-                      ? t("common.loading", "Opening workspace…")
-                      : t("auth.enterAdminWorkspace")}
-                    {!isDemoSubmitting ? (
-                      <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
-                    ) : null}
-                  </Button>
-                </section>
-
-              </div>
-
-              <p className="flex items-start gap-3 border-t border-border pt-5 text-xs leading-5 text-muted-foreground">
-                <ShieldCheck
-                  aria-hidden="true"
-                  className="mt-0.5 size-4 shrink-0 text-primary"
-                />
-                <span>
-                  {t("auth.developmentOnlyNotice")}
-                </span>
-              </p>
-            </div>
-          ) : (
-            <form className="space-y-5" noValidate onSubmit={onSubmit}>
-              {errors.root?.message ? (
-                <div
-                  className="rounded-md border border-destructive/30 bg-emergency-subtle px-4 py-3 text-sm leading-6 text-[#7a1a13]"
-                  role="alert"
-                >
-                  {errors.root.message}
-                </div>
-              ) : null}
-
-              <div className="space-y-2">
-                <Label htmlFor="email">{t("auth.email")}</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="username"
-                  inputMode="email"
-                  aria-invalid={Boolean(errors.email)}
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                  {...register("email")}
-                />
-                {errors.email ? (
-                  <p id="email-error" className="text-sm text-destructive">
-                    {errors.email.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">{t("auth.password")}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  aria-invalid={Boolean(errors.password)}
-                  aria-describedby={
-                    errors.password ? "password-error" : undefined
-                  }
-                  {...register("password")}
-                />
-                {errors.password ? (
-                  <p id="password-error" className="text-sm text-destructive">
-                    {errors.password.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <Button
-                className="w-full"
-                type="submit"
-                size="lg"
-                disabled={isSubmitting}
+          <form className="space-y-5" noValidate onSubmit={onSubmit}>
+            {errors.root?.message ? (
+              <div
+                className="rounded-md border border-destructive/30 bg-emergency-subtle px-4 py-3 text-sm leading-6 text-[#7a1a13]"
+                role="alert"
               >
-                {isSubmitting ? t("auth.submitting") : t("auth.submit")}
-                {!isSubmitting ? <ArrowRight aria-hidden="true" className="rtl:rotate-180" /> : null}
-              </Button>
-            </form>
-          )}
+                {errors.root.message}
+              </div>
+            ) : null}
 
-          {!isDemoAuthenticationEnabled ? (
-            <p className="mt-8 flex items-start gap-3 border-t border-border pt-5 text-xs leading-5 text-muted-foreground">
-              <LockKeyhole
-                aria-hidden="true"
-                className="mt-0.5 size-4 shrink-0 text-primary"
+            <div className="space-y-2">
+              <Label htmlFor="email">{t("auth.email")}</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="username"
+                inputMode="email"
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                {...register("email")}
               />
-              <span>{t("auth.secureNotice")}</span>
-            </p>
-          ) : null}
+              {errors.email ? (
+                <p id="email-error" className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">{t("auth.password")}</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={
+                  errors.password ? "password-error" : undefined
+                }
+                {...register("password")}
+              />
+              {errors.password ? (
+                <p id="password-error" className="text-sm text-destructive">
+                  {errors.password.message}
+                </p>
+              ) : null}
+            </div>
+
+            <Button
+              className="w-full"
+              type="submit"
+              size="lg"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? t("auth.submitting") : t("auth.submit")}
+              {!isSubmitting ? <ArrowRight aria-hidden="true" className="rtl:rotate-180" /> : null}
+            </Button>
+          </form>
+
+          <p className="mt-8 flex items-start gap-3 border-t border-border pt-5 text-xs leading-5 text-muted-foreground">
+            <LockKeyhole
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0 text-primary"
+            />
+            <span>{t("auth.secureNotice")}</span>
+          </p>
         </div>
       </section>
     </main>
