@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 from app.core.domain import (
     BLOOD_BAG_TRANSITIONS,
