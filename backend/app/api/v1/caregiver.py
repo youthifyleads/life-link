@@ -13,3 +13,11 @@ async def list_items(current:CurrentUser,svc:CaregiverService=Depends(get_caregi
 async def get(assignment_id:str,current:CurrentUser,svc:CaregiverService=Depends(get_caregiver_service)): return await svc.get(assignment_id,current)
 @router.patch("/assignments/{assignment_id}",response_model=CaregiverAssignmentPublic)
 async def update(assignment_id:str,data:CaregiverAssignmentUpdate,current:CurrentUser,svc:CaregiverService=Depends(get_caregiver_service)): return await svc.update(assignment_id,data,current)
+
+@router.post("/scan-bag", response_model=CaregiverBagScanPublic, summary="Scan blood bag QR for caregiver")
+async def scan_bag(data: CaregiverBagScanRequest, current: CurrentUser, svc: CaregiverService = Depends(get_caregiver_service)):
+    return await svc.scan_bag(data.qr_code, current)
+
+@router.get("/bag/{qr_code}", response_model=CaregiverBagScanPublic, summary="Get blood bag details by QR for caregiver")
+async def get_bag_by_qr(qr_code: str, current: CurrentUser, svc: CaregiverService = Depends(get_caregiver_service)):
+    return await svc.scan_bag(qr_code, current)

@@ -35,6 +35,22 @@ Donation request:
 - `GET /caregiver/assignments`
 - `GET /caregiver/assignments/{assignment_id}`
 - `PATCH /caregiver/assignments/{assignment_id}`
+- `POST /caregiver/scan-bag` (Body: `{"qr_code": "..."}`)
+- `GET /caregiver/bag/{qr_code}`
+
+### Caregiver Blood Bag QR Scan Response
+Returns strictly the essential blood bag and bank details for mobile caregiver view:
+```json
+{
+  "blood_bag_id": "bag_123",
+  "qr_code": "LL-BAG-abc123",
+  "bank_name": "Central Blood Bank",
+  "bank_location": "15 Tahrir Square, Cairo",
+  "status": "available",
+  "blood_type": "A+"
+}
+```
+*(Also accessible via alias endpoints `POST /qr/bag-scan` and `GET /qr/bag/{qr_code}`)*.
 
 ## Payments (MVP record only)
 - `POST /payments`

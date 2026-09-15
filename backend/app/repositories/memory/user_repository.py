@@ -77,5 +77,9 @@ class InMemoryUserRepository(UserRepository):
         self._users[user.id] = user
         return user
 
+    async def update(self, user: UserRecord) -> UserRecord:
+        self._users[user.id] = user
+        return user
+
     async def list_all(self) -> list[UserRecord]:
         return list(self._users.values())

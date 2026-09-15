@@ -94,7 +94,7 @@ Seeded dev users (password `Test@123` for all):
 python -m pytest app/tests -v
 ```
 
-The repository contains 55 automated unit and integration tests covering authentication, RBAC authorization matrix, role mapping (DB PascalCase & snake_case), all 8 QA test accounts, request lifecycle & state machine, inventory, QR/tracking, and notifications linking (`related_request_id`). All 55 tests run and pass cleanly.
+The repository contains **81 automated unit and integration tests** covering authentication, RBAC authorization matrix, role mapping (DB PascalCase & snake_case), all 8 QA test accounts, request lifecycle & state machine, inventory, QR/tracking, caregiver blood bag QR scanning, Paymob payment integration & HMAC webhook verification, Haversine distance calculation, clinical donor matching, 6-month rule, and automatic quota fulfillment. All 81 tests run and pass cleanly.
 
 ## 7. Swagger location
 
@@ -104,8 +104,7 @@ responses.
 
 ## 8. Environment variables
 
-See `.env.example`: `ENVIRONMENT`, `DATABASE_URL`, `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`. Never
-commit real secrets — use a secret manager for anything beyond local dev.
+See `.env.example`: `ENVIRONMENT`, `DATABASE_URL`, `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES`, and Paymob credentials (`PAYMOB_API_KEY`, `PAYMOB_SECRET_KEY`, `PAYMOB_PUBLIC_KEY`, `PAYMOB_HMAC_SECRET`, `PAYMOB_INTEGRATION_ID`). Never commit real secrets — use a secret manager for anything beyond local dev.
 
 ## 9. API versioning
 
@@ -174,17 +173,24 @@ See `docs/ERD_MAPPING.md` for the exact 24-table mapping from `schema.pdf`. The 
   rules.
 
 
-## Recent integration fixes
-- Swagger security is attached only to protected endpoints. Login, OTP and health are public.
-- 422 validation responses keep the standard error envelope and include safe field-level details.
-- OTP development mode is short-lived, single-use and attempt-limited; production explicitly requires an SMS provider.
+## Recent integration fixes & new features
+- **81 Automated Tests Passing**: All tests pass across auth, RBAC, requests, QR, inventory, payments, caregiver, and matching.
+- **Paymob Payment Gateway Integration**:
+  - Secure payment initiation (`POST /api/v1/payments/initiate`) returning checkout URLs.
+  - Server-side pricing calculation configurable per blood bank.
+  - HMAC-SHA512 verified webhook callback (`POST /api/v1/payments/webhook`) ensuring tamper-proof, idempotent transaction handling.
+- **Caregiver Blood Bag QR Lookup**:
+  - `POST /api/v1/caregiver/scan-bag` and `GET /api/v1/caregiver/bag/{qr_code}` (aliased as `/qr/bag-scan`).
+  - Returns strictly essential information: `bank_name`, `bank_location`, `status`, `blood_type`.
+- **Intelligent Donor Matching & Distance**:
+  - Haversine distance formula with GPS and Egyptian governorates fallback coordinates.
+  - Clinical RBC compatibility matrix with optional exact match flag (`exact_match=True`).
+  - 6-Month donation rule (≥ 180 days) and healthy donor default eligibility (`eligible`).
+  - Donor quota auto-fulfillment: When accepted responses reach `quantity_units`, the request is automatically fulfilled, hidden from nearby feeds, and further acceptances are rejected with `422 REQUEST_ALREADY_FULFILLED`.
+  - Mobile nearby requests feed: `GET /api/v1/donors/me/nearby-requests`.
+  - Batch notify closest matching donors: `POST /api/v1/requests/{id}/notify-matching-donors`.
 - Role mapping layer supports both database PascalCase (`HospitalStaff`, `SystemAdmin`, `BloodBankStaff`, `MedicalLead`, `PlatformSupport`, `NormalUser`) and backend snake_case aliases.
 - Canonical QA test accounts unified across in-memory repository, `scripts/seed_dev.py`, and `database/migrations/005_seed_data.sql` with default password `Test@123`.
-- Banned/suspended accounts are blocked on login with HTTP 401 `ACCOUNT_BANNED` (`user.status.lower() in ("banned", "suspended")` adhering to database constraint `ck_users_status`).
+- Banned/suspended accounts are blocked on login with HTTP 401 `ACCOUNT_BANNED`.
 - Donor and Caregiver roles are aligned as `NormalUser` role, with caregiver assignments managed via `caregiver_assignments`.
-- Blood request creation restricted to `HospitalStaff` (`Role.HOSPITAL_USER`); Admins can monitor, confirm, or cancel requests, but cannot create requests directly.
-- Migration `006_add_notifications_related_request_id.sql` added to link notifications to blood requests via `related_request_id UNIQUEIDENTIFIER NULL` with index.
-- `database/migrations` is the shared database schema source of truth; Alembic is not a second production migration stream.
-
-- Public registration is not part of the current confirmed API contract; `/users` is Admin-only user creation.
-- See `docs/MIGRATION_STRATEGY.md` for the single-source database migration rule.
+- Migration `006_add_notifications_related_request_id.sql`, `007_update_payments_and_allocations_pricing.sql`, and `008_add_payment_gateway_fields.sql` added.

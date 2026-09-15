@@ -101,9 +101,17 @@ class PaymentService:
         if any(p.payment_status.lower() in {"paid", "completed", "success"} for p in existing):
             raise ConflictError("This blood request has already been paid for.", code="ALREADY_PAID")
 
-        # Compute amount server-side from request quantity units (e.g. 500 EGP per bag)
+        # Ensure request has been reviewed and priced by the blood bank
+        unit_price = getattr(req, "unit_price", None)
+        if unit_price is None or float(unit_price) <= 0:
+            raise ValidationAppError(
+                "Blood bank has not set the price for this request yet. Please wait for the blood bank to review and price the request before initiating payment.",
+                code="PRICE_NOT_SET",
+            )
+
+        # Compute amount server-side from request quantity units and blood bank's quoted unit_price
         units = getattr(req, "quantity_units", 1) or 1
-        amount = float(units) * 500.0
+        amount = round(float(units) * float(unit_price), 2)
 
         provider_order_id = None
         client_secret = None

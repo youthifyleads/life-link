@@ -124,3 +124,43 @@ def test_hospital_user_cannot_view_other_hospitals_request(client, hospital_toke
     r = client.get(f"/api/v1/requests/{created['id']}", headers=auth_headers(other_hospital_token))
     assert r.status_code == 403
     assert r.json()["error"]["code"] == "FORBIDDEN_REQUEST_ACCESS"
+
+
+def test_acknowledge_with_unit_price(client, hospital_token, bloodbank_token):
+    created = _create_request(client, hospital_token).json()
+    request_id = created["id"]
+    quantity = created["quantity_units"]
+
+    r = client.post(
+        f"/api/v1/requests/{request_id}/acknowledge",
+        json={"unit_price": 650.0, "notes": "Approved with unit price 650 EGP"},
+        headers=auth_headers(bloodbank_token),
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "acknowledged"
+    assert body["unit_price"] == 650.0
+    assert body["total_amount"] == round(quantity * 650.0, 2)
+
+
+def test_patch_request_price_by_bloodbank(client, hospital_token, bloodbank_token):
+    created = _create_request(client, hospital_token).json()
+    request_id = created["id"]
+
+    # Hospital user cannot set price
+    h_resp = client.patch(
+        f"/api/v1/requests/{request_id}/price",
+        json={"unit_price": 700.0},
+        headers=auth_headers(hospital_token),
+    )
+    assert h_resp.status_code == 403
+
+    # Blood bank operator sets price
+    bb_resp = client.patch(
+        f"/api/v1/requests/{request_id}/price",
+        json={"unit_price": 700.0},
+        headers=auth_headers(bloodbank_token),
+    )
+    assert bb_resp.status_code == 200
+    assert bb_resp.json()["unit_price"] == 700.0
+

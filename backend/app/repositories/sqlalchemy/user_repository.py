@@ -63,6 +63,16 @@ class SQLAlchemyUserRepository(UserRepository):
         await self.session.commit()
         return user
 
+    async def update(self, user: UserRecord) -> UserRecord:
+        obj = (await self.session.execute(select(UserModel).where(UserModel.user_id == user.id))).scalar_one_or_none()
+        if obj:
+            obj.password_hash = user.hashed_password
+            obj.status = "active" if user.is_active else "inactive"
+            if hasattr(obj, "email_verified"):
+                obj.email_verified = getattr(user, "email_verified", True)
+            await self.session.commit()
+        return user
+
     async def list_all(self) -> list[UserRecord]:
         result = await self.session.execute(select(UserModel).options(joinedload(UserModel.role), joinedload(UserModel.phones)).order_by(UserModel.created_at.desc()))
         return [user_to_record(o) for o in result.scalars().all()]

@@ -6,12 +6,16 @@ class DonorCreate(BaseModel):
     blood_type: str | None = Field(default=None, min_length=2, max_length=3)
     date_of_birth: date | None = None
     governorate: str | None = Field(default=None, max_length=100)
+    latitude: float | None = Field(default=None, ge=-90.0, le=90.0)
+    longitude: float | None = Field(default=None, ge=-180.0, le=180.0)
 
 class DonorUpdate(BaseModel):
     blood_type: str | None = Field(default=None, min_length=2, max_length=3)
     date_of_birth: date | None = None
     governorate: str | None = Field(default=None, max_length=100)
     eligibility_status: str | None = Field(default=None, max_length=60)
+    latitude: float | None = Field(default=None, ge=-90.0, le=90.0)
+    longitude: float | None = Field(default=None, ge=-180.0, le=180.0)
 
 class DonorPublic(BaseModel):
     id: str
@@ -21,6 +25,45 @@ class DonorPublic(BaseModel):
     governorate: str | None
     eligibility_status: str
     last_donation_date: date | None
+    latitude: float | None = None
+    longitude: float | None = None
+
+class MatchingDonorPublic(BaseModel):
+    donor_id: str
+    user_id: str
+    full_name: str
+    phone: str | None = None
+    blood_type: str
+    governorate: str | None = None
+    distance_km: float | None = None
+    eligibility_status: str
+    last_donation_date: date | None = None
+    days_since_last_donation: int | None = None
+
+
+class NearbyBloodRequestPublic(BaseModel):
+    request_id: str
+    hospital_name: str
+    governorate: str | None = None
+    blood_type: str
+    component: str
+    quantity_units: int
+    urgency: bool
+    distance_km: float | None = None
+    notes: str | None = None
+    created_at: datetime
+
+
+class NotifyMatchingDonorsRequest(BaseModel):
+    count: int = Field(default=5, ge=1, le=50, description="Number of closest matching donors to notify")
+    exact_match: bool = Field(default=False, description="If True, only exact blood type matches; if False, clinical compatibility")
+    max_distance_km: float | None = Field(default=None, description="Optional maximum distance filter in km")
+
+
+class NotifyMatchingDonorsResponse(BaseModel):
+    request_id: str
+    total_notified: int
+    notified_donors: list[MatchingDonorPublic]
 
 class DonationCreate(BaseModel):
     blood_type: str = Field(min_length=2, max_length=3)

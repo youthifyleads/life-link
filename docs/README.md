@@ -15,7 +15,12 @@ Welcome to the Life Link project documentation directory.
 - [ERD Mapping](../backend/docs/ERD_MAPPING.md): Mapping between the physical 24-table database schema and SQLAlchemy ORM models.
 - [Database Strategy](../backend/docs/MIGRATION_STRATEGY.md): Rules for maintaining the single source of truth for database migrations.
 
+### Client Applications
+- [Mobile App Guide](../mobile/README.md): Flutter mobile architecture, donor & caregiver user flows, and local setup.
+- [Web Portal Guide](../web/README.md): React + Vite web dashboard for hospitals, blood banks, and administrative staff.
+- [Mobile API Contract](../backend/docs/MOBILE_API_CONTRACT.md): Dev/MVP mobile API contract for donors and caregivers.
+
 ### Database & Migrations
-- [Database Guidelines & Migrations](../database/README.md): MSSQL setup, migration naming conventions, and inventory of migrations (`000` through `006`).
+- [Database Guidelines & Migrations](../database/README.md): MSSQL setup, migration naming conventions, and inventory of migrations (`000` through `008`).
 - [Consolidated Database Script](../database/LifeLink_Full_Database.sql): All-in-one T-SQL script for fresh Azure SQL / SSMS database deployment.
 

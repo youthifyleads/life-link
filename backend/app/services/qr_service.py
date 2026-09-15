@@ -8,6 +8,9 @@ from app.schemas.qr import QRIssueResponse, TrackingPublic
 from app.services.audit_service import AuditService
 
 
+from app.repositories.interfaces.institution_repository import InstitutionRepository
+
+
 class QRService:
     """
     Generates and resolves secure tracking references.
@@ -18,9 +21,15 @@ class QRService:
     request lifecycle logic.
     """
 
-    def __init__(self, request_repo: RequestRepository, audit_service: AuditService):
+    def __init__(
+        self,
+        request_repo: RequestRepository,
+        audit_service: AuditService,
+        institution_repo: InstitutionRepository | None = None,
+    ):
         self._request_repo = request_repo
         self._audit_service = audit_service
+        self._institution_repo = institution_repo
 
     @staticmethod
     def generate_reference(request_id: str) -> str:
