@@ -73,6 +73,22 @@ app.include_router(device_tokens.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get(
+    "/",
+    tags=["Health"],
+    summary="Root service status",
+    include_in_schema=False,
+)
+async def root():
+    return {
+        "status": "ok",
+        "service": settings.PROJECT_NAME,
+        "environment": settings.ENVIRONMENT,
+        "docs": "/docs",
+        "api": settings.API_V1_PREFIX,
+    }
+
+
+@app.get(
     "/health",
     tags=["Health"],
     summary="Health check",
@@ -106,3 +122,4 @@ async def health():
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"status": "error", "database": "disconnected"},
         )
+
