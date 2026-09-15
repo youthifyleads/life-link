@@ -52,7 +52,10 @@ export function AppSidebar({
   onOrganizationChange,
 }: AppSidebarProps) {
   const { t } = useTranslation();
-  const navigationGroups = navigationByRole[user.primary_role];
+  const navigationGroups =
+    (user?.primary_role && navigationByRole[user.primary_role]) ||
+    navigationByRole.hospital_staff ||
+    [];
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">

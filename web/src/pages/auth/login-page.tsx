@@ -77,43 +77,25 @@ export function LoginPage() {
               ? "/caregiver/dashboard"
               : "/hospital/dashboard";
 
-    return (
-      <Navigate
-        to={isDemoAuthenticationEnabled ? authenticatedDestination : "/"}
-        replace
-      />
-    );
+    const targetPath =
+      locationState?.from?.startsWith("/") && locationState.from !== "/"
+        ? locationState.from
+        : authenticatedDestination;
+
+    return <Navigate to={targetPath} replace />;
   }
 
-  const getDestination = (role: DemoSessionRole = "hospital_staff") => {
-    if (isDemoAuthenticationEnabled) {
-      const requestedPath = locationState?.from;
-      if (requestedPath === "/ui-preview") return requestedPath;
-      if (role === "admin") {
-        return requestedPath?.startsWith("/admin/")
-          ? requestedPath
-          : "/admin/dashboard";
-      }
-      if (role === "blood_bank_staff") {
-        return requestedPath?.startsWith("/blood-bank/")
-          ? requestedPath
-          : "/blood-bank/dashboard";
-      }
-      if (role === "donor") {
-        return requestedPath?.startsWith("/donor/")
-          ? requestedPath
-          : "/donor/dashboard";
-      }
-      if (role === "caregiver") {
-        return requestedPath?.startsWith("/caregiver/")
-          ? requestedPath
-          : "/caregiver/dashboard";
-      }
-      return requestedPath?.startsWith("/hospital/")
-        ? requestedPath
-        : "/hospital/dashboard";
+  const getDestination = (role?: DemoSessionRole) => {
+    const requestedPath = locationState?.from;
+    if (requestedPath?.startsWith("/") && requestedPath !== "/") {
+      return requestedPath;
     }
-    return locationState?.from?.startsWith("/") ? locationState.from : "/";
+    const targetRole = role || user?.primary_role || "hospital_staff";
+    if (targetRole === "admin") return "/admin/dashboard";
+    if (targetRole === "blood_bank_staff") return "/blood-bank/dashboard";
+    if (targetRole === "donor") return "/donor/dashboard";
+    if (targetRole === "caregiver") return "/caregiver/dashboard";
+    return "/hospital/dashboard";
   };
 
   const onSubmit = handleSubmit(async (values) => {

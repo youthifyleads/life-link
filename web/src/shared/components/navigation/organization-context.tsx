@@ -36,11 +36,12 @@ export function OrganizationContext({
   compact = false,
 }: OrganizationContextProps) {
   const { t } = useTranslation();
+  const safeOrganizations = Array.isArray(organizations) ? organizations : [];
   const activeOrganization =
-    organizations.find(
+    safeOrganizations.find(
       (organization) => organization.id === activeOrganizationId,
-    ) ?? organizations[0];
-  const canSwitch = organizations.length > 1 && Boolean(onOrganizationChange);
+    ) ?? safeOrganizations[0];
+  const canSwitch = safeOrganizations.length > 1 && Boolean(onOrganizationChange);
 
   if (!activeOrganization) {
     return null;
@@ -100,7 +101,7 @@ export function OrganizationContext({
               {t("nav.changeOrganization")}
             </p>
             <div className="space-y-1">
-              {organizations.map((organization) => {
+              {safeOrganizations.map((organization) => {
                 const isActive = organization.id === activeOrganization.id;
 
                 return (
