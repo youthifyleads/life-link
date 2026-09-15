@@ -37,3 +37,14 @@ export interface TokenResponse {
   token_type: "bearer";
   expires_in: number;
 }
+
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface ResetPasswordInput {
+  email: string;
+  code: string;
+  new_password: string;
+}
+

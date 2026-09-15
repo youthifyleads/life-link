@@ -12,6 +12,9 @@ import {
 import type { HospitalRequestInput } from "@/features/hospital/types/hospital.types";
 import { queryClient } from "@/app/providers/query-client";
 
+import { requestsApi } from "@/shared/api/requests.api";
+import { getAccessToken } from "@/shared/api/auth-token";
+
 export const hospitalRequestKeys = {
   all: ["hospital", "requests"] as const,
   detail: (id: string) => ["hospital", "requests", id] as const,
@@ -22,7 +25,17 @@ export const hospitalRequestKeys = {
 export function useHospitalRequests() {
   return useQuery({
     queryKey: hospitalRequestKeys.all,
-    queryFn: getHospitalRequests,
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveData = await requestsApi.getRequests();
+          if (liveData && liveData.length > 0) return liveData;
+        } catch (err) {
+          console.warn("Live requests fetch fallback:", err);
+        }
+      }
+      return getHospitalRequests();
+    },
   });
 }
 
@@ -36,7 +49,16 @@ export function useAvailableBloodBanks() {
 export function useHospitalRequest(id: string) {
   return useQuery({
     queryKey: hospitalRequestKeys.detail(id),
-    queryFn: () => getHospitalRequest(id),
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          return await requestsApi.getRequestById(id);
+        } catch (err) {
+          console.warn("Live request detail fallback:", err);
+        }
+      }
+      return getHospitalRequest(id);
+    },
   });
 }
 
@@ -49,8 +71,16 @@ export function useHospitalAllDocuments() {
 
 export function useCreateHospitalRequest(shouldFail = false) {
   return useMutation({
-    mutationFn: (input: HospitalRequestInput) =>
-      createHospitalRequest(input, shouldFail),
+    mutationFn: async (input: HospitalRequestInput) => {
+      if (getAccessToken() && !shouldFail) {
+        try {
+          return await requestsApi.createRequest(input);
+        } catch (err) {
+          console.warn("Live create request fallback:", err);
+        }
+      }
+      return createHospitalRequest(input, shouldFail);
+    },
     onSuccess: (request) => {
       queryClient.setQueryData(hospitalRequestKeys.detail(request.id), request);
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.all });

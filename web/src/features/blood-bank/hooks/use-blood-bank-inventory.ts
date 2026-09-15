@@ -15,6 +15,9 @@ import type {
   InventoryLedgerFilters,
 } from "@/features/blood-bank/types/blood-bank.types";
 
+import { inventoryApi } from "@/features/blood-bank/api/inventory.api";
+import { getAccessToken } from "@/shared/api/auth-token";
+
 export const inventoryKeys = {
   all: ["blood-bank", "inventory"] as const,
   list: (filters?: Partial<InventoryLedgerFilters>) =>
@@ -28,7 +31,17 @@ export const inventoryKeys = {
 export function useInventoryUnits(filters?: Partial<InventoryLedgerFilters>) {
   return useQuery({
     queryKey: inventoryKeys.list(filters),
-    queryFn: () => getInventoryUnits(filters),
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveData = await inventoryApi.getInventory(filters);
+          if (liveData && liveData.length > 0) return liveData;
+        } catch (err) {
+          console.warn("Live inventory fetch fallback:", err);
+        }
+      }
+      return getInventoryUnits(filters);
+    },
   });
 }
 
