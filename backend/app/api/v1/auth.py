@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 
 from app.core.security import CurrentUser
 from app.schemas.auth import (
@@ -65,10 +65,10 @@ async def refresh(payload: RefreshTokenRequest, svc=Depends(get_refresh_service)
     return TokenResponse(access_token=access_token, refresh_token=new_refresh_token)
 
 
-@router.post("/logout", status_code=204)
-async def logout(payload: RefreshTokenRequest, svc=Depends(get_refresh_service)) -> None:
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
+async def logout(payload: RefreshTokenRequest, svc=Depends(get_refresh_service)) -> Response:
     await svc.revoke(payload.refresh_token)
-    return None
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/forgot-password")
