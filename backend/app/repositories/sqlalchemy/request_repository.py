@@ -24,6 +24,7 @@ class SQLAlchemyRequestRepository(RequestRepository):
             blood_request_id=req_id, hospital_id=request.hospital_id, created_by_user_id=request.created_by,
             blood_type=request.blood_type, requested_quantity=request.quantity_units,
             urgency="urgent" if request.urgency else "normal", status=request.status.value, reason=request.notes,
+            unit_price=getattr(request, "unit_price", None),
             created_at=request.created_at, required_by=request.required_by,
         )
         self.session.add(obj)
@@ -57,5 +58,7 @@ class SQLAlchemyRequestRepository(RequestRepository):
             return request
         obj.status = request.status.value
         obj.reason = request.notes
+        if hasattr(request, "unit_price") and request.unit_price is not None:
+            obj.unit_price = request.unit_price
         await self.session.commit()
         return request

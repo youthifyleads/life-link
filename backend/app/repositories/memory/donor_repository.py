@@ -14,6 +14,7 @@ class InMemoryDonorRepository(DonorRepository):
     async def create_donation(self, donation): self.donations[donation.id]=donation; return donation
     async def get_donation(self, donation_id): return self.donations.get(donation_id)
     async def list_responses(self, donor_id): return [x for x in self.responses.values() if x.donor_id==donor_id]
+    async def list_responses_for_request(self, blood_request_id): return [x for x in self.responses.values() if x.blood_request_id==blood_request_id]
     async def create_response(self, response): self.responses[response.id]=response; return response
     async def create_consent(self, consent): self.consents[consent.id]=consent; return consent
     async def list_consents(self, donor_id): return [x for x in self.consents.values() if x.donor_id==donor_id]

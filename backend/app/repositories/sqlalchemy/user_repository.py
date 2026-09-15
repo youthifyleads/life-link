@@ -52,7 +52,6 @@ class SQLAlchemyUserRepository(UserRepository):
         obj = UserModel(
             user_id=uid, email=user.email.lower(), password_hash=user.hashed_password,
             name=user.full_name, status="active" if user.is_active else "inactive",
-            date_of_birth=getattr(user, "date_of_birth", None), email_verified=getattr(user, "email_verified", True),
             created_at=user.created_at if hasattr(user, "created_at") else __import__('datetime').datetime.now(__import__('datetime').timezone.utc),
             role_id=role.role_id,
             hospital_id=user.hospital_id or (user.institution_id if user.role == Role.HOSPITAL_USER else None),
@@ -65,11 +64,14 @@ class SQLAlchemyUserRepository(UserRepository):
         return user
 
     async def update(self, user: UserRecord) -> UserRecord:
-        result = await self.session.execute(select(UserModel).where(UserModel.user_id == user.id))
-        obj = result.scalar_one_or_none()
-        if obj is None: return user
-        obj.name = user.full_name; obj.email = user.email.lower(); obj.password_hash = user.hashed_password; obj.status = user.status; obj.email_verified = getattr(user, "email_verified", True); obj.date_of_birth = getattr(user, "date_of_birth", None)
-        await self.session.commit(); return user
+        obj = (await self.session.execute(select(UserModel).where(UserModel.user_id == user.id))).scalar_one_or_none()
+        if obj:
+            obj.password_hash = user.hashed_password
+            obj.status = "active" if user.is_active else "inactive"
+            if hasattr(obj, "email_verified"):
+                obj.email_verified = getattr(user, "email_verified", True)
+            await self.session.commit()
+        return user
 
     async def list_all(self) -> list[UserRecord]:
         result = await self.session.execute(select(UserModel).options(joinedload(UserModel.role), joinedload(UserModel.phones)).order_by(UserModel.created_at.desc()))
