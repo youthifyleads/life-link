@@ -75,4 +75,4 @@ class SQLAlchemyUserRepository(UserRepository):
 
     async def list_all(self) -> list[UserRecord]:
         result = await self.session.execute(select(UserModel).options(joinedload(UserModel.role), joinedload(UserModel.phones)).order_by(UserModel.created_at.desc()))
-        return [user_to_record(o) for o in result.scalars().all()]
+        return [user_to_record(o) for o in result.unique().scalars().all()]

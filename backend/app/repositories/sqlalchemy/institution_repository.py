@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import HospitalModel, HospitalPhoneModel, BloodBankModel, BloodBankPhoneModel
 from app.repositories.institution_models import InstitutionRecord
@@ -9,18 +10,26 @@ class SQLAlchemyInstitutionRepository(InstitutionRepository):
 
     async def list(self, kind):
         if kind == "hospital":
-            result = await self.session.execute(select(HospitalModel).order_by(HospitalModel.name))
+            result = await self.session.execute(
+                select(HospitalModel).options(selectinload(HospitalModel.phones)).order_by(HospitalModel.name)
+            )
             rows = result.scalars().all()
             return [InstitutionRecord(x.hospital_id,x.name,x.governorate,x.address,x.status or "active",[p.phone for p in x.phones],"hospital") for x in rows]
-        result = await self.session.execute(select(BloodBankModel).order_by(BloodBankModel.name))
+        result = await self.session.execute(
+            select(BloodBankModel).options(selectinload(BloodBankModel.phones)).order_by(BloodBankModel.name)
+        )
         rows = result.scalars().all()
         return [InstitutionRecord(x.blood_bank_id,x.name,x.governorate,x.address,x.status or "active",[p.phone for p in x.phones],"blood_bank") for x in rows]
 
     async def get(self, kind, institution_id):
         if kind == "hospital":
-            x = (await self.session.execute(select(HospitalModel).where(HospitalModel.hospital_id==institution_id))).scalar_one_or_none()
+            x = (await self.session.execute(
+                select(HospitalModel).options(selectinload(HospitalModel.phones)).where(HospitalModel.hospital_id==institution_id)
+            )).scalar_one_or_none()
             return InstitutionRecord(x.hospital_id,x.name,x.governorate,x.address,x.status or "active",[p.phone for p in x.phones],"hospital") if x else None
-        x = (await self.session.execute(select(BloodBankModel).where(BloodBankModel.blood_bank_id==institution_id))).scalar_one_or_none()
+        x = (await self.session.execute(
+            select(BloodBankModel).options(selectinload(BloodBankModel.phones)).where(BloodBankModel.blood_bank_id==institution_id)
+        )).scalar_one_or_none()
         return InstitutionRecord(x.blood_bank_id,x.name,x.governorate,x.address,x.status or "active",[p.phone for p in x.phones],"blood_bank") if x else None
 
     async def create(self, record):

@@ -110,7 +110,7 @@ export function RequestQueuePage() {
           request.hospital.name.toLowerCase().includes(query) ||
           formatHospitalName(request.hospital.name, request.hospital.id).toLowerCase().includes(query) ||
           request.hospital.facilityCode.toLowerCase().includes(query) ||
-          bloodBankComponentLabels[request.component]
+          ((bloodBankComponentLabels as Record<string, string>)[request.component] || "")
             .toLowerCase()
             .includes(query) ||
           formatBloodBankComponent(request.component)
@@ -143,7 +143,8 @@ export function RequestQueuePage() {
           return Date.parse(left.requiredAt) - Date.parse(right.requiredAt);
         }
         if (filters.sort === "highest_urgency") {
-          return urgencyRank[right.urgency] - urgencyRank[left.urgency];
+          const rank = urgencyRank as Record<string, number>;
+          return (rank[right.urgency] ?? 0) - (rank[left.urgency] ?? 0);
         }
         return Date.parse(right.createdAt) - Date.parse(left.createdAt);
       });

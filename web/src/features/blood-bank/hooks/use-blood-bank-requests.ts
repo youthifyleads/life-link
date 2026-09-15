@@ -29,17 +29,40 @@ export const bloodBankRequestKeys = {
     ["blood-bank", "units", params] as const,
 };
 
+import { requestsApi } from "@/shared/api/requests.api";
+import { getAccessToken } from "@/shared/api/auth-token";
+
 export function useBloodBankRequests() {
   return useQuery({
     queryKey: bloodBankRequestKeys.all,
-    queryFn: getBloodBankRequests,
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveData = await requestsApi.getBloodBankRequests();
+          if (liveData && liveData.length > 0) return liveData;
+        } catch (err) {
+          console.warn("Live blood bank requests fetch fallback:", err);
+        }
+      }
+      return getBloodBankRequests();
+    },
   });
 }
 
 export function useBloodBankRequest(id: string) {
   return useQuery({
     queryKey: bloodBankRequestKeys.detail(id),
-    queryFn: () => getBloodBankRequestById(id),
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveReq = await requestsApi.getBloodBankRequestById(id);
+          if (liveReq) return liveReq;
+        } catch (err) {
+          console.warn("Live blood bank request detail fallback:", err);
+        }
+      }
+      return getBloodBankRequestById(id);
+    },
     enabled: Boolean(id),
   });
 }

@@ -13,6 +13,7 @@ class SQLAlchemyBloodBagRepository(BloodBagRepository):
         self.session = session
 
     def _to_record(self, obj: BloodBagModel) -> BloodBagRecord:
+        st = str(obj.status).lower() if obj.status else "available"
         return BloodBagRecord(
             id=obj.blood_bag_id,
             blood_type=obj.blood_type,
@@ -20,7 +21,7 @@ class SQLAlchemyBloodBagRepository(BloodBagRepository):
             collection_date=obj.collection_date,
             expiry_date=obj.expiry_date,
             qr_code=obj.qr_code,
-            status=obj.status,
+            status=st,
             current_location=obj.current_location,
             created_at=obj.created_at,
             donation_id=obj.donation_id,
