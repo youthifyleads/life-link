@@ -549,6 +549,7 @@ BEGIN
     CREATE TABLE request_allocations (
         allocation_id       UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
         quantity            NUMERIC(8,2)     NOT NULL,
+        unit_price          NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
         status              VARCHAR(30)      NOT NULL DEFAULT 'allocated',
         allocated_at        DATETIME2        NOT NULL DEFAULT SYSUTCDATETIME(),
         blood_request_id    UNIQUEIDENTIFIER NOT NULL,
@@ -570,6 +571,9 @@ BEGIN
         CONSTRAINT ck_request_allocations_quantity
             CHECK (quantity > 0),
 
+        CONSTRAINT ck_request_allocations_unit_price
+            CHECK (unit_price >= 0),
+
         CONSTRAINT ck_request_allocations_status
             CHECK (status IN ('allocated','released','fulfilled','cancelled'))
     );
@@ -582,6 +586,9 @@ BEGIN
     CREATE TABLE payments (
         payment_id               UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
         amount                   NUMERIC(10,2)    NOT NULL,
+        currency                 VARCHAR(3)       NOT NULL DEFAULT 'EGP',
+        provider                 VARCHAR(50)      NOT NULL DEFAULT 'paymob',
+        provider_order_id        NVARCHAR(100)    NULL,
         payment_status           VARCHAR(30)      NOT NULL DEFAULT 'pending',
         payment_method           VARCHAR(40)      NULL,
         paid_at                  DATETIME2        NULL,
@@ -590,7 +597,6 @@ BEGIN
         blood_request_id         UNIQUEIDENTIFIER NOT NULL,
 
         CONSTRAINT pk_payments PRIMARY KEY (payment_id),
-        CONSTRAINT uq_payments_blood_request_id UNIQUE (blood_request_id),
 
         CONSTRAINT fk_payments_blood_request
             FOREIGN KEY (blood_request_id) REFERENCES blood_requests(blood_request_id) ON DELETE NO ACTION,
@@ -609,6 +615,20 @@ DROP INDEX IF EXISTS ux_payments_transaction_reference ON dbo.payments;
 CREATE UNIQUE INDEX ux_payments_transaction_reference
     ON dbo.payments(transaction_reference)
     WHERE transaction_reference IS NOT NULL;
+
+DROP INDEX IF EXISTS ix_payments_provider_order_id ON dbo.payments;
+CREATE NONCLUSTERED INDEX ix_payments_provider_order_id
+    ON dbo.payments(provider_order_id)
+    WHERE provider_order_id IS NOT NULL;
+
+DROP INDEX IF EXISTS ix_payments_blood_request_id ON dbo.payments;
+CREATE NONCLUSTERED INDEX ix_payments_blood_request_id
+    ON dbo.payments(blood_request_id);
+
+DROP INDEX IF EXISTS ux_payments_single_paid_per_request ON dbo.payments;
+CREATE UNIQUE NONCLUSTERED INDEX ux_payments_single_paid_per_request
+    ON dbo.payments(blood_request_id)
+    WHERE payment_status = 'paid';
 
 -- 21. Supporting Documents
 IF OBJECT_ID('dbo.supporting_documents', 'U') IS NULL
@@ -733,11 +753,15 @@ BEGIN
         created_at        DATETIME2        NOT NULL DEFAULT SYSUTCDATETIME(),
         read_at           DATETIME2        NULL,
         user_id           UNIQUEIDENTIFIER NOT NULL,
+        related_request_id UNIQUEIDENTIFIER NULL,
 
         CONSTRAINT pk_notifications PRIMARY KEY (notification_id),
 
         CONSTRAINT fk_notifications_user
             FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE NO ACTION,
+
+        CONSTRAINT fk_notifications_blood_request
+            FOREIGN KEY (related_request_id) REFERENCES blood_requests(blood_request_id) ON DELETE SET NULL,
 
         CONSTRAINT ck_notifications_status
             CHECK (status IN ('unread','read','dismissed')),
@@ -780,6 +804,11 @@ CREATE NONCLUSTERED INDEX ix_notifications_unread_fast
 ON dbo.notifications(user_id, created_at DESC) 
 INCLUDE (title, message, type)
 WHERE status = 'unread';
+
+DROP INDEX IF EXISTS ix_notifications_related_request_id ON dbo.notifications;
+CREATE NONCLUSTERED INDEX ix_notifications_related_request_id 
+ON dbo.notifications(related_request_id) 
+WHERE related_request_id IS NOT NULL;
 
 DROP INDEX IF EXISTS ix_audit_logs_user_time ON dbo.audit_logs;
 CREATE NONCLUSTERED INDEX ix_audit_logs_user_time ON dbo.audit_logs(user_id, logged_at DESC);
@@ -1197,6 +1226,9 @@ BEGIN
     DECLARE @role_admin_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @role_hospital_staff_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @role_bank_staff_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @role_medical_lead_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @role_support_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @role_normal_user_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @role_donor_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @role_caregiver_id UNIQUEIDENTIFIER = NEWID();
 
@@ -1205,8 +1237,11 @@ BEGIN
         (@role_admin_id, 'SystemAdmin', 'Full administrative system access'),
         (@role_hospital_staff_id, 'HospitalStaff', 'Hospital staff responsible for blood requests'),
         (@role_bank_staff_id, 'BloodBankStaff', 'Blood bank personnel managing inventory and allocations'),
-        (@role_donor_id, 'Donor', 'Registered blood donor'),
-        (@role_caregiver_id, 'Caregiver', 'Caregiver / Nurse administering blood units');
+        (@role_medical_lead_id, 'MedicalLead', 'Clinical decision maker for blood suitability and release'),
+        (@role_support_id, 'PlatformSupport', 'Technical platform maintenance and support'),
+        (@role_normal_user_id, 'NormalUser', 'Regular user account (donors and caregivers)'),
+        (@role_donor_id, 'Donor', 'Registered blood donor profile role alias'),
+        (@role_caregiver_id, 'Caregiver', 'Caregiver / Nurse administering blood units alias');
 
     -- 2. Permissions
     DECLARE @p1 UNIQUEIDENTIFIER = NEWID();
@@ -1235,6 +1270,7 @@ BEGIN
         (@role_bank_staff_id, @p2),
         (@role_bank_staff_id, @p3),
         (@role_bank_staff_id, @p4),
+        (@role_medical_lead_id, @p3),
         (@role_caregiver_id, @p3);
 
     -- 4. Sample Hospital & Blood Bank
@@ -1253,22 +1289,33 @@ BEGIN
     INSERT INTO blood_bank_phones (blood_bank_id, phone)
     VALUES (@blood_bank_id, '+20237618991');
 
-    -- 5. Sample Users
+    -- 5. Sample Users (Password for all demo accounts: Test@123)
     DECLARE @admin_user_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @bank_user_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @hospital_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @medical_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @support_user_id UNIQUEIDENTIFIER = NEWID();
     DECLARE @donor_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @normal_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @banned_user_id UNIQUEIDENTIFIER = NEWID();
+    DECLARE @pwd_hash NVARCHAR(255) = '$pbkdf2-sha256$29000$8T6nNCbEmNNaS2mtlZLSWg$qJ2bWTCh61M8faL3nbxMOuEgFsOBEVgrw9ppUkvVGh8';
 
     INSERT INTO users (user_id, name, email, password_hash, status, role_id, hospital_id, blood_bank_id)
     VALUES
-        (@admin_user_id, N'System Admin', 'admin@lifelink.org', '$2a$12$e8Y6l9cT2r4qW...', 'active', @role_admin_id, NULL, NULL),
-        (@bank_user_id, N'Dr. Ahmed Ali (Bank Lab)', 'bank.lab@lifelink.org', '$2a$12$e8Y6l9cT2r4qW...', 'active', @role_bank_staff_id, NULL, @blood_bank_id),
-        (@hospital_user_id, N'Dr. Sarah Mahmoud (ER)', 'sarah.er@hospital.org', '$2a$12$e8Y6l9cT2r4qW...', 'active', @role_hospital_staff_id, @hospital_id, NULL),
-        (@donor_user_id, N'Mohamed Youssef', 'donor.mohamed@gmail.com', '$2a$12$e8Y6l9cT2r4qW...', 'active', @role_donor_id, NULL, NULL);
+        (@admin_user_id, N'System Admin', 'admin@lifelink.dev', @pwd_hash, 'active', @role_admin_id, NULL, NULL),
+        (@hospital_user_id, N'Dr. Sarah Mahmoud (ER Staff)', 'hospital@lifelink.dev', @pwd_hash, 'active', @role_hospital_staff_id, @hospital_id, NULL),
+        (@bank_user_id, N'Dr. Ahmed Ali (Blood Bank Lab)', 'bloodbank@lifelink.dev', @pwd_hash, 'active', @role_bank_staff_id, NULL, @blood_bank_id),
+        (@medical_user_id, N'Dr. Tamer Khaled (Medical Lead)', 'medicallead@lifelink.dev', @pwd_hash, 'active', @role_medical_lead_id, @hospital_id, NULL),
+        (@support_user_id, N'Eng. Mostafa (Support)', 'support@lifelink.dev', @pwd_hash, 'active', @role_support_id, NULL, NULL),
+        (@donor_user_id, N'Mohamed Youssef (Donor & Caregiver)', 'donor@lifelink.dev', @pwd_hash, 'active', @role_normal_user_id, NULL, NULL),
+        (@normal_user_id, N'Normal User Demo', 'user@lifelink.dev', @pwd_hash, 'active', @role_normal_user_id, NULL, NULL),
+        (@banned_user_id, N'Banned User Demo', 'banned@lifelink.dev', @pwd_hash, 'suspended', @role_normal_user_id, NULL, NULL);
 
     INSERT INTO user_phones (user_id, phone)
     VALUES
         (@donor_user_id, '+201012345678'),
+        (@normal_user_id, '+20100000005'),
+        (@banned_user_id, '+20100000004'),
         (@hospital_user_id, '+201198765432');
 
     -- 6. Sample Donor Record & Consent
