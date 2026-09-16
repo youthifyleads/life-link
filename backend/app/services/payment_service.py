@@ -72,6 +72,20 @@ class PaymentService:
         self._check_hospital_access(req, current)
         return await self.repo.list_for_request(blood_request_id)
 
+    async def list_history(self, current) -> list[PaymentRecord]:
+        """Payment history. Admin/Platform Support see everything; Hospital
+        Staff see only payments for their own hospital's requests."""
+        all_payments = await self.repo.list_all()
+        if current.role.value in {"admin", "platform_support"}:
+            return all_payments
+        user_inst_id = getattr(current, "institution_id", None) or getattr(current, "hospital_id", None)
+        scoped: list[PaymentRecord] = []
+        for p in all_payments:
+            req = await self.request_repo.get_by_id(p.blood_request_id)
+            if req and req.hospital_id == user_inst_id:
+                scoped.append(p)
+        return scoped
+
     async def update(self, payment_id: str, data: PaymentUpdate, current) -> PaymentRecord:
         p = await self.repo.get_by_id(payment_id)
         if not p:
@@ -80,6 +94,11 @@ class PaymentService:
         self._check_hospital_access(req, current)
 
         if data.payment_status is not None:
+            if data.payment_status.lower() in {"paid", "completed", "success"}:
+                raise ForbiddenError(
+                    "Payment success can only be confirmed by the Paymob webhook, not set manually.",
+                    code="MANUAL_PAID_STATUS_FORBIDDEN",
+                )
             p.payment_status = data.payment_status
         if data.paid_at is not None:
             p.paid_at = data.paid_at

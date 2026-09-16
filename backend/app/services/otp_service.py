@@ -145,8 +145,19 @@ class OTPService:
             attempts=0,
             last_sent_at=now,
         )
-        await self.email_provider.send_otp(to_email=email.lower(), code=code, purpose=purpose)
-        return "Verification code sent"
+        dev_otp = None
+        try:
+            await self.email_provider.send_otp(to_email=email.lower(), code=code, purpose=purpose)
+        except ServiceUnavailableError:
+            if self._is_dev(settings):
+                dev_otp = code
+            else:
+                raise
+        else:
+            if self._is_dev(settings):
+                dev_otp = code
+
+        return dev_otp or "Verification code sent"
 
     async def verify_email(self, email: str, code: str) -> bool:
         key = email.lower()

@@ -30,6 +30,10 @@ async def webhook(
 async def create(data: PaymentCreate, current: CurrentUser, svc: PaymentService = Depends(get_payment_service)):
     return await svc.create(data, current)
 
+@router.get("", response_model=list[PaymentPublic], dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.ADMIN, Role.PLATFORM_SUPPORT))])
+async def list_payments(current: CurrentUser, svc: PaymentService = Depends(get_payment_service)):
+    return await svc.list_history(current)
+
 @router.get("/{payment_id}", response_model=PaymentPublic)
 async def get(payment_id: str, current: CurrentUser, svc: PaymentService = Depends(get_payment_service)):
     return await svc.get(payment_id, current)

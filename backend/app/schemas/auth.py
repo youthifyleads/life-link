@@ -32,12 +32,42 @@ class SignupRequest(BaseModel):
     governorate: str | None = Field(default=None, max_length=100)
     blood_type: str | None = Field(default=None, min_length=2, max_length=3)
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("phone", "name", mode="before")
+    @classmethod
+    def strip_strings(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("date_of_birth", mode="before")
+    @classmethod
+    def validate_dob(cls, value: object) -> str:
+        from datetime import date as _date
+        if isinstance(value, _date):
+            d = value
+        elif isinstance(value, str):
+            val_str = value.strip()
+            try:
+                d = _date.fromisoformat(val_str)
+            except ValueError:
+                raise ValueError("date_of_birth must be a valid date in YYYY-MM-DD format")
+        else:
+            raise ValueError("Invalid date_of_birth")
+
+        if d >= _date.today():
+            raise ValueError("date_of_birth must be in the past")
+        return str(d)
+
 
 class SignupResponse(BaseModel):
-    message: str
+    message: str = "Account created. Verification code sent to email."
     user_id: str
     email: EmailStr
     email_verification_required: bool = True
+    dev_otp: str | None = None
 
 
 class EmailOTPRequest(BaseModel):

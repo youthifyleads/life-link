@@ -109,10 +109,13 @@ class AuthService:
                 )
             )
 
+        dev_otp = None
         if self._otp:
-            await self._otp.request_email(user.email, "signup")
+            otp_res = await self._otp.request_email(user.email, "signup")
+            if otp_res and otp_res != "Verification code sent":
+                dev_otp = otp_res
 
-        return user
+        return user, dev_otp
 
     async def verify_signup(self, email: str, otp: str) -> UserRecord:
         user = await self._user_repo.get_by_email(email.lower())

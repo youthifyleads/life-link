@@ -28,24 +28,30 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/signup", response_model=SignupResponse, status_code=201)
 async def signup(payload: SignupRequest, svc: AuthService = Depends(get_auth_service)) -> SignupResponse:
-    user = await svc.signup(payload)
+    user, dev_otp = await svc.signup(payload)
     return SignupResponse(
         message="Account created. Verification code sent to email.",
         user_id=user.id,
         email=user.email,
+        dev_otp=dev_otp,
     )
 
 
 @router.post("/signup/verify", response_model=UserPublic)
+@router.post("/verify-email", response_model=UserPublic)
 async def verify_signup(payload: EmailOTPVerify, svc: AuthService = Depends(get_auth_service)) -> UserPublic:
     user = await svc.verify_signup(payload.email, payload.otp)
     return UserPublic.model_validate(user)
 
 
 @router.post("/signup/resend-otp")
+@router.post("/resend-verification-email")
 async def resend_signup_otp(payload: EmailOTPRequest, otp=Depends(get_otp_service)) -> dict[str, str]:
     msg = await otp.request_email(payload.email, "signup")
-    return {"message": msg}
+    res = {"message": "A new verification code has been sent." if msg != "Verification code sent" else msg}
+    if msg != "Verification code sent":
+        res["dev_otp"] = msg
+    return res
 
 
 @router.post(

@@ -371,3 +371,65 @@ def test_initiate_payment_duplicate_when_paid_rejected(client, hospital_token, b
     )
     assert dup_init.status_code == 409
     assert dup_init.json()["error"]["code"] == "ALREADY_PAID"
+
+
+def test_patch_payment_cannot_manually_mark_paid(client, admin_token, hospital_token):
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "A+", "component": "whole_blood", "quantity_units": 1},
+        headers=auth_headers(hospital_token),
+    )
+    blood_request_id = req_resp.json()["id"]
+
+    # Create pending payment
+    create_resp = client.post(
+        "/api/v1/payments",
+        json={
+            "blood_request_id": blood_request_id,
+            "amount": 250.0,
+            "payment_status": "pending",
+        },
+        headers=auth_headers(admin_token),
+    )
+    assert create_resp.status_code == 201
+    payment_id = create_resp.json()["id"]
+
+    # Attempt to manually mark as paid via admin PATCH
+    patch_resp = client.patch(
+        f"/api/v1/payments/{payment_id}",
+        json={"payment_status": "paid"},
+        headers=auth_headers(admin_token),
+    )
+    assert patch_resp.status_code == 403
+    assert patch_resp.json()["error"]["code"] == "MANUAL_PAID_STATUS_FORBIDDEN"
+
+
+def test_list_payments_history_endpoint(client, admin_token, hospital_token):
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "O+", "component": "whole_blood", "quantity_units": 1},
+        headers=auth_headers(hospital_token),
+    )
+    blood_request_id = req_resp.json()["id"]
+
+    # Create payment
+    client.post(
+        "/api/v1/payments",
+        json={
+            "blood_request_id": blood_request_id,
+            "amount": 350.0,
+            "payment_status": "pending",
+        },
+        headers=auth_headers(admin_token),
+    )
+
+    # Admin lists history
+    admin_list = client.get("/api/v1/payments", headers=auth_headers(admin_token))
+    assert admin_list.status_code == 200
+    assert isinstance(admin_list.json(), list)
+    assert len(admin_list.json()) >= 1
+
+    # Hospital user lists history
+    hosp_list = client.get("/api/v1/payments", headers=auth_headers(hospital_token))
+    assert hosp_list.status_code == 200
+    assert isinstance(hosp_list.json(), list)
