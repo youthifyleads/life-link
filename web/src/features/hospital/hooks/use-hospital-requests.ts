@@ -30,12 +30,16 @@ export function useHospitalRequests() {
       if (getAccessToken()) {
         try {
           const liveData = await requestsApi.getRequests();
-          if (liveData && liveData.length > 0) return liveData;
+          return liveData || [];
         } catch (err) {
-          console.warn("Live requests fetch fallback:", err);
+          console.warn("Live requests fetch failed:", err);
+          return [];
         }
       }
-      return getHospitalRequests();
+      if (import.meta.env.MODE === "test") {
+        return getHospitalRequests();
+      }
+      return [];
     },
   });
 }
@@ -47,7 +51,7 @@ export function useAvailableBloodBanks() {
       if (getAccessToken()) {
         try {
           const { data } = await apiClient.get<any[]>("/blood-banks");
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             return data.map((b) => ({
               id: b.id,
               name: b.name,
@@ -57,17 +61,21 @@ export function useAvailableBloodBanks() {
               phone: b.phones?.[0] || "+20 2 3761 1111",
               status: b.status || "active",
               availabilitySummary: {
-                totalAvailable: 28,
+                totalAvailable: b.available_units ?? 0,
                 posture: "optimal" as const,
-                lowStockGroupsCount: 1,
+                lowStockGroupsCount: 0,
               },
             }));
           }
         } catch (err) {
-          console.warn("Live blood banks fetch fallback:", err);
+          console.warn("Live blood banks fetch failed:", err);
+          return [];
         }
       }
-      return getAvailableBloodBanks();
+      if (import.meta.env.MODE === "test") {
+        return getAvailableBloodBanks();
+      }
+      return [];
     },
   });
 }
@@ -80,10 +88,13 @@ export function useHospitalRequest(id: string) {
         try {
           return await requestsApi.getRequestById(id);
         } catch (err) {
-          console.warn("Live request detail fallback:", err);
+          console.warn("Live request detail failed:", err);
         }
       }
-      return getHospitalRequest(id);
+      if (import.meta.env.MODE === "test") {
+        return getHospitalRequest(id);
+      }
+      return null;
     },
   });
 }

@@ -4,10 +4,7 @@ import {
   computeBloodStockMatrix,
   computeInventoryKPIs,
   computeInventoryWarnings,
-  getBloodStockMatrix,
-  getInventoryKPIs,
   getInventoryUnits,
-  getInventoryWarnings,
   lookupBloodUnit,
   registerBloodUnits,
   updateBloodUnitStatus,
@@ -38,12 +35,16 @@ export function useInventoryUnits(filters?: Partial<InventoryLedgerFilters>) {
       if (getAccessToken()) {
         try {
           const liveData = await inventoryApi.getInventory(filters);
-          if (liveData && liveData.length > 0) return liveData;
+          return liveData || [];
         } catch (err) {
-          console.warn("Live inventory fetch fallback:", err);
+          console.warn("Live inventory fetch failed:", err);
+          return [];
         }
       }
-      return getInventoryUnits(filters);
+      if (import.meta.env.MODE === "test") {
+        return getInventoryUnits(filters);
+      }
+      return [];
     },
   });
 }
@@ -54,10 +55,7 @@ export function useInventoryKPIs() {
   return useQuery({
     queryKey: [...inventoryKeys.kpis, units?.length],
     queryFn: async () => {
-      if (units && units.length > 0) {
-        return computeInventoryKPIs(units);
-      }
-      return getInventoryKPIs();
+      return computeInventoryKPIs(units || []);
     },
   });
 }
@@ -68,10 +66,7 @@ export function useBloodStockMatrix() {
   return useQuery({
     queryKey: [...inventoryKeys.matrix, units?.length],
     queryFn: async () => {
-      if (units && units.length > 0) {
-        return computeBloodStockMatrix(units);
-      }
-      return getBloodStockMatrix();
+      return computeBloodStockMatrix(units || []);
     },
   });
 }
@@ -82,10 +77,7 @@ export function useInventoryWarnings() {
   return useQuery({
     queryKey: [...inventoryKeys.warnings, units?.length],
     queryFn: async () => {
-      if (units && units.length > 0) {
-        return computeInventoryWarnings(units);
-      }
-      return getInventoryWarnings();
+      return computeInventoryWarnings(units || []);
     },
   });
 }
