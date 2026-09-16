@@ -20,8 +20,15 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.primary_role)) {
-    return <Navigate to="/forbidden" replace />;
+  if (allowedRoles) {
+    const hasRole =
+      allowedRoles.includes(user.primary_role) ||
+      (Array.isArray(user.roles) &&
+        user.roles.some((role) => allowedRoles.includes(role)));
+
+    if (!hasRole) {
+      return <Navigate to="/forbidden" replace />;
+    }
   }
 
   return <Outlet />;

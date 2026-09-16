@@ -22,12 +22,10 @@ const commonConfig = {
 
 export const authHttpClient = axios.create({
   ...commonConfig,
-  withCredentials: true,
 });
 
 export const apiClient = axios.create({
   ...commonConfig,
-  withCredentials: true,
 });
 
 apiClient.interceptors.request.use((config) => {

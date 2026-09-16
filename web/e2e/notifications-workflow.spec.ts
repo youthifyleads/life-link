@@ -76,8 +76,8 @@ test.describe("Unified Notification and Communication Layer (Phase 7)", () => {
     page,
   }) => {
     await page.goto("/login");
-    await page.getByRole("button", { name: "Enter blood bank workspace" }).click();
-    await expect(page).toHaveURL(/.*\/blood-bank\/dashboard/);
+    await page.getByRole("button", { name: "Enter admin workspace" }).click();
+    await expect(page).toHaveURL(/.*\/admin\/dashboard/);
 
     // Navigate to activity ledger
     await page.goto("/activity");

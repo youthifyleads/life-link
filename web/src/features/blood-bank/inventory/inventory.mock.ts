@@ -678,21 +678,20 @@ export async function getInventoryUnits(
 }
 
 /**
- * Compute real-time Inventory KPIs
+ * Compute real-time Inventory KPIs from a blood units list
  */
-export async function getInventoryKPIs(): Promise<InventoryKPIs> {
+export function computeInventoryKPIs(units: BloodUnit[]): InventoryKPIs {
   const now = Date.now();
-  const available = sharedBloodUnits.filter((u) => u.status === "available");
-  const reserved = sharedBloodUnits.filter((u) => u.status === "reserved");
-  const quarantined = sharedBloodUnits.filter((u) => u.status === "quarantined");
+  const available = units.filter((u) => u.status === "available");
+  const reserved = units.filter((u) => u.status === "reserved");
+  const quarantined = units.filter((u) => u.status === "quarantined");
 
-  const expiringSoon = sharedBloodUnits.filter((u) => {
+  const expiringSoon = units.filter((u) => {
     if (u.status === "expired") return false;
     const diff = new Date(u.expiryDate).getTime() - now;
     return diff > 0 && diff <= 48 * 60 * 60 * 1000;
   });
 
-  // Calculate available counts per blood group to identify critical low stock (<= 2 units, or <= 3 for O- universal)
   const criticalLowStockGroups: BloodGroup[] = [];
   for (const group of ALL_BLOOD_GROUPS) {
     const groupCount = available.filter((u) => u.bloodGroup === group).length;
@@ -702,25 +701,29 @@ export async function getInventoryKPIs(): Promise<InventoryKPIs> {
     }
   }
 
-  return waitForMock({
+  return {
     totalAvailable: available.length,
     reservedUnits: reserved.length,
     quarantinedUnits: quarantined.length,
     expiringSoon: expiringSoon.length,
     criticalLowStockGroups,
-  });
+  };
+}
+
+export async function getInventoryKPIs(): Promise<InventoryKPIs> {
+  return waitForMock(computeInventoryKPIs(sharedBloodUnits));
 }
 
 /**
- * Compute Blood Stock Matrix (ABO/Rh x Component)
+ * Compute Blood Stock Matrix (ABO/Rh x Component) from a blood units list
  */
-export async function getBloodStockMatrix(): Promise<BloodStockMatrixCell[]> {
+export function computeBloodStockMatrix(units: BloodUnit[]): BloodStockMatrixCell[] {
   const now = Date.now();
   const cells: BloodStockMatrixCell[] = [];
 
   for (const group of ALL_BLOOD_GROUPS) {
     for (const comp of ALL_COMPONENTS) {
-      const groupCompUnits = sharedBloodUnits.filter(
+      const groupCompUnits = units.filter(
         (u) => u.bloodGroup === group && u.component === comp,
       );
 
@@ -752,18 +755,21 @@ export async function getBloodStockMatrix(): Promise<BloodStockMatrixCell[]> {
     }
   }
 
-  return waitForMock(cells);
+  return cells;
+}
+
+export async function getBloodStockMatrix(): Promise<BloodStockMatrixCell[]> {
+  return waitForMock(computeBloodStockMatrix(sharedBloodUnits));
 }
 
 /**
- * Compute operational clinical warnings
+ * Compute operational clinical warnings from a blood units list
  */
-export async function getInventoryWarnings(): Promise<InventoryWarning[]> {
+export function computeInventoryWarnings(units: BloodUnit[]): InventoryWarning[] {
   const warnings: InventoryWarning[] = [];
   const now = Date.now();
 
-  // 1. Critical Shortage Warnings (Emergency Red)
-  const oNegAvailable = sharedBloodUnits.filter(
+  const oNegAvailable = units.filter(
     (u) => u.bloodGroup === "O−" && u.status === "available",
   ).length;
   if (oNegAvailable <= 3) {
@@ -777,7 +783,7 @@ export async function getInventoryWarnings(): Promise<InventoryWarning[]> {
     });
   }
 
-  const abNegAvailable = sharedBloodUnits.filter(
+  const abNegAvailable = units.filter(
     (u) => u.bloodGroup === "AB−" && u.status === "available",
   ).length;
   if (abNegAvailable === 0) {
@@ -791,8 +797,7 @@ export async function getInventoryWarnings(): Promise<InventoryWarning[]> {
     });
   }
 
-  // 2. Expired Units Warning (Emergency Red for biohazard audit)
-  const expiredUnits = sharedBloodUnits.filter(
+  const expiredUnits = units.filter(
     (u) => u.status === "expired" || new Date(u.expiryDate).getTime() <= now,
   );
   if (expiredUnits.length > 0) {
@@ -806,8 +811,7 @@ export async function getInventoryWarnings(): Promise<InventoryWarning[]> {
     });
   }
 
-  // 3. Units Expiring within 24 Hours (Amber Warning)
-  const expiring24h = sharedBloodUnits.filter((u) => {
+  const expiring24h = units.filter((u) => {
     if (u.status === "expired") return false;
     const diff = new Date(u.expiryDate).getTime() - now;
     return diff > 0 && diff <= 24 * 60 * 60 * 1000;
@@ -823,8 +827,7 @@ export async function getInventoryWarnings(): Promise<InventoryWarning[]> {
     });
   }
 
-  // 4. Units Expiring within 48 Hours (Amber Warning)
-  const expiring48h = sharedBloodUnits.filter((u) => {
+  const expiring48h = units.filter((u) => {
     if (u.status === "expired") return false;
     const diff = new Date(u.expiryDate).getTime() - now;
     return diff > 24 * 60 * 60 * 1000 && diff <= 48 * 60 * 60 * 1000;
@@ -840,7 +843,11 @@ export async function getInventoryWarnings(): Promise<InventoryWarning[]> {
     });
   }
 
-  return waitForMock(warnings);
+  return warnings;
+}
+
+export async function getInventoryWarnings(): Promise<InventoryWarning[]> {
+  return waitForMock(computeInventoryWarnings(sharedBloodUnits));
 }
 
 /**

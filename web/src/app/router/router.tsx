@@ -1,8 +1,30 @@
-import { createBrowserRouter, Outlet } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 
+import { useAuth } from "@/features/authentication/model/use-auth";
 import { ProtectedRoute } from "@/features/authentication/ui/protected-route";
 import { ProtectedLayout } from "@/layouts/protected-layout";
 import { PageLoader } from "@/shared/components/feedback/page-loader";
+
+function RootRedirect() {
+  const { user, status } = useAuth();
+  if (status === "loading") {
+    return <PageLoader />;
+  }
+  const role = user?.primary_role;
+  if (role === "admin" || role === "platform_support") {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  if (role === "blood_bank_staff") {
+    return <Navigate to="/blood-bank/dashboard" replace />;
+  }
+  if (role === "donor") {
+    return <Navigate to="/donor/dashboard" replace />;
+  }
+  if (role === "caregiver") {
+    return <Navigate to="/caregiver/dashboard" replace />;
+  }
+  return <Navigate to="/hospital/dashboard" replace />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -24,11 +46,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                lazy: async () => {
-                  const { FoundationPage } =
-                    await import("@/pages/system/foundation-page");
-                  return { Component: FoundationPage };
-                },
+                element: <RootRedirect />,
               },
               ...(import.meta.env.DEV
                 ? [
@@ -53,16 +71,6 @@ export const router = createBrowserRouter([
                 },
               },
               {
-                path: "activity",
-                lazy: async () => {
-                  const { ActivityPage } =
-                    await import(
-                      "@/features/notifications/activity/activity-page"
-                    );
-                  return { Component: ActivityPage };
-                },
-              },
-              {
                 path: "settings/notifications",
                 lazy: async () => {
                   const { NotificationPreferencesPage } =
@@ -73,7 +81,7 @@ export const router = createBrowserRouter([
                 },
               },
               {
-                element: <ProtectedRoute allowedRoles={["hospital_staff"]} />,
+                element: <ProtectedRoute allowedRoles={["hospital_staff", "medical_lead"]} />,
                 children: [
                   {
                     path: "hospital/dashboard",
@@ -179,7 +187,7 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                element: <ProtectedRoute allowedRoles={["admin"]} />,
+                element: <ProtectedRoute allowedRoles={["admin", "platform_support"]} />,
                 children: [
                   {
                     path: "admin/dashboard",
@@ -235,6 +243,16 @@ export const router = createBrowserRouter([
                       const { AuditPage } =
                         await import("@/features/admin/audit/audit-page");
                       return { Component: AuditPage };
+                    },
+                  },
+                  {
+                    path: "activity",
+                    lazy: async () => {
+                      const { ActivityPage } =
+                        await import(
+                          "@/features/notifications/activity/activity-page"
+                        );
+                      return { Component: ActivityPage };
                     },
                   },
                 ],

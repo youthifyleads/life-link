@@ -36,9 +36,9 @@ export interface BackendBagHistoryDTO {
   created_at: string;
 }
 
-export function mapBackendDtoToBloodUnit(dto: BackendInventoryItemDTO): BloodUnit {
+export function mapBackendDtoToBloodUnit(dto: any): BloodUnit {
   let status: BloodUnitStatus = "available";
-  const st = dto.status.toLowerCase();
+  const st = (dto.status || (dto.is_available ? "available" : "quarantined")).toLowerCase();
   if (st === "allocated") status = "allocated";
   else if (st === "reserved") status = "reserved";
   else if (st === "quarantine" || st === "quarantined") status = "quarantined";
@@ -46,16 +46,16 @@ export function mapBackendDtoToBloodUnit(dto: BackendInventoryItemDTO): BloodUni
   else status = "available";
 
   return {
-    id: dto.barcode || dto.id,
-    bloodGroup: dto.blood_type as BloodGroup,
+    id: dto.qr_code || dto.barcode || dto.id || `UNT-${Date.now().toString().slice(-6)}`,
+    bloodGroup: (dto.blood_type || dto.bloodGroup || "O+") as BloodGroup,
     component: (dto.component as BloodBankComponent) || "red_cells",
-    collectionDate: dto.collection_date ? dto.collection_date.split("T")[0] : "",
-    expiryDate: dto.expiry_date,
-    storageLocation: dto.storage_location || "Central Storage Rack",
+    collectionDate: dto.collection_date ? String(dto.collection_date).split("T")[0] : new Date().toISOString().split("T")[0],
+    expiryDate: dto.expiry_date ? String(dto.expiry_date).split("T")[0] : new Date(Date.now() + 35 * 86400000).toISOString().split("T")[0],
+    storageLocation: dto.current_location || dto.storage_location || "Central Storage Rack",
     status,
-    allocatedRequestId: dto.reserved_for_request_id || undefined,
-    registeredAt: dto.created_at,
-    updatedAt: dto.updated_at,
+    allocatedRequestId: dto.allocated_request_id || dto.reserved_for_request_id || undefined,
+    registeredAt: dto.created_at || new Date().toISOString(),
+    updatedAt: dto.updated_at || dto.last_updated || new Date().toISOString(),
     notes: dto.volume_ml ? `Volume: ${dto.volume_ml} mL` : undefined,
   };
 }
@@ -73,32 +73,66 @@ export const inventoryApi = {
       params.status = filters.status;
     }
 
-    const { data } = await apiClient.get<BackendInventoryItemDTO[]>("/inventory", { params });
-    return data.map(mapBackendDtoToBloodUnit);
+    try {
+      const { data } = await apiClient.get<any[]>("/blood-bags", { params });
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map(mapBackendDtoToBloodUnit);
+      }
+    } catch {
+      // fallback to /inventory
+    }
+
+    try {
+      const { data } = await apiClient.get<any[]>("/inventory", { params });
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map(mapBackendDtoToBloodUnit);
+      }
+    } catch {
+      // return empty array if both fail
+    }
+    return [];
   },
 
   async registerUnit(payload: BloodUnitIntakePayload): Promise<BloodUnit> {
-    const barcode = payload.unitId || `UNT-${payload.bloodGroup.replace("+", "POS").replace("−", "NEG")}-${Date.now().toString().slice(-6)}`;
     const body = {
       blood_type: payload.bloodGroup,
       component: payload.component,
-      barcode,
-      volume_ml: 450,
-      storage_location: payload.storageLocation || "Central Agitator Bay",
-      collection_date: new Date(payload.collectionDate).toISOString(),
-      expiry_date: new Date(payload.expiryDate).toISOString(),
+      quantity: 1,
+      collection_date: payload.collectionDate,
+      expiry_date: payload.expiryDate,
+      current_location: payload.storageLocation || "Central Agitator Bay",
     };
 
-    const { data } = await apiClient.post<BackendInventoryItemDTO>("/inventory", body);
-    return mapBackendDtoToBloodUnit(data);
+    try {
+      const { data } = await apiClient.post<any>("/blood-bags", body);
+      return mapBackendDtoToBloodUnit(data);
+    } catch {
+      const fallbackBody = {
+        blood_bank_id: "default",
+        blood_type: payload.bloodGroup,
+        component: payload.component,
+        quantity_units: 1,
+        expiry_date: payload.expiryDate ? new Date(payload.expiryDate).toISOString() : null,
+      };
+      const { data } = await apiClient.post<any>("/inventory", fallbackBody);
+      return mapBackendDtoToBloodUnit(data);
+    }
   },
 
-  async updateUnitStatus(unitId: string, status: BloodUnitStatus, notes?: string): Promise<BloodUnit> {
-    const { data } = await apiClient.patch<BackendInventoryItemDTO>(`/inventory/${unitId}/status`, {
-      status,
-      notes,
-    });
-    return mapBackendDtoToBloodUnit(data);
+  async updateUnitStatus(unitId: string, status: BloodUnitStatus, notes?: string, location?: string): Promise<BloodUnit> {
+    try {
+      const { data } = await apiClient.patch<any>(`/blood-bags/${unitId}/status`, {
+        status,
+        notes,
+        location,
+      });
+      return mapBackendDtoToBloodUnit(data);
+    } catch {
+      const { data } = await apiClient.patch<any>(`/inventory/${unitId}`, {
+        is_available: status === "available",
+      });
+      return mapBackendDtoToBloodUnit(data);
+    }
   },
 
   async getInventoryStats(): Promise<any> {
