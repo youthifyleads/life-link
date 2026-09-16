@@ -13,3 +13,6 @@ class SQLAlchemyPaymentRepository(PaymentRepository):
         o = (await self.session.execute(select(PaymentModel).where(PaymentModel.provider_order_id == order_id))).scalar_one_or_none()
         return self.m(o) if o else None
     async def update(self,r): o=(await self.session.execute(select(PaymentModel).where(PaymentModel.payment_id==r.id))).scalar_one(); o.payment_status=r.payment_status; o.transaction_reference=r.transaction_reference; o.paid_at=r.paid_at; o.provider_order_id=getattr(r,"provider_order_id",o.provider_order_id); await self.session.commit(); return r
+    async def list_all(self) -> list[PaymentRecord]:
+        rows = (await self.session.execute(select(PaymentModel).order_by(PaymentModel.created_at.desc()))).scalars().all()
+        return [self.m(o) for o in rows]

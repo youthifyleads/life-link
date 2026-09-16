@@ -3,7 +3,7 @@ from decimal import Decimal
 import logging
 from uuid import uuid4
 
-from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationAppError
+from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError, ServiceUnavailableError, ValidationAppError
 from app.core.paymob import PaymobClient
 from app.repositories.interfaces.payment_repository import PaymentRepository
 from app.repositories.interfaces.request_repository import RequestRepository
@@ -42,51 +42,71 @@ class PaymentService:
             raise NotFoundError("Blood request not found", code="REQUEST_NOT_FOUND")
         self._check_hospital_access(req, current)
 
-        existing = await self.repo.list_for_request(data.blood_request_id)
-        if any(p.payment_status.lower() in {"paid", "completed", "success"} for p in existing):
-            raise ConflictError("This blood request has already been paid for.", code="ALREADY_PAID")
-
-        return await self.repo.create(
-            PaymentRecord(
-                id=str(uuid4()),
-                amount=float(data.amount),
-                payment_status="pending",
-                payment_method=data.payment_method,
-                paid_at=None,
-                transaction_reference=None,
-                created_at=datetime.now(timezone.utc),
-                blood_request_id=data.blood_request_id,
-                currency=getattr(data, "currency", "EGP"),
-                provider=getattr(data, "provider", "paymob"),
-                provider_order_id=getattr(data, "provider_order_id", None),
-            )
+        record = PaymentRecord(
+            id=str(uuid4()),
+            amount=float(data.amount),
+            payment_status=data.payment_status or "pending",
+            payment_method=data.payment_method,
+            paid_at=data.paid_at,
+            transaction_reference=data.transaction_reference,
+            created_at=datetime.now(timezone.utc),
+            blood_request_id=data.blood_request_id,
+            currency=getattr(data, "currency", "EGP") or "EGP",
+            provider=getattr(data, "provider", "paymob") or "paymob",
+            provider_order_id=getattr(data, "provider_order_id", None),
         )
+        return await self.repo.create(record)
 
-    async def get(self, i: str, current) -> PaymentRecord:
-        p = await self.repo.get_by_id(i)
+    async def get(self, payment_id: str, current) -> PaymentRecord:
+        p = await self.repo.get_by_id(payment_id)
         if not p:
             raise NotFoundError("Payment not found", code="PAYMENT_NOT_FOUND")
         req = await self.request_repo.get_by_id(p.blood_request_id)
         self._check_hospital_access(req, current)
         return p
 
-    async def list_for_request(self, q: str, current) -> list[PaymentRecord]:
-        req = await self.request_repo.get_by_id(q)
+    async def list_for_request(self, blood_request_id: str, current) -> list[PaymentRecord]:
+        req = await self.request_repo.get_by_id(blood_request_id)
         if not req:
             raise NotFoundError("Blood request not found", code="REQUEST_NOT_FOUND")
         self._check_hospital_access(req, current)
-        return await self.repo.list_for_request(q)
+        return await self.repo.list_for_request(blood_request_id)
 
-    async def update(self, i: str, data: PaymentUpdate, current) -> PaymentRecord:
-        p = await self.get(i, current)
-        p.payment_status = data.payment_status
-        p.transaction_reference = data.transaction_reference
-        p.provider_order_id = getattr(data, "provider_order_id", p.provider_order_id)
-        p.paid_at = (
-            datetime.now(timezone.utc)
-            if data.payment_status.lower() in {"paid", "completed", "success"}
-            else p.paid_at
-        )
+    async def list_history(self, current) -> list[PaymentRecord]:
+        """Payment history. Admin/Platform Support see everything; Hospital
+        Staff see only payments for their own hospital's requests."""
+        all_payments = await self.repo.list_all()
+        if current.role.value in {"admin", "platform_support"}:
+            return all_payments
+        user_inst_id = getattr(current, "institution_id", None) or getattr(current, "hospital_id", None)
+        scoped: list[PaymentRecord] = []
+        for p in all_payments:
+            req = await self.request_repo.get_by_id(p.blood_request_id)
+            if req and req.hospital_id == user_inst_id:
+                scoped.append(p)
+        return scoped
+
+    async def update(self, payment_id: str, data: PaymentUpdate, current) -> PaymentRecord:
+        p = await self.repo.get_by_id(payment_id)
+        if not p:
+            raise NotFoundError("Payment not found", code="PAYMENT_NOT_FOUND")
+        req = await self.request_repo.get_by_id(p.blood_request_id)
+        self._check_hospital_access(req, current)
+
+        if data.payment_status is not None:
+            if data.payment_status.lower() in {"paid", "completed", "success"}:
+                raise ForbiddenError(
+                    "Payment success can only be confirmed by the Paymob webhook, not set manually.",
+                    code="MANUAL_PAID_STATUS_FORBIDDEN",
+                )
+            p.payment_status = data.payment_status
+        if data.paid_at is not None:
+            p.paid_at = data.paid_at
+        if data.transaction_reference is not None:
+            p.transaction_reference = data.transaction_reference
+        if data.payment_method is not None:
+            p.payment_method = data.payment_method
+
         return await self.repo.update(p)
 
     async def initiate_payment(self, data: PaymentInitiateRequest, current) -> PaymentInitiateResponse:
@@ -100,29 +120,45 @@ class PaymentService:
         if any(p.payment_status.lower() in {"paid", "completed", "success"} for p in existing):
             raise ConflictError("This blood request has already been paid for.", code="ALREADY_PAID")
 
-        # Compute amount server-side from request quantity units (e.g. 500 EGP per bag)
+        # Ensure request has been reviewed and priced by the blood bank
+        unit_price = getattr(req, "unit_price", None)
+        if unit_price is None or float(unit_price) <= 0:
+            raise ValidationAppError(
+                "Blood bank has not set the price for this request yet. Please wait for the blood bank to review and price the request before initiating payment.",
+                code="PRICE_NOT_SET",
+            )
+
+        # Compute amount server-side from request quantity units and blood bank's quoted unit_price
         units = getattr(req, "quantity_units", 1) or 1
-        amount = float(units) * 500.0
+        amount = round(float(units) * float(unit_price), 2)
 
         provider_order_id = None
         client_secret = None
         checkout_url = None
 
-        try:
-            paymob_res = await self.paymob_client.create_intention(
-                amount=amount,
-                blood_request_id=data.blood_request_id,
-                currency="EGP",
-                payment_methods=[data.payment_method or "card"],
-            )
-            provider_order_id = paymob_res.get("provider_order_id")
-            client_secret = paymob_res.get("client_secret")
-            checkout_url = paymob_res.get("checkout_url")
-        except Exception as e:
-            logger.warning("Paymob API call threw exception: %s. Using local intention session.", e)
+        if not self.paymob_client.secret_key:
+            # Offline / CI mock mode when no Paymob credentials are provided
+            logger.info("Paymob secret key not configured. Using local mock intention session.")
             provider_order_id = f"paymob_order_{uuid4().hex[:10]}"
             client_secret = f"cs_test_{uuid4().hex}"
             checkout_url = f"{self.paymob_client.base_url}/unifiedcheckout/?publicKey={self.paymob_client.public_key}&clientSecret={client_secret}"
+        else:
+            try:
+                paymob_res = await self.paymob_client.create_intention(
+                    amount=amount,
+                    blood_request_id=data.blood_request_id,
+                    currency="EGP",
+                    payment_methods=[data.payment_method or "card"],
+                )
+                provider_order_id = paymob_res.get("provider_order_id")
+                client_secret = paymob_res.get("client_secret")
+                checkout_url = paymob_res.get("checkout_url")
+            except Exception as e:
+                logger.error("Paymob payment intention creation failed: %s", e)
+                raise ServiceUnavailableError(
+                    f"Failed to initiate payment gateway session: {e}",
+                    code="PAYMENT_GATEWAY_ERROR",
+                ) from e
 
         record = PaymentRecord(
             id=str(uuid4()),

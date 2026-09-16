@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends
 
 from app.core.security import CurrentUser
@@ -16,12 +18,19 @@ router = APIRouter(prefix="/blood-bags", tags=["Blood Bags"])
 
 
 @router.post("", response_model=BloodBagPublic, status_code=201)
-async def create(payload: BloodBagCreate, current_user: CurrentUser, svc=Depends(get_blood_bag_service)):
+async def create(
+    payload: BloodBagCreate,
+    current_user: CurrentUser,
+    svc=Depends(get_blood_bag_service),
+):
     return await svc.create(payload, current_user)
 
 
 @router.get("", response_model=list[BloodBagPublic])
-async def list_bags(current_user: CurrentUser, svc=Depends(get_blood_bag_service)):
+async def list_bags(
+    current_user: CurrentUser,
+    svc=Depends(get_blood_bag_service),
+):
     return await svc.list(current_user)
 
 
@@ -36,12 +45,20 @@ async def status(
 
 
 @router.get("/{bag_id}/history", response_model=list[BloodBagHistoryPublic])
-async def history(bag_id: str, current_user: CurrentUser, svc=Depends(get_blood_bag_service)):
+async def history(
+    bag_id: str,
+    current_user: CurrentUser,
+    svc=Depends(get_blood_bag_service),
+):
     return await svc.history(bag_id, current_user)
 
 
 @router.get("/{bag_id}/qr", response_model=BloodBagQRPublic)
-async def qr(bag_id: str, current_user: CurrentUser, svc=Depends(get_blood_bag_service)):
+async def qr(
+    bag_id: str,
+    current_user: CurrentUser,
+    svc=Depends(get_blood_bag_service),
+):
     bag, payload = await svc.issue_qr(bag_id, current_user)
     return BloodBagQRPublic(blood_bag_id=bag.id, qr_payload=payload)
 

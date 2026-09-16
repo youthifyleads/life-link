@@ -1,54 +1,133 @@
-from datetime import datetime,timedelta,timezone
-import uuid
+"""
+Authentication & authorization foundation.
+
+PROVISIONAL: token strategy (plain JWT bearer, HS256, in-memory user store)
+is a placeholder so the API layer and RBAC can be developed and tested
+now. This is explicitly flagged for Technical Lead review before it is
+treated as final - see docs/API_SPEC.md and the README "Provisional
+decisions" section.
+"""
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
+
 from fastapi import Depends
-from fastapi.security import HTTPAuthorizationCredentials,HTTPBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 try:
- from jose import JWTError,jwt
-except ImportError:
- import jwt
- JWTError=(jwt.InvalidTokenError,jwt.PyJWTError)
+    from jose import JWTError, jwt
+except ImportError:  # local test fallback; production uses python-jose from requirements.txt
+    import jwt
+    JWTError = (jwt.InvalidTokenError, jwt.PyJWTError)
+
 from app.core.config import get_settings
 from app.core.domain import Role
-from app.core.exceptions import ForbiddenError,UnauthorizedError
-from app.core.hashing import hash_password,verify_password
+from app.core.exceptions import ForbiddenError, UnauthorizedError
+from app.core.hashing import hash_password, verify_password  # re-exported for convenience
 from app.repositories.interfaces.user_repository import UserRepository
 from app.schemas.users import UserPublic
-security=HTTPBearer(auto_error=False)
-def create_access_token(*,subject:str,role:str)->str:
- s=get_settings();now=datetime.now(timezone.utc);return jwt.encode({'sub':subject,'role':role,'iat':int(now.timestamp()),'jti':str(uuid.uuid4()),'type':'access','exp':now+timedelta(minutes=s.ACCESS_TOKEN_EXPIRE_MINUTES)},s.SECRET_KEY,algorithm=s.ALGORITHM)
-def decode_access_token(token):
- s=get_settings()
- try:
-  p=jwt.decode(token,s.SECRET_KEY,algorithms=[s.ALGORITHM])
-  if p.get('type') not in (None,'access'):raise JWTError()
-  return p
- except JWTError:raise UnauthorizedError('Invalid or expired access token',code='INVALID_TOKEN')
-async def get_current_user(credentials:Annotated[HTTPAuthorizationCredentials|None,Depends(security)],repo:UserRepository=Depends(lambda:None))->UserPublic:
- if not credentials:raise UnauthorizedError('Authentication required',code='MISSING_TOKEN')
- # Resolve repository lazily to avoid circular import in annotations.
- from app.services.dependencies import get_user_repository
- payload=decode_access_token(credentials.credentials);sub=payload.get('sub')
- if not sub:raise UnauthorizedError('Invalid token subject',code='INVALID_TOKEN')
- gen=get_user_repository(); real_repo=await gen.__anext__()
- try:user=await real_repo.get_by_id(str(sub))
- finally:
-  await gen.aclose()
- if not user:raise UnauthorizedError('User not found',code='INVALID_TOKEN')
- if user.status.lower() in {'banned','suspended'}:raise UnauthorizedError('This account has been banned.',code='ACCOUNT_BANNED')
- if not user.is_active:raise UnauthorizedError('This account is inactive.',code='ACCOUNT_INACTIVE')
- if not getattr(user,'email_verified',True):raise UnauthorizedError('Please verify your email before signing in.',code='EMAIL_NOT_VERIFIED')
- return UserPublic.model_validate(user)
-CurrentUser=Annotated[UserPublic,Depends(get_current_user)]
-def require_roles(*roles:Role):
- async def dep(current_user:CurrentUser):
-  if current_user.role not in roles:raise ForbiddenError('You are not authorized for this action',code='FORBIDDEN_ROLE')
-  return current_user
- return dep
-def create_tracking_reference(request_id):
- s=get_settings();return jwt.encode({'sub':request_id,'typ':'tracking'},s.SECRET_KEY,algorithm=s.ALGORITHM)
-def decode_tracking_reference(reference):
- s=get_settings()
- try:
-  p=jwt.decode(reference,s.SECRET_KEY,algorithms=[s.ALGORITHM]);return str(p['sub']) if p.get('typ')=='tracking' else None
- except JWTError:return None
+
+__all__ = [
+    "hash_password",
+    "verify_password",
+    "create_access_token",
+    "decode_access_token",
+    "get_current_user",
+    "CurrentUser",
+    "require_roles",
+    "create_tracking_reference",
+    "decode_tracking_reference",
+]
+
+
+def create_access_token(*, subject: str, role: str) -> str:
+    settings = get_settings()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode = {"sub": subject, "role": role, "exp": expire}
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def decode_access_token(token: str) -> dict:
+    settings = get_settings()
+    try:
+        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError:
+        raise UnauthorizedError("Invalid or expired access token", code="INVALID_TOKEN")
+
+
+def create_tracking_reference(request_id: str) -> str:
+    """Create a signed opaque tracking token without adding a column to the supplied schema."""
+    settings = get_settings()
+    return jwt.encode({"sub": request_id, "typ": "tracking"}, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def decode_tracking_reference(reference: str) -> str | None:
+    settings = get_settings()
+    try:
+        payload = jwt.decode(reference, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("typ") != "tracking" or not payload.get("sub"):
+            return None
+        return str(payload["sub"])
+    except JWTError:
+        return None
+
+
+async def _get_user_repo_dep():
+    # Imported lazily to avoid a module-level circular import:
+    # core.security <-> services.dependencies <-> services.auth_service <-> core.security
+    from app.services.dependencies import get_user_repository
+
+    async for repo in get_user_repository():
+        yield repo
+
+
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    user_repo: UserRepository = Depends(_get_user_repo_dep),
+) -> UserPublic:
+    """Validate a bearer JWT and load the current user from the repository."""
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise UnauthorizedError("Missing bearer token", code="MISSING_TOKEN")
+
+    payload = decode_access_token(credentials.credentials)
+    user_id = payload.get("sub")
+    if user_id is None:
+        raise UnauthorizedError("Invalid token payload", code="INVALID_TOKEN")
+
+    try:
+        user = await user_repo.get_by_id(user_id)
+    except ValueError:
+        raise UnauthorizedError("User role configuration is invalid", code="INVALID_USER_ROLE")
+    if user is None:
+        raise UnauthorizedError("User no longer exists", code="INVALID_TOKEN")
+
+    if user.status.lower() in ("banned", "suspended"):
+        raise UnauthorizedError("This account has been banned.", code="ACCOUNT_BANNED")
+    if not user.is_active:
+        raise UnauthorizedError("This account is inactive.", code="ACCOUNT_INACTIVE")
+
+    return UserPublic.model_validate(user)
+
+CurrentUser = Annotated[UserPublic, Depends(get_current_user)]
+
+
+def require_roles(*allowed_roles: Role):
+    """
+    RBAC dependency factory.
+
+    Usage: Depends(require_roles(Role.ADMIN, Role.PLATFORM_SUPPORT))
+
+    Authorization is enforced here on the backend - the frontend/mobile
+    apps must never be trusted to hide unauthorized actions instead.
+    """
+
+    async def _check(current_user: CurrentUser) -> UserPublic:
+        if current_user.role not in allowed_roles:
+            raise ForbiddenError(
+                f"Role '{current_user.role.value}' is not permitted to perform this action",
+                code="FORBIDDEN_ROLE",
+            )
+        return current_user
+
+    return _check

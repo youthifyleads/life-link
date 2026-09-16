@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends
 
 from app.core.security import CurrentUser
 from app.repositories.interfaces.user_repository import UserRepository
+from app.schemas.caregiver import CaregiverBagScanPublic, CaregiverBagScanRequest
 from app.schemas.qr import QRIssueResponse, QRScanRequest, TrackingPublic
-from app.services.dependencies import get_qr_service, get_user_repository
+from app.services.caregiver_service import CaregiverService
+from app.services.dependencies import get_caregiver_service, get_qr_service, get_user_repository
 from app.services.qr_service import QRService
 
 router = APIRouter(tags=["QR / Tracking"])
@@ -54,3 +56,30 @@ async def get_tracking(
     user_record=Depends(_load_user_record),
 ) -> TrackingPublic:
     return await qr_service.resolve_reference(reference, user_record)
+
+
+@router.post(
+    "/qr/bag-scan",
+    response_model=CaregiverBagScanPublic,
+    summary="Scan blood bag QR for caregiver",
+    description="Returns bank_name, bank_location, status, and blood_type for the blood bag.",
+)
+async def scan_blood_bag(
+    payload: CaregiverBagScanRequest,
+    current_user: CurrentUser,
+    caregiver_service: CaregiverService = Depends(get_caregiver_service),
+) -> CaregiverBagScanPublic:
+    return await caregiver_service.scan_bag(payload.qr_code, current_user)
+
+
+@router.get(
+    "/qr/bag/{qr_code}",
+    response_model=CaregiverBagScanPublic,
+    summary="Get blood bag details by QR for caregiver",
+)
+async def get_blood_bag_by_qr(
+    qr_code: str,
+    current_user: CurrentUser,
+    caregiver_service: CaregiverService = Depends(get_caregiver_service),
+) -> CaregiverBagScanPublic:
+    return await caregiver_service.scan_bag(qr_code, current_user)

@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     PAYMOB_PUBLIC_KEY: str = ""
     PAYMOB_HMAC_SECRET: str = ""
     PAYMOB_BASE_URL: str = "https://accept.paymob.com"
+    PAYMOB_CARD_INTEGRATION_ID: int = 5912806
 
 
 @lru_cache

@@ -1,5 +1,6 @@
-from datetime import date, datetime
+from __future__ import annotations
 
+from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.domain import BloodBagStatus
@@ -7,6 +8,7 @@ from app.core.domain import BloodBagStatus
 
 class BloodBagCreate(BaseModel):
     blood_type: str = Field(min_length=2, max_length=3)
+    component: str = Field(default="whole_blood", max_length=50)
     quantity: int = Field(default=1, ge=1)
     collection_date: date
     expiry_date: date | None = None
@@ -26,6 +28,7 @@ class BloodBagPublic(BaseModel):
 
     id: str
     blood_type: str
+    component: str = "whole_blood"
     quantity: int
     collection_date: date
     expiry_date: date | None
@@ -34,6 +37,7 @@ class BloodBagPublic(BaseModel):
     current_location: str | None
     current_blood_bank_id: str | None
     donation_id: str | None
+    allocated_request_id: str | None = None
 
 
 class BloodBagHistoryPublic(BaseModel):
@@ -53,14 +57,10 @@ class BloodBagQRScan(BaseModel):
 
 
 class BloodBagQRPublic(BaseModel):
-    """QR payload that points to a real blood-bag record."""
-
     blood_bag_id: str
     qr_payload: str
 
 
 class BloodBagQRScanResponse(BaseModel):
-    """Server-resolved Blood Bag data plus its movement/status history."""
-
     blood_bag: BloodBagPublic
     movement_history: list[BloodBagHistoryPublic]

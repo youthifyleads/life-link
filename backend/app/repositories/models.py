@@ -40,6 +40,7 @@ class BloodRequestRecord:
     status: RequestStatus
     tracking_reference: str
     created_by: str
+    unit_price: float | None = None
     required_by: datetime | None = None
     created_at: datetime = field(default_factory=_utcnow)
     updated_at: datetime = field(default_factory=_utcnow)
@@ -55,6 +56,8 @@ class InventoryItemRecord:
     is_available: bool
     expiry_date: datetime | None
     last_updated: datetime = field(default_factory=_utcnow)
+    qr_code: str | None = None
+    status: str = "available"
 
 
 @dataclass
@@ -117,8 +120,10 @@ class DonorRecord:
     blood_type: str | None = None
     date_of_birth: object | None = None
     governorate: str | None = None
-    eligibility_status: str = "pending"
+    eligibility_status: str = "eligible"
     last_donation_date: object | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 @dataclass
 class DonationRecord:
@@ -192,6 +197,7 @@ class RefreshTokenRecord:
     revoked_at: datetime | None = None
     replaced_by_token_id: str | None = None
 
+
 @dataclass
 class PasswordResetTokenRecord:
     id: str
@@ -201,6 +207,7 @@ class PasswordResetTokenRecord:
     created_at: datetime = field(default_factory=_utcnow)
     used_at: datetime | None = None
     attempts: int = 0
+
 
 @dataclass
 class DeviceTokenRecord:
@@ -212,6 +219,7 @@ class DeviceTokenRecord:
     created_at: datetime = field(default_factory=_utcnow)
     updated_at: datetime = field(default_factory=_utcnow)
 
+
 @dataclass
 class BloodBagRecord:
     id: str
@@ -222,16 +230,19 @@ class BloodBagRecord:
     qr_code: str
     status: str
     current_location: str | None
-    created_at: datetime
-    donation_id: str | None
-    current_blood_bank_id: str | None
+    created_at: datetime = field(default_factory=_utcnow)
+    donation_id: str | None = None
+    current_blood_bank_id: str | None = None
+    component: str = "whole_blood"
+    allocated_request_id: str | None = None
+
 
 @dataclass
 class BloodBagHistoryRecord:
     id: str
     blood_bag_id: str
     status: str
-    changed_at: datetime
-    changed_by_user_id: str
+    changed_at: datetime = field(default_factory=_utcnow)
+    changed_by_user_id: str = ""
     location: str | None = None
     notes: str | None = None

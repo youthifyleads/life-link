@@ -36,3 +36,9 @@ def test_invalid_token_rejected(client):
     resp = client.get("/api/v1/auth/me", headers={"Authorization": "Bearer not-a-real-token"})
     assert resp.status_code == 401
     assert resp.json()["error"]["code"] == "INVALID_TOKEN"
+
+
+def test_logout_returns_204_no_content(client):
+    resp = client.post("/api/v1/auth/logout", json={"refresh_token": "some-sample-token-valid-length"})
+    assert resp.status_code == 204
+    assert resp.content == b""

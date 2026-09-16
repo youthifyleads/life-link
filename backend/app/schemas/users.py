@@ -19,8 +19,6 @@ class UserPublic(BaseModel):
     is_active: bool = True
     status: str = "active"
     phone: str | None = None
-    date_of_birth: object | None = None
-    email_verified: bool = True
 
 
 class UserCreate(BaseModel):

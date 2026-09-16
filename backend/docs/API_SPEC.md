@@ -76,9 +76,9 @@ medical detail — only `reference`, `status`, `blood_type`, and the API compati
 
 ## Health
 
-| Method | Endpoint | Purpose | Auth |
-|---|---|---|---|
-| GET | `/health` | Liveness check | No |
+| Method | Endpoint | Purpose | Auth | Success (200) | Failure (503) |
+|---|---|---|---|---|---|
+| GET | `/health` | Liveness and database connectivity check (`SELECT 1`) | No | `{"status": "ok", "database": "connected"}` | `{"status": "error", "database": "disconnected"}` |
 
 ## Standard error codes
 
@@ -109,7 +109,9 @@ Set `REPOSITORY_BACKEND=sqlserver` to use the SQLAlchemy/Azure SQL repositories.
 ## Mobile additions (Dev/MVP)
 OTP: POST /api/v1/auth/otp/request, POST /api/v1/auth/otp/verify. Development fixed OTP: 123456.
 Donor: /api/v1/donors/me, /api/v1/donors/me/donations, /api/v1/donors/me/responses, /api/v1/donors/me/consents plus admin/medical donor lookup.
-Caregiver: /api/v1/caregiver/assignments CRUD/update endpoints.
+Caregiver:
+- `/api/v1/caregiver/assignments` CRUD/update endpoints.
+- `POST /api/v1/caregiver/scan-bag` & `GET /api/v1/caregiver/bag/{qr_code}`: Scan blood bag QR and return `bank_name`, `bank_location`, `status`, `blood_type`.
 Payments:
 - POST /api/v1/payments/initiate (Hospital User / Admin: Initiates Paymob payment session and returns checkout_url)
 - POST /api/v1/payments/webhook (Public Paymob callback endpoint verified by HMAC-SHA512)
@@ -120,37 +122,46 @@ Payments:
 Full examples are in docs/MOBILE_API_CONTRACT.md.
 
 
-## MVP additions implemented in current backend
-### Authentication
-- `POST /auth/signup`: public Normal User registration. Required: name, email, phone, password, date_of_birth. Optional: governorate, blood_type.
-- `POST /auth/signup/verify`: verifies the email OTP. OTP is random 6 digits, hashed, single-use, 60-second expiry, attempt-limited and resend-rate-limited.
-- `POST /auth/signup/resend-otp`: resend verification code.
-- `POST /auth/login`: email/password; returns access and refresh tokens. Unverified accounts cannot sign in.
-- `POST /auth/refresh`: rotating server-side refresh token flow.
-- `POST /auth/logout`: revokes the supplied refresh token.
-- `POST /auth/forgot-password` and `POST /auth/reset-password`: email-based password reset; account existence is not disclosed.
+## Distance & Donor Matching (Web Portal & Mobile)
 
-### Blood Bags
-- `POST/GET /blood-bags`
-- `PATCH /blood-bags/{id}/status`
-- `GET /blood-bags/{id}/history`
-- Lifecycle: `available -> reserved -> allocated -> in_transit -> delivered -> received`.
-- MVP bags are atomic; the lifecycle endpoint does not support splitting one bag across multiple requests.
+Matching algorithm criteria:
+1. **Blood Compatibility**: Clinical compatibility (e.g. A+ receives from A+, A-, O+, O-), or `exact_match=True` for single blood type only.
+2. **Donor Eligibility**: Defaults to `eligible` on registration; excluded only if medically `ineligible`.
+3. **6-Month Rule**: Must not have donated within the last 180 days (`last_donation_date >= 180 days ago` or never donated).
+4. **Donor Active**: User status must be `active` and `is_active=True`.
+5. **Distance Calculation**: Haversine distance formula using exact GPS coordinates (latitude/longitude), with Egyptian governorates central coordinates as automatic fallback. Sorted ascending by distance (`distance_km`).
+6. **Quota Cancellation**: When accepted responses count reaches `quantity_units`, the request is closed for new acceptances (returns `422 REQUEST_ALREADY_FULFILLED`) and automatically removed from other donors' nearby feeds.
 
-### Blood Bag QR
-- `GET /blood-bags/{id}/qr` returns an opaque QR payload.
-- `POST /blood-bags/scan` resolves the QR server-side to the real bag record.
-- QR does not embed patient identity or unnecessary medical data.
+### Endpoints:
+- `GET /api/v1/requests/{id}/matching-donors?exact_match=false&max_distance_km=50&limit=50`: (Web Portal) View eligible matching donors ordered by distance from the requesting hospital/blood bank.
+- `POST /api/v1/requests/{id}/notify-matching-donors`: (Web Portal) Notify closest N donors automatically (`{"count": 5, "exact_match": false}`).
+- `GET /api/v1/donors/matches?blood_type=A+&exact_match=false&latitude=30.0444&longitude=31.2357`: Standalone donor search by blood type and GPS/governorate.
+- `GET /api/v1/donors/me/nearby-requests?limit=20&max_distance_km=50`: (Mobile App) Feed of open blood requests matching the donor's blood type, sorted by distance from the donor's home location. Requests that have reached their donor quota are automatically hidden.
+- `POST /api/v1/donors/me/responses`: (Mobile App) Donor accepts or declines request (`{"blood_request_id": "...", "status": "accepted"}`).
 
-### Push provider architecture
-- `POST/GET/DELETE /notifications/devices` manages device tokens for `fcm` or `onesignal`.
-- Provider delivery is intentionally not faked while the team decides between FCM and OneSignal.
-- SMS/TextBee/messaging is out of current scope.
 
-### Blood Bag QR (official flow)
-- `GET /blood-bags/{id}/qr` returns the opaque QR payload tied to the real `blood_bags` row.
-- `POST /blood-bags/scan` accepts that payload and resolves it server-side to the real Blood Bag.
-- The scan response includes the current Blood Bag record (`blood_bag`) and `movement_history` ordered oldest-to-newest.
-- Movement history reflects the Blood Bag lifecycle: `available -> reserved -> allocated -> in_transit -> delivered -> received`.
-- The QR payload does not contain the bag's business data; the backend resolves the payload to the database record.
-- The old request-tracking QR endpoints remain available for backward compatibility only and are not the official Blood Bag QR flow.
+## Request-Centric Multi-Bag Allocation & Bag History (Blood Bank & Caregiver)
+
+1. **Multi-Bag Quota**: A single hospital blood request specifies `quantity_units` (e.g. 2 or 3 bags).
+2. **Barcode Scanning Allocation**: Blood bank staff scans barcodes one-by-one to allocate available units:
+   - Validates bank ownership, availability (`status == 'available'`), expiration, blood type, and component.
+   - Automatically advances request status to `confirmed` when full quota is fulfilled.
+3. **Consolidated Request QR**: Caregiver scans one Request QR to view bank location, units requested, unit price, total price, and Paymob checkout.
+4. **Dispatch & Cascading**: Blood bank dispatches the request -> all allocated bags automatically cascade to `in_transit` with individual bag history entries.
+5. **Hospital Receive**: Hospital confirms receipt -> all allocated bags cascade to `received` with history entries.
+6. **Safety Quarantine**: If an allocated bag is deallocated or the request is cancelled before dispatch, bags automatically move to `quarantine` for safety inspection before they can be re-used.
+
+### Endpoints:
+- `POST /api/v1/requests/{id}/allocate-bag`: Blood Bank Operator scans barcode to allocate unit.
+- `POST /api/v1/requests/{id}/deallocate-bag`: Blood Bank Operator removes a unit and moves it to quarantine.
+- `POST /api/v1/requests/{id}/cancel`: Cancels request and safely moves all allocated units to quarantine.
+- `GET /api/v1/requests/{id}/allocated-bags`: Lists all blood bags currently assigned to the request.
+- `POST /api/v1/requests/{id}/dispatch`: Dispatches request and transitions all assigned bags to `in_transit`.
+- `POST /api/v1/requests/{id}/receive`: Confirms receipt at hospital and marks bags `received`.
+- `POST /api/v1/blood-bags`: Add a blood unit to bank inventory (generates QR code).
+- `GET /api/v1/blood-bags`: List blood bags.
+- `GET /api/v1/blood-bags/{id}/history`: View full chain of custody and movements for an individual unit.
+- `PATCH /api/v1/blood-bags/{id}/status`: Transition bag status (available, reserved, allocated, in_transit, received, quarantine, disposed).
+- `POST /api/v1/notifications/devices`: Register mobile device token (FCM).
+- `DELETE /api/v1/notifications/devices/{token}`: Unregister mobile device token.
+

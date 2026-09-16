@@ -100,7 +100,6 @@ async def main() -> None:
                 session.add(UserModel(
                     user_id=uid, email=email, password_hash=hash_password(password), name=name,
                     status=user_status, created_at=datetime.now(timezone.utc), role_id=roles[role].role_id,
-                    email_verified=True,
                     hospital_id=hospital.hospital_id if hospital_ref else None,
                     blood_bank_id=blood_bank.blood_bank_id if bank_ref else None,
                 ))
