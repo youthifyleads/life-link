@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 import uuid
 
-from app.core.domain import AuditAction, Role
+from app.core.domain import AuditAction, Role, VALID_BLOOD_TYPES
 from app.core.exceptions import ConflictError, UnauthorizedError
 from app.core.hashing import hash_password, verify_password
 from app.core.security import create_access_token
@@ -65,9 +65,19 @@ class AuthService:
                 "An account with this phone already exists", code="PHONE_ALREADY_EXISTS"
             )
 
-        try:
-            dob = date.fromisoformat(payload.date_of_birth)
-        except ValueError:
+        dob = None
+        if isinstance(payload.date_of_birth, date):
+            dob = payload.date_of_birth
+        else:
+            val_str = str(payload.date_of_birth).strip()
+            for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%Y/%m/%d"):
+                try:
+                    dob = datetime.strptime(val_str, fmt).date()
+                    break
+                except ValueError:
+                    pass
+
+        if dob is None:
             raise ConflictError(
                 "date_of_birth must use YYYY-MM-DD",
                 code="INVALID_DATE_OF_BIRTH",
@@ -97,14 +107,25 @@ class AuthService:
         await self._user_repo.create(user)
 
         if self._donor_repo:
+            bt = None
+            raw_bt = getattr(payload, "blood_type", None)
+            if raw_bt:
+                val_bt = str(getattr(raw_bt, "value", raw_bt)).strip().upper()
+                if val_bt in VALID_BLOOD_TYPES:
+                    bt = val_bt
+
+            gov = getattr(payload, "governorate", None)
+            if gov and str(gov).strip().lower() in ("", "string", "null", "none"):
+                gov = None
+
             await self._donor_repo.create(
                 DonorRecord(
                     id=str(uuid.uuid4()),
                     user_id=uid,
-                    blood_type=payload.blood_type,
+                    blood_type=bt,
                     date_of_birth=dob,
-                    governorate=payload.governorate,
-                    eligibility_status="pending",
+                    governorate=gov,
+                    eligibility_status="eligible",
                     last_donation_date=None,
                 )
             )

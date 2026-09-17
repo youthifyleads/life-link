@@ -19,6 +19,20 @@ class Role(str, Enum):
     PLATFORM_SUPPORT = "platform_support"
 
 
+class BloodType(str, Enum):
+    A_POS = "A+"
+    A_NEG = "A-"
+    B_POS = "B+"
+    B_NEG = "B-"
+    AB_POS = "AB+"
+    AB_NEG = "AB-"
+    O_POS = "O+"
+    O_NEG = "O-"
+
+
+VALID_BLOOD_TYPES: set[str] = {bt.value for bt in BloodType}
+
+
 class VoucherStatus(str, Enum):
     ACTIVE = "ACTIVE"
     REDEEMED = "REDEEMED"
