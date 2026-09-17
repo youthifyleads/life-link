@@ -90,7 +90,19 @@ class DonationResponseModel(Base):
 
 class DonationVoucherModel(Base):
     __tablename__ = "donation_vouchers"
-    voucher_id: Mapped[str] = id_col(); voucher_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False); issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); donation_id: Mapped[str] = mapped_column(ForeignKey("donations.donation_id"), unique=True, index=True)
+    # The public code is not a primary key and is never inferred from donor data.
+    id: Mapped[str] = id_col(); code: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    donor_id: Mapped[str] = mapped_column(ForeignKey("donors.donor_id"), nullable=False, index=True)
+    partner_id: Mapped[Optional[str]] = mapped_column(ForeignKey("users.user_id"), nullable=True, index=True)
+    value: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="ACTIVE", index=True)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    redeemed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    transaction_reference: Mapped[Optional[str]] = mapped_column(String(100), unique=True, nullable=True)
+    # Required to enforce one voucher per donation. It is an internal linkage,
+    # in addition to the requested voucher lifecycle fields.
+    donation_id: Mapped[str] = mapped_column(ForeignKey("donations.donation_id"), unique=True, index=True)
     donation: Mapped[DonationModel] = relationship(back_populates="voucher")
 
 class BloodRequestModel(Base):

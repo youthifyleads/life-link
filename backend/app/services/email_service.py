@@ -8,7 +8,7 @@ class EmailProvider:
     async def send_otp(self, *, to_email: str, code: str, purpose: str) -> None:
         raise NotImplementedError
 
-    async def send_voucher(self, *, to_email: str, voucher_number: str, amount_tier: str) -> None:
+    async def send_voucher(self, *, to_email: str, code: str, value, expires_at) -> None:
         raise NotImplementedError
 
 
@@ -44,22 +44,18 @@ class AzureCommunicationEmailProvider(EmailProvider):
                 code="EMAIL_PROVIDER_UNAVAILABLE",
             ) from exc
 
-    async def send_voucher(self, *, to_email: str, voucher_number: str, amount_tier: str) -> None:
+    async def send_voucher(self, *, to_email: str, code: str, value, expires_at) -> None:
         settings = get_settings()
-        if not getattr(settings, "AZURE_COMMUNICATION_CONNECTION_STRING", None) or not getattr(settings, "AZURE_EMAIL_SENDER_ADDRESS", None):
+        if not settings.AZURE_COMMUNICATION_CONNECTION_STRING or not settings.AZURE_EMAIL_SENDER_ADDRESS:
             raise ServiceUnavailableError("Email provider is not configured.", code="EMAIL_PROVIDER_NOT_CONFIGURED")
         try:
             from azure.communication.email import EmailClient
             client = EmailClient.from_connection_string(settings.AZURE_COMMUNICATION_CONNECTION_STRING)
-            message = {
-                "senderAddress": settings.AZURE_EMAIL_SENDER_ADDRESS,
-                "recipients": {"to": [{"address": to_email}]},
-                "content": {
-                    "subject": "Life Link Donation Voucher",
-                    "plainText": f"Thank you for donating with Life Link. Your voucher number is {voucher_number}. Voucher tier: {amount_tier}.",
-                },
-            }
-            client.begin_send(message).result()
+            poller = client.begin_send({"senderAddress": settings.AZURE_EMAIL_SENDER_ADDRESS,
+                "recipients": {"to": [{"address": to_email}]}, "content": {
+                    "subject": "Your Life Link donation voucher",
+                    "plainText": f"Your Life Link Voucher Code is {code}. Value: {value}. It expires at {expires_at.isoformat()}."}})
+            poller.result()
         except ServiceUnavailableError:
             raise
         except Exception as exc:
@@ -73,6 +69,5 @@ class FakeEmailProvider(EmailProvider):
     async def send_otp(self, *, to_email: str, code: str, purpose: str) -> None:
         self.sent.append((to_email, code, purpose))
 
-    async def send_voucher(self, *, to_email: str, voucher_number: str, amount_tier: str) -> None:
-        self.sent.append((to_email, voucher_number, f"voucher:{amount_tier}"))
-
+    async def send_voucher(self, *, to_email: str, code: str, value, expires_at) -> None:
+        self.sent.append((to_email, code, "voucher"))

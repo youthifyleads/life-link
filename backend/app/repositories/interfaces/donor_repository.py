@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from app.repositories.models import DonorRecord, DonationRecord, DonationResponseRecord, ConsentRecord, DonationVoucherRecord
+from app.repositories.models import DonorRecord, DonationRecord, DonationResponseRecord, ConsentRecord
 
 class DonorRepository(ABC):
     @abstractmethod
@@ -28,9 +28,3 @@ class DonorRepository(ABC):
     async def create_consent(self, consent: ConsentRecord) -> ConsentRecord: ...
     @abstractmethod
     async def list_consents(self, donor_id: str) -> list[ConsentRecord]: ...
-    @abstractmethod
-    async def create_voucher(self, voucher: DonationVoucherRecord) -> DonationVoucherRecord: ...
-    @abstractmethod
-    async def get_voucher_by_donation(self, donation_id: str) -> DonationVoucherRecord | None: ...
-    @abstractmethod
-    async def list_vouchers(self, donor_id: str) -> list[DonationVoucherRecord]: ...

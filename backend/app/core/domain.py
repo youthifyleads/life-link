@@ -19,6 +19,13 @@ class Role(str, Enum):
     PLATFORM_SUPPORT = "platform_support"
 
 
+class VoucherStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    REDEEMED = "REDEEMED"
+    EXPIRED = "EXPIRED"
+    CANCELLED = "CANCELLED"
+
+
 class RequestStatus(str, Enum):
     REQUESTED = "requested"
     ACKNOWLEDGED = "acknowledged"
@@ -81,4 +88,3 @@ BLOOD_BAG_TRANSITIONS: dict[BloodBagStatus, set[BloodBagStatus]] = {
     BloodBagStatus.QUARANTINE: {BloodBagStatus.AVAILABLE, BloodBagStatus.DISPOSED},
     BloodBagStatus.DISPOSED: set(),
 }
-

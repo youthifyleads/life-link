@@ -157,9 +157,15 @@ class ConsentRecord:
 @dataclass
 class DonationVoucherRecord:
     id: str
-    voucher_number: str
-    issued_at: datetime
+    code: str
+    donor_id: str
+    partner_id: str | None
+    value: Decimal
     status: str
+    issued_at: datetime
+    expires_at: datetime
+    redeemed_at: datetime | None
+    transaction_reference: str | None
     donation_id: str
 
 @dataclass

@@ -39,10 +39,6 @@ async def nearby_requests(
     svc: DonorService = Depends(get_donor_service),
 ):
     return await svc.get_nearby_requests(current.id, limit=limit, max_distance_km=max_distance_km)
-@router.get("/me/vouchers",response_model=list[VoucherPublic], summary="List the authenticated donor's issued vouchers")
-async def vouchers(current:CurrentUser,svc:DonorService=Depends(get_donor_service)):
-    return await svc.vouchers(current.id)
-
 @router.get("/{donor_id}",response_model=DonorPublic,dependencies=[Depends(require_roles(Role.ADMIN,Role.MEDICAL_LEAD))])
 async def get(donor_id:str,svc:DonorService=Depends(get_donor_service)): return await svc.get(donor_id)
 @router.get("/me/donations",response_model=list[DonationPublic])

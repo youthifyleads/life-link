@@ -6,7 +6,6 @@ from app.repositories.interfaces.donor_repository import DonorRepository
 from app.repositories.interfaces.request_repository import RequestRepository
 from app.repositories.interfaces.user_repository import UserRepository
 from app.repositories.models import *
-from app.services.email_service import EmailProvider
 
 
 class DonorService:
@@ -16,13 +15,13 @@ class DonorService:
         user_repo: UserRepository,
         request_repo: RequestRepository | None = None,
         matching_service=None,
-        email_provider: EmailProvider | None = None,
+        voucher_service=None,
     ):
         self.repo = repo
         self.user_repo = user_repo
         self.request_repo = request_repo
         self.matching_service = matching_service
-        self.email_provider = email_provider
+        self.voucher_service = voucher_service
 
     async def get_me(self, user_id):
         return await self.repo.get_by_user_id(user_id)
@@ -82,42 +81,15 @@ class DonorService:
         donor.last_donation_date = data.donation_date
         donor.eligibility_status = "eligible"
         await self.repo.update(donor)
-        created = await self.repo.create_donation(r)
-
-        # A voucher is generated only after the donation has been persisted.
-        # A confirmed/accepted Donation Response means this donation answers a
-        # hospital request; otherwise it is treated as a direct donation.
-        voucher = await self.repo.get_voucher_by_donation(created.id)
-        if voucher is None:
-            responses = await self.repo.list_responses(donor_id)
-            linked = any(
-                response.status.lower() in {"accepted", "confirmed"}
-                and response.response_date.date() <= created.donation_date
-                for response in responses
-            )
-            tier = "request" if linked else "direct"
-            voucher = DonationVoucherRecord(
-                id=str(uuid4()),
-                voucher_number=f"LL-{uuid4().hex[:12].upper()}",
-                issued_at=datetime.now(timezone.utc),
-                status="issued",
-                donation_id=created.id,
-            )
-            await self.repo.create_voucher(voucher)
-            user = await self.user_repo.get_by_id(user_id)
-            if self.email_provider and user and user.email:
-                try:
-                    await self.email_provider.send_voucher(
-                        to_email=user.email,
-                        voucher_number=voucher.voucher_number,
-                        amount_tier=tier,
-                    )
-                except Exception:
-                    # The donation and voucher remain valid; email delivery can
-                    # be retried by an operational workflow without duplicating
-                    # the voucher because donation_id is unique.
-                    pass
-        return created
+        donation = await self.repo.create_donation(r)
+        # Confirmation is the issuance trigger. Voucher failures never undo a
+        # confirmed donation; retrying POST /vouchers/issue is then safe.
+        if (donation.status or "").upper() == "CONFIRMED" and self.voucher_service:
+            try:
+                await self.voucher_service.issue(donation.id)
+            except ConflictError:
+                pass
+        return donation
 
     async def respond(self, user_id, data):
         donor = await self.repo.get_by_user_id(user_id)
@@ -185,9 +157,3 @@ class DonorService:
         if not d:
             raise NotFoundError("Donor profile not found", code="DONOR_NOT_FOUND")
         return await self.repo.list_consents(d.id)
-
-    async def vouchers(self, user_id):
-        donor = await self.repo.get_by_user_id(user_id)
-        if not donor:
-            raise NotFoundError("Donor profile not found", code="DONOR_NOT_FOUND")
-        return await self.repo.list_vouchers(donor.id)

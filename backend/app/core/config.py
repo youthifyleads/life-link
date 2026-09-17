@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     PAYMOB_BASE_URL: str = "https://accept.paymob.com"
     PAYMOB_CARD_INTEGRATION_ID: int = 5912806
 
+    # Donation vouchers. Monetary values are deliberately configuration, never
+    # supplied by a donor or partner request.
+    VOUCHER_DIRECT_DONATION_VALUE: int = 50
+    VOUCHER_REQUEST_BASED_VALUE: int = 75
+    VOUCHER_EXPIRY_DAYS: int = 90
+
 
 @lru_cache
 def get_settings() -> Settings:

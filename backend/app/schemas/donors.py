@@ -107,15 +107,3 @@ class ConsentPublic(BaseModel):
     granted: bool
     granted_at: datetime | None
     revoked_at: datetime | None
-
-class VoucherCreate(BaseModel):
-    donation_id: str
-    voucher_number: str = Field(min_length=1, max_length=100)
-    status: str = Field(default="issued", max_length=40)
-
-class VoucherPublic(BaseModel):
-    id: str
-    voucher_number: str
-    issued_at: datetime
-    status: str
-    donation_id: str
