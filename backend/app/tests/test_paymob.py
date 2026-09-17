@@ -1,0 +1,435 @@
+import hashlib
+import hmac
+from unittest.mock import AsyncMock, patch
+import pytest
+
+from app.core.paymob import PaymobClient
+from app.tests.conftest import auth_headers
+
+
+_orig_create_intention = PaymobClient.create_intention
+
+
+@pytest.fixture(autouse=True)
+def mock_paymob_intention_api():
+    with patch.object(
+        PaymobClient,
+        "create_intention",
+        new_callable=AsyncMock,
+    ) as mock_create:
+        mock_create.return_value = {
+            "provider_order_id": "609337263",
+            "client_secret": "egy_csk_test_mock123",
+            "checkout_url": "https://accept.paymob.com/unifiedcheckout/?publicKey=egy_pk_test_bKtkvo5X9GTf2RO1Kwyvk11apqc7yQbG&clientSecret=egy_csk_test_mock123",
+            "raw_response": {"intention_order_id": 609337263, "id": "pi_test_mock123"},
+        }
+        yield mock_create
+
+
+@pytest.mark.asyncio
+async def test_paymob_client_create_intention_resolves_card_integration():
+    client = PaymobClient(
+        secret_key="egy_sk_test_mock",
+        public_key="egy_pk_test_mock",
+        card_integration_id=5912806,
+    )
+
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_resp = AsyncMock()
+        mock_resp.status_code = 201
+        mock_resp.raise_for_status = lambda: None
+        mock_resp.json = lambda: {
+            "id": "pi_test_123",
+            "intention_order_id": 998877,
+            "client_secret": "egy_csk_test_abc",
+        }
+        mock_post.return_value = mock_resp
+
+        # Call the original unpatched method to test real parameter preparation logic
+        res = await _orig_create_intention(
+            client,
+            amount=250.0,
+            blood_request_id="req-test-1",
+            currency="EGP",
+            payment_methods=["card"],
+        )
+
+        assert res["provider_order_id"] == "998877"
+        assert res["client_secret"] == "egy_csk_test_abc"
+        assert "clientSecret=egy_csk_test_abc" in res["checkout_url"]
+
+        call_kwargs = mock_post.call_args.kwargs
+        sent_json = call_kwargs["json"]
+        assert sent_json["amount"] == 25000
+        assert sent_json["payment_methods"] == [5912806]
+        assert sent_json["special_reference"] == "req-test-1"
+        assert sent_json["extras"]["blood_request_id"] == "req-test-1"
+
+
+def _generate_hmac(obj: dict, hmac_secret: str) -> str:
+    keys = [
+        "amount_cents",
+        "created_at",
+        "currency",
+        "error_occured",
+        "has_parent_transaction",
+        "id",
+        "integration_id",
+        "is_3d_secure",
+        "is_auth",
+        "is_capture",
+        "is_refunded",
+        "is_standalone_payment",
+        "is_voided",
+        "order.id",
+        "owner",
+        "pending",
+        "source_data.pan",
+        "source_data.sub_type",
+        "source_data.type",
+        "success",
+    ]
+
+    parts = []
+    for k in keys:
+        if "." in k:
+            p1, p2 = k.split(".")
+            val = obj.get(p1, {}).get(p2) if isinstance(obj.get(p1), dict) else ""
+        else:
+            val = obj.get(k)
+
+        if val is None:
+            parts.append("")
+        elif isinstance(val, bool):
+            parts.append("true" if val else "false")
+        else:
+            parts.append(str(val))
+
+    s = "".join(parts)
+    return hmac.new(hmac_secret.encode(), s.encode(), hashlib.sha512).hexdigest()
+
+
+def test_paymob_hmac_calculation_and_verification():
+    client = PaymobClient(hmac_secret="42F9F7F61E81C60BAE9FD707C8FC31D8")
+    sample_obj = {
+        "amount_cents": 100000,
+        "created_at": "2026-09-13T00:00:00.000000",
+        "currency": "EGP",
+        "error_occured": False,
+        "has_parent_transaction": False,
+        "id": 12345678,
+        "integration_id": 99999,
+        "is_3d_secure": True,
+        "is_auth": False,
+        "is_capture": False,
+        "is_refunded": False,
+        "is_standalone_payment": True,
+        "is_voided": False,
+        "order": {"id": 888888},
+        "owner": 100,
+        "pending": False,
+        "source_data": {"pan": "2345", "sub_type": "MasterCard", "type": "card"},
+        "success": True,
+    }
+
+    valid_hmac = _generate_hmac(sample_obj, "42F9F7F61E81C60BAE9FD707C8FC31D8")
+    assert client.verify_hmac(sample_obj, valid_hmac) is True
+    assert client.verify_hmac(sample_obj, "invalid_hmac_string") is False
+
+
+def test_initiate_payment_fails_when_unpriced(client, hospital_token):
+    # 1. Create a blood request
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "A+", "component": "whole_blood", "quantity_units": 2},
+        headers=auth_headers(hospital_token),
+    )
+    assert req_resp.status_code == 201
+    blood_request_id = req_resp.json()["id"]
+
+    # 2. Attempt to initiate payment before blood bank sets the price
+    init_resp = client.post(
+        "/api/v1/payments/initiate",
+        json={"blood_request_id": blood_request_id, "payment_method": "card"},
+        headers=auth_headers(hospital_token),
+    )
+    assert init_resp.status_code == 422
+    assert init_resp.json()["error"]["code"] == "PRICE_NOT_SET"
+
+
+def test_initiate_payment_uses_dynamic_bloodbank_price(client, hospital_token, bloodbank_token):
+    # 1. Create a blood request for 3 units
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "B-", "component": "platelets", "quantity_units": 3},
+        headers=auth_headers(hospital_token),
+    )
+    assert req_resp.status_code == 201
+    blood_request_id = req_resp.json()["id"]
+
+    # 2. Blood bank acknowledges with custom unit price (e.g. 750 EGP per unit)
+    ack_resp = client.post(
+        f"/api/v1/requests/{blood_request_id}/acknowledge",
+        json={"unit_price": 750.0, "notes": "Approved at 750 EGP per platelet unit"},
+        headers=auth_headers(bloodbank_token),
+    )
+    assert ack_resp.status_code == 200
+    assert ack_resp.json()["unit_price"] == 750.0
+    assert ack_resp.json()["total_amount"] == 2250.0
+
+    # 3. Initiate payment
+    init_resp = client.post(
+        "/api/v1/payments/initiate",
+        json={"blood_request_id": blood_request_id, "payment_method": "card"},
+        headers=auth_headers(hospital_token),
+    )
+    assert init_resp.status_code == 201
+    body = init_resp.json()
+    assert float(body["amount"]) == 2250.0  # 3 units * 750 EGP
+
+
+def test_initiate_payment_flow(client, hospital_token, bloodbank_token):
+    # 1. Create a blood request
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "A+", "component": "whole_blood", "quantity_units": 2},
+        headers=auth_headers(hospital_token),
+    )
+    assert req_resp.status_code == 201
+    blood_request_id = req_resp.json()["id"]
+
+    # 2. Blood bank prices and acknowledges the request
+    ack_resp = client.post(
+        f"/api/v1/requests/{blood_request_id}/acknowledge",
+        json={"unit_price": 500.0},
+        headers=auth_headers(bloodbank_token),
+    )
+    assert ack_resp.status_code == 200
+
+    # 3. Initiate payment
+    init_resp = client.post(
+        "/api/v1/payments/initiate",
+        json={"blood_request_id": blood_request_id, "payment_method": "card"},
+        headers=auth_headers(hospital_token),
+    )
+    assert init_resp.status_code == 201
+    body = init_resp.json()
+
+    assert body["blood_request_id"] == blood_request_id
+    assert body["payment_status"] == "pending"
+    assert body["currency"] == "EGP"
+    assert body["provider"] == "paymob"
+    assert float(body["amount"]) == 1000.0  # 2 units * 500 EGP quoted by blood bank
+    assert "unifiedcheckout" in (body["checkout_url"] or "")
+
+    # 4. Verify it is listed in payments for this request
+    list_resp = client.get(
+        f"/api/v1/payments/request/{blood_request_id}",
+        headers=auth_headers(hospital_token),
+    )
+    assert list_resp.status_code == 200
+    assert len(list_resp.json()) == 1
+
+
+def test_paymob_webhook_success_and_idempotency(client, hospital_token, bloodbank_token):
+    # 1. Create a blood request
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "O-", "component": "whole_blood", "quantity_units": 1},
+        headers=auth_headers(hospital_token),
+    )
+    blood_request_id = req_resp.json()["id"]
+
+    # 2. Blood bank prices and acknowledges the request
+    client.post(
+        f"/api/v1/requests/{blood_request_id}/acknowledge",
+        json={"unit_price": 500.0},
+        headers=auth_headers(bloodbank_token),
+    )
+
+    # 3. Initiate payment
+    init_resp = client.post(
+        "/api/v1/payments/initiate",
+        json={"blood_request_id": blood_request_id, "payment_method": "card"},
+        headers=auth_headers(hospital_token),
+    )
+    assert init_resp.status_code == 201
+    order_id = init_resp.json()["provider_order_id"]
+
+    # 4. Construct webhook transaction callback
+    transaction_obj = {
+        "amount_cents": 50000,
+        "created_at": "2026-09-13T00:00:00.000000",
+        "currency": "EGP",
+        "error_occured": False,
+        "has_parent_transaction": False,
+        "id": 99887766,
+        "integration_id": 1234,
+        "is_3d_secure": True,
+        "is_auth": False,
+        "is_capture": False,
+        "is_refunded": False,
+        "is_standalone_payment": True,
+        "is_voided": False,
+        "order": {"id": order_id, "extras": {"blood_request_id": blood_request_id}},
+        "owner": 100,
+        "pending": False,
+        "source_data": {"pan": "1234", "sub_type": "Visa", "type": "card"},
+        "success": True,
+    }
+    hmac_secret = "42F9F7F61E81C60BAE9FD707C8FC31D8"
+    valid_hmac = _generate_hmac(transaction_obj, hmac_secret)
+
+    # 5. Post Webhook with HMAC
+    webhook_resp = client.post(
+        f"/api/v1/payments/webhook?hmac={valid_hmac}",
+        json={"type": "TRANSACTION", "obj": transaction_obj},
+    )
+    assert webhook_resp.status_code == 200
+    assert webhook_resp.json()["status"] == "success"
+
+    # 6. Check request status updated to confirmed
+    get_req = client.get(f"/api/v1/requests/{blood_request_id}", headers=auth_headers(hospital_token))
+    assert get_req.status_code == 200
+    assert get_req.json()["status"] == "confirmed"
+
+    # 7. Idempotency test: duplicate webhook call returns already_processed
+    dup_resp = client.post(
+        f"/api/v1/payments/webhook?hmac={valid_hmac}",
+        json={"type": "TRANSACTION", "obj": transaction_obj},
+    )
+    assert dup_resp.status_code == 200
+    assert dup_resp.json()["status"] == "already_processed"
+
+
+def test_paymob_webhook_invalid_hmac_rejected(client, hospital_token):
+    # Post Webhook with invalid HMAC signature
+    webhook_resp = client.post(
+        "/api/v1/payments/webhook?hmac=completely_invalid_hmac",
+        json={"type": "TRANSACTION", "obj": {"id": 111, "success": True}},
+    )
+    assert webhook_resp.status_code == 422
+    assert webhook_resp.json()["error"]["code"] == "INVALID_HMAC_SIGNATURE"
+
+
+def test_initiate_payment_duplicate_when_paid_rejected(client, hospital_token, bloodbank_token):
+    # 1. Create request & initiate payment
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "B+", "component": "whole_blood", "quantity_units": 1},
+        headers=auth_headers(hospital_token),
+    )
+    blood_request_id = req_resp.json()["id"]
+
+    client.post(
+        f"/api/v1/requests/{blood_request_id}/acknowledge",
+        json={"unit_price": 500.0},
+        headers=auth_headers(bloodbank_token),
+    )
+
+    init_resp = client.post(
+        "/api/v1/payments/initiate",
+        json={"blood_request_id": blood_request_id},
+        headers=auth_headers(hospital_token),
+    )
+    order_id = init_resp.json()["provider_order_id"]
+
+    # 2. Mark paid via webhook
+    transaction_obj = {
+        "amount_cents": 50000,
+        "created_at": "2026-09-13T00:00:00.000000",
+        "currency": "EGP",
+        "error_occured": False,
+        "has_parent_transaction": False,
+        "id": 55443322,
+        "integration_id": 1234,
+        "is_3d_secure": True,
+        "is_auth": False,
+        "is_capture": False,
+        "is_refunded": False,
+        "is_standalone_payment": True,
+        "is_voided": False,
+        "order": {"id": order_id, "extras": {"blood_request_id": blood_request_id}},
+        "owner": 100,
+        "pending": False,
+        "source_data": {"pan": "1234", "sub_type": "Visa", "type": "card"},
+        "success": True,
+    }
+    hmac_secret = "42F9F7F61E81C60BAE9FD707C8FC31D8"
+    valid_hmac = _generate_hmac(transaction_obj, hmac_secret)
+
+    client.post(
+        f"/api/v1/payments/webhook?hmac={valid_hmac}",
+        json={"type": "TRANSACTION", "obj": transaction_obj},
+    )
+
+    # 3. Attempt to initiate another payment for the same request
+    dup_init = client.post(
+        "/api/v1/payments/initiate",
+        json={"blood_request_id": blood_request_id},
+        headers=auth_headers(hospital_token),
+    )
+    assert dup_init.status_code == 409
+    assert dup_init.json()["error"]["code"] == "ALREADY_PAID"
+
+
+def test_patch_payment_cannot_manually_mark_paid(client, admin_token, hospital_token):
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "A+", "component": "whole_blood", "quantity_units": 1},
+        headers=auth_headers(hospital_token),
+    )
+    blood_request_id = req_resp.json()["id"]
+
+    # Create pending payment
+    create_resp = client.post(
+        "/api/v1/payments",
+        json={
+            "blood_request_id": blood_request_id,
+            "amount": 250.0,
+            "payment_status": "pending",
+        },
+        headers=auth_headers(admin_token),
+    )
+    assert create_resp.status_code == 201
+    payment_id = create_resp.json()["id"]
+
+    # Attempt to manually mark as paid via admin PATCH
+    patch_resp = client.patch(
+        f"/api/v1/payments/{payment_id}",
+        json={"payment_status": "paid"},
+        headers=auth_headers(admin_token),
+    )
+    assert patch_resp.status_code == 403
+    assert patch_resp.json()["error"]["code"] == "MANUAL_PAID_STATUS_FORBIDDEN"
+
+
+def test_list_payments_history_endpoint(client, admin_token, hospital_token):
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "O+", "component": "whole_blood", "quantity_units": 1},
+        headers=auth_headers(hospital_token),
+    )
+    blood_request_id = req_resp.json()["id"]
+
+    # Create payment
+    client.post(
+        "/api/v1/payments",
+        json={
+            "blood_request_id": blood_request_id,
+            "amount": 350.0,
+            "payment_status": "pending",
+        },
+        headers=auth_headers(admin_token),
+    )
+
+    # Admin lists history
+    admin_list = client.get("/api/v1/payments", headers=auth_headers(admin_token))
+    assert admin_list.status_code == 200
+    assert isinstance(admin_list.json(), list)
+    assert len(admin_list.json()) >= 1
+
+    # Hospital user lists history
+    hosp_list = client.get("/api/v1/payments", headers=auth_headers(hospital_token))
+    assert hosp_list.status_code == 200
+    assert isinstance(hosp_list.json(), list)
