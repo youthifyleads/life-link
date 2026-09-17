@@ -5,6 +5,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../bloc/notification_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/lifelink_states.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -39,47 +40,31 @@ class NotificationsScreen extends StatelessWidget {
       body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
           if (state is NotificationLoading) {
-            return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary));
+            return const LifeLinkLoadingState(
+              message: 'Checking for new LifeLink updates…',
+            );
           }
 
           if (state is NotificationError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.wifi_off_rounded,
-                      size: 48, color: AppColors.textHint),
-                  const SizedBox(height: 12),
-                  Text(state.message,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary)),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () => context
-                        .read<NotificationBloc>()
-                        .add(LoadNotificationsEvent()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+            return LifeLinkStatePanel(
+              icon: Icons.cloud_off_rounded,
+              title: 'Notifications are unavailable',
+              message: state.message,
+              actionLabel: 'Try again',
+              onAction: () => context
+                  .read<NotificationBloc>()
+                  .add(LoadNotificationsEvent()),
+              tone: AppColors.error,
             );
           }
 
           if (state is NotificationLoaded) {
             if (state.notifications.isEmpty) {
-              return const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.notifications_none_rounded,
-                        size: 64, color: AppColors.textHint),
-                    SizedBox(height: 16),
-                    Text('No notifications yet',
-                        style: TextStyle(
-                            color: AppColors.textSecondary, fontSize: 16)),
-                  ],
-                ),
+              return const LifeLinkStatePanel(
+                icon: Icons.notifications_none_rounded,
+                title: 'You are all caught up',
+                message:
+                    'New updates about requests and donation activity will appear here.',
               );
             }
 

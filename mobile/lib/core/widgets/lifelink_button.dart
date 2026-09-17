@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/design_tokens.dart';
 
 class LifeLinkButton extends StatelessWidget {
   final String label;
@@ -25,8 +26,8 @@ class LifeLinkButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: AppColors.primary),
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          shape: const RoundedRectangleBorder(
+            borderRadius: AppRadii.md,
           ),
           minimumSize: const Size(double.infinity, 56),
         ),
@@ -39,6 +40,7 @@ class LifeLinkButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         minimumSize: const Size(double.infinity, 56),
         disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
+        shape: const RoundedRectangleBorder(borderRadius: AppRadii.md),
       ),
       child: _buildContent(),
     );
@@ -46,12 +48,14 @@ class LifeLinkButton extends StatelessWidget {
 
   Widget _buildContent() {
     if (isLoading) {
-      return const SizedBox(
+      return SizedBox(
         height: 24,
         width: 24,
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          valueColor: AlwaysStoppedAnimation<Color>(
+            isOutlined ? AppColors.primary : Colors.white,
+          ),
         ),
       );
     }

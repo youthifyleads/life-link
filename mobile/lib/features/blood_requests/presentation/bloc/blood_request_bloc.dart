@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../domain/models/blood_request_model.dart';
 import '../../data/blood_request_remote_datasource.dart';
+import '../../../../core/network/api_error_message.dart';
 
 // ── Events ────────────────────────────────────────────────
 abstract class BloodRequestEvent extends Equatable {
@@ -93,7 +94,7 @@ class BloodRequestBloc extends Bloc<BloodRequestEvent, BloodRequestState> {
       final requests = await _dataSource.getRequests();
       emit(BloodRequestLoaded(requests));
     } catch (e) {
-      emit(BloodRequestError(e.toString()));
+      emit(BloodRequestError(friendlyErrorMessage(e)));
     }
   }
 
@@ -106,7 +107,7 @@ class BloodRequestBloc extends Bloc<BloodRequestEvent, BloodRequestState> {
       final newReq = await _dataSource.createRequest(event.data);
       emit(BloodRequestCreateSuccess(newReq));
     } catch (e) {
-      emit(BloodRequestError(e.toString()));
+      emit(BloodRequestError(friendlyErrorMessage(e)));
     }
   }
 
@@ -122,7 +123,7 @@ class BloodRequestBloc extends Bloc<BloodRequestEvent, BloodRequestState> {
       await _dataSource.respondToRequest(event.requestId);
       emit(BloodRequestRespondSuccess(event.requestId));
     } catch (e) {
-      emit(BloodRequestError(e.toString()));
+      emit(BloodRequestError(friendlyErrorMessage(e)));
     }
   }
 }

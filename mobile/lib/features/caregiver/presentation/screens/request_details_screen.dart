@@ -9,6 +9,7 @@ import '../../../documents/presentation/bloc/document_bloc.dart';
 import '../../../documents/domain/models/document_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/lifelink_button.dart';
+import '../../../../core/widgets/lifelink_components.dart';
 
 class RequestDetailsScreen extends StatefulWidget {
   final BloodRequestPublic request;
@@ -127,20 +128,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
 
   Widget _buildRequestSummaryCard() {
     final req = widget.request;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
+    return LifeLinkCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -149,13 +137,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
-                    backgroundColor:
-                        req.urgency ? AppColors.error : AppColors.primary,
-                    child: Text(req.bloodType,
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
+                  LifeLinkBloodTypeBadge(req.bloodType),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,16 +146,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                         '${req.quantityUnits} Units • ${req.component}',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      Text(
-                        req.status.toUpperCase(),
-                        style: TextStyle(
-                          color: req.status == 'requested'
-                              ? AppColors.warning
-                              : AppColors.success,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
+                      LifeLinkStatusChip(req.status),
                     ],
                   ),
                 ],

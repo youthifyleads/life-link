@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/design_tokens.dart';
 
 class LifeLinkTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -11,6 +12,12 @@ class LifeLinkTextField extends StatelessWidget {
   final IconData? suffixIcon;
   final VoidCallback? onSuffixTap;
   final String? Function(String?)? validator;
+  final TextInputAction? textInputAction;
+  final Iterable<String>? autofillHints;
+  final ValueChanged<String>? onFieldSubmitted;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final String? helperText;
 
   const LifeLinkTextField({
     super.key,
@@ -23,6 +30,12 @@ class LifeLinkTextField extends StatelessWidget {
     this.suffixIcon,
     this.onSuffixTap,
     this.validator,
+    this.textInputAction,
+    this.autofillHints,
+    this.onFieldSubmitted,
+    this.readOnly = false,
+    this.onTap,
+    this.helperText,
   });
 
   @override
@@ -34,17 +47,23 @@ class LifeLinkTextField extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.labelLarge,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
           validator: validator,
+          textInputAction: textInputAction,
+          autofillHints: autofillHints,
+          onFieldSubmitted: onFieldSubmitted,
+          readOnly: readOnly,
+          onTap: onTap,
           style: const TextStyle(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
+            helperText: helperText,
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.textHint, size: 22)
+                ? Icon(prefixIcon, color: AppColors.secondaryBlue, size: 21)
                 : null,
             suffixIcon: suffixIcon != null
                 ? InkWell(

@@ -1,160 +1,187 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../blood_requests/presentation/bloc/blood_request_bloc.dart';
-import '../../../../core/di/injection.dart';
+import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/notification_badge_button.dart';
 
-class CaregiverRequestsScreen extends StatelessWidget {
-  const CaregiverRequestsScreen({super.key});
+class CaregiverHomeScreen extends StatelessWidget {
+  const CaregiverHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<BloodRequestBloc>()..add(LoadRequestsEvent()),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('My Blood Requests'),
-          actions: [
-            const NotificationBadgeButton(),
-            IconButton(
-              icon: const Icon(Icons.person_outline_rounded),
-              tooltip: 'Profile & Settings',
-              onPressed: () => context.push('/profile'),
-            ),
-          ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Care coordination'),
+        actions: [
+          const NotificationBadgeButton(),
+          IconButton(
+            tooltip: 'Profile and settings',
+            icon: const Icon(Icons.account_circle_outlined),
+            onPressed: () => context.push('/profile'),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.xxl,
         ),
-        body: BlocBuilder<BloodRequestBloc, BloodRequestState>(
-          builder: (context, state) {
-            if (state is BloodRequestLoading) {
-              return const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary));
-            }
-            if (state is BloodRequestError) {
-              return Center(
-                child: Text(
-                  'Error loading requests:\n${state.message}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.error),
-                ),
-              );
-            }
-            if (state is BloodRequestLoaded) {
-              final requests = state.requests;
-              if (requests.isEmpty) {
-                return _buildEmptyState(context);
-              }
-              return RefreshIndicator(
-                color: AppColors.primary,
-                onRefresh: () async {
-                  final bloc = context.read<BloodRequestBloc>();
-                  bloc.add(LoadRequestsEvent());
-                  await bloc.stream.firstWhere(
-                    (state) =>
-                        state is BloodRequestLoaded ||
-                        state is BloodRequestError,
-                  );
-                },
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: requests.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final req = requests[index];
-                    return Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(16),
-                        leading: CircleAvatar(
-                          backgroundColor:
-                              req.urgency ? AppColors.error : AppColors.primary,
-                          child: Text(req.bloodType,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                        ),
-                        title: Text(
-                            '${req.quantityUnits} Units • ${req.component}'),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                              'Status: ${req.status}\nRef: ${req.trackingReference}'),
-                        ),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        isThreeLine: true,
-                        onTap: () {
-                          context.push('/caregiver/request/details',
-                              extra: req);
-                        },
-                      ),
-                    );
-                  },
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          },
+        children: [
+          _AttentionBanner(onTap: () => context.push('/caregiver/requests')),
+          const SizedBox(height: AppSpacing.lg),
+          Text('Care workspace', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: AppSpacing.md),
+          _WorkspaceTile(
+            icon: Icons.bloodtype_outlined,
+            title: 'Blood requests',
+            subtitle: 'Create and follow patient requests',
+            accent: AppColors.primary,
+            onTap: () => context.push('/caregiver/requests'),
+          ),
+          _WorkspaceTile(
+            icon: Icons.people_alt_outlined,
+            title: 'Patients',
+            subtitle: 'Review patient profiles and blood types',
+            accent: AppColors.teal,
+            onTap: () => context.push('/caregiver/patients'),
+          ),
+          _WorkspaceTile(
+            icon: Icons.assignment_outlined,
+            title: 'Assignments',
+            subtitle: 'Review blood-bag assignments and notes',
+            accent: AppColors.navy,
+            onTap: () => context.push('/caregiver/assignments'),
+          ),
+          _WorkspaceTile(
+            icon: Icons.inventory_2_outlined,
+            title: 'Blood bags',
+            subtitle: 'Review bag status and movement history',
+            accent: AppColors.teal,
+            onTap: () => context.push('/caregiver/blood-bags'),
+          ),
+          _WorkspaceTile(
+            icon: Icons.qr_code_scanner_rounded,
+            title: 'Scan and track',
+            subtitle: 'Use the real QR and tracking workflow',
+            accent: AppColors.info,
+            onTap: () => context.push('/qr/scan'),
+          ),
+          _WorkspaceTile(
+            icon: Icons.payments_outlined,
+            title: 'Payments',
+            subtitle: 'Review request-specific payment history',
+            accent: AppColors.warning,
+            onTap: () => context.push('/caregiver/payment-history'),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text('Need a walkthrough?',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.xs),
+          TextButton.icon(
+            onPressed: () => context.push('/help/caregiver'),
+            icon: const Icon(Icons.menu_book_outlined),
+            label: const Text('How LifeLink works'),
+            style: TextButton.styleFrom(alignment: Alignment.centerLeft),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttentionBanner extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _AttentionBanner({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: AppRadii.lg,
+      onTap: onTap,
+      child: Ink(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.navy, AppColors.secondaryBlue],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: AppRadii.lg,
+          boxShadow: AppShadows.soft,
         ),
-        floatingActionButton: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        child: Row(
           children: [
-            // QR Scanner
-            FloatingActionButton(
-              heroTag: 'qr_scan',
-              onPressed: () => context.push('/qr/scan'),
-              backgroundColor: AppColors.info,
-              foregroundColor: Colors.white,
-              child: const Icon(Icons.qr_code_scanner),
-            ),
-            const SizedBox(height: 12),
-            // New Request
-            Builder(
-              builder: (ctx) => FloatingActionButton.extended(
-                heroTag: 'new_request',
-                onPressed: () async {
-                  final result =
-                      await context.push('/caregiver/create-request');
-                  if (result == true && ctx.mounted) {
-                    ctx.read<BloodRequestBloc>().add(LoadRequestsEvent());
-                  }
-                },
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                icon: const Icon(Icons.add),
-                label: const Text('New Request'),
+            const Icon(Icons.task_alt_rounded, color: Colors.white, size: 34),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Stay on top of care',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(color: Colors.white),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  const Text(
+                    'Open requests and review the latest backend status.',
+                    style: TextStyle(color: Color(0xFFD7E3E8)),
+                  ),
+                ],
               ),
             ),
+            const Icon(Icons.arrow_forward_rounded, color: Colors.white),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.medical_services_outlined,
-              size: 64, color: AppColors.textHint),
-          const SizedBox(height: 16),
-          Text(
-            'No Requests Found',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(color: AppColors.textSecondary),
+class _WorkspaceTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _WorkspaceTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: ListTile(
+        minVerticalPadding: AppSpacing.sm,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        leading: Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: AppRadii.sm,
           ),
-          const SizedBox(height: 8),
-          const Text('Tap the + button to create a new blood request.'),
-        ],
+          child: Icon(icon, color: accent),
+        ),
+        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: onTap,
       ),
     );
   }

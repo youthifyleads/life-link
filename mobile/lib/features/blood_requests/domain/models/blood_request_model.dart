@@ -8,6 +8,8 @@ class BloodRequestCreate extends Equatable {
   final String? notes;
   final String? reason;
   final DateTime? requiredBy;
+  final double? latitude;
+  final double? longitude;
 
   const BloodRequestCreate({
     required this.bloodType,
@@ -17,6 +19,8 @@ class BloodRequestCreate extends Equatable {
     this.notes,
     this.reason,
     this.requiredBy,
+    this.latitude,
+    this.longitude,
   });
 
   Map<String, dynamic> toJson() => {
@@ -24,16 +28,26 @@ class BloodRequestCreate extends Equatable {
         'component': component,
         'quantity_units': quantityUnits,
         'urgency': urgency,
-        'notes': notes ?? 'طلب نقل دم عبر تطبيق LifeLink',
-        'reason': reason ?? 'حالة طبية طارئة',
-        'required_by':
-            (requiredBy ?? DateTime.now().add(const Duration(days: 2)).toUtc())
-                .toIso8601String(),
+        if (notes != null) 'notes': notes,
+        if (reason != null) 'reason': reason,
+        if (requiredBy != null)
+          'required_by': requiredBy!.toUtc().toIso8601String(),
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
       };
 
   @override
-  List<Object?> get props =>
-      [bloodType, component, quantityUnits, urgency, notes, reason, requiredBy];
+  List<Object?> get props => [
+        bloodType,
+        component,
+        quantityUnits,
+        urgency,
+        notes,
+        reason,
+        requiredBy,
+        latitude,
+        longitude,
+      ];
 }
 
 class BloodRequestPublic extends Equatable {
@@ -64,21 +78,47 @@ class BloodRequestPublic extends Equatable {
   });
 
   factory BloodRequestPublic.fromJson(Map<String, dynamic> json) {
+    final id = json['id'];
+    final hospitalId = json['hospital_id'];
+    final bloodType = json['blood_type'];
+    final component = json['component'];
+    final quantityUnits = json['quantity_units'];
+    final urgency = json['urgency'];
+    final status = json['status'];
+    final trackingReference = json['tracking_reference'];
+    final createdAt = json['created_at'];
+
+    if (id is! String ||
+        hospitalId is! String ||
+        bloodType is! String ||
+        component is! String ||
+        quantityUnits is! int ||
+        urgency is! bool ||
+        status is! String ||
+        trackingReference is! String ||
+        createdAt is! String) {
+      throw const FormatException(
+        'Blood request response is missing required fields.',
+      );
+    }
+
+    final parsedCreatedAt = DateTime.tryParse(createdAt);
+    if (parsedCreatedAt == null) {
+      throw const FormatException('Blood request created_at is invalid.');
+    }
+
     return BloodRequestPublic(
-      id: json['id'] as String? ?? '',
-      hospitalId: json['hospital_id'] as String? ?? '',
-      bloodType: json['blood_type'] as String? ?? 'O+',
-      component: json['component'] as String? ?? 'whole_blood',
-      quantityUnits: json['quantity_units'] as int? ?? 1,
-      urgency: json['urgency'] as bool? ?? false,
+      id: id,
+      hospitalId: hospitalId,
+      bloodType: bloodType,
+      component: component,
+      quantityUnits: quantityUnits,
+      urgency: urgency,
       notes: json['notes'] as String?,
       reason: json['reason'] as String?,
-      status: json['status'] as String? ?? 'requested',
-      trackingReference: json['tracking_reference'] as String? ??
-          'REF-${DateTime.now().millisecondsSinceEpoch}',
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String) ?? DateTime.now()
-          : DateTime.now(),
+      status: status,
+      trackingReference: trackingReference,
+      createdAt: parsedCreatedAt,
     );
   }
 

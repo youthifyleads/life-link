@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/widgets/lifelink_button.dart';
+import '../../../../core/network/api_error_message.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../blood_requests/domain/models/blood_request_model.dart';
 import '../../data/caregiver_remote_datasource.dart';
 import '../../domain/models/caregiver_models.dart';
@@ -81,7 +83,10 @@ class _PatientBloodRequestScreenState extends State<PatientBloodRequestScreen> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
+          SnackBar(
+            content: Text(friendlyErrorMessage(error)),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {

@@ -1,5 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.lifelink.life_link_mobile">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Permissions required by LifeLink Mobile -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -23,7 +22,7 @@
         android:label="LifeLink"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="false">
         
         <activity
             android:name=".MainActivity"

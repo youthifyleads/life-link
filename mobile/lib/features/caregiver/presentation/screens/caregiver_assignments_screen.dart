@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/network/api_error_message.dart';
+import '../../../../core/widgets/lifelink_states.dart';
 import '../../data/caregiver_remote_datasource.dart';
 import '../../domain/models/caregiver_models.dart';
 
@@ -14,8 +16,10 @@ class CaregiverAssignmentsScreen extends StatefulWidget {
       _CaregiverAssignmentsScreenState();
 }
 
-class _CaregiverAssignmentsScreenState extends State<CaregiverAssignmentsScreen> {
-  final CaregiverRemoteDataSource _dataSource = getIt<CaregiverRemoteDataSource>();
+class _CaregiverAssignmentsScreenState
+    extends State<CaregiverAssignmentsScreen> {
+  final CaregiverRemoteDataSource _dataSource =
+      getIt<CaregiverRemoteDataSource>();
 
   bool _loading = true;
   String? _error;
@@ -38,7 +42,7 @@ class _CaregiverAssignmentsScreenState extends State<CaregiverAssignmentsScreen>
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = error.toString();
+        _error = friendlyErrorMessage(error);
         _loading = false;
       });
     }
@@ -62,23 +66,23 @@ class _CaregiverAssignmentsScreenState extends State<CaregiverAssignmentsScreen>
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const LifeLinkLoadingState(message: 'Loading assignments…')
           : _error != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(_error!),
-                  ),
+              ? LifeLinkStatePanel(
+                  icon: Icons.cloud_off_rounded,
+                  title: 'Assignments are unavailable',
+                  message:
+                      'We could not load assignment data. Check your connection and try again.',
+                  actionLabel: 'Try again',
+                  onAction: _loadAssignments,
+                  tone: AppColors.error,
                 )
               : _assignments.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text(
-                          'No caregiver assignments are available yet.',
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
+                  ? const LifeLinkStatePanel(
+                      icon: Icons.assignment_outlined,
+                      title: 'No assignments yet',
+                      message:
+                          'Confirmed blood-bag assignments will appear here.',
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.all(20),
@@ -97,7 +101,8 @@ class _CaregiverAssignmentsScreenState extends State<CaregiverAssignmentsScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
@@ -110,17 +115,23 @@ class _CaregiverAssignmentsScreenState extends State<CaregiverAssignmentsScreen>
                                   ),
                                   Chip(
                                     label: Text(assignment.status),
-                                    backgroundColor: assignment.status == 'assigned'
-                                        ? AppColors.primary.withValues(alpha: 0.12)
-                                        : AppColors.success.withValues(alpha: 0.12),
+                                    backgroundColor: assignment.status ==
+                                            'assigned'
+                                        ? AppColors.primary
+                                            .withValues(alpha: 0.12)
+                                        : AppColors.success
+                                            .withValues(alpha: 0.12),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
                               _detailsRow('Hospital', assignment.hospitalId),
-                              _detailsRow('Caregiver', assignment.caregiverUserId),
-                              _detailsRow('Assigned', _formatDate(assignment.assignmentDate)),
-                              if (assignment.notes != null && assignment.notes!.isNotEmpty)
+                              _detailsRow(
+                                  'Caregiver', assignment.caregiverUserId),
+                              _detailsRow('Assigned',
+                                  _formatDate(assignment.assignmentDate)),
+                              if (assignment.notes != null &&
+                                  assignment.notes!.isNotEmpty)
                                 _detailsRow('Notes', assignment.notes!),
                             ],
                           ),

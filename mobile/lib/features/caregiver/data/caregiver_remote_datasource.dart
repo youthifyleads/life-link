@@ -50,10 +50,34 @@ class CaregiverRemoteDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        '${ApiEndpoints.caregiverPatients}/$patientId/blood-requests',
+        ApiEndpoints.caregiverPatientRequests(patientId),
         data: request.toJson(),
       );
       return BloodRequestPublic.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (error) {
+      throw apiErrorMessage(error);
+    }
+  }
+
+  Future<Map<String, dynamic>> initiateAllocationPayment(
+      String allocationId) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.caregiverPaymentInitiate,
+        data: {'allocation_id': allocationId},
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (error) {
+      throw apiErrorMessage(error);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPaymentHistory() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.caregiverPaymentHistory);
+      return (response.data as List)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
     } on DioException catch (error) {
       throw apiErrorMessage(error);
     }
@@ -72,7 +96,8 @@ class CaregiverRemoteDataSource {
     }
   }
 
-  Future<CaregiverAssignmentModel> getAssignmentById(String assignmentId) async {
+  Future<CaregiverAssignmentModel> getAssignmentById(
+      String assignmentId) async {
     try {
       final response = await _dio.get(
         ApiEndpoints.caregiverAssignmentById(assignmentId),
