@@ -220,12 +220,13 @@ class RequestService:
             request_id, RequestStatus.COMPLETED, current_user, {Role.BLOOD_BANK_OPERATOR, Role.ADMIN}
         )
 
-    async def cancel(self, request_id: str, current_user: UserRecord) -> BloodRequestRecord:
+    async def cancel(self, request_id: str, current_user: UserRecord, reason: str | None = None) -> BloodRequestRecord:
         return await self._transition(
             request_id,
             RequestStatus.CANCELLED,
             current_user,
             {Role.HOSPITAL_USER, Role.BLOOD_BANK_OPERATOR, Role.ADMIN},
+            notes=reason,
         )
 
     async def list_allocated_bags(self, request_id: str, current_user: UserRecord):

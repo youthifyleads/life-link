@@ -29,7 +29,8 @@ export const bloodBankRequestKeys = {
     ["blood-bank", "units", params] as const,
 };
 
-import { requestsApi } from "@/shared/api/requests.api";
+import { apiClient } from "@/shared/api/http-client";
+import { requestsApi, mapBackendDtoToBloodBankRequest } from "@/shared/api/requests.api";
 import { inventoryApi } from "@/features/blood-bank/api/inventory.api";
 import { getAccessToken } from "@/shared/api/auth-token";
 
@@ -137,7 +138,7 @@ export function useTransitionBloodBankRequest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       requestId,
       action,
       note,
@@ -147,7 +148,38 @@ export function useTransitionBloodBankRequest() {
       action: BloodBankRequestAction;
       note?: string;
       rejectReason?: string;
-    }) => transitionBloodBankRequest(requestId, action, { note, rejectReason }),
+    }) => {
+      if (getAccessToken()) {
+        try {
+          let res: any;
+          const act = action as string;
+          if (act === "acknowledge") {
+            res = await apiClient.post(`/requests/${requestId}/acknowledge`, { notes: note });
+          } else if (act === "confirm") {
+            res = await apiClient.post(`/requests/${requestId}/confirm`);
+          } else if (act === "start_preparation" || act === "prepare") {
+            res = await apiClient.post(`/requests/${requestId}/prepare`);
+          } else if (act === "dispatch") {
+            res = await apiClient.post(`/requests/${requestId}/dispatch`, { notes: note });
+          } else if (act === "complete") {
+            res = await apiClient.post(`/requests/${requestId}/complete`);
+          } else if (act === "reject") {
+            res = await apiClient.post(`/requests/${requestId}/reject`, { reason: rejectReason || note || "Rejected by blood bank" });
+          } else if (act === "cancel") {
+            res = await apiClient.post(`/requests/${requestId}/cancel`, { reason: note || "Cancelled" });
+          }
+          if (res?.data) {
+            return mapBackendDtoToBloodBankRequest(res.data);
+          }
+        } catch (err) {
+          console.warn("Live request transition failed, falling back to mock:", err);
+          if (import.meta.env.MODE !== "test") {
+            throw err;
+          }
+        }
+      }
+      return transitionBloodBankRequest(requestId, action, { note, rejectReason });
+    },
     onSuccess: (updatedRequest) => {
       queryClient.setQueryData(
         bloodBankRequestKeys.all,

@@ -1,19 +1,51 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
-from app.core.domain import RequestStatus
+from app.core.domain import BloodType, RequestStatus, VALID_BLOOD_TYPES
 
 
 class BloodRequestCreate(BaseModel):
     blood_type: str = Field(..., examples=["O+", "A-", "AB+"], min_length=2, max_length=3)
-    component: str = Field(..., examples=["whole_blood", "plasma", "platelets", "red_cells"])
+    component: str = Field(default="whole_blood", examples=["whole_blood", "plasma", "platelets", "red_cells"])
     quantity_units: int = Field(..., gt=0, le=100)
     urgency: bool = Field(default=False, description="Marks the request as urgent for escalation/notification purposes")
     notes: str | None = Field(default=None, max_length=1000)
     reason: str | None = Field(default=None, max_length=1000)
     required_by: datetime | None = Field(default=None, examples=["2026-12-31T23:59:59Z"])
+
+    @field_validator("blood_type", mode="before")
+    @classmethod
+    def parse_blood_type(cls, value: object) -> str:
+        if isinstance(value, str):
+            clean = value.strip().upper()
+            return clean
+        return str(value)
+
+    @field_validator("urgency", mode="before")
+    @classmethod
+    def parse_urgency(cls, value: object) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in ("true", "1", "urgent", "emergency", "critical", "yes")
+        return bool(value)
+
+    @field_validator("component", mode="before")
+    @classmethod
+    def parse_component(cls, value: object) -> str:
+        if not value or str(value).strip().lower() in ("", "none", "null", "undefined"):
+            return "whole_blood"
+        val = str(value).strip().lower()
+        mapping = {
+            "red blood cells": "red_cells",
+            "red_blood_cells": "red_cells",
+            "rbc": "red_cells",
+            "whole blood": "whole_blood",
+            "fresh frozen plasma": "plasma",
+        }
+        return mapping.get(val, val)
 
 
 class BloodRequestPublic(BaseModel):

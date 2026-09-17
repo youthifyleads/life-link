@@ -255,7 +255,7 @@ export function RequestDetailsPage() {
                 <BloodGroupBadge group={request.bloodGroup} />
               </SummaryItem>
               <SummaryItem label={t("common.component")}>
-                {t(`healthcare.${request.component}`, bloodComponentLabels[request.component])}
+                {String(t(`healthcare.${request.component}`, { defaultValue: (bloodComponentLabels as Record<string, string>)[request.component] ?? request.component }))}
               </SummaryItem>
               <SummaryItem label={t("common.quantity")}>
                 <span className="font-semibold tabular-nums">

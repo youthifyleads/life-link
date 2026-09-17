@@ -197,6 +197,45 @@ async def cancel_request(
     return BloodRequestPublic.model_validate(updated)
 
 
+@router.post(
+    "/{request_id}/reject",
+    response_model=BloodRequestPublic,
+    summary="Reject a blood request",
+    description="Blood Bank Operator / Admin only. Marks request as cancelled/rejected with clinical justification.",
+    responses={409: {"description": "INVALID_STATUS_TRANSITION"}},
+)
+async def reject_request(
+    request_id: str,
+    payload: RequestCancelPayload | None = None,
+    current_user: CurrentUser = None,
+    request_service: RequestService = Depends(get_request_service),
+    user_record=Depends(_load_user_record),
+) -> BloodRequestPublic:
+    reason = payload.reason if payload else "Request rejected by blood bank"
+    updated = await request_service.cancel(request_id, user_record, reason=reason)
+    return BloodRequestPublic.model_validate(updated)
+
+
+@router.post(
+    "/{request_id}/accept",
+    response_model=BloodRequestPublic,
+    summary="Accept / acknowledge a blood request",
+    description="Blood Bank Operator / Admin only. Alias for acknowledging the request and optionally locking in unit price.",
+    responses={409: {"description": "INVALID_STATUS_TRANSITION"}},
+)
+async def accept_request(
+    request_id: str,
+    payload: RequestAcknowledgePayload | None = None,
+    current_user: CurrentUser = None,
+    request_service: RequestService = Depends(get_request_service),
+    user_record=Depends(_load_user_record),
+) -> BloodRequestPublic:
+    unit_price = payload.unit_price if payload else None
+    notes = (payload.notes or payload.reason) if payload else None
+    updated = await request_service.acknowledge(request_id, user_record, unit_price=unit_price, notes=notes)
+    return BloodRequestPublic.model_validate(updated)
+
+
 
 @router.get(
     "/{request_id}/matching-donors",

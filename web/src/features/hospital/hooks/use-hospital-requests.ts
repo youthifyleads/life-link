@@ -89,13 +89,17 @@ export function useHospitalRequest(id: string) {
           return await requestsApi.getRequestById(id);
         } catch (err) {
           console.warn("Live request detail failed:", err);
+          const cached = queryClient.getQueryData<any>(hospitalRequestKeys.detail(id));
+          if (cached) return cached;
         }
       }
       if (import.meta.env.MODE === "test") {
         return getHospitalRequest(id);
       }
-      return null;
+      const cached = queryClient.getQueryData<any>(hospitalRequestKeys.detail(id));
+      return cached ?? null;
     },
+    enabled: Boolean(id),
   });
 }
 
@@ -110,11 +114,7 @@ export function useCreateHospitalRequest(shouldFail = false) {
   return useMutation({
     mutationFn: async (input: HospitalRequestInput) => {
       if (getAccessToken() && !shouldFail) {
-        try {
-          return await requestsApi.createRequest(input);
-        } catch (err) {
-          console.warn("Live create request fallback:", err);
-        }
+        return await requestsApi.createRequest(input);
       }
       return createHospitalRequest(input, shouldFail);
     },

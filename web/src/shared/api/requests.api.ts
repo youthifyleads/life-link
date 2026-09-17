@@ -106,10 +106,13 @@ export const requestsApi = {
   async createRequest(input: HospitalRequestInput): Promise<HospitalRequest> {
     const payload = {
       blood_type: input.bloodGroup,
+      component: input.component || "whole_blood",
       quantity_units: input.quantity,
-      urgency: input.urgency,
+      urgency: input.urgency === "emergency" || input.urgency === "urgent",
       target_blood_bank_id: input.bloodBankId || null,
       notes: input.notes || input.reason || null,
+      reason: input.reason || "Clinical Requisition",
+      required_by: input.requiredAt ? new Date(input.requiredAt).toISOString() : null,
     };
 
     const { data } = await apiClient.post<BackendBloodRequestDTO>("/requests", payload);

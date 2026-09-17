@@ -111,17 +111,21 @@ export function LoginPage() {
       navigate(targetPath, { replace: true });
     } catch (error) {
       const apiError = normalizeApiError(error);
-      setError("root", {
-        message:
-          apiError.status === 401
-            ? t("auth.invalidCredentials")
-            : apiError.correlationId
-              ? t("auth.apiErrorWithReference", {
-                  message: apiError.message,
-                  reference: apiError.correlationId,
-                })
-              : apiError.message,
-      });
+      let errorMessage = apiError.message;
+      if (apiError.code === "ACCOUNT_BANNED") {
+        errorMessage = t(
+          "auth.accountBanned",
+          "This account has been suspended. Please check your email and contact customer support.",
+        );
+      } else if (apiError.status === 401) {
+        errorMessage = t("auth.invalidCredentials");
+      } else if (apiError.correlationId) {
+        errorMessage = t("auth.apiErrorWithReference", {
+          message: apiError.message,
+          reference: apiError.correlationId,
+        });
+      }
+      setError("root", { message: errorMessage });
     }
   });
 
