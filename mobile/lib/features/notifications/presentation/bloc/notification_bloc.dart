@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../domain/models/notification_model.dart';
 import '../../data/notification_remote_datasource.dart';
+import '../../../../core/network/api_error_message.dart';
 
 // ── Events ────────────────────────────────────────────────
 abstract class NotificationEvent extends Equatable {
@@ -72,7 +73,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       });
       emit(NotificationLoaded(_currentList));
     } catch (e) {
-      emit(NotificationError(e.toString()));
+      emit(NotificationError(friendlyErrorMessage(e)));
     }
   }
 
@@ -85,7 +86,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       }).toList();
       emit(NotificationLoaded(_currentList));
     } catch (e) {
-      emit(NotificationError(e.toString()));
+      emit(NotificationError(friendlyErrorMessage(e)));
     }
   }
 
@@ -99,7 +100,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       _currentList = _currentList.map((n) => n.copyWithRead()).toList();
       emit(NotificationLoaded(_currentList));
     } catch (e) {
-      emit(NotificationError(e.toString()));
+      emit(NotificationError(friendlyErrorMessage(e)));
     }
   }
 }

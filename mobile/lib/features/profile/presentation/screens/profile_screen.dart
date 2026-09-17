@@ -120,7 +120,7 @@ class ProfileScreen extends StatelessWidget {
 
                 // ── Options List ───────────────────────────────────
                 _buildCardGroup([
-                  if (user.role.isDonor)
+                  if (user.role.canAccessDonorFeatures)
                     _settingTile(
                       context,
                       icon: Icons.favorite_border_rounded,
@@ -150,6 +150,13 @@ class ProfileScreen extends StatelessWidget {
                         ? 'العربية (Arabic)'
                         : 'English (الإنجليزية)',
                     onTap: () => _showLanguageBottomSheet(context),
+                  ),
+                  _settingTile(
+                    context,
+                    icon: Icons.settings_outlined,
+                    title: 'إعدادات التطبيق (Settings)',
+                    subtitle: 'اللغة، الأمان، المساعدة وتسجيل الخروج',
+                    onTap: () => context.push('/settings'),
                   ),
                   _settingTile(
                     context,

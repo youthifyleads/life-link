@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 
 import '../../domain/models/tracking_model.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/lifelink_button.dart';
+import '../../../../core/widgets/lifelink_components.dart';
 
 class TrackingDetailsScreen extends StatelessWidget {
   final TrackingPublic tracking;
@@ -90,7 +92,15 @@ class TrackingDetailsScreen extends StatelessWidget {
             Text('Status Timeline',
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
-            _buildTimeline(),
+            LifeLinkTimeline(
+              children: [
+                _timelineEntry(
+                  context,
+                  tracking.status,
+                  'This is the latest status returned by the tracking API.',
+                ),
+              ],
+            ),
 
             const SizedBox(height: 32),
 
@@ -155,79 +165,30 @@ class TrackingDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTimeline() {
-    final statuses = [
-      'requested',
-      'acknowledged',
-      'confirmed',
-      'prepared',
-      'completed'
-    ];
-    final currentIndex = statuses.indexOf(tracking.status);
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: statuses.asMap().entries.map((entry) {
-          final idx = entry.key;
-          final status = entry.value;
-          final isDone = idx <= currentIndex;
-          final isCurrent = idx == currentIndex;
-          final isLast = idx == statuses.length - 1;
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Dot + Line column
-              Column(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: isDone ? AppColors.primary : AppColors.border,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isDone ? Icons.check : Icons.circle,
-                      size: isDone ? 14 : 8,
-                      color: isDone ? Colors.white : AppColors.textHint,
-                    ),
-                  ),
-                  if (!isLast)
-                    Container(
-                      width: 2,
-                      height: 36,
-                      color: idx < currentIndex
-                          ? AppColors.primary
-                          : AppColors.border,
-                    ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 2, bottom: 24),
-                  child: Text(
-                    _timelineLabel(status),
-                    style: TextStyle(
-                      fontWeight:
-                          isCurrent ? FontWeight.bold : FontWeight.normal,
-                      color: isCurrent
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }).toList(),
+  Widget _timelineEntry(
+    BuildContext context,
+    String status,
+    String explanation,
+  ) {
+    return LifeLinkCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.radio_button_checked_rounded,
+              color: AppColors.primary),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LifeLinkStatusChip(status),
+                const SizedBox(height: AppSpacing.xs),
+                Text(explanation,
+                    style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -302,24 +263,7 @@ class TrackingDetailsScreen extends StatelessWidget {
       case 'expired':
         return 'This request has expired.';
       default:
-        return '';
-    }
-  }
-
-  String _timelineLabel(String status) {
-    switch (status) {
-      case 'requested':
-        return 'Request Submitted';
-      case 'acknowledged':
-        return 'Blood Bank Acknowledged';
-      case 'confirmed':
-        return 'Request Confirmed';
-      case 'prepared':
-        return 'Blood Bag Prepared';
-      case 'completed':
-        return 'Successfully Delivered';
-      default:
-        return status;
+        return 'Latest status returned by the tracking service.';
     }
   }
 

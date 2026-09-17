@@ -22,8 +22,9 @@ class AuthLoginEvent extends AuthEvent {
 
 class AuthRegisterEvent extends AuthEvent {
   final String fullName;
-  final String phone;
   final String email;
+  final String phone;
+  final String dateOfBirth;
   final String password;
   final UserRole role;
   final String? bloodType;
@@ -31,8 +32,9 @@ class AuthRegisterEvent extends AuthEvent {
 
   AuthRegisterEvent({
     required this.fullName,
-    required this.phone,
     required this.email,
+    required this.phone,
+    required this.dateOfBirth,
     required this.password,
     required this.role,
     this.bloodType,
@@ -40,17 +42,19 @@ class AuthRegisterEvent extends AuthEvent {
   });
 
   @override
-  List<Object?> get props => [email, phone, role];
+  List<Object?> get props => [email, role];
 }
 
 class AuthVerifyOtpEvent extends AuthEvent {
-  final String challengeId;
+  final String email;
+  final String? challengeId;
   final String otp;
   final bool isRegistration;
   final Map<String, dynamic>? pendingUserData;
 
   AuthVerifyOtpEvent({
-    required this.challengeId,
+    required this.email,
+    this.challengeId,
     required this.otp,
     this.isRegistration = false,
     this.pendingUserData,
@@ -61,11 +65,11 @@ class AuthVerifyOtpEvent extends AuthEvent {
 }
 
 class AuthResendOtpEvent extends AuthEvent {
-  final String phoneOrEmail;
+  final String email;
   final String purpose;
-  AuthResendOtpEvent(this.phoneOrEmail, {this.purpose = 'login'});
+  AuthResendOtpEvent(this.email, {this.purpose = 'login'});
   @override
-  List<Object?> get props => [phoneOrEmail, purpose];
+  List<Object?> get props => [email, purpose];
 }
 
 class AuthLogoutEvent extends AuthEvent {}
@@ -82,21 +86,19 @@ class AuthLoading extends AuthState {}
 
 class AuthOtpRequiredState extends AuthState {
   final String email;
-  final String phone;
   final bool isRegistration;
   final Map<String, dynamic>? pendingUserData;
   final String? challengeId;
 
   AuthOtpRequiredState({
     required this.email,
-    required this.phone,
     this.isRegistration = false,
     this.pendingUserData,
     this.challengeId,
   });
 
   @override
-  List<Object?> get props => [email, phone, isRegistration, challengeId];
+  List<Object?> get props => [email, isRegistration, challengeId];
 }
 
 class AuthAuthenticated extends AuthState {
@@ -183,7 +185,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return;
     }
     final user = (meResult as AuthSuccess<UserModel>).data;
-    await _dataSource.persistSession(token, user);
+    await _dataSource.persistSession(
+      token,
+      user,
+    );
     emit(AuthAuthenticated(user));
   }
 
@@ -195,11 +200,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     final regResult = await _dataSource.registerUser(
       email: event.email,
-      fullName: event.fullName,
-      password: event.password,
-      role: event.role.apiValue,
+      name: event.fullName,
       phone: event.phone,
+      dateOfBirth: event.dateOfBirth,
+      password: event.password,
       bloodType: event.bloodType,
+      governorate: event.governorate,
     );
 
     if (regResult is AuthFailure<RegistrationResult>) {
@@ -210,7 +216,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final registration = (regResult as AuthSuccess<RegistrationResult>).data;
     emit(AuthOtpRequiredState(
       email: event.email,
-      phone: event.phone,
       isRegistration: true,
       challengeId: registration.challengeId,
       pendingUserData: null,
@@ -223,8 +228,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
 
-    final verifyResult =
-        await _dataSource.verifyOtp(event.challengeId, event.otp);
+    if (event.isRegistration) {
+      final result = await _dataSource.verifySignup(event.email, event.otp);
+      if (result is AuthFailure<UserModel>) {
+        emit(AuthError(result.message));
+        return;
+      }
+      final user = (result as AuthSuccess<UserModel>).data;
+      emit(AuthRegistrationSucceeded(user));
+      return;
+    }
+
+    final challengeId = event.challengeId;
+    if (challengeId == null || challengeId.isEmpty) {
+      emit(AuthError('جلسة OTP غير صالحة، اطلب رمزًا جديدًا'));
+      return;
+    }
+    final verifyResult = await _dataSource.verifyOtp(challengeId, event.otp);
     if (verifyResult is AuthFailure<String>) {
       emit(AuthError(verifyResult.message));
       return;
@@ -245,7 +265,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return;
     }
 
-    await _dataSource.persistSession(token, user);
+    await _dataSource.persistSession(
+      token,
+      user,
+    );
     emit(AuthAuthenticated(user));
   }
 
@@ -254,17 +277,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    final result = await _dataSource.requestOtp(
-      event.phoneOrEmail,
-      purpose: event.purpose,
-    );
+    final result = event.purpose == 'signup'
+        ? await _dataSource.resendSignupOtp(event.email)
+        : await _dataSource.requestOtp(event.email, purpose: event.purpose);
     if (result is AuthFailure<Map<String, dynamic>>) {
       emit(AuthError(result.message));
       return;
     }
     emit(AuthOtpRequiredState(
-      email: event.phoneOrEmail,
-      phone: event.phoneOrEmail,
+      email: event.email,
       challengeId: (result as AuthSuccess<Map<String, dynamic>>)
           .data['challenge_id'] as String?,
     ));
@@ -274,7 +295,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLogoutEvent event,
     Emitter<AuthState> emit,
   ) async {
-    await _dataSource.clearSession();
+    await _dataSource.logout();
     emit(AuthUnauthenticated());
   }
 }
