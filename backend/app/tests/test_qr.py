@@ -13,9 +13,15 @@ def test_valid_reference_scan_returns_no_sensitive_info(client, hospital_token):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert set(body.keys()) == {"reference", "status", "blood_type", "component", "last_updated"}
+    assert set(body.keys()) == {
+        "reference", "status", "blood_type", "component", "last_updated",
+        "request_id", "unit_price", "total_price", "payment_status", "bank_name",
+    }
     assert "notes" not in body
     assert "hospital_id" not in body
+    assert body["request_id"] == created["id"]
+    assert body["payment_status"] == "unpaid"
+    assert body["bank_name"] is not None
 
 
 def test_invalid_reference_returns_404(client, hospital_token):
@@ -63,3 +69,5 @@ def test_tracking_endpoint_matches_scan(client, hospital_token):
     resp = client.get(f"/api/v1/tracking/{created['tracking_reference']}", headers=auth_headers(hospital_token))
     assert resp.status_code == 200
     assert resp.json()["status"] == "requested"
+    assert resp.json()["request_id"] == created["id"]
+    assert resp.json()["payment_status"] == "unpaid"
