@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../domain/models/tracking_model.dart';
 import '../../data/tracking_remote_datasource.dart';
+import '../../../../core/network/api_error_message.dart';
 
 // ── Events ────────────────────────────────────────────────
 abstract class TrackingEvent extends Equatable {
@@ -73,7 +74,7 @@ class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
       final result = await _dataSource.scanQr(event.reference);
       emit(TrackingLoaded(result));
     } catch (e) {
-      emit(TrackingError(e.toString()));
+      emit(TrackingError(friendlyErrorMessage(e)));
     }
   }
 
@@ -84,7 +85,7 @@ class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
       final result = await _dataSource.getTrackingInfo(event.reference);
       emit(TrackingLoaded(result));
     } catch (e) {
-      emit(TrackingError(e.toString()));
+      emit(TrackingError(friendlyErrorMessage(e)));
     }
   }
 }

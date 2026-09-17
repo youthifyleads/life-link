@@ -62,6 +62,7 @@ class DonorMatchModel {
   final bool eligible;
   final String eligibilityStatus;
   final int daysUntilEligible;
+  final double distanceKm;
 
   const DonorMatchModel({
     required this.donorId,
@@ -70,6 +71,7 @@ class DonorMatchModel {
     required this.eligible,
     required this.eligibilityStatus,
     required this.daysUntilEligible,
+    required this.distanceKm,
   });
 
   factory DonorMatchModel.fromJson(Map<String, dynamic> json) =>
@@ -80,5 +82,6 @@ class DonorMatchModel {
         eligible: json['eligible'] as bool? ?? false,
         eligibilityStatus: json['eligibility_status'] as String? ?? 'unknown',
         daysUntilEligible: json['days_until_eligible'] as int? ?? 0,
+        distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0,
       );
 }

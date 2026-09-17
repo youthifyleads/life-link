@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 /// All roles exactly as returned by the LifeLink API v0.1.0.
 /// Donor and Caregiver are documented as backend dependencies pending addition.
 enum UserRole {
+  unknown,
   hospitalUser, // hospital_user
   bloodBankOperator, // blood_bank_operator
   medicalLead, // medical_lead
@@ -34,6 +35,8 @@ extension UserRoleX on UserRole {
         return 'donor';
       case UserRole.caregiver:
         return 'caregiver';
+      case UserRole.unknown:
+        return 'unknown';
     }
   }
 
@@ -56,15 +59,22 @@ extension UserRoleX on UserRole {
       case 'caregiver':
         return UserRole.caregiver;
       default:
-        return UserRole.platformSupport;
+        return UserRole.unknown;
     }
   }
 
-  bool get isDonor => this == UserRole.donor || this == UserRole.normalUser;
+  bool get isDonor => this == UserRole.donor;
   bool get isCaregiver => this == UserRole.caregiver;
   bool get isHospitalUser => this == UserRole.hospitalUser;
   bool get isBloodBankOperator => this == UserRole.bloodBankOperator;
   bool get isAdmin => this == UserRole.admin;
+  bool get isKnown => this != UserRole.unknown;
+
+  /// Returns true for roles that may access the Donor feature area.
+  /// The deployed backend assigns `normal_user` to mobile sign-ups, so
+  /// all of these map to the donor home experience.
+  bool get canAccessDonorFeatures =>
+      this == UserRole.donor || this == UserRole.normalUser;
 }
 
 /// Domain model for the authenticated user (mapped from UserPublic schema).
@@ -91,7 +101,7 @@ class UserModel extends Equatable {
         id: json['id'] as String? ?? '',
         email: json['email'] as String? ?? '',
         fullName: json['full_name'] as String? ?? '',
-        role: UserRoleX.fromApi(json['role'] as String? ?? 'donor'),
+        role: UserRoleX.fromApi(json['role'] as String? ?? 'unknown'),
         phone: json['phone'] as String?,
         institutionId: json['institution_id'] as String?,
         isActive: json['is_active'] as bool? ?? true,

@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import '../bloc/donor_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/widgets/lifelink_states.dart';
+import '../../../../core/widgets/lifelink_components.dart';
 
 class DonorEligibilityScreen extends StatelessWidget {
   const DonorEligibilityScreen({super.key});
@@ -25,30 +27,20 @@ class DonorEligibilityScreen extends StatelessWidget {
         body: BlocBuilder<DonorBloc, DonorState>(
           builder: (context, state) {
             if (state is DonorLoading) {
-              return const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary));
+              return const LifeLinkLoadingState(
+                message: 'Checking your donation eligibility…',
+              );
             }
 
             if (state is DonorError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: AppColors.error),
-                    const SizedBox(height: 12),
-                    Text(state.message,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.textSecondary)),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => context
-                          .read<DonorBloc>()
-                          .add(LoadDonorProfileEvent()),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              return LifeLinkStatePanel(
+                icon: Icons.cloud_off_rounded,
+                title: 'Eligibility is unavailable',
+                message: state.message,
+                actionLabel: 'Try again',
+                onAction: () =>
+                    context.read<DonorBloc>().add(LoadDonorProfileEvent()),
+                tone: AppColors.error,
               );
             }
 
@@ -83,16 +75,6 @@ class DonorEligibilityScreen extends StatelessWidget {
                               color: AppColors.primary,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildStatCard(
-                              context,
-                              icon: Icons.stars_rounded,
-                              label: 'Reward Points',
-                              value: '—',
-                              color: AppColors.warning,
-                            ),
-                          ),
                         ],
                       ),
 
@@ -106,20 +88,11 @@ class DonorEligibilityScreen extends StatelessWidget {
                       const SizedBox(height: 12),
 
                       if (history.isEmpty)
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'No previous donations found.',
-                              style: TextStyle(color: AppColors.textSecondary),
-                            ),
-                          ),
+                        const LifeLinkStatePanel(
+                          icon: Icons.history_rounded,
+                          title: 'No donations recorded',
+                          message:
+                              'Completed donations returned by LifeLink will appear here.',
                         )
                       else
                         ListView.separated(
@@ -130,64 +103,23 @@ class DonorEligibilityScreen extends StatelessWidget {
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final item = history[index];
-                            return Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Row(
-                                children: [
-                                  const CircleAvatar(
-                                    backgroundColor: AppColors.primaryLight,
-                                    child: Icon(Icons.check_circle,
-                                        color: AppColors.success),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.hospitalName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          DateFormat('MMMM d, yyyy')
-                                              .format(item.donationDate),
-                                          style: const TextStyle(
-                                            color: AppColors.textHint,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.success
-                                          .withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Text(
-                                      'Completed',
-                                      style: TextStyle(
-                                        color: AppColors.success,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                            return LifeLinkHistoryCard(
+                              title: item.bloodBankId ??
+                                  'Donation center unavailable',
+                              date: item.donationDate == null
+                                  ? 'Date unavailable'
+                                  : DateFormat('MMMM d, yyyy')
+                                      .format(item.donationDate!),
+                              status: item.status,
+                              trailing: item.status.toLowerCase() == 'completed'
+                                  ? TextButton(
+                                      onPressed: () => context.push(
+                                        '/donor/voucher',
+                                        extra: item.id,
                                       ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                      child: const Text('View voucher'),
+                                    )
+                                  : null,
                             );
                           },
                         ),

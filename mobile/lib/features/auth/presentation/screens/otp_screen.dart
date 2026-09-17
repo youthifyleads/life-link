@@ -10,7 +10,6 @@ import '../../../../core/widgets/lifelink_button.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
-  final String? phone;
   final bool isRegistration;
   final Map<String, dynamic>? pendingUserData;
   final String? challengeId;
@@ -18,7 +17,6 @@ class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({
     super.key,
     required this.email,
-    this.phone,
     this.isRegistration = false,
     this.pendingUserData,
     this.challengeId,
@@ -71,7 +69,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
 
     final challengeId = _challengeId;
-    if (challengeId == null || challengeId.isEmpty) {
+    if (!widget.isRegistration &&
+        (challengeId == null || challengeId.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('جلسة OTP غير صالحة، اطلب رمزًا جديدًا')),
       );
@@ -80,6 +79,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     context.read<AuthBloc>().add(
           AuthVerifyOtpEvent(
+            email: widget.email,
             challengeId: challengeId,
             otp: code,
             isRegistration: widget.isRegistration,
@@ -91,9 +91,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void _onResend() {
     if (!_canResend) return;
     _startCountdown();
-    final target =
-        widget.phone?.isNotEmpty == true ? widget.phone! : widget.email;
-    context.read<AuthBloc>().add(AuthResendOtpEvent(target));
+    context.read<AuthBloc>().add(AuthResendOtpEvent(
+          widget.email,
+          purpose: widget.isRegistration ? 'signup' : 'login',
+        ));
   }
 
   @override
@@ -109,14 +110,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       listener: (context, state) {
         if (state is AuthAuthenticated) {
           final role = state.user.role;
-          if (role.isDonor ||
-              role.apiValue == 'platform_support' ||
-              role.apiValue == 'normal_user') {
-            context.go('/donor/home');
-          } else if (role.isCaregiver) {
+          if (role.isCaregiver) {
             context.go('/caregiver/home');
-          } else {
+          } else if (role.canAccessDonorFeatures) {
             context.go('/donor/home');
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('دور المستخدم غير مدعوم، تواصل مع الدعم'),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           }
         }
         if (state is AuthOtpRequiredState && state.challengeId != null) {
@@ -178,7 +183,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'تم إرسال رمز التحقق إلى:\n${widget.phone ?? widget.email}',
+                    'تم إرسال رمز التحقق إلى بريدك الإلكتروني:\n${widget.email}',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textSecondary,

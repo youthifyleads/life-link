@@ -19,17 +19,27 @@ class AuthFailure<T> extends AuthResult<T> {
   AuthFailure(this.message, {this.statusCode});
 }
 
+class AuthTokens {
+  final String accessToken;
+  final String? refreshToken;
+
+  AuthTokens({required this.accessToken, this.refreshToken});
+
+  factory AuthTokens.fromJson(Map<String, dynamic> json) => AuthTokens(
+        accessToken: json['access_token'] as String,
+        refreshToken: json['refresh_token'] as String?,
+      );
+}
+
 class RegistrationResult {
-  final UserModel user;
-  final String challengeId;
-  final int expiresInSeconds;
-  final String? debugOtp;
+  final UserModel? user;
+  final String? challengeId;
+  final int? expiresInSeconds;
 
   RegistrationResult({
-    required this.user,
-    required this.challengeId,
-    required this.expiresInSeconds,
-    this.debugOtp,
+    this.user,
+    this.challengeId,
+    this.expiresInSeconds,
   });
 }
 
@@ -46,71 +56,88 @@ class AuthRemoteDataSource {
         ApiEndpoints.login,
         data: {'email': email, 'password': password},
       );
-      final token = response.data['access_token'] as String;
-      return AuthSuccess(token);
+      final tokens = AuthTokens.fromJson(response.data as Map<String, dynamic>);
+      await persistTokens(tokens);
+      return AuthSuccess(tokens.accessToken);
     } on DioException catch (e) {
       return _handleDioError(e);
     }
   }
 
-  /// POST /api/v1/auth/otp/request
+  /// The deployed API exposes a legacy phone-based generic OTP endpoint.
+  /// LifeLink mobile deliberately does not call it; signup verification is
+  /// email-based through /auth/signup/verify.
   Future<AuthResult<Map<String, dynamic>>> requestOtp(
-    String phone, {
+    String email, {
     String purpose = 'login',
   }) async {
-    try {
-      final response = await _dio.post(
-        ApiEndpoints.otpRequest,
-        data: {'phone': phone, 'purpose': purpose},
-      );
-      return AuthSuccess(response.data as Map<String, dynamic>);
-    } on DioException catch (e) {
-      return _handleDioError(e);
-    }
+    return AuthFailure(
+      'تسجيل الدخول برمز OTP غير متاح في عقدة الخادم الحالية. استخدم البريد وكلمة المرور.',
+    );
   }
 
-  /// POST /api/v1/auth/otp/verify
+  /// Generic login OTP is not part of the deployed email-only mobile flow.
   Future<AuthResult<String>> verifyOtp(String challengeId, String otp) async {
-    try {
-      final response = await _dio.post(
-        ApiEndpoints.otpVerify,
-        data: {'challenge_id': challengeId, 'code': otp},
-      );
-      final token = response.data['access_token'] as String;
-      return AuthSuccess(token);
-    } on DioException catch (e) {
-      return _handleDioError(e);
-    }
+    return AuthFailure(
+      'تسجيل الدخول برمز OTP غير متاح في عقدة الخادم الحالية. استخدم البريد وكلمة المرور.',
+    );
   }
 
   /// POST /api/v1/auth/register
   Future<AuthResult<RegistrationResult>> registerUser({
     required String email,
-    required String fullName,
-    required String password,
-    required String role,
+    required String name,
     required String phone,
+    required String dateOfBirth,
+    required String password,
     String? bloodType,
+    String? governorate,
   }) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.register,
         data: {
           'email': email,
-          'full_name': fullName,
-          'password': password,
-          'role': role,
+          'name': name,
           'phone': phone,
+          'date_of_birth': dateOfBirth,
+          'password': password,
           if (bloodType != null) 'blood_type': bloodType,
+          if (governorate != null) 'governorate': governorate,
         },
       );
       final body = response.data as Map<String, dynamic>;
       return AuthSuccess(RegistrationResult(
-        user: UserModel.fromJson(body['user'] as Map<String, dynamic>),
-        challengeId: body['challenge_id'] as String,
-        expiresInSeconds: body['expires_in_seconds'] as int,
-        debugOtp: body['debug_otp'] as String?,
+        user: body['user'] is Map<String, dynamic>
+            ? UserModel.fromJson(body['user'] as Map<String, dynamic>)
+            : null,
+        challengeId: body['challenge_id'] as String?,
       ));
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    }
+  }
+
+  Future<AuthResult<UserModel>> verifySignup(String email, String otp) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.signupVerify,
+        data: {'email': email, 'otp': otp},
+      );
+      return AuthSuccess(
+          UserModel.fromJson(response.data as Map<String, dynamic>));
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    }
+  }
+
+  Future<AuthResult<Map<String, dynamic>>> resendSignupOtp(String email) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.signupResendOtp,
+        data: {'email': email},
+      );
+      return AuthSuccess(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       return _handleDioError(e);
     }
@@ -122,6 +149,42 @@ class AuthRemoteDataSource {
       final response = await _dio.get(ApiEndpoints.me);
       return AuthSuccess(
           UserModel.fromJson(response.data as Map<String, dynamic>));
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    }
+  }
+
+  /// POST /api/v1/auth/forgot-password
+  Future<AuthResult<String>> forgotPassword(String email) async {
+    try {
+      await _dio.post(
+        ApiEndpoints.forgotPassword,
+        data: {'email': email},
+      );
+      return AuthSuccess(
+          'تم إرسال رمز استعادة كلمة المرور إلى بريدك الإلكتروني');
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    }
+  }
+
+  /// POST /api/v1/auth/reset-password
+  Future<AuthResult<String>> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      await _dio.post(
+        ApiEndpoints.resetPassword,
+        data: {
+          'email': email,
+          'code': code,
+          'new_password': newPassword,
+        },
+      );
+      return AuthSuccess(
+          'تم تغيير كلمة المرور بنجاح. يمكنك تسجيل الدخول الآن.');
     } on DioException catch (e) {
       return _handleDioError(e);
     }
@@ -152,10 +215,66 @@ class AuthRemoteDataSource {
     await _storage.write(key: AppConfig.accessTokenKey, value: token);
   }
 
-  Future<void> persistSession(String token, UserModel user) async {
-    await _storage.write(key: AppConfig.accessTokenKey, value: token);
+  Future<void> persistSession(
+    String token,
+    UserModel user, {
+    String? refreshToken,
+  }) async {
+    await saveToken(token);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _storage.write(
+        key: AppConfig.refreshTokenKey,
+        value: refreshToken,
+      );
+    }
     await _storage.write(
         key: AppConfig.userKey, value: jsonEncode(user.toJson()));
+  }
+
+  Future<AuthResult<AuthTokens>> refreshSession() async {
+    final refreshToken = await _storage.read(key: AppConfig.refreshTokenKey);
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return AuthFailure('انتهت جلسة العمل، يرجى تسجيل الدخول مرة أخرى');
+    }
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.refresh,
+        data: {'refresh_token': refreshToken},
+        options: Options(extra: {'skipTokenRefresh': true}),
+      );
+      final tokens = AuthTokens.fromJson(response.data as Map<String, dynamic>);
+      await persistTokens(tokens);
+      return AuthSuccess(tokens);
+    } on DioException catch (e) {
+      await clearSession();
+      return _handleDioError(e);
+    }
+  }
+
+  Future<void> persistTokens(AuthTokens tokens) async {
+    await _storage.write(
+        key: AppConfig.accessTokenKey, value: tokens.accessToken);
+    if (tokens.refreshToken != null && tokens.refreshToken!.isNotEmpty) {
+      await _storage.write(
+          key: AppConfig.refreshTokenKey, value: tokens.refreshToken);
+    } else {
+      await _storage.delete(key: AppConfig.refreshTokenKey);
+    }
+  }
+
+  Future<void> logout() async {
+    final refreshToken = await _storage.read(key: AppConfig.refreshTokenKey);
+    try {
+      await _dio.post(
+        ApiEndpoints.logout,
+        data: {'refresh_token': refreshToken},
+        options: Options(extra: {'skipTokenRefresh': true}),
+      );
+    } on DioException {
+      // Local cleanup must still happen when the server is unavailable.
+    } finally {
+      await clearSession();
+    }
   }
 
   Future<String?> getStoredToken() =>
@@ -193,7 +312,9 @@ class AuthRemoteDataSource {
           if (code == 'INVALID_CREDENTIALS') {
             return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
           }
-          if (code == 'PHONE_NOT_FOUND') return 'رقم الهاتف غير مسجل بالنظام';
+          if (code == 'EMAIL_NOT_FOUND') {
+            return 'البريد الإلكتروني غير مسجل بالنظام';
+          }
           if (code == 'INVALID_OTP') {
             return 'رمز التحقق (OTP) غير صحيح أو انتهت صلاحيته';
           }
@@ -202,6 +323,9 @@ class AuthRemoteDataSource {
           }
           if (code == 'OTP_EXPIRED') {
             return 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا';
+          }
+          if (code == 'OTP_ATTEMPTS_EXCEEDED') {
+            return 'تم تجاوز عدد محاولات رمز التحقق';
           }
           if (code == 'OTP_NOT_REQUESTED') {
             return 'اطلب رمز التحقق أولًا قبل محاولة التحقق';

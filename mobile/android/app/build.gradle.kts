@@ -6,12 +6,14 @@ plugins {
 
 android {
     namespace = "com.example.lifelink_mobile"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_plugin_android_lifecycle requires Android API 36 at compile time.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -31,11 +33,14 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Release signing must be supplied by the deployment pipeline.
+            // Never ship a production artifact signed with the debug key.
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
 
 kotlin {

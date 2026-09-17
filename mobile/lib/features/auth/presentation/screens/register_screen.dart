@@ -18,8 +18,9 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _dobCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
   UserRole _selectedRole = UserRole.donor;
@@ -58,8 +59,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _phoneCtrl.dispose();
     _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _dobCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
@@ -81,8 +83,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     context.read<AuthBloc>().add(
           AuthRegisterEvent(
             fullName: _nameCtrl.text.trim(),
-            phone: _phoneCtrl.text.trim(),
             email: _emailCtrl.text.trim(),
+            phone: _phoneCtrl.text.trim(),
+            dateOfBirth: _dobCtrl.text.trim(),
             password: _passwordCtrl.text,
             role: _selectedRole,
             bloodType:
@@ -92,6 +95,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
   }
 
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime(now.year - 120),
+      lastDate: DateTime(now.year - 16, now.month, now.day),
+      initialDate: DateTime(now.year - 25, now.month, now.day),
+      helpText: 'اختر تاريخ الميلاد',
+    );
+    if (picked == null || !mounted) return;
+    _dobCtrl.text = '${picked.year.toString().padLeft(4, '0')}-'
+        '${picked.month.toString().padLeft(2, '0')}-'
+        '${picked.day.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
@@ -99,19 +117,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (state is AuthOtpRequiredState) {
           context.push('/otp', extra: {
             'email': state.email,
-            'phone': state.phone,
             'isRegistration': true,
             'challengeId': state.challengeId,
           });
         }
         if (state is AuthAuthenticated) {
           final role = state.user.role;
-          if (role.isDonor) {
-            context.go('/donor/home');
-          } else if (role.isCaregiver) {
+          if (role.isCaregiver) {
             context.go('/caregiver/home');
+          } else if (role.canAccessDonorFeatures) {
+            context.go('/donor/home');
           } else {
-            context.go('/home');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('دور المستخدم غير مدعوم، تواصل مع الدعم'),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           }
         }
         if (state is AuthRegistrationSucceeded) {
@@ -169,7 +192,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'سجل بياناتك لإرسال رمز التحقق OTP وتفعيل الحساب',
+                        'سجل بياناتك لإرسال رمز التحقق إلى بريدك الإلكتروني وتفعيل الحساب',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -259,23 +282,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 16),
 
                       LifeLinkTextField(
-                        controller: _phoneCtrl,
-                        label: 'رقم الهاتف (Phone Number)',
-                        hint: '01012345678',
-                        keyboardType: TextInputType.phone,
-                        prefixIcon: Icons.phone_outlined,
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) {
-                            return 'يرجى إدخال رقم الهاتف لإرسال OTP';
-                          }
-                          if (v.trim().length < 10) return 'رقم هاتف غير صالح';
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      LifeLinkTextField(
                         controller: _emailCtrl,
                         label: 'البريد الإلكتروني (Email Address)',
                         hint: 'you@example.com',
@@ -293,6 +299,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 16),
 
                       LifeLinkTextField(
+                        controller: _phoneCtrl,
+                        label: 'رقم الهاتف (Phone)',
+                        hint: '+201000000000',
+                        keyboardType: TextInputType.phone,
+                        prefixIcon: Icons.phone_outlined,
+                        validator: (v) {
+                          if (v == null || v.trim().length < 7) {
+                            return 'يرجى إدخال رقم هاتف صحيح';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      LifeLinkTextField(
+                        controller: _dobCtrl,
+                        label: 'تاريخ الميلاد (YYYY-MM-DD)',
+                        hint: '1995-01-31',
+                        prefixIcon: Icons.calendar_today_outlined,
+                        readOnly: true,
+                        textInputAction: TextInputAction.next,
+                        onTap: _pickDateOfBirth,
+                        validator: (v) {
+                          if (v == null ||
+                              RegExp(r'^\d{4}-\d{2}-\d{2}$')
+                                      .hasMatch(v.trim()) ==
+                                  false) {
+                            return 'استخدم صيغة YYYY-MM-DD';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      LifeLinkTextField(
                         controller: _passwordCtrl,
                         label: 'كلمة المرور (Password)',
                         hint: '••••••••',
@@ -303,12 +346,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             : Icons.visibility_off_outlined,
                         onSuffixTap: () => setState(
                             () => _obscurePassword = !_obscurePassword),
+                        helperText:
+                            'استخدم 8 أحرف على الأقل، ولا تشارك كلمة المرور مع أي شخص.',
                         validator: (v) {
                           if (v == null || v.isEmpty) {
                             return 'يرجى إدخال كلمة المرور';
                           }
-                          if (v.length < 6) {
-                            return 'يجب أن تكون 6 أحرف على الأقل';
+                          if (v.length < 8) {
+                            return 'يجب أن تكون 8 أحرف على الأقل';
                           }
                           return null;
                         },
