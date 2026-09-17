@@ -14,11 +14,16 @@ from app.schemas.caregiver import (
 from app.schemas.payments import PaymentInitiateRequest, PaymentInitiateResponse, PaymentPublic
 from app.schemas.requests import BloodRequestCreate, BloodRequestPublic
 from app.services.caregiver_service import CaregiverService
-from app.services.dependencies import get_caregiver_service, get_payment_service, get_request_service
+from app.repositories.interfaces.user_repository import UserRepository
+from app.services.dependencies import get_caregiver_service, get_payment_service, get_request_service, get_user_repository
 from app.services.payment_service import PaymentService
 from app.services.request_service import RequestService
 
 router = APIRouter(prefix="/caregiver", tags=["Caregiver"])
+
+
+async def _load_user_record(current_user: CurrentUser, user_repo: UserRepository = Depends(get_user_repository)):
+    return await user_repo.get_by_id(current_user.id)
 
 
 @router.post("/assignments", response_model=CaregiverAssignmentPublic, status_code=201, dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.BLOOD_BANK_OPERATOR, Role.ADMIN, Role.MEDICAL_LEAD))])
@@ -68,10 +73,11 @@ async def create_patient_blood_request(
     data: BloodRequestCreate,
     current: CurrentUser,
     req_svc: RequestService = Depends(get_request_service),
+    user_record=Depends(_load_user_record),
 ):
     note_extra = f"[Patient ID: {patient_id}]"
     data.notes = f"{note_extra} {data.notes or ''}".strip()
-    return await req_svc.create_request(data, current)
+    return await req_svc.create_request(data, user_record)
 
 
 @router.get("/allocations", response_model=list[CaregiverAssignmentPublic], summary="List allocations assigned to caregiver")
