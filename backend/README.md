@@ -118,6 +118,16 @@ access token; send it as `Authorization: Bearer <token>`.
 `get_current_user()` (in `app/core/security.py`) is the single reusable
 dependency — no endpoint duplicates auth logic.
 
+## Donation vouchers
+
+Every `CONFIRMED` donation automatically receives exactly one voucher. The donor is emailed its **Voucher Code**; email delivery is retriable and does not undo the issued voucher. Values and lifetime are environment configuration (`VOUCHER_DIRECT_DONATION_VALUE`, `VOUCHER_REQUEST_BASED_VALUE`, and `VOUCHER_EXPIRY_DAYS`). A request-based value applies when the donor has an accepted/confirmed donation response for a blood request; otherwise the direct-donation value applies.
+
+- `POST /api/v1/vouchers/issue` — admin or the owning blood-bank operator can safely issue/retry issuance for a confirmed donation.
+- `GET /api/v1/vouchers/me` — a donor sees only their own vouchers.
+- `POST /api/v1/partners/vouchers/validate` and `POST /api/v1/partners/vouchers/redeem` — hospital/blood-bank partner accounts must supply their own authenticated user id as `partner_id`. Redemption requires `voucher_code`, `donor_id`, `partner_id`, `value`, `status: "REDEEMED"`, and timezone-aware `redeemed_at`.
+
+The database unique `donation_id` constraint and an atomic `ACTIVE → REDEEMED` update prevent duplicate issuance and double redemption. Voucher codes and server-side configured values are authoritative; clients cannot choose either.
+
 ## 11. RBAC
 
 See `docs/RBAC.md` for the full role/permission matrix. Enforced via the

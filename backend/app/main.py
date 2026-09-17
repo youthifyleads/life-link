@@ -20,6 +20,7 @@ from app.api.v1 import (
     qr,
     requests,
     users,
+    vouchers,
 )
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
@@ -71,6 +72,8 @@ app.include_router(payments.router, prefix=settings.API_V1_PREFIX)
 app.include_router(otp.router, prefix=settings.API_V1_PREFIX)
 app.include_router(blood_bags.router, prefix=settings.API_V1_PREFIX)
 app.include_router(device_tokens.router, prefix=settings.API_V1_PREFIX)
+app.include_router(vouchers.router, prefix=settings.API_V1_PREFIX)
+app.include_router(vouchers.partner_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get(
@@ -113,6 +116,10 @@ async def root():
     },
 )
 async def health():
+    # The test/demo repository has no SQL connection by design. Treat it as a
+    # healthy persistence backend instead of probing the SQL Server placeholder.
+    if settings.REPOSITORY_BACKEND.lower() == "memory":
+        return {"status": "ok", "database": "memory"}
     try:
         async with get_session_factory()() as session:
             await session.execute(text("SELECT 1"))
@@ -123,4 +130,3 @@ async def health():
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"status": "error", "database": "disconnected"},
         )
-

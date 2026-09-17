@@ -15,11 +15,13 @@ class DonorService:
         user_repo: UserRepository,
         request_repo: RequestRepository | None = None,
         matching_service=None,
+        voucher_service=None,
     ):
         self.repo = repo
         self.user_repo = user_repo
         self.request_repo = request_repo
         self.matching_service = matching_service
+        self.voucher_service = voucher_service
 
     async def get_me(self, user_id):
         return await self.repo.get_by_user_id(user_id)
@@ -79,7 +81,15 @@ class DonorService:
         donor.last_donation_date = data.donation_date
         donor.eligibility_status = "eligible"
         await self.repo.update(donor)
-        return await self.repo.create_donation(r)
+        donation = await self.repo.create_donation(r)
+        # Confirmation is the issuance trigger. Voucher failures never undo a
+        # confirmed donation; retrying POST /vouchers/issue is then safe.
+        if (donation.status or "").upper() == "CONFIRMED" and self.voucher_service:
+            try:
+                await self.voucher_service.issue(donation.id)
+            except ConflictError:
+                pass
+        return donation
 
     async def respond(self, user_id, data):
         donor = await self.repo.get_by_user_id(user_id)

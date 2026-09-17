@@ -3,7 +3,13 @@ import pytest
 from app.db import session as db_session_module
 
 
-def test_health_success(client):
+def test_health_memory_backend(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "database": "memory"}
+
+
+def test_health_success(client, monkeypatch):
     """Test health check returns 200 and connected when database query succeeds."""
     mock_session = AsyncMock()
     mock_session.execute = AsyncMock()
@@ -18,6 +24,7 @@ def test_health_success(client):
         async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
 
+    monkeypatch.setattr("app.main.settings.REPOSITORY_BACKEND", "sqlserver")
     with patch("app.main.get_session_factory", return_value=MockSessionFactory()):
         response = client.get("/health")
         assert response.status_code == 200
@@ -25,7 +32,7 @@ def test_health_success(client):
         mock_session.execute.assert_awaited_once()
 
 
-def test_health_database_failure(client):
+def test_health_database_failure(client, monkeypatch):
     """Test health check returns 503 and disconnected when database query fails."""
     mock_session = AsyncMock()
     mock_session.execute = AsyncMock(side_effect=Exception("Login failed for user 'sa' on server 'azure-sql'"))
@@ -40,6 +47,7 @@ def test_health_database_failure(client):
         async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
 
+    monkeypatch.setattr("app.main.settings.REPOSITORY_BACKEND", "sqlserver")
     with patch("app.main.get_session_factory", return_value=MockSessionFactory()):
         response = client.get("/health")
         assert response.status_code == 503

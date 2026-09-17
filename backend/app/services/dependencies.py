@@ -20,6 +20,7 @@ from app.repositories.interfaces.caregiver_repository import CaregiverRepository
 from app.repositories.interfaces.payment_repository import PaymentRepository
 from app.repositories.interfaces.blood_bag_repository import BloodBagRepository
 from app.repositories.interfaces.device_token_repository import DeviceTokenRepository
+from app.repositories.interfaces.voucher_repository import VoucherRepository
 
 from app.repositories.memory.audit_repository import InMemoryAuditRepository
 from app.repositories.memory.inventory_repository import InMemoryInventoryRepository
@@ -34,6 +35,7 @@ from app.repositories.memory.caregiver_repository import InMemoryCaregiverReposi
 from app.repositories.memory.payment_repository import InMemoryPaymentRepository
 from app.repositories.memory.blood_bag_repository import InMemoryBloodBagRepository
 from app.repositories.memory.device_token_repository import InMemoryDeviceTokenRepository
+from app.repositories.memory.voucher_repository import InMemoryVoucherRepository
 
 from app.repositories.sqlalchemy.audit_repository import SQLAlchemyAuditRepository
 from app.repositories.sqlalchemy.inventory_repository import SQLAlchemyInventoryRepository
@@ -48,6 +50,7 @@ from app.repositories.sqlalchemy.caregiver_repository import SQLAlchemyCaregiver
 from app.repositories.sqlalchemy.payment_repository import SQLAlchemyPaymentRepository
 from app.repositories.sqlalchemy.blood_bag_repository import SQLAlchemyBloodBagRepository
 from app.repositories.sqlalchemy.device_token_repository import SQLAlchemyDeviceTokenRepository
+from app.repositories.sqlalchemy.voucher_repository import SQLAlchemyVoucherRepository
 from app.repositories.sqlalchemy.auth_tokens import SQLRefreshTokenStore, SQLPasswordResetStore
 
 from app.services.audit_service import AuditService
@@ -67,6 +70,7 @@ from app.services.email_service import AzureCommunicationEmailProvider, EmailPro
 from app.services.token_service import RefreshTokenService, RefreshTokenStore
 from app.services.password_reset_service import MemoryPasswordResetStore, PasswordResetService
 from app.services.auth_service import AuthService
+from app.services.voucher_service import VoucherService
 
 
 @lru_cache
@@ -132,6 +136,10 @@ def _memory_blood_bag_repository() -> BloodBagRepository:
 @lru_cache
 def _memory_device_token_repository() -> DeviceTokenRepository:
     return InMemoryDeviceTokenRepository()
+
+@lru_cache
+def _memory_voucher_repository() -> VoucherRepository:
+    return InMemoryVoucherRepository()
 
 
 def use_sql() -> bool:
@@ -210,6 +218,10 @@ async def get_blood_bag_repository() -> AsyncIterator[BloodBagRepository]:
 
 async def get_device_token_repository() -> AsyncIterator[DeviceTokenRepository]:
     async for repo in _repo_or_memory(SQLAlchemyDeviceTokenRepository, _memory_device_token_repository):
+        yield repo
+
+async def get_voucher_repository() -> AsyncIterator[VoucherRepository]:
+    async for repo in _repo_or_memory(SQLAlchemyVoucherRepository, _memory_voucher_repository):
         yield repo
 
 
@@ -320,8 +332,9 @@ def get_donor_service(
     user_repo: UserRepository = Depends(get_user_repository),
     request_repo: RequestRepository = Depends(get_request_repository),
     matching_service: MatchingService = Depends(get_matching_service),
+    voucher_service: VoucherService = Depends(get_voucher_service),
 ) -> DonorService:
-    return DonorService(repo, user_repo, request_repo, matching_service)
+    return DonorService(repo, user_repo, request_repo, matching_service, voucher_service)
 
 
 def get_caregiver_service(
@@ -363,6 +376,14 @@ def get_device_token_service(
 ) -> DeviceTokenService:
     return DeviceTokenService(repo)
 
+def get_voucher_service(
+    voucher_repo: VoucherRepository = Depends(get_voucher_repository),
+    donor_repo: DonorRepository = Depends(get_donor_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    email_provider: EmailProvider = Depends(get_email_provider),
+) -> VoucherService:
+    return VoucherService(voucher_repo, donor_repo, user_repo, email_provider)
+
 
 def reset_all_repositories() -> None:
     for factory in [
@@ -379,6 +400,7 @@ def reset_all_repositories() -> None:
         _memory_payment_repository,
         _memory_blood_bag_repository,
         _memory_device_token_repository,
+        _memory_voucher_repository,
     ]:
         factory.cache_clear()
     OTPService.reset_store()

@@ -1,8 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.models import DonorModel, DonationModel, DonationResponseModel, ConsentModel, DonationVoucherModel
+from app.db.models import DonorModel, DonationModel, DonationResponseModel, ConsentModel
 from app.repositories.interfaces.donor_repository import DonorRepository
-from app.repositories.models import DonorRecord, DonationRecord, DonationResponseRecord, ConsentRecord, DonationVoucherRecord
+from app.repositories.models import DonorRecord, DonationRecord, DonationResponseRecord, ConsentRecord
 
 class SQLAlchemyDonorRepository(DonorRepository):
     def __init__(self, session: AsyncSession): self.session=session
@@ -26,6 +26,3 @@ class SQLAlchemyDonorRepository(DonorRepository):
     async def create_response(self,r): self.session.add(DonationResponseModel(response_id=r.id,response_date=r.response_date,status=r.status,notes=r.notes,blood_request_id=r.blood_request_id,donor_id=r.donor_id)); await self.session.commit(); return r
     async def create_consent(self,r): self.session.add(ConsentModel(consent_id=r.id,donor_id=r.donor_id,consent_type=r.consent_type,granted=r.granted,granted_at=r.granted_at,revoked_at=r.revoked_at)); await self.session.commit(); return r
     async def list_consents(self,i): return [ConsentRecord(o.consent_id,o.donor_id,o.consent_type,o.granted,o.granted_at,o.revoked_at) for o in (await self.session.execute(select(ConsentModel).where(ConsentModel.donor_id==i))).scalars().all()]
-    async def create_voucher(self,r): self.session.add(DonationVoucherModel(voucher_id=r.id,voucher_number=r.voucher_number,issued_at=r.issued_at,status=r.status,donation_id=r.donation_id)); await self.session.commit(); return r
-    async def get_voucher_by_donation(self,i):
-        o=(await self.session.execute(select(DonationVoucherModel).where(DonationVoucherModel.donation_id==i))).scalar_one_or_none(); return DonationVoucherRecord(o.voucher_id,o.voucher_number,o.issued_at,o.status,o.donation_id) if o else None

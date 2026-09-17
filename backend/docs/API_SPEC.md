@@ -78,7 +78,31 @@ medical detail — only `reference`, `status`, `blood_type`, and the API compati
 
 | Method | Endpoint | Purpose | Auth | Success (200) | Failure (503) |
 |---|---|---|---|---|---|
-| GET | `/health` | Liveness and database connectivity check (`SELECT 1`) | No | `{"status": "ok", "database": "connected"}` | `{"status": "error", "database": "disconnected"}` |
+| GET | `/health` | Liveness and persistence-backend health check | No | `{"status": "ok", "database": "memory"}` in demo/test mode, or `connected` for SQL | `{"status": "error", "database": "disconnected"}` for SQL failures |
+
+## Donation vouchers
+
+| Method | Endpoint | Purpose | Auth | Success | Errors |
+|---|---|---|---|---|---|
+| POST | `/vouchers/issue` | Issue the one configured-value voucher for a `CONFIRMED` donation | Admin or owning Blood Bank Operator | 201 | 403 `FORBIDDEN_VOUCHER_ISSUE`, 404 `DONATION_NOT_FOUND`, 409 `VOUCHER_ALREADY_ISSUED`, 422 `DONATION_NOT_CONFIRMED` |
+| GET | `/vouchers/me` | List only the caller's donor vouchers | Donor account | 200 | 404 `DONOR_NOT_FOUND` |
+| POST | `/partners/vouchers/validate` | Check a code before redemption | Hospital/Blood Bank partner, own `partner_id` | 200 | 403 `FORBIDDEN_PARTNER`, 404 `VOUCHER_NOT_FOUND`, 409 `VOUCHER_NOT_ACTIVE` |
+| POST | `/partners/vouchers/redeem` | Atomically redeem an active validated voucher | Hospital/Blood Bank partner, own `partner_id` | 200 | 403 `FORBIDDEN_PARTNER`, 409 `VOUCHER_NOT_ACTIVE`, 422 `VOUCHER_VALUE_MISMATCH` |
+
+`POST /partners/vouchers/redeem` body:
+
+```json
+{
+  "voucher_code": "LLV-EXAMPLECODE",
+  "donor_id": "donor-id",
+  "partner_id": "authenticated-partner-user-id",
+  "value": "75.00",
+  "status": "REDEEMED",
+  "redeemed_at": "2026-09-17T12:00:00+00:00"
+}
+```
+
+The service treats code/value/status as authoritative checks, requires `partner_id` to equal the authenticated user, and performs redemption using a conditional update. A repeated or racing request cannot redeem twice.
 
 ## Standard error codes
 
@@ -164,4 +188,3 @@ Matching algorithm criteria:
 - `PATCH /api/v1/blood-bags/{id}/status`: Transition bag status (available, reserved, allocated, in_transit, received, quarantine, disposed).
 - `POST /api/v1/notifications/devices`: Register mobile device token (FCM).
 - `DELETE /api/v1/notifications/devices/{token}`: Unregister mobile device token.
-
