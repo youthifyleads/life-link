@@ -9,10 +9,14 @@ error envelope:
 
 so API routes never need to build error JSON by hand.
 """
+import logging
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from sqlalchemy.exc import IntegrityError
+
+logger = logging.getLogger(__name__)
 
 
 class AppError(Exception):
@@ -102,9 +106,28 @@ def register_exception_handlers(app) -> None:
             code = "FORBIDDEN"
         return JSONResponse(status_code=exc.status_code, content=_error_body(code, str(exc.detail)))
 
+    @app.exception_handler(IntegrityError)
+    async def integrity_error_handler(request: Request, exc: IntegrityError):
+        logger.error("Database integrity error: %s", exc)
+        orig_msg = str(exc.orig) if hasattr(exc, "orig") else str(exc)
+        if "CHECK constraint" in orig_msg:
+            return JSONResponse(
+                status_code=422,
+                content=_error_body("VALIDATION_ERROR", "Data provided violates a database check constraint."),
+            )
+        elif "UNIQUE KEY" in orig_msg or "duplicate key" in orig_msg.lower() or "PRIMARY KEY" in orig_msg:
+            return JSONResponse(
+                status_code=status.HTTP_409_CONFLICT,
+                content=_error_body("CONFLICT", "A record with this information already exists."),
+            )
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=_error_body("DATABASE_ERROR", "Database operation failed due to a constraint violation."),
+        )
+
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
-        # Never leak internal exception details to clients.
+        logger.exception("Unhandled server exception: %s", exc)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=_error_body("INTERNAL_SERVER_ERROR", "An unexpected error occurred"),

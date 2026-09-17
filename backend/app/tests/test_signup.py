@@ -110,3 +110,48 @@ def test_resend_verification_email(client):
     )
     # Could be 429 if within 60s cooldown or 200 if cool
     assert resend.status_code in {200, 429}
+
+
+def test_signup_accepts_dd_mm_yyyy_date_format(client):
+    payload = _signup_payload(
+        email="ddmmyyyy@example.com",
+        phone="01077712345",
+        date_of_birth="10-10-2005",
+    )
+    resp = client.post("/api/v1/auth/signup", json=payload)
+    assert resp.status_code == 201, resp.text
+
+
+def test_signup_accepts_swagger_defaults_safely(client):
+    payload = {
+        "name": "ahmed",
+        "email": "esso.swagger@example.com",
+        "phone": "01023914999",
+        "password": "Ahmed123*",
+        "date_of_birth": "10-10-2005",
+        "governorate": "string",
+        "blood_type": "str",
+    }
+    resp = client.post("/api/v1/auth/signup", json=payload)
+    assert resp.status_code == 201, resp.text
+
+
+def test_signup_accepts_case_insensitive_valid_blood_type(client):
+    payload = _signup_payload(
+        email="blood.valid@example.com",
+        phone="01077799988",
+        blood_type="o+",
+    )
+    resp = client.post("/api/v1/auth/signup", json=payload)
+    assert resp.status_code == 201, resp.text
+
+
+def test_signup_rejects_invalid_blood_type(client):
+    payload = _signup_payload(
+        email="blood.invalid@example.com",
+        phone="01077799977",
+        blood_type="XYZ",
+    )
+    resp = client.post("/api/v1/auth/signup", json=payload)
+    assert resp.status_code == 422
+    assert "blood_type must be one of" in resp.text

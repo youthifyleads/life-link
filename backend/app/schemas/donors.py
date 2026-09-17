@@ -1,21 +1,86 @@
 from datetime import date, datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from app.core.domain import BloodType, VALID_BLOOD_TYPES
+
+VALID_ELIGIBILITY_STATUSES = {"eligible", "ineligible", "unknown"}
 
 class DonorCreate(BaseModel):
-    blood_type: str | None = Field(default=None, min_length=2, max_length=3)
+    blood_type: BloodType | None = Field(default=None, description="Blood type", examples=[BloodType.O_POS])
     date_of_birth: date | None = None
-    governorate: str | None = Field(default=None, max_length=100)
+    governorate: str | None = Field(default=None, max_length=100, examples=["Cairo"])
     latitude: float | None = Field(default=None, ge=-90.0, le=90.0)
     longitude: float | None = Field(default=None, ge=-180.0, le=180.0)
 
+    @field_validator("governorate", mode="before")
+    @classmethod
+    def clean_governorate(cls, value: object) -> object:
+        if isinstance(value, str):
+            val = value.strip()
+            if val.lower() in ("", "string", "null", "none"):
+                return None
+            return val
+        return value
+
+    @field_validator("blood_type", mode="before")
+    @classmethod
+    def validate_blood_type(cls, value: object) -> object:
+        if value is None or value == "":
+            return None
+        if isinstance(value, str):
+            clean = value.strip().upper()
+            if clean in ("", "STRING", "STR", "NULL", "NONE"):
+                return None
+            if clean not in VALID_BLOOD_TYPES:
+                raise ValueError(f"blood_type must be one of: {', '.join(sorted(VALID_BLOOD_TYPES))}")
+            return clean
+        return value
+
 class DonorUpdate(BaseModel):
-    blood_type: str | None = Field(default=None, min_length=2, max_length=3)
+    blood_type: BloodType | None = Field(default=None, description="Blood type", examples=[BloodType.O_POS])
     date_of_birth: date | None = None
-    governorate: str | None = Field(default=None, max_length=100)
+    governorate: str | None = Field(default=None, max_length=100, examples=["Cairo"])
     eligibility_status: str | None = Field(default=None, max_length=60)
     latitude: float | None = Field(default=None, ge=-90.0, le=90.0)
     longitude: float | None = Field(default=None, ge=-180.0, le=180.0)
+
+    @field_validator("governorate", mode="before")
+    @classmethod
+    def clean_governorate(cls, value: object) -> object:
+        if isinstance(value, str):
+            val = value.strip()
+            if val.lower() in ("", "string", "null", "none"):
+                return None
+            return val
+        return value
+
+    @field_validator("blood_type", mode="before")
+    @classmethod
+    def validate_blood_type(cls, value: object) -> object:
+        if value is None or value == "":
+            return None
+        if isinstance(value, str):
+            clean = value.strip().upper()
+            if clean in ("", "STRING", "STR", "NULL", "NONE"):
+                return None
+            if clean not in VALID_BLOOD_TYPES:
+                raise ValueError(f"blood_type must be one of: {', '.join(sorted(VALID_BLOOD_TYPES))}")
+            return clean
+        return value
+
+    @field_validator("eligibility_status", mode="before")
+    @classmethod
+    def validate_eligibility_status(cls, value: object) -> object:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            clean = value.strip().lower()
+            if clean in ("pending", "active"):
+                return "eligible"
+            if clean not in VALID_ELIGIBILITY_STATUSES:
+                raise ValueError(f"eligibility_status must be one of: {', '.join(sorted(VALID_ELIGIBILITY_STATUSES))}")
+            return clean
+        return value
 
 class DonorPublic(BaseModel):
     id: str

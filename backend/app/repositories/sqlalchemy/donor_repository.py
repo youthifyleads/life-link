@@ -9,7 +9,7 @@ class SQLAlchemyDonorRepository(DonorRepository):
     def dm(self,o):
         lat = float(o.latitude) if getattr(o, "latitude", None) is not None else None
         lng = float(o.longitude) if getattr(o, "longitude", None) is not None else None
-        return DonorRecord(o.donor_id,o.user_id,o.blood_type,o.date_of_birth,o.governorate,o.eligibility_status or "pending",o.last_donation_date,lat,lng)
+        return DonorRecord(o.donor_id,o.user_id,o.blood_type,o.date_of_birth,o.governorate,o.eligibility_status or "eligible",o.last_donation_date,lat,lng)
     def dnm(self,o): return DonationRecord(o.donation_id,o.blood_type,o.quantity,o.donation_date,o.status or "completed",o.created_at,o.donor_id,o.blood_bank_id)
     async def get_by_id(self,i): return (lambda o:self.dm(o) if o else None)((await self.session.execute(select(DonorModel).where(DonorModel.donor_id==i))).scalar_one_or_none())
     async def get_by_user_id(self,u): return (lambda o:self.dm(o) if o else None)((await self.session.execute(select(DonorModel).where(DonorModel.user_id==u))).scalar_one_or_none())
