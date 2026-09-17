@@ -58,7 +58,7 @@ class VoucherService:
     async def list_mine(self, user_id: str):
         donor = await self.donors.get_by_user_id(user_id)
         if not donor:
-            raise NotFoundError("Donor profile not found", code="DONOR_NOT_FOUND")
+            return []
         return await self._expire(await self.vouchers.list_for_donor(donor.id))
 
     async def validate(self, code: str, donor_id: str, partner_id: str, actor):

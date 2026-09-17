@@ -11,8 +11,9 @@ router = APIRouter(prefix="/vouchers", tags=["Donation Vouchers"])
 partner_router = APIRouter(prefix="/partners/vouchers", tags=["Partner Voucher Redemption"])
 
 @router.post("/issue", response_model=VoucherPublic, status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(require_roles(Role.ADMIN, Role.BLOOD_BANK_OPERATOR))],
              summary="Issue the single voucher for a confirmed donation")
-async def issue(payload: VoucherIssueRequest, current: CurrentUser = Depends(require_roles(Role.ADMIN, Role.BLOOD_BANK_OPERATOR)), svc: VoucherService = Depends(get_voucher_service)):
+async def issue(payload: VoucherIssueRequest, current: CurrentUser, svc: VoucherService = Depends(get_voucher_service)):
     return await svc.issue(payload.donation_id, current)
 
 @router.get("/me", response_model=list[VoucherPublic], summary="List the authenticated donor's vouchers")

@@ -7,7 +7,7 @@ from app.services.payment_service import PaymentService
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
-@router.post("/initiate", response_model=PaymentInitiateResponse, status_code=201, dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.ADMIN))])
+@router.post("/initiate", response_model=PaymentInitiateResponse, status_code=201, dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.ADMIN, Role.NORMAL_USER))])
 async def initiate(
     data: PaymentInitiateRequest,
     current: CurrentUser,
@@ -26,11 +26,11 @@ async def webhook(
     payload = await request.json()
     return await svc.process_webhook(payload, received_hmac)
 
-@router.post("", response_model=PaymentPublic, status_code=201, dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.ADMIN))])
+@router.post("", response_model=PaymentPublic, status_code=201, dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.ADMIN, Role.NORMAL_USER))])
 async def create(data: PaymentCreate, current: CurrentUser, svc: PaymentService = Depends(get_payment_service)):
     return await svc.create(data, current)
 
-@router.get("", response_model=list[PaymentPublic], dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.ADMIN, Role.PLATFORM_SUPPORT))])
+@router.get("", response_model=list[PaymentPublic], dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.ADMIN, Role.PLATFORM_SUPPORT, Role.NORMAL_USER))])
 async def list_payments(current: CurrentUser, svc: PaymentService = Depends(get_payment_service)):
     return await svc.list_history(current)
 

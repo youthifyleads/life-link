@@ -82,7 +82,9 @@ class PaymentService:
         scoped: list[PaymentRecord] = []
         for p in all_payments:
             req = await self.request_repo.get_by_id(p.blood_request_id)
-            if req and req.hospital_id == user_inst_id:
+            if req and user_inst_id and req.hospital_id == user_inst_id:
+                scoped.append(p)
+            elif req and getattr(req, "requester_id", None) == current.id:
                 scoped.append(p)
         return scoped
 

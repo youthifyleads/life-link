@@ -2,12 +2,18 @@ from fastapi import APIRouter, Depends
 from app.core.domain import Role
 from app.core.security import CurrentUser, require_roles
 from app.schemas.donors import *
-from app.services.dependencies import get_donor_service, get_matching_service
+from app.schemas.vouchers import VoucherPublic
+from app.services.dependencies import get_donor_service, get_matching_service, get_voucher_service
 from app.services.donor_service import DonorService
 from app.services.matching_service import MatchingService
+from app.services.voucher_service import VoucherService
+
 router=APIRouter(prefix="/donors",tags=["Donors"])
 @router.get("/me",response_model=DonorPublic)
 async def me(current:CurrentUser,svc:DonorService=Depends(get_donor_service)): return await svc.get_me(current.id)
+@router.get("/me/vouchers", response_model=list[VoucherPublic], summary="List authenticated donor's vouchers")
+async def get_my_vouchers(current: CurrentUser, svc: VoucherService = Depends(get_voucher_service)):
+    return await svc.list_mine(current.id)
 @router.post("/me",response_model=DonorPublic,status_code=201)
 async def create(data:DonorCreate,current:CurrentUser,svc:DonorService=Depends(get_donor_service)): return await svc.create_for_user(current.id,data)
 @router.patch("/me",response_model=DonorPublic)

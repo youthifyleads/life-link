@@ -11,6 +11,8 @@ from app.schemas.caregiver import CaregiverBagScanPublic
 
 
 class CaregiverService:
+    _patients: dict[str, list[dict]] = {}
+
     def __init__(
         self,
         repo: CaregiverRepository,
@@ -28,6 +30,26 @@ class CaregiverService:
         self.request_repo = request_repo
         self.payment_repo = payment_repo
         self.blood_bag_repo = blood_bag_repo
+
+    async def list_patients(self, current) -> list[dict]:
+        user_patients = self._patients.get(current.id, [])
+        if not user_patients and current.role.value in {"admin", "medical_lead", "platform_support"}:
+            all_pts = []
+            for pts in self._patients.values():
+                all_pts.extend(pts)
+            return all_pts
+        return user_patients
+
+    async def create_patient(self, data, current) -> dict:
+        p_dict = {
+            "id": str(uuid4()),
+            "full_name": data.full_name,
+            "blood_type": data.blood_type,
+            "hospital_id": data.hospital_id,
+            "notes": data.notes,
+        }
+        self._patients.setdefault(current.id, []).append(p_dict)
+        return p_dict
 
     async def create(self, data, current) -> CaregiverAssignmentRecord:
         user = await self.user_repo.get_by_id(data.caregiver_user_id)

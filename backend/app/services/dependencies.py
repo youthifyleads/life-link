@@ -327,6 +327,15 @@ def get_matching_service(
     return MatchingService(donor_repo, user_repo, request_repo, institution_repo)
 
 
+def get_voucher_service(
+    voucher_repo: VoucherRepository = Depends(get_voucher_repository),
+    donor_repo: DonorRepository = Depends(get_donor_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    email_provider: EmailProvider = Depends(get_email_provider),
+) -> VoucherService:
+    return VoucherService(voucher_repo, donor_repo, user_repo, email_provider)
+
+
 def get_donor_service(
     repo: DonorRepository = Depends(get_donor_repository),
     user_repo: UserRepository = Depends(get_user_repository),
@@ -375,14 +384,6 @@ def get_device_token_service(
     repo: DeviceTokenRepository = Depends(get_device_token_repository),
 ) -> DeviceTokenService:
     return DeviceTokenService(repo)
-
-def get_voucher_service(
-    voucher_repo: VoucherRepository = Depends(get_voucher_repository),
-    donor_repo: DonorRepository = Depends(get_donor_repository),
-    user_repo: UserRepository = Depends(get_user_repository),
-    email_provider: EmailProvider = Depends(get_email_provider),
-) -> VoucherService:
-    return VoucherService(voucher_repo, donor_repo, user_repo, email_provider)
 
 
 def reset_all_repositories() -> None:

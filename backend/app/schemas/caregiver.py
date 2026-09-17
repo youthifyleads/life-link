@@ -36,3 +36,19 @@ class CaregiverBagScanPublic(BaseModel):
     total_price: float | None = None
     payment_status: str = "unpaid"
     payment_url: str | None = None
+
+
+class PatientCreate(BaseModel):
+    full_name: str
+    blood_type: str
+    hospital_id: str | None = None
+    notes: str | None = None
+
+
+class PatientPublic(PatientCreate):
+    id: str
+
+
+class CaregiverPaymentInitiateRequest(BaseModel):
+    allocation_id: str | None = None
+    blood_request_id: str | None = None
