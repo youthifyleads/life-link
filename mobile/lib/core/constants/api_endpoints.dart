@@ -5,10 +5,14 @@ class ApiEndpoints {
 
   // ── Auth ─────────────────────────────────────────────────
   static const String login = '/auth/login';
-  static const String register = '/auth/register';
+  static const String refresh = '/auth/refresh';
+  static const String logout = '/auth/logout';
+  static const String register = '/auth/signup';
+  static const String signupVerify = '/auth/signup/verify';
+  static const String signupResendOtp = '/auth/signup/resend-otp';
   static const String me = '/auth/me';
-  static const String otpRequest = '/auth/otp/request';
-  static const String otpVerify = '/auth/otp/verify';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword = '/auth/reset-password';
 
   // ── Users ────────────────────────────────────────────────
   static const String users = '/users';
@@ -51,23 +55,43 @@ class ApiEndpoints {
   static const String donorsMe = '/donors/me';
   static String donorById(String id) => '/donors/$id';
   static const String donorDonations = '/donors/me/donations';
+  static const String donorNearbyRequests = '/donors/me/nearby-requests';
   static const String donorResponses = '/donors/me/responses';
   static const String donorConsents = '/donors/me/consents';
 
   // ── Caregiver ────────────────────────────────────────────
   static const String caregiverAssignments = '/caregiver/assignments';
   static const String caregiverPatients = '/caregiver/patients';
+  static String caregiverPatientRequests(String patientId) =>
+      '/caregiver/patients/$patientId/blood-requests';
+  static const String caregiverAllocations = '/caregiver/allocations';
+  static const String caregiverPaymentInitiate = '/caregiver/payments/initiate';
+  static const String caregiverPaymentHistory = '/caregiver/payments/history';
   static String caregiverMatches(String requestId) =>
-      '/caregiver/matches/$requestId';
+      '/requests/$requestId/matching-donors';
   static String caregiverAssignmentById(String id) =>
       '/caregiver/assignments/$id';
+  static String caregiverBagDetails(String qrCode) => '/caregiver/bag/$qrCode';
 
   // ── Payments ─────────────────────────────────────────────
   static const String payments = '/payments';
+  static const String initiatePayment = '/payments/initiate';
   static String paymentById(String id) => '/payments/$id';
   static String paymentsByRequestId(String requestId) =>
       '/payments/request/$requestId';
 
   // ── Health ───────────────────────────────────────────────
   static const String health = '/health';
+
+  // ── Blood bags ──────────────────────────────────────────
+  static const String bloodBags = '/blood-bags';
+  static String bloodBagQr(String id) => '/blood-bags/$id/qr';
+  static String bloodBagHistory(String id) => '/blood-bags/$id/history';
+  static const String caregiverScanBag = '/caregiver/scan-bag';
+  static const String bloodBagScan = '/blood-bags/scan';
+  static String bloodBagScanHistory(String qrCode) =>
+      '/blood-bags/scan/$qrCode/history';
+
+  // ── Push devices ────────────────────────────────────────
+  static const String notificationDevices = '/notifications/devices';
 }

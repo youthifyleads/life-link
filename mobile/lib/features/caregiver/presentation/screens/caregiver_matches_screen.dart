@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/widgets/lifelink_states.dart';
+import '../../../../core/widgets/lifelink_components.dart';
 import '../../data/caregiver_remote_datasource.dart';
 import '../../domain/models/caregiver_models.dart';
 
@@ -37,21 +39,28 @@ class _CaregiverMatchesScreenState extends State<CaregiverMatchesScreen> {
         future: _matches,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const LifeLinkLoadingState(
+              message: 'Checking real matching results…',
+            );
           }
           if (snapshot.hasError) {
-            return Center(
-              child: FilledButton.icon(
-                onPressed: _reload,
-                icon: const Icon(Icons.refresh),
-                label: Text('Retry: ${snapshot.error}'),
-              ),
+            return LifeLinkStatePanel(
+              icon: Icons.cloud_off_rounded,
+              title: 'Matching is unavailable',
+              message:
+                  'The service did not return matching results. Try again when you have a connection.',
+              actionLabel: 'Try again',
+              onAction: _reload,
+              tone: Colors.orange.shade800,
             );
           }
           final matches = snapshot.data ?? const <DonorMatchModel>[];
           if (matches.isEmpty) {
-            return const Center(
-              child: Text('No eligible matching donors are available.'),
+            return const LifeLinkStatePanel(
+              icon: Icons.person_search_rounded,
+              title: 'No matches available',
+              message:
+                  'No eligible matching donors were returned for this request.',
             );
           }
           return RefreshIndicator(
@@ -62,20 +71,13 @@ class _CaregiverMatchesScreenState extends State<CaregiverMatchesScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final match = matches[index];
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(child: Text(match.bloodType)),
-                    title: Text('Donor ${match.donorId}'),
-                    subtitle: Text(
-                      match.eligible
-                          ? 'Eligible and available'
-                          : '${match.eligibilityStatus} · ${match.daysUntilEligible} days remaining',
-                    ),
-                    trailing: Icon(
-                      match.eligible ? Icons.check_circle : Icons.schedule,
-                      color: match.eligible ? Colors.green : Colors.orange,
-                    ),
-                  ),
+                return LifeLinkMatchCard(
+                  donorLabel: 'Donor ${match.donorId}',
+                  bloodType: match.bloodType,
+                  status: match.eligible ? 'Eligible' : match.eligibilityStatus,
+                  distance: match.distanceKm > 0
+                      ? '${match.distanceKm.toStringAsFixed(1)} km away'
+                      : null,
                 );
               },
             ),

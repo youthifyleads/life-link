@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../domain/models/donor_profile_model.dart';
 import '../../data/donor_remote_datasource.dart';
+import '../../../../core/network/api_error_message.dart';
 
 // ── Events ────────────────────────────────────────────────
 abstract class DonorEvent extends Equatable {
@@ -63,7 +64,7 @@ class DonorBloc extends Bloc<DonorEvent, DonorState> {
       final history = await _dataSource.getDonationHistory();
       emit(DonorLoaded(profile: profile, history: history));
     } catch (e) {
-      emit(DonorError(e.toString()));
+      emit(DonorError(friendlyErrorMessage(e)));
     }
   }
 
@@ -78,7 +79,7 @@ class DonorBloc extends Bloc<DonorEvent, DonorState> {
       final profile = await _dataSource.updateAvailability(event.available);
       emit(DonorLoaded(profile: profile, history: current.history));
     } catch (e) {
-      emit(DonorError(e.toString()));
+      emit(DonorError(friendlyErrorMessage(e)));
     }
   }
 }

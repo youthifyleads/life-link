@@ -59,33 +59,38 @@ class DonorProfileModel extends Equatable {
 
 class DonationHistoryItem extends Equatable {
   final String id;
-  final String hospitalName;
-  final DateTime donationDate;
-  final String bloodType;
+  final String? bloodBankId;
+  final DateTime? donationDate;
+  final String? bloodType;
+  final String? quantity;
   final String status;
 
   const DonationHistoryItem({
     required this.id,
-    required this.hospitalName,
-    required this.donationDate,
-    required this.bloodType,
+    this.bloodBankId,
+    this.donationDate,
+    this.bloodType,
+    this.quantity,
     required this.status,
   });
 
   factory DonationHistoryItem.fromJson(Map<String, dynamic> json) {
     return DonationHistoryItem(
       id: json['id'] as String? ?? '',
-      hospitalName: json['hospital_name'] as String? ??
-          json['blood_bank_id'] as String? ??
-          'بنك الدم المركزي',
+      bloodBankId:
+          json['blood_bank_id'] as String? ?? json['hospital_name'] as String?,
       donationDate: json['donation_date'] != null
-          ? DateTime.tryParse(json['donation_date'] as String) ?? DateTime.now()
-          : DateTime.now(),
-      bloodType: json['blood_type'] as String? ?? 'O+',
-      status: json['status'] as String? ?? 'completed',
+          ? DateTime.tryParse(json['donation_date'] as String)
+          : null,
+      bloodType: json['blood_type'] as String?,
+      quantity: json['quantity']?.toString(),
+      status: json['status'] as String? ?? 'unknown',
     );
   }
 
+  String get hospitalName => bloodBankId ?? '—';
+
   @override
-  List<Object?> get props => [id, hospitalName, donationDate, status];
+  List<Object?> get props =>
+      [id, bloodBankId, donationDate, bloodType, quantity, status];
 }

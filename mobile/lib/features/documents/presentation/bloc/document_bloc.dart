@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../domain/models/document_model.dart';
 import '../../data/document_remote_datasource.dart';
+import '../../../../core/network/api_error_message.dart';
 
 // ── Events ────────────────────────────────────────────────
 abstract class DocumentEvent extends Equatable {
@@ -85,7 +86,7 @@ class DocumentBloc extends Bloc<DocumentEvent, DocumentState> {
       _currentDocuments = await _dataSource.getDocuments(event.requestId);
       emit(DocumentLoaded(_currentDocuments));
     } catch (e) {
-      emit(DocumentError(e.toString()));
+      emit(DocumentError(friendlyErrorMessage(e)));
     }
   }
 
@@ -108,7 +109,7 @@ class DocumentBloc extends Bloc<DocumentEvent, DocumentState> {
       _currentDocuments = List.from(_currentDocuments)..add(newDoc);
       emit(DocumentLoaded(_currentDocuments));
     } catch (e) {
-      emit(DocumentError(e.toString()));
+      emit(DocumentError(friendlyErrorMessage(e)));
       emit(DocumentLoaded(_currentDocuments)); // restore list
     }
   }

@@ -9,9 +9,7 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/donor/presentation/screens/donor_home_screen.dart';
-import '../../features/donor/presentation/screens/donor_dashboard_screen.dart';
 import '../../features/caregiver/presentation/screens/caregiver_home_screen.dart';
-import '../../features/caregiver/presentation/screens/caregiver_dashboard_screen.dart';
 import '../../features/caregiver/presentation/screens/caregiver_assignments_screen.dart';
 import '../../features/help/presentation/screens/help_screen.dart';
 import '../../features/blood_requests/presentation/screens/create_blood_request_screen.dart';
@@ -20,6 +18,7 @@ import '../../features/blood_requests/domain/models/blood_request_model.dart';
 import '../../features/caregiver/presentation/screens/request_details_screen.dart';
 import '../../features/caregiver/presentation/screens/caregiver_patients_screen.dart';
 import '../../features/caregiver/presentation/screens/caregiver_matches_screen.dart';
+import '../../features/caregiver/presentation/screens/caregiver_requests_screen.dart';
 import '../../features/caregiver/presentation/screens/patient_blood_request_screen.dart';
 import '../../features/caregiver/domain/models/caregiver_models.dart';
 import '../../features/documents/presentation/bloc/document_bloc.dart';
@@ -30,10 +29,24 @@ import '../../features/tracking/domain/models/tracking_model.dart';
 import '../../features/notifications/presentation/bloc/notification_bloc.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/donor/presentation/screens/donor_eligibility_screen.dart';
+import '../../features/donor/presentation/screens/donor_feed_screen.dart';
+import '../../features/donor/presentation/screens/donation_voucher_screen.dart';
+import '../../features/donor/presentation/screens/donor_responses_screen.dart';
+import '../../features/donor/presentation/screens/donor_consents_screen.dart';
+import '../../features/blood_bags/presentation/screens/blood_bags_screen.dart';
+import '../../features/blood_bags/presentation/screens/blood_bag_details_screen.dart';
+import '../../features/blood_bags/domain/models/blood_bag_models.dart';
+import '../../features/blood_bags/presentation/screens/blood_bag_qr_screen.dart';
+import '../../features/blood_bags/presentation/screens/blood_bag_scanner_screen.dart';
+import '../../features/blood_bags/presentation/screens/blood_bag_scan_result_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/payments/presentation/screens/payment_screen.dart';
 import '../../features/payments/presentation/screens/payment_history_screen.dart';
+import '../../features/payments/presentation/bloc/payment_cubit.dart';
+import '../../features/payments/data/payment_repository.dart';
 import '../di/injection.dart';
+import '../widgets/unavailable_feature_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -80,19 +93,23 @@ class AppRouter {
         }
 
         if (authState is AuthAuthenticated) {
-          if (state.uri.path.startsWith('/qr') &&
-              !authState.user.role.isCaregiver) {
-            return '/donor/home';
+          final role = authState.user.role;
+          final canUseDonorRoutes = role.canAccessDonorFeatures;
+          final isCaregiverRoute = state.uri.path.startsWith('/caregiver') ||
+              state.uri.path.startsWith('/qr') ||
+              state.uri.path.startsWith('/tracking');
+          final isDonorRoute = state.uri.path.startsWith('/donor');
+          if (isCaregiverRoute && !role.isCaregiver) {
+            return canUseDonorRoutes ? '/donor/home' : null;
+          }
+          if (isDonorRoute && !canUseDonorRoutes) {
+            // Don't block caregiver from landing on caregiver home
+            return role.isCaregiver ? '/caregiver/home' : '/login';
           }
           if (isAuthRoute) {
-            final role = authState.user.role;
-            if (role.apiValue == 'donor' ||
-                role.apiValue == 'platform_support' ||
-                role.apiValue == 'normal_user') {
-              return '/donor/home';
-            }
-            if (role.apiValue == 'caregiver') return '/caregiver/home';
-            return '/donor/home'; // fallback for mobile view
+            if (role.isCaregiver) return '/caregiver/home';
+            if (canUseDonorRoutes) return '/donor/home';
+            return null; // allow unknown roles to stay on auth route
           }
         }
         return null;
@@ -114,17 +131,40 @@ class AppRouter {
           path: '/otp',
           builder: (context, state) {
             if (state.extra is Map<String, dynamic>) {
-              final map = state.extra as Map<String, dynamic>;
+              final map = Map<String, dynamic>.from(
+                state.extra! as Map<String, dynamic>,
+              );
+              final email =
+                  map['email'] is String ? (map['email'] as String).trim() : '';
+              if (email.isEmpty) {
+                return const UnavailableFeatureScreen(
+                  title: 'OTP verification unavailable',
+                  message: 'A valid verification destination is required. '
+                      'Please return to sign in and request a new code.',
+                );
+              }
               return OtpVerificationScreen(
-                email: map['email'] as String? ?? '',
-                phone: map['phone'] as String?,
-                isRegistration: map['isRegistration'] as bool? ?? false,
-                pendingUserData:
-                    map['pendingUserData'] as Map<String, dynamic>?,
-                challengeId: map['challengeId'] as String?,
+                email: email,
+                isRegistration: map['isRegistration'] is bool
+                    ? map['isRegistration'] as bool
+                    : false,
+                pendingUserData: map['pendingUserData'] is Map
+                    ? Map<String, dynamic>.from(map['pendingUserData'] as Map)
+                    : null,
+                challengeId: map['challengeId'] is String
+                    ? map['challengeId'] as String
+                    : null,
               );
             }
-            final email = state.extra as String? ?? '';
+            final email =
+                state.extra is String ? (state.extra as String).trim() : '';
+            if (email.isEmpty) {
+              return const UnavailableFeatureScreen(
+                title: 'OTP verification unavailable',
+                message: 'A valid verification destination is required. '
+                    'Please return to sign in and request a new code.',
+              );
+            }
             return OtpVerificationScreen(email: email);
           },
         ),
@@ -138,31 +178,154 @@ class AppRouter {
         ),
         GoRoute(
           path: '/donor/feed',
-          builder: (context, state) => const DonationFeedScreen(),
+          builder: (context, state) => const DonorFeedScreen(),
         ),
         GoRoute(
           path: '/caregiver/requests',
           builder: (context, state) => const CaregiverRequestsScreen(),
         ),
         GoRoute(
+          path: '/donor/voucher',
+          builder: (context, state) {
+            final donationId = state.uri.queryParameters['donationId'] ??
+                (state.extra is String ? state.extra as String : null);
+            if (donationId == null || donationId.isEmpty) {
+              return const UnavailableFeatureScreen(
+                title: 'Donation voucher',
+                message: 'A donation reference is required to view a voucher.',
+              );
+            }
+            return DonationVoucherScreen(donationId: donationId);
+          },
+        ),
+        GoRoute(
+          path: '/donor/responses',
+          builder: (context, state) => const DonorResponsesScreen(),
+        ),
+        GoRoute(
+          path: '/donor/consents',
+          builder: (context, state) => const DonorConsentsScreen(),
+        ),
+        GoRoute(
+          path: '/caregiver/blood-bags',
+          builder: (context, state) {
+            if (authState is! AuthAuthenticated ||
+                !authState.user.role.isCaregiver) {
+              return const UnavailableFeatureScreen(
+                title: 'Blood bags',
+                message: 'This operation is only available to caregivers.',
+              );
+            }
+            return const BloodBagsScreen();
+          },
+        ),
+        GoRoute(
+          path: '/blood-bags/details',
+          builder: (context, state) {
+            final bag = state.extra;
+            if (bag is! BloodBagModel) {
+              return const UnavailableFeatureScreen(
+                title: 'Blood bag',
+                message: 'No blood bag was provided.',
+              );
+            }
+            return BloodBagDetailsScreen(bag: bag);
+          },
+        ),
+        GoRoute(
+          path: '/caregiver/blood-bags/scan',
+          builder: (context, state) {
+            if (authState is! AuthAuthenticated ||
+                !authState.user.role.isCaregiver) {
+              return const UnavailableFeatureScreen(
+                title: 'Blood bag scanner',
+                message: 'This operation is only available to caregivers.',
+              );
+            }
+            return const BloodBagScannerScreen(caregiver: true);
+          },
+        ),
+        GoRoute(
+          path: '/donor/blood-bags/scan',
+          builder: (context, state) {
+            if (authState is! AuthAuthenticated ||
+                authState.user.role.isCaregiver) {
+              return const UnavailableFeatureScreen(
+                title: 'Blood bag scanner',
+                message: 'This operation is not available for this account.',
+              );
+            }
+            return const BloodBagScannerScreen(caregiver: false);
+          },
+        ),
+        GoRoute(
+          path: '/blood-bags/scan-result',
+          builder: (context, state) {
+            final result = state.extra;
+            return result is BloodBagScanResult
+                ? BloodBagScanResultScreen(result: result)
+                : const UnavailableFeatureScreen(
+                    title: 'Blood bag',
+                    message: 'A valid scan result is required.',
+                  );
+          },
+        ),
+        GoRoute(
+          path: '/blood-bags/qr',
+          builder: (context, state) {
+            final bagId = state.uri.queryParameters['bagId'];
+            return bagId == null || bagId.isEmpty
+                ? const UnavailableFeatureScreen(
+                    title: 'Blood bag QR',
+                    message: 'A valid blood bag is required.',
+                  )
+                : BloodBagQrScreen(bagId: bagId);
+          },
+        ),
+        GoRoute(
           path: '/caregiver/patients',
-          builder: (context, state) => const CaregiverPatientsScreen(),
+          builder: (context, state) => authState is AuthAuthenticated &&
+                  authState.user.role.isCaregiver
+              ? const CaregiverPatientsScreen()
+              : const UnavailableFeatureScreen(
+                  title: 'Patients',
+                  message: 'This operation is only available to caregivers.',
+                ),
         ),
         GoRoute(
           path: '/caregiver/assignments',
-          builder: (context, state) => const CaregiverAssignmentsScreen(),
+          builder: (context, state) => authState is AuthAuthenticated &&
+                  authState.user.role.isCaregiver
+              ? const CaregiverAssignmentsScreen()
+              : const UnavailableFeatureScreen(
+                  title: 'Assignments',
+                  message: 'This operation is only available to caregivers.',
+                ),
         ),
         GoRoute(
           path: '/caregiver/patients/request',
-          builder: (context, state) => PatientBloodRequestScreen(
-            patient: state.extra as PatientModel,
-          ),
+          builder: (context, state) => state.extra is PatientModel
+              ? PatientBloodRequestScreen(patient: state.extra as PatientModel)
+              : const UnavailableFeatureScreen(
+                  title: 'Patient request',
+                  message: 'A valid patient is required.',
+                ),
         ),
         GoRoute(
           path: '/caregiver/matches',
-          builder: (context, state) => CaregiverMatchesScreen(
-            requestId: state.uri.queryParameters['requestId'] ?? '',
-          ),
+          builder: (context, state) {
+            final requestId = state.uri.queryParameters['requestId'];
+            if (authState is! AuthAuthenticated ||
+                !authState.user.role.isCaregiver ||
+                requestId == null ||
+                requestId.isEmpty) {
+              return const UnavailableFeatureScreen(
+                title: 'Matching',
+                message: 'A valid caregiver request is required.',
+              );
+            }
+            return CaregiverMatchesScreen(requestId: requestId);
+          },
         ),
         GoRoute(
           path: '/caregiver/create-request',
@@ -174,7 +337,13 @@ class AppRouter {
         GoRoute(
           path: '/caregiver/request/details',
           builder: (context, state) {
-            final request = state.extra as BloodRequestPublic;
+            final request = state.extra;
+            if (request is! BloodRequestPublic) {
+              return const UnavailableFeatureScreen(
+                title: 'Request details',
+                message: 'A valid blood request is required.',
+              );
+            }
             return BlocProvider(
               create: (_) => getIt<DocumentBloc>(),
               child: RequestDetailsScreen(request: request),
@@ -199,8 +368,13 @@ class AppRouter {
         GoRoute(
           path: '/tracking/details',
           builder: (context, state) {
-            final tracking = state.extra as TrackingPublic;
-            return TrackingDetailsScreen(tracking: tracking);
+            final tracking = state.extra;
+            return tracking is TrackingPublic
+                ? TrackingDetailsScreen(tracking: tracking)
+                : const UnavailableFeatureScreen(
+                    title: 'Tracking',
+                    message: 'Valid tracking data is required.',
+                  );
           },
         ),
 
@@ -220,6 +394,10 @@ class AppRouter {
           builder: (context, state) => const ProfileScreen(),
         ),
         GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsScreen(),
+        ),
+        GoRoute(
           path: '/donor/eligibility',
           builder: (context, state) => const DonorEligibilityScreen(),
         ),
@@ -228,8 +406,16 @@ class AppRouter {
         GoRoute(
           path: '/caregiver/payment',
           builder: (context, state) {
-            final request = state.extra as BloodRequestPublic;
-            return PaymentScreen(request: request);
+            final request = state.extra;
+            return request is BloodRequestPublic
+                ? BlocProvider(
+                    create: (_) => PaymentCubit(getIt<PaymentRepository>()),
+                    child: PaymentScreen(request: request),
+                  )
+                : const UnavailableFeatureScreen(
+                    title: 'Payment',
+                    message: 'A valid blood request is required.',
+                  );
           },
         ),
         GoRoute(
@@ -243,6 +429,23 @@ class AppRouter {
               return PaymentHistoryScreen(requestId: extra);
             }
             return const PaymentHistoryScreen();
+          },
+        ),
+        GoRoute(
+          path: '/caregiver/payment/allocation',
+          builder: (context, state) {
+            final allocationId = state.extra is String
+                ? state.extra as String
+                : state.uri.queryParameters['allocationId'];
+            return allocationId == null || allocationId.isEmpty
+                ? const UnavailableFeatureScreen(
+                    title: 'Payment',
+                    message: 'An allocation is required.',
+                  )
+                : BlocProvider(
+                    create: (_) => PaymentCubit(getIt<PaymentRepository>()),
+                    child: PaymentScreen(allocationId: allocationId),
+                  );
           },
         ),
         GoRoute(

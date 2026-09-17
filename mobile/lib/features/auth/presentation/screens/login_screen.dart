@@ -18,14 +18,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
-    _phoneCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
@@ -44,7 +42,6 @@ class _LoginScreenState extends State<LoginScreen> {
         if (state is AuthOtpRequiredState) {
           context.push('/otp', extra: {
             'email': state.email,
-            'phone': state.phone,
             'isRegistration': state.isRegistration,
             'pendingUserData': state.pendingUserData,
             'challengeId': state.challengeId,
@@ -52,14 +49,19 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         if (state is AuthAuthenticated) {
           final role = state.user.role;
-          if (role.isDonor ||
-              role.apiValue == 'platform_support' ||
-              role.apiValue == 'normal_user') {
-            context.go('/donor/home');
-          } else if (role.isCaregiver) {
+          if (role.isCaregiver) {
             context.go('/caregiver/home');
-          } else {
+          } else if (role.canAccessDonorFeatures) {
             context.go('/donor/home');
+          } else {
+            // Unknown role — stay on login and show message
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('دور المستخدم غير مدعوم، تواصل مع الدعم'),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           }
         }
         if (state is AuthError) {
@@ -147,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'أدخل بيانات حسابك للمتابعة والتحقق برمز OTP',
+                        'أدخل بريدك الإلكتروني وكلمة المرور للمتابعة',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -161,6 +163,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         hint: 'name@example.com',
                         keyboardType: TextInputType.emailAddress,
                         prefixIcon: Icons.email_outlined,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.username],
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
                             return 'يرجى إدخال البريد الإلكتروني';
@@ -168,16 +172,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (!v.contains('@')) return 'بريد إلكتروني غير صالح';
                           return null;
                         },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      LifeLinkTextField(
-                        controller: _phoneCtrl,
-                        label: 'رقم الهاتف (لإرسال OTP)',
-                        hint: '+201000000000',
-                        keyboardType: TextInputType.phone,
-                        prefixIcon: Icons.phone_android_rounded,
                       ),
 
                       const SizedBox(height: 16),
@@ -193,6 +187,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             : Icons.visibility_off_outlined,
                         onSuffixTap: () => setState(
                             () => _obscurePassword = !_obscurePassword),
+                        textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
+                        onFieldSubmitted: (_) => _onLogin(),
                         validator: (v) {
                           if (v == null || v.isEmpty) {
                             return 'يرجى إدخال كلمة المرور';
@@ -211,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: TextButton(
                           onPressed: () => context.push('/forgot-password'),
                           child: const Text(
-                            'نسيت كلمة المرور؟ (استعادة عبر OTP)',
+                            'نسيت كلمة المرور؟ (استعادة عبر البريد الإلكتروني)',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -224,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           return Column(
                             children: [
                               LifeLinkButton(
-                                label: 'تسجيل الدخول وطلب الـ OTP',
+                                label: 'تسجيل الدخول',
                                 onPressed: _onLogin,
                                 isLoading: state is AuthLoading,
                                 icon: Icons.login_rounded,

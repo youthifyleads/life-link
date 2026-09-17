@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/lifelink_states.dart';
+import '../../../../core/network/api_error_message.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/caregiver_remote_datasource.dart';
 import '../../domain/models/caregiver_models.dart';
@@ -32,6 +34,7 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
   Future<void> _addPatient() async {
     final name = TextEditingController();
     final bloodType = TextEditingController();
+    final hospitalId = TextEditingController();
     final notes = TextEditingController();
     final formKey = GlobalKey<FormState>();
     final created = await showDialog<bool>(
@@ -57,6 +60,15 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
                     : null,
               ),
               TextFormField(
+                controller: hospitalId,
+                decoration: const InputDecoration(
+                  labelText: 'Hospital ID',
+                  helperText: 'Required to create a blood request',
+                ),
+                validator: (value) =>
+                    value == null || value.trim().isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
                 controller: notes,
                 decoration: const InputDecoration(labelText: 'Notes'),
               ),
@@ -75,6 +87,7 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
                 await getIt<CaregiverRemoteDataSource>().createPatient(
                   fullName: name.text.trim(),
                   bloodType: bloodType.text.trim().toUpperCase(),
+                  hospitalId: hospitalId.text.trim(),
                   notes: notes.text.trim(),
                 );
                 if (dialogContext.mounted) {
@@ -83,7 +96,10 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
               } catch (error) {
                 if (dialogContext.mounted) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(content: Text(error.toString())),
+                    SnackBar(
+                      content: Text(friendlyErrorMessage(error)),
+                      backgroundColor: AppColors.error,
+                    ),
                   );
                 }
               }
@@ -95,6 +111,7 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
     );
     name.dispose();
     bloodType.dispose();
+    hospitalId.dispose();
     notes.dispose();
     if (created == true && mounted) _reload();
   }
@@ -112,20 +129,28 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
         future: _patients,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const LifeLinkLoadingState(message: 'Loading patients…');
           }
           if (snapshot.hasError) {
-            return Center(
-              child: FilledButton.icon(
-                onPressed: _reload,
-                icon: const Icon(Icons.refresh),
-                label: Text('Retry: ${snapshot.error}'),
-              ),
+            return LifeLinkStatePanel(
+              icon: Icons.cloud_off_rounded,
+              title: 'Patients could not be loaded',
+              message:
+                  'Check your connection and try again. No patient data was changed.',
+              actionLabel: 'Try again',
+              onAction: _reload,
             );
           }
           final patients = snapshot.data ?? const <PatientModel>[];
           if (patients.isEmpty) {
-            return const Center(child: Text('No patients added yet.'));
+            return LifeLinkStatePanel(
+              icon: Icons.people_outline_rounded,
+              title: 'No patients yet',
+              message:
+                  'Patients you add for blood requests will be listed here.',
+              actionLabel: 'Add patient',
+              onAction: _addPatient,
+            );
           }
           return RefreshIndicator(
             onRefresh: () async => _reload(),

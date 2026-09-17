@@ -1,14 +1,17 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/lifelink_components.dart';
+import '../../../../core/widgets/lifelink_states.dart';
 import '../../../blood_requests/data/blood_request_remote_datasource.dart';
 import '../../../blood_requests/domain/models/blood_request_model.dart';
 import '../../domain/models/payment_model.dart';
+import '../../data/payment_repository.dart';
+import '../bloc/payment_history_cubit.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   final BloodRequestPublic? request;
@@ -27,8 +30,6 @@ class PaymentHistoryScreen extends StatefulWidget {
 class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   final BloodRequestRemoteDataSource _requestDataSource =
       getIt<BloodRequestRemoteDataSource>();
-  final Dio _dio = getIt<Dio>();
-
   bool _loading = true;
   bool _loadingPayments = false;
   String? _error;
@@ -39,7 +40,20 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    _loadRequests();
+    _historyCubit = PaymentHistoryCubit(getIt<PaymentRepository>());
+    if (widget.request == null && widget.requestId == null) {
+      _error =
+          'Caregiver payment history is unavailable in the current Azure API contract.';
+      _loading = false;
+    } else {
+      _loadRequests();
+    }
+  }
+
+  @override
+  void dispose() {
+    _historyCubit.close();
+    super.dispose();
   }
 
   Future<void> _loadRequests() async {
@@ -59,7 +73,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = error.toString();
+        _error = friendlyErrorMessage(error);
         _loading = false;
       });
     }
@@ -73,29 +87,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       _error = null;
     });
 
-    try {
-      final response = await _dio.get(
-        ApiEndpoints.paymentsByRequestId(requestId),
-      );
-      final data = response.data as List;
-      final payments = data
-          .map((json) => PaymentModel.fromJson(json as Map<String, dynamic>))
-          .toList();
-      if (!mounted) return;
-      setState(() {
-        _payments = payments;
-        _loadingPayments = false;
-      });
-    } on DioException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _paymentError = apiErrorMessage(error);
-        _loadingPayments = false;
-      });
-    }
+    await _historyCubit.load(requestId);
   }
 
   String? _paymentError;
+  late final PaymentHistoryCubit _historyCubit;
 
   String _formatDate(DateTime? dateTime) {
     if (dateTime == null) return '—';
@@ -104,29 +100,46 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Payment history'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+    return BlocProvider.value(
+      value: _historyCubit,
+      child: BlocListener<PaymentHistoryCubit, PaymentHistoryState>(
+        listener: (context, state) {
+          if (!mounted) return;
+          setState(() {
+            _loadingPayments = state.loading;
+            _paymentError = state.error;
+            if (state.error == null && !state.loading) {
+              _payments = state.payments;
+            }
+          });
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Payment history'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_rounded),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+          body: _buildBody(),
         ),
       ),
-      body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const LifeLinkLoadingState(message: 'Loading payment history…');
     }
 
     if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(_error!),
-        ),
+      return LifeLinkStatePanel(
+        icon: Icons.cloud_off_rounded,
+        title: 'Payment history unavailable',
+        message: _error!,
+        actionLabel: 'Try again',
+        onAction: _loadRequests,
+        tone: AppColors.error,
       );
     }
 
@@ -152,7 +165,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
-                      label: Text('${request.bloodType} • ${request.quantityUnits}u'),
+                      label: Text(
+                          '${request.bloodType} • ${request.quantityUnits}u'),
                       selected: selected,
                       onSelected: (_) => _loadPaymentsForRequest(request.id),
                     ),
@@ -177,20 +191,19 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 color: AppColors.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Text(_paymentError!, style: const TextStyle(color: AppColors.error)),
+              child: Text(_paymentError!,
+                  style: const TextStyle(color: AppColors.error)),
             )
           else if (_payments.isEmpty)
             Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    _selectedRequestId == null
+              child: LifeLinkEmptyState(
+                icon: Icons.payments_outlined,
+                title: 'No payment records',
+                message: _requests.isEmpty
+                    ? 'No caregiver payment transactions exist yet.'
+                    : _selectedRequestId == null
                         ? 'Select a request to view payment history.'
                         : 'No payment records exist yet for this request.',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
               ),
             )
           else
@@ -200,15 +213,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final payment = _payments[index];
-                  final isSuccessful = payment.isSuccessful;
-                  final isFailure = payment.isFailed;
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
+                  return LifeLinkCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -224,22 +229,23 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                 ),
                               ),
                             ),
-                            Chip(
-                              label: Text(
-                                payment.paymentStatus.toUpperCase(),
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              backgroundColor: isSuccessful
-                                  ? AppColors.success.withValues(alpha: 0.12)
-                                  : isFailure
-                                      ? AppColors.error.withValues(alpha: 0.12)
-                                      : AppColors.warning.withValues(alpha: 0.12),
-                            ),
+                            LifeLinkStatusChip(payment.paymentStatus),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _detailsRow('Method', payment.paymentMethod.isEmpty ? '—' : payment.paymentMethod),
-                        _detailsRow('Reference', payment.transactionReference ?? '—'),
+                        _detailsRow(
+                            'Method',
+                            payment.paymentMethod.isEmpty
+                                ? '—'
+                                : payment.paymentMethod),
+                        _detailsRow(
+                            'Reference', payment.transactionReference ?? '—'),
+                        if (payment.patientId != null)
+                          _detailsRow('Patient case', payment.patientId!),
+                        if (payment.allocationId != null)
+                          _detailsRow('Allocation', payment.allocationId!),
+                        if (payment.bloodBagId != null)
+                          _detailsRow('Blood bag', payment.bloodBagId!),
                         _detailsRow('Created', _formatDate(payment.createdAt)),
                         _detailsRow('Paid', _formatDate(payment.paidAt)),
                       ],
@@ -261,7 +267,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         children: [
           SizedBox(
             width: 92,
-            child: Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+            child: Text(label,
+                style: const TextStyle(color: AppColors.textSecondary)),
           ),
           Expanded(child: Text(value)),
         ],
