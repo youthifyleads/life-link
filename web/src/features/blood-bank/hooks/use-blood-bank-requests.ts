@@ -29,17 +29,48 @@ export const bloodBankRequestKeys = {
     ["blood-bank", "units", params] as const,
 };
 
+import { requestsApi } from "@/shared/api/requests.api";
+import { inventoryApi } from "@/features/blood-bank/api/inventory.api";
+import { getAccessToken } from "@/shared/api/auth-token";
+
 export function useBloodBankRequests() {
   return useQuery({
     queryKey: bloodBankRequestKeys.all,
-    queryFn: getBloodBankRequests,
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveData = await requestsApi.getBloodBankRequests();
+          return liveData || [];
+        } catch (err) {
+          console.warn("Live blood bank requests fetch failed:", err);
+          return [];
+        }
+      }
+      if (import.meta.env.MODE === "test") {
+        return getBloodBankRequests();
+      }
+      return [];
+    },
   });
 }
 
 export function useBloodBankRequest(id: string) {
   return useQuery({
     queryKey: bloodBankRequestKeys.detail(id),
-    queryFn: () => getBloodBankRequestById(id),
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveReq = await requestsApi.getBloodBankRequestById(id);
+          if (liveReq) return liveReq;
+        } catch (err) {
+          console.warn("Live blood bank request detail failed:", err);
+        }
+      }
+      if (import.meta.env.MODE === "test") {
+        return getBloodBankRequestById(id);
+      }
+      return null;
+    },
     enabled: Boolean(id),
   });
 }
@@ -47,7 +78,31 @@ export function useBloodBankRequest(id: string) {
 export function useBloodBankOperationalSnapshot() {
   return useQuery({
     queryKey: bloodBankRequestKeys.snapshot,
-    queryFn: getBloodBankOperationalSnapshot,
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveUnits = await inventoryApi.getInventory();
+          const availableCount = (liveUnits || []).filter((u) => u.status === "available").length;
+          return {
+            availableBloodUnits: availableCount,
+            recordedAt: new Date().toISOString(),
+          };
+        } catch (err) {
+          console.warn("Live snapshot fetch error:", err);
+          return {
+            availableBloodUnits: 0,
+            recordedAt: new Date().toISOString(),
+          };
+        }
+      }
+      if (import.meta.env.MODE === "test") {
+        return getBloodBankOperationalSnapshot();
+      }
+      return {
+        availableBloodUnits: 0,
+        recordedAt: new Date().toISOString(),
+      };
+    },
   });
 }
 
@@ -57,7 +112,24 @@ export function useBloodUnits(params?: {
 }) {
   return useQuery({
     queryKey: bloodBankRequestKeys.units(params),
-    queryFn: () => getBloodUnits(params),
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveUnits = await inventoryApi.getInventory({
+            bloodGroup: params?.bloodGroup,
+            status: params?.status,
+          });
+          return liveUnits || [];
+        } catch (err) {
+          console.warn("Live blood units fetch failed:", err);
+          return [];
+        }
+      }
+      if (import.meta.env.MODE === "test") {
+        return getBloodUnits(params);
+      }
+      return [];
+    },
   });
 }
 

@@ -52,6 +52,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setAccessToken(accessToken);
     const user = await authApi.getCurrentUser();
     dispatch({ type: "authenticated", user });
+    return user;
   }, []);
 
   const restoreSession = useCallback(async () => {
@@ -67,25 +68,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [establishSession]);
 
   useEffect(() => {
-    if (import.meta.env.DEV) return;
     return registerRefreshHandler(restoreSession);
   }, [restoreSession]);
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      void import("@/features/authentication/model/demo-session").then(
-        ({ restoreDemoSession }) => {
-          const user = restoreDemoSession();
-          dispatch(
-            user
-              ? { type: "authenticated", user }
-              : { type: "unauthenticated" },
-          );
-        },
-      );
-      return;
-    }
-
     void restoreSession().catch(() => undefined);
   }, [restoreSession]);
 
@@ -107,47 +93,34 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signIn = useCallback(
     async (input: LoginInput) => {
-      if (import.meta.env.DEV) {
-        throw new Error(
-          "Password authentication is disabled in the development preview.",
-        );
-      }
-
       const tokenResponse = await authApi.login(input);
-      await establishSession(tokenResponse.access_token);
+      return await establishSession(tokenResponse.access_token);
     },
     [establishSession],
   );
 
   const signInDemo = useCallback(
     async (role: DemoSessionRole = "hospital_staff") => {
-      if (!import.meta.env.DEV) {
-        throw new Error("Demo authentication is unavailable.");
-      }
-
       const { startDemoSession } =
         await import("@/features/authentication/model/demo-session");
       const user = startDemoSession(role);
       setAccessToken(null);
+      queryClient.clear();
       dispatch({ type: "authenticated", user });
+      return user;
     },
     [],
   );
 
   const signOut = useCallback(async () => {
-    if (import.meta.env.DEV) {
+    try {
+      await authApi.logout();
+    } catch {
+      // Ignore network errors during logout
+    } finally {
       const { clearDemoSession } =
         await import("@/features/authentication/model/demo-session");
       clearDemoSession();
-      setAccessToken(null);
-      queryClient.clear();
-      dispatch({ type: "unauthenticated" });
-      return;
-    }
-
-    try {
-      await authApi.logout();
-    } finally {
       setAccessToken(null);
       queryClient.clear();
       dispatch({ type: "unauthenticated" });

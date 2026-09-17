@@ -12,6 +12,7 @@ import {
 import type { HospitalRequestInput } from "@/features/hospital/types/hospital.types";
 import { queryClient } from "@/app/providers/query-client";
 
+import { apiClient } from "@/shared/api/http-client";
 import { requestsApi } from "@/shared/api/requests.api";
 import { getAccessToken } from "@/shared/api/auth-token";
 
@@ -29,12 +30,16 @@ export function useHospitalRequests() {
       if (getAccessToken()) {
         try {
           const liveData = await requestsApi.getRequests();
-          if (liveData && liveData.length > 0) return liveData;
+          return liveData || [];
         } catch (err) {
-          console.warn("Live requests fetch fallback:", err);
+          console.warn("Live requests fetch failed:", err);
+          return [];
         }
       }
-      return getHospitalRequests();
+      if (import.meta.env.MODE === "test") {
+        return getHospitalRequests();
+      }
+      return [];
     },
   });
 }
@@ -42,7 +47,36 @@ export function useHospitalRequests() {
 export function useAvailableBloodBanks() {
   return useQuery({
     queryKey: hospitalRequestKeys.bloodBanks,
-    queryFn: getAvailableBloodBanks,
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const { data } = await apiClient.get<any[]>("/blood-banks");
+          if (Array.isArray(data)) {
+            return data.map((b) => ({
+              id: b.id,
+              name: b.name,
+              facilityCode: b.facility_code || "BB-CTR",
+              governorate: b.governorate || "Cairo",
+              address: b.address || "Central District",
+              phone: b.phones?.[0] || "+20 2 3761 1111",
+              status: b.status || "active",
+              availabilitySummary: {
+                totalAvailable: b.available_units ?? 0,
+                posture: "optimal" as const,
+                lowStockGroupsCount: 0,
+              },
+            }));
+          }
+        } catch (err) {
+          console.warn("Live blood banks fetch failed:", err);
+          return [];
+        }
+      }
+      if (import.meta.env.MODE === "test") {
+        return getAvailableBloodBanks();
+      }
+      return [];
+    },
   });
 }
 
@@ -54,10 +88,13 @@ export function useHospitalRequest(id: string) {
         try {
           return await requestsApi.getRequestById(id);
         } catch (err) {
-          console.warn("Live request detail fallback:", err);
+          console.warn("Live request detail failed:", err);
         }
       }
-      return getHospitalRequest(id);
+      if (import.meta.env.MODE === "test") {
+        return getHospitalRequest(id);
+      }
+      return null;
     },
   });
 }

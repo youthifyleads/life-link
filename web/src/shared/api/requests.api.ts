@@ -8,6 +8,11 @@ import type {
   TargetBloodBank,
 } from "@/features/hospital/types/hospital.types";
 import type { BloodGroup, UrgencyLevel } from "@/shared/components/clinical/clinical.types";
+import type {
+  BloodBankRequest,
+  BloodBankQueueStatus,
+  BloodBankComponent,
+} from "@/features/blood-bank/types/blood-bank.types";
 
 export interface BackendBloodRequestDTO {
   id: string;
@@ -178,4 +183,49 @@ export const requestsApi = {
     const { data } = await apiClient.get(`/qr/request/${id}`);
     return data;
   },
+
+  async getBloodBankRequests(): Promise<BloodBankRequest[]> {
+    const { data } = await apiClient.get<any[]>("/requests");
+    return Array.isArray(data) ? data.map(mapBackendDtoToBloodBankRequest) : [];
+  },
+
+  async getBloodBankRequestById(id: string): Promise<BloodBankRequest> {
+    const { data } = await apiClient.get<any>(`/requests/${id}`);
+    return mapBackendDtoToBloodBankRequest(data);
+  },
 };
+
+export function mapBackendDtoToBloodBankRequest(dto: any): BloodBankRequest {
+  let qStatus: BloodBankQueueStatus = "submitted";
+  const st = (dto.status || "submitted").toLowerCase();
+  if (st === "requested" || st === "submitted") qStatus = "submitted";
+  else if (st === "acknowledged") qStatus = "acknowledged";
+  else if (st === "confirmed") qStatus = "confirmed";
+  else if (st === "prepared" || st === "preparing") qStatus = "preparing";
+  else if (st === "completed" || st === "dispatched" || st === "delivered") qStatus = "completed";
+  else if (st === "cancelled") qStatus = "cancelled";
+  else if (st === "rejected") qStatus = "rejected";
+
+  return {
+    id: dto.id || dto.blood_request_id,
+    hospital: {
+      id: dto.hospital_id || "hospital-01",
+      name: dto.hospital_name || "Al-Qasr Al-Aini Hospital",
+      facilityCode: "HOSP-01",
+    },
+    bloodGroup: (dto.blood_type || "O+") as BloodGroup,
+    component: (dto.component as BloodBankComponent) || "red_cells",
+    quantity: dto.quantity_units || dto.requested_quantity || 1,
+    urgency: (String(dto.urgency || "normal").toLowerCase() in { urgent: 1, critical: 1, emergency: 1 } ? "urgent" : "routine") as UrgencyLevel,
+    status: qStatus,
+    createdAt: dto.created_at || new Date().toISOString(),
+    requiredAt: dto.required_by || dto.created_at || new Date().toISOString(),
+    updatedAt: dto.updated_at || dto.created_at || new Date().toISOString(),
+    reasonCategory: "Clinical Requisition",
+    clinicalReason: dto.reason || dto.notes || "Clinical blood requirement",
+    notes: dto.notes || undefined,
+    history: [],
+    documents: [],
+    allocatedUnitIds: dto.allocated_bags || [],
+  };
+}

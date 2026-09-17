@@ -19,6 +19,8 @@ import {
 } from "@/features/notifications/components/notification-badges";
 import {
   formatDateTime,
+  getLocalizedNotificationMessage,
+  getLocalizedNotificationTitle,
   getLocalizedRoleName,
   getLocalizedSourceModuleName,
 } from "@/features/notifications/components/notifications-formatters";
@@ -48,20 +50,27 @@ export function NotificationsPage() {
   const { user } = useAuth();
   useEventBusListener();
 
+  const userRole = user?.primary_role;
+  const isAdmin = userRole === "admin";
+
   const [search, setSearch] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [typeFilter, setTypeFilter] = useState<NotificationType | "all">("all");
   const [priorityFilter, setPriorityFilter] = useState<NotificationPriority | "all">("all");
   const [rolePerspective, setRolePerspective] = useState<UserRole | "all">(
-    user?.primary_role ?? "all",
+    isAdmin ? "admin" : (userRole ?? "hospital_staff"),
   );
+
+  const activeRole: UserRole | undefined = isAdmin
+    ? (rolePerspective !== "all" ? rolePerspective : undefined)
+    : userRole;
 
   const notificationsQuery = useNotifications({
     search: search || undefined,
     unreadOnly,
     type: typeFilter !== "all" ? typeFilter : undefined,
     priority: priorityFilter !== "all" ? priorityFilter : undefined,
-    roleView: rolePerspective !== "all" ? rolePerspective : undefined,
+    roleView: activeRole,
   });
 
   const markReadMutation = useMarkNotificationRead();
@@ -71,7 +80,7 @@ export function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const handleMarkAllRead = () => {
-    void markAllMutation.mutateAsync(rolePerspective !== "all" ? rolePerspective : undefined);
+    void markAllMutation.mutateAsync(activeRole);
   };
 
   const handleResetFilters = () => {
@@ -79,7 +88,9 @@ export function NotificationsPage() {
     setUnreadOnly(false);
     setTypeFilter("all");
     setPriorityFilter("all");
-    setRolePerspective(user?.primary_role ?? "all");
+    if (isAdmin) {
+      setRolePerspective("admin");
+    }
   };
 
   return (
@@ -143,75 +154,76 @@ export function NotificationsPage() {
 
       {/* Role View Perspectives Bar */}
       <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 lg:pb-0 text-xs">
-          <span className="text-muted-foreground font-medium shrink-0 me-1">
-            {t("notifications.roleViewLabel", "Role View:")}
-          </span>
-          <Button
-            type="button"
-            size="sm"
-            variant={rolePerspective === user?.primary_role ? "default" : "secondary"}
-            className="h-7 text-xs rounded-full"
-            onClick={() => setRolePerspective(user?.primary_role ?? "all")}
-          >
-            {t("notifications.myInbox", "My Inbox")} (
-            {getLocalizedRoleName(user?.primary_role ?? "")})
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={rolePerspective === "all" ? "default" : "secondary"}
-            className="h-7 text-xs rounded-full"
-            onClick={() => setRolePerspective("all")}
-          >
-            {t("notifications.allRoles", "All Roles")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={rolePerspective === "hospital_staff" ? "default" : "secondary"}
-            className="h-7 text-xs rounded-full"
-            onClick={() => setRolePerspective("hospital_staff")}
-          >
-            {getLocalizedRoleName("hospital_staff")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={rolePerspective === "blood_bank_staff" ? "default" : "secondary"}
-            className="h-7 text-xs rounded-full"
-            onClick={() => setRolePerspective("blood_bank_staff")}
-          >
-            {getLocalizedRoleName("blood_bank_staff")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={rolePerspective === "donor" ? "default" : "secondary"}
-            className="h-7 text-xs rounded-full"
-            onClick={() => setRolePerspective("donor")}
-          >
-            {getLocalizedRoleName("donor")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={rolePerspective === "caregiver" ? "default" : "secondary"}
-            className="h-7 text-xs rounded-full"
-            onClick={() => setRolePerspective("caregiver")}
-          >
-            {getLocalizedRoleName("caregiver")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={rolePerspective === "admin" ? "default" : "secondary"}
-            className="h-7 text-xs rounded-full"
-            onClick={() => setRolePerspective("admin")}
-          >
-            {getLocalizedRoleName("admin")}
-          </Button>
-        </div>
+        {isAdmin ? (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 lg:pb-0 text-xs">
+            <span className="text-muted-foreground font-medium shrink-0 me-1">
+              {t("notifications.roleViewLabel", "Role View:")}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant={rolePerspective === "admin" ? "default" : "secondary"}
+              className="h-7 text-xs rounded-full"
+              onClick={() => setRolePerspective("admin")}
+            >
+              {t("notifications.myInbox", "My Inbox")} ({getLocalizedRoleName("admin")})
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={rolePerspective === "all" ? "default" : "secondary"}
+              className="h-7 text-xs rounded-full"
+              onClick={() => setRolePerspective("all")}
+            >
+              {t("notifications.allRoles", "All Roles")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={rolePerspective === "hospital_staff" ? "default" : "secondary"}
+              className="h-7 text-xs rounded-full"
+              onClick={() => setRolePerspective("hospital_staff")}
+            >
+              {getLocalizedRoleName("hospital_staff")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={rolePerspective === "blood_bank_staff" ? "default" : "secondary"}
+              className="h-7 text-xs rounded-full"
+              onClick={() => setRolePerspective("blood_bank_staff")}
+            >
+              {getLocalizedRoleName("blood_bank_staff")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={rolePerspective === "donor" ? "default" : "secondary"}
+              className="h-7 text-xs rounded-full"
+              onClick={() => setRolePerspective("donor")}
+            >
+              {getLocalizedRoleName("donor")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={rolePerspective === "caregiver" ? "default" : "secondary"}
+              className="h-7 text-xs rounded-full"
+              onClick={() => setRolePerspective("caregiver")}
+            >
+              {getLocalizedRoleName("caregiver")}
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 pb-2 lg:pb-0 text-xs">
+            <span className="text-muted-foreground font-medium">
+              {t("notifications.roleViewLabel", "Role View:")}
+            </span>
+            <Badge variant="secondary" className="text-xs font-medium">
+              {getLocalizedRoleName(userRole ?? "")}
+            </Badge>
+          </div>
+        )}
 
         {/* Unread toggle */}
         <div className="flex items-center gap-2 shrink-0">
@@ -361,11 +373,11 @@ export function NotificationsPage() {
                     </div>
 
                     <h2 className="text-sm font-semibold text-foreground">
-                      {item.title}
+                      {getLocalizedNotificationTitle(item)}
                     </h2>
 
                     <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                      {item.message}
+                      {getLocalizedNotificationMessage(item)}
                     </p>
 
                     <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
