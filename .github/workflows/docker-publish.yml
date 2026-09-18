@@ -1,10 +1,9 @@
-name: Build and Push Docker to ACR
+name: Build and Push Docker to ACR (Mobile Test)
 
 on:
   push:
     branches:
-      - main
-      - develop
+      - mobile/test
     paths:
       - 'backend/**'
       - 'Dockerfile'  
@@ -30,5 +29,5 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ vars.AZURE_ACR_LOGIN_SERVER }}/lifelink-backend:latest .
-          docker push ${{ vars.AZURE_ACR_LOGIN_SERVER }}/lifelink-backend:latest
+          docker build -t ${{ vars.AZURE_ACR_LOGIN_SERVER }}/lifelink-backend:mobile .
+          docker push ${{ vars.AZURE_ACR_LOGIN_SERVER }}/lifelink-backend:mobile
