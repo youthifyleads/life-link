@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 32),
 
                       Text(
-                        'تسجيل الدخول / Sign In',
+                        'تسجيل الدخول',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
@@ -159,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       LifeLinkTextField(
                         controller: _emailCtrl,
-                        label: 'البريد الإلكتروني (Email)',
+                        label: 'البريد الإلكتروني',
                         hint: 'name@example.com',
                         keyboardType: TextInputType.emailAddress,
                         prefixIcon: Icons.email_outlined,
@@ -178,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       LifeLinkTextField(
                         controller: _passwordCtrl,
-                        label: 'كلمة المرور (Password)',
+                        label: 'كلمة المرور',
                         hint: '••••••••',
                         obscureText: _obscurePassword,
                         prefixIcon: Icons.lock_outline,
@@ -208,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: TextButton(
                           onPressed: () => context.push('/forgot-password'),
                           child: const Text(
-                            'نسيت كلمة المرور؟ (استعادة عبر البريد الإلكتروني)',
+                            'نسيت كلمة المرور؟',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
