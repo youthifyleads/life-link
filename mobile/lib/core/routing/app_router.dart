@@ -18,7 +18,6 @@ import '../../features/blood_requests/domain/models/blood_request_model.dart';
 import '../../features/caregiver/presentation/screens/request_details_screen.dart';
 import '../../features/caregiver/presentation/screens/caregiver_patients_screen.dart';
 import '../../features/caregiver/presentation/screens/caregiver_matches_screen.dart';
-import '../../features/caregiver/presentation/screens/caregiver_requests_screen.dart';
 import '../../features/caregiver/presentation/screens/patient_blood_request_screen.dart';
 import '../../features/caregiver/domain/models/caregiver_models.dart';
 import '../../features/documents/presentation/bloc/document_bloc.dart';
@@ -29,18 +28,8 @@ import '../../features/tracking/domain/models/tracking_model.dart';
 import '../../features/notifications/presentation/bloc/notification_bloc.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/donor/presentation/screens/donor_eligibility_screen.dart';
-import '../../features/donor/presentation/screens/donor_feed_screen.dart';
-import '../../features/donor/presentation/screens/donation_voucher_screen.dart';
-import '../../features/donor/presentation/screens/donor_responses_screen.dart';
-import '../../features/donor/presentation/screens/donor_consents_screen.dart';
-import '../../features/blood_bags/presentation/screens/blood_bags_screen.dart';
-import '../../features/blood_bags/presentation/screens/blood_bag_details_screen.dart';
-import '../../features/blood_bags/domain/models/blood_bag_models.dart';
-import '../../features/blood_bags/presentation/screens/blood_bag_qr_screen.dart';
-import '../../features/blood_bags/presentation/screens/blood_bag_scanner_screen.dart';
-import '../../features/blood_bags/presentation/screens/blood_bag_scan_result_screen.dart';
+import '../../features/donor/presentation/screens/donor_vouchers_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
-import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/payments/presentation/screens/payment_screen.dart';
 import '../../features/payments/presentation/screens/payment_history_screen.dart';
 import '../../features/payments/presentation/bloc/payment_cubit.dart';
@@ -93,24 +82,11 @@ class AppRouter {
         }
 
         if (authState is AuthAuthenticated) {
-          final role = authState.user.role;
-          final canUseDonorRoutes = role.canAccessDonorFeatures;
-          final isCaregiverRoute = state.uri.path.startsWith('/caregiver') ||
-              state.uri.path.startsWith('/qr') ||
-              state.uri.path.startsWith('/tracking');
-          final isDonorRoute = state.uri.path.startsWith('/donor');
-          if (isCaregiverRoute && !role.isCaregiver) {
-            return canUseDonorRoutes ? '/donor/home' : null;
-          }
-          if (isDonorRoute && !canUseDonorRoutes) {
-            // Don't block caregiver from landing on caregiver home
-            return role.isCaregiver ? '/caregiver/home' : '/login';
-          }
+          // Users have single account and can access both donor and caregiver modes
           if (isAuthRoute) {
-            if (role.isCaregiver) return '/caregiver/home';
-            if (canUseDonorRoutes) return '/donor/home';
-            return null; // allow unknown roles to stay on auth route
+            return '/donor/home';
           }
+          return null;
         }
         return null;
       },
@@ -178,129 +154,88 @@ class AppRouter {
         ),
         GoRoute(
           path: '/donor/feed',
-          builder: (context, state) => const DonorFeedScreen(),
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Donor Feed',
+            message: 'Donor feed is managed from Donor Home.',
+          ),
         ),
         GoRoute(
           path: '/caregiver/requests',
-          builder: (context, state) => const CaregiverRequestsScreen(),
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Requests',
+            message: 'Caregiver requests are available from the Home screen.',
+          ),
         ),
         GoRoute(
           path: '/donor/voucher',
-          builder: (context, state) {
-            final donationId = state.uri.queryParameters['donationId'] ??
-                (state.extra is String ? state.extra as String : null);
-            if (donationId == null || donationId.isEmpty) {
-              return const UnavailableFeatureScreen(
-                title: 'Donation voucher',
-                message: 'A donation reference is required to view a voucher.',
-              );
-            }
-            return DonationVoucherScreen(donationId: donationId);
-          },
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Donation voucher',
+            message: 'Voucher feature is coming soon.',
+          ),
         ),
         GoRoute(
           path: '/donor/responses',
-          builder: (context, state) => const DonorResponsesScreen(),
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Donor Responses',
+            message: 'Responses history is coming soon.',
+          ),
         ),
         GoRoute(
           path: '/donor/consents',
-          builder: (context, state) => const DonorConsentsScreen(),
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Donor Consents',
+            message: 'Consents feature is coming soon.',
+          ),
         ),
         GoRoute(
           path: '/caregiver/blood-bags',
-          builder: (context, state) {
-            if (authState is! AuthAuthenticated ||
-                !authState.user.role.isCaregiver) {
-              return const UnavailableFeatureScreen(
-                title: 'Blood bags',
-                message: 'This operation is only available to caregivers.',
-              );
-            }
-            return const BloodBagsScreen();
-          },
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Blood bags',
+            message: 'Blood bags are scanned via Caregiver Home.',
+          ),
         ),
         GoRoute(
           path: '/blood-bags/details',
-          builder: (context, state) {
-            final bag = state.extra;
-            if (bag is! BloodBagModel) {
-              return const UnavailableFeatureScreen(
-                title: 'Blood bag',
-                message: 'No blood bag was provided.',
-              );
-            }
-            return BloodBagDetailsScreen(bag: bag);
-          },
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Blood bag',
+            message: 'Blood bag details are displayed upon scanning.',
+          ),
         ),
         GoRoute(
           path: '/caregiver/blood-bags/scan',
-          builder: (context, state) {
-            if (authState is! AuthAuthenticated ||
-                !authState.user.role.isCaregiver) {
-              return const UnavailableFeatureScreen(
-                title: 'Blood bag scanner',
-                message: 'This operation is only available to caregivers.',
-              );
-            }
-            return const BloodBagScannerScreen(caregiver: true);
-          },
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Blood bag scanner',
+            message: 'Scanner is accessible from Caregiver Home.',
+          ),
         ),
         GoRoute(
           path: '/donor/blood-bags/scan',
-          builder: (context, state) {
-            if (authState is! AuthAuthenticated ||
-                authState.user.role.isCaregiver) {
-              return const UnavailableFeatureScreen(
-                title: 'Blood bag scanner',
-                message: 'This operation is not available for this account.',
-              );
-            }
-            return const BloodBagScannerScreen(caregiver: false);
-          },
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Blood bag scanner',
+            message: 'This operation is not available for this account.',
+          ),
         ),
         GoRoute(
           path: '/blood-bags/scan-result',
-          builder: (context, state) {
-            final result = state.extra;
-            return result is BloodBagScanResult
-                ? BloodBagScanResultScreen(result: result)
-                : const UnavailableFeatureScreen(
-                    title: 'Blood bag',
-                    message: 'A valid scan result is required.',
-                  );
-          },
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Blood bag',
+            message: 'Scan result is displayed on the main screen.',
+          ),
         ),
         GoRoute(
           path: '/blood-bags/qr',
-          builder: (context, state) {
-            final bagId = state.uri.queryParameters['bagId'];
-            return bagId == null || bagId.isEmpty
-                ? const UnavailableFeatureScreen(
-                    title: 'Blood bag QR',
-                    message: 'A valid blood bag is required.',
-                  )
-                : BloodBagQrScreen(bagId: bagId);
-          },
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Blood bag QR',
+            message: 'Blood bag QR is generated hospital-side.',
+          ),
         ),
         GoRoute(
           path: '/caregiver/patients',
-          builder: (context, state) => authState is AuthAuthenticated &&
-                  authState.user.role.isCaregiver
-              ? const CaregiverPatientsScreen()
-              : const UnavailableFeatureScreen(
-                  title: 'Patients',
-                  message: 'This operation is only available to caregivers.',
-                ),
+          builder: (context, state) => const CaregiverPatientsScreen(),
         ),
         GoRoute(
           path: '/caregiver/assignments',
-          builder: (context, state) => authState is AuthAuthenticated &&
-                  authState.user.role.isCaregiver
-              ? const CaregiverAssignmentsScreen()
-              : const UnavailableFeatureScreen(
-                  title: 'Assignments',
-                  message: 'This operation is only available to caregivers.',
-                ),
+          builder: (context, state) => const CaregiverAssignmentsScreen(),
         ),
         GoRoute(
           path: '/caregiver/patients/request',
@@ -395,27 +330,71 @@ class AppRouter {
         ),
         GoRoute(
           path: '/settings',
-          builder: (context, state) => const SettingsScreen(),
+          builder: (context, state) => const UnavailableFeatureScreen(
+            title: 'Settings',
+            message: 'Settings are coming soon.',
+          ),
         ),
         GoRoute(
           path: '/donor/eligibility',
           builder: (context, state) => const DonorEligibilityScreen(),
+        ),
+        GoRoute(
+          path: '/donor/vouchers',
+          builder: (context, state) => const DonorVouchersScreen(),
         ),
 
         // ── Payment ───────────────────────────────────────────────
         GoRoute(
           path: '/caregiver/payment',
           builder: (context, state) {
-            final request = state.extra;
-            return request is BloodRequestPublic
-                ? BlocProvider(
-                    create: (_) => PaymentCubit(getIt<PaymentRepository>()),
-                    child: PaymentScreen(request: request),
-                  )
-                : const UnavailableFeatureScreen(
-                    title: 'Payment',
-                    message: 'A valid blood request is required.',
-                  );
+            final extra = state.extra;
+            if (extra is BloodRequestPublic) {
+              return BlocProvider(
+                create: (_) => PaymentCubit(getIt<PaymentRepository>()),
+                child: PaymentScreen(request: extra),
+              );
+            }
+            if (extra is TrackingPublic && extra.requestId != null) {
+              return BlocProvider(
+                create: (_) => PaymentCubit(getIt<PaymentRepository>()),
+                child: PaymentScreen(
+                  request: BloodRequestPublic(
+                    id: extra.requestId!,
+                    hospitalId: '',
+                    bloodType: extra.bloodType,
+                    component: extra.component,
+                    quantityUnits: extra.quantity,
+                    urgency: false,
+                    status: extra.status,
+                    trackingReference: extra.reference,
+                    createdAt: extra.lastUpdated,
+                  ),
+                ),
+              );
+            }
+            if (extra is String) {
+              return BlocProvider(
+                create: (_) => PaymentCubit(getIt<PaymentRepository>()),
+                child: PaymentScreen(
+                  request: BloodRequestPublic(
+                    id: extra,
+                    hospitalId: '',
+                    bloodType: '',
+                    component: 'whole_blood',
+                    quantityUnits: 1,
+                    urgency: false,
+                    status: 'requested',
+                    trackingReference: extra,
+                    createdAt: DateTime.now(),
+                  ),
+                ),
+              );
+            }
+            return const UnavailableFeatureScreen(
+              title: 'Payment',
+              message: 'A valid blood request is required.',
+            );
           },
         ),
         GoRoute(

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../domain/models/donor_profile_model.dart';
+import '../domain/models/voucher_model.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_error_message.dart';
 
@@ -8,6 +9,19 @@ class DonorRemoteDataSource {
   final Dio _dio;
 
   DonorRemoteDataSource(this._dio);
+
+  /// GET /api/v1/donors/me/vouchers
+  Future<List<VoucherModel>> getVouchers() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.donorVouchers);
+      final List data = response.data as List;
+      return data
+          .map((item) => VoucherModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _extractMessage(e);
+    }
+  }
 
   /// GET /api/v1/donors/me
   Future<DonorProfileModel> getProfile() async {

@@ -48,8 +48,8 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('Scan Blood Bag QR',
-            style: TextStyle(color: Colors.white)),
+        title: const Text('مسح كود طلب المستشفى',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => context.pop(),
@@ -106,8 +106,8 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                         children: [
                           CircularProgressIndicator(color: Colors.white),
                           SizedBox(height: 16),
-                          Text('Verifying QR code...',
-                              style: TextStyle(color: Colors.white)),
+                          Text('جاري فحص كود الطلب وبيانات المستشفى...',
+                              style: TextStyle(color: Colors.white, fontSize: 15)),
                         ],
                       ),
                     ),
@@ -162,18 +162,25 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           // Instructions
           Positioned(
             bottom: 60,
-            left: 0,
-            right: 0,
+            left: 24,
+            right: 24,
             child: Column(
               children: [
                 const Icon(Icons.qr_code_scanner,
-                    color: Colors.white, size: 32),
+                    color: Colors.white, size: 36),
                 const SizedBox(height: 12),
-                Text(
-                  'Point camera at the blood bag QR code',
+                const Text(
+                  'وجّه الكاميرا نحو كود طلب الدم',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9), fontSize: 15),
+                      color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'المطبوع في إذن صرف المستشفى أو المعروض على شاشة الطبيب',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
                 ),
               ],
             ),
