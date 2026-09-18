@@ -375,7 +375,7 @@ class RequestService:
                         changed_at=now,
                         changed_by_user_id=current_user.id,
                         location=bag.current_location,
-                        notes=notes or "Dispatched from blood bank to caregiver/transport",
+                        notes=notes or "Dispatched from blood bank via medical courier / cold-chain logistics to hospital",
                     )
                 )
 
@@ -385,7 +385,7 @@ class RequestService:
                     id=str(uuid.uuid4()),
                     blood_request_id=request.id,
                     status=request.status,
-                    notes=notes or "Dispatched to caregiver",
+                    notes=notes or "Dispatched via medical courier to hospital",
                     changed_by_user_id=current_user.id,
                 )
             )
