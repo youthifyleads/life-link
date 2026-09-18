@@ -12,52 +12,52 @@ class HelpScreen extends StatelessWidget {
     final sections = isDonor
         ? const [
             (
-              'Complete your profile',
-              'Add your phone, blood type, and availability.'
+              'استكمال الملف الشخصي',
+              'سجّل رقم هاتفك وفصيلة دمك وحالة جاهزيتك للتبرع لتلقي الحالات المتوافقة.',
             ),
             (
-              'Verify your blood type',
-              'Only verified information should be used for matching.'
+              'التحقق الطبي من الفصيلة',
+              'تعتمد منظومة LifeLink بيانات فصيلة الدم الموثقة لضمان أمان ومطابقة الحالات.',
             ),
             (
-              'Check eligibility',
-              'At least six months must pass after your last donation.'
+              'فترة الأمان الطبية (الأهلية)',
+              'يجب انقضاء 6 أشهر (180 يوماً) على الأقل بعد آخر تبرع لضمان تعافي وصحة المتبرع.',
             ),
             (
-              'Use Donation Feed',
-              'Review compatible requests and respond when you can help.'
+              'متابعة طلبات التبرع العاجلة',
+              'استعرض الحالات المتوافقة مع فصيلتك وأبْدِ استعدادك لإنقاذ حياة مريض.',
             ),
             (
-              'Notifications and history',
-              'Follow updates and review your past activity.'
+              'قسائم التقدير والتحاليل',
+              'بعد إتمام تبرعك في بنك الدم، تحصل فوراً على قسائم تقدير ومكافآت تحاليل مجانية.',
             ),
           ]
         : const [
             (
-              'Add a patient',
-              'Store the patient blood type and request information.'
+              'إضافة المريض وربطه بالمستشفى',
+              'أضف بيانات المريض التابع لك مع كود المستشفى أو رقم الملف الطبي.',
             ),
             (
-              'Create a request',
-              'Submit the required component, quantity, urgency, and hospital.'
+              'مسح كود طلب المستشفى (QR)',
+              'يقوم طبيب المستشفى بإنشاء طلب الدم رسمياً، ويقوم المرافق بمسح رمز الاستجابة السريع للطلب من شاشة أو ورقة المستشفى.',
             ),
             (
-              'Review matching',
-              'Matching uses blood type, availability, eligibility, and location.'
+              'مطابقة بنك الدم والأكياس',
+              'يقوم النظام بالبحث الآلي في مخزون بنوك الدم المعتمدة والمتبرعين المتطابقين.',
             ),
             (
-              'Track a blood bag',
-              'Tracking becomes available only after a real donation is available.'
+              'سداد الرسوم وتأكيد الطلب',
+              'سداد الفاتورة المعتمدة بأمان عبر البطاقات البنكية، المحافظ الإلكترونية، أو خزينة المستشفى.',
             ),
             (
-              'Payment',
-              'Review the amount and payment result returned by the backend.'
+              'تتبع النقل الطبي المتخصص (Cold-Chain)',
+              'ينقل مندوب طبي معتمد كيس الدم في حاوية مبردة ومراقبة حرارياً حتى باب المستشفى مباشرة، مع إمكانية التتبع اللحظي.',
             ),
           ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('How LifeLink works'),
+        title: const Text('دليل استخدام LifeLink'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => context.pop(),

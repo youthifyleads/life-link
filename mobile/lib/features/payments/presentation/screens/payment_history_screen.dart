@@ -115,7 +115,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('Payment history'),
+            title: const Text('سجل المدفوعات والفواتير'),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_rounded),
               onPressed: () => Navigator.of(context).pop(),
@@ -129,15 +129,15 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const LifeLinkLoadingState(message: 'Loading payment history…');
+      return const LifeLinkLoadingState(message: 'جاري تحميل سجل المدفوعات...');
     }
 
     if (_error != null) {
       return LifeLinkStatePanel(
         icon: Icons.cloud_off_rounded,
-        title: 'Payment history unavailable',
+        title: 'تعذر عرض سجل المدفوعات',
         message: _error!,
-        actionLabel: 'Try again',
+        actionLabel: 'إعادة المحاولة',
         onAction: _loadRequests,
         tone: AppColors.error,
       );
@@ -150,7 +150,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         children: [
           if (_requests.isNotEmpty) ...[
             const Text(
-              'Select request',
+              'اختر طلب الدم المطلوب',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 12),
@@ -166,7 +166,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
                       label: Text(
-                          '${request.bloodType} • ${request.quantityUnits}u'),
+                          '${request.bloodType} • ${request.quantityUnits} وحدات'),
                       selected: selected,
                       onSelected: (_) => _loadPaymentsForRequest(request.id),
                     ),
@@ -198,12 +198,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             Expanded(
               child: LifeLinkEmptyState(
                 icon: Icons.payments_outlined,
-                title: 'No payment records',
+                title: 'لا توجد فواتير أو مدفوعات',
                 message: _requests.isEmpty
-                    ? 'No caregiver payment transactions exist yet.'
+                    ? 'لم يتم تسجيل أي معاملات سداد حتى الآن.'
                     : _selectedRequestId == null
-                        ? 'Select a request to view payment history.'
-                        : 'No payment records exist yet for this request.',
+                        ? 'اختر طلب دم من القائمة أعلاه لعرض مدفوعاته.'
+                        : 'لا توجد فواتير مسجلة لهذا الطلب حتى الآن.',
               ),
             )
           else
@@ -213,6 +213,13 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final payment = _payments[index];
+                  final methodLabel = payment.paymentMethod == 'card'
+                      ? 'بطاقة بنكية'
+                      : payment.paymentMethod == 'wallet'
+                          ? 'محفظة إلكترونية / InstaPay'
+                          : payment.paymentMethod == 'hospital_cash'
+                              ? 'سداد بنكي/نقدي بالمستشفى'
+                              : (payment.paymentMethod.isEmpty ? '—' : payment.paymentMethod);
                   return LifeLinkCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +229,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                'EGP ${payment.amount}',
+                                '${payment.amount} ج.م',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
@@ -233,21 +240,17 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           ],
                         ),
                         const SizedBox(height: 12),
+                        _detailsRow('طريقة الدفع', methodLabel),
                         _detailsRow(
-                            'Method',
-                            payment.paymentMethod.isEmpty
-                                ? '—'
-                                : payment.paymentMethod),
-                        _detailsRow(
-                            'Reference', payment.transactionReference ?? '—'),
+                            'رقم المعاملة', payment.transactionReference ?? '—'),
                         if (payment.patientId != null)
-                          _detailsRow('Patient case', payment.patientId!),
+                          _detailsRow('كود المريض', payment.patientId!),
                         if (payment.allocationId != null)
-                          _detailsRow('Allocation', payment.allocationId!),
+                          _detailsRow('كود التخصيص', payment.allocationId!),
                         if (payment.bloodBagId != null)
-                          _detailsRow('Blood bag', payment.bloodBagId!),
-                        _detailsRow('Created', _formatDate(payment.createdAt)),
-                        _detailsRow('Paid', _formatDate(payment.paidAt)),
+                          _detailsRow('كود كيس الدم', payment.bloodBagId!),
+                        _detailsRow('تاريخ الإنشاء', _formatDate(payment.createdAt)),
+                        _detailsRow('تاريخ السداد', _formatDate(payment.paidAt)),
                       ],
                     ),
                   );

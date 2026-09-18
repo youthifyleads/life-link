@@ -73,7 +73,7 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Blood Request'),
+        title: const Text('طلب دم جديد'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => context.pop(),
@@ -130,7 +130,7 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Medical Details',
+                  'البيانات الطبية المطلوبة',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 16),
@@ -139,7 +139,7 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _bloodType,
                   decoration: InputDecoration(
-                    labelText: 'Blood Type',
+                    labelText: 'فصيلة الدم',
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
@@ -157,7 +157,7 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _component,
                   decoration: InputDecoration(
-                    labelText: 'Blood Component',
+                    labelText: 'مكون الدم المطلوب',
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
@@ -174,12 +174,12 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                 // Quantity
                 LifeLinkTextField(
                   controller: _quantityCtrl,
-                  label: 'Quantity (Units)',
+                  label: 'الكمية المطلوبة (بالوحدات)',
                   keyboardType: TextInputType.number,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Required';
+                    if (v == null || v.isEmpty) return 'هذا الحقل مطلوب';
                     if (int.tryParse(v) == null || int.parse(v) <= 0) {
-                      return 'Invalid amount';
+                      return 'يرجى إدخال عدد وحدات صحيح';
                     }
                     return null;
                   },
@@ -199,12 +199,12 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                     onChanged: (val) =>
                         setState(() => _isUrgent = val ?? false),
                     title: const Text(
-                      'Urgent Request',
+                      'طلب طارئ وعاجل',
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryDark),
                     ),
-                    subtitle: const Text('Check this if it is an emergency'),
+                    subtitle: const Text('حدد هذا الخيار للحالات الحرجة التي تتطلب تدخلاً فورياً'),
                     activeColor: AppColors.primary,
                     controlAffinity: ListTileControlAffinity.leading,
                   ),
@@ -212,21 +212,21 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                 const SizedBox(height: 24),
 
                 Text(
-                  'Additional Information',
+                  'تفاصيل وملاحظات إضافية',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 16),
 
                 LifeLinkTextField(
                   controller: _reasonCtrl,
-                  label: 'Medical Reason (Optional)',
-                  hint: 'e.g., Surgery, Accident',
+                  label: 'السبب الطبي (اختياري)',
+                  hint: 'مثال: عملية جراحية، نزيف طارئ',
                 ),
                 const SizedBox(height: 16),
                 LifeLinkTextField(
                   controller: _notesCtrl,
-                  label: 'Notes (Optional)',
-                  hint: 'Any specific instructions...',
+                  label: 'ملاحظات وتوصيات إضافية (اختياري)',
+                  hint: 'أي تفاصيل أو اشتراطات خاصة بالحالة...',
                 ),
 
                 const SizedBox(height: 32),
@@ -234,10 +234,10 @@ class _CreateBloodRequestScreenState extends State<CreateBloodRequestScreen> {
                 BlocBuilder<BloodRequestBloc, BloodRequestState>(
                   builder: (context, state) {
                     return LifeLinkButton(
-                      label: 'Create Request',
+                      label: 'إرسال طلب الدم',
                       onPressed: _submit,
                       isLoading: state is BloodRequestCreating,
-                      icon: Icons.add_circle_outline,
+                      icon: Icons.send_rounded,
                     );
                   },
                 ),

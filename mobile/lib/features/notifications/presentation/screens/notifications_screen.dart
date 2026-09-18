@@ -14,7 +14,7 @@ class NotificationsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: const Text('الإشعارات والتنبيهات'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => context.pop(),
@@ -27,7 +27,7 @@ class NotificationsScreen extends StatelessWidget {
                   onPressed: () =>
                       context.read<NotificationBloc>().add(MarkAllReadEvent()),
                   child: const Text(
-                    'Mark all read',
+                    'تحديد الكل كمقروء',
                     style: TextStyle(color: AppColors.primary),
                   ),
                 );
@@ -41,16 +41,16 @@ class NotificationsScreen extends StatelessWidget {
         builder: (context, state) {
           if (state is NotificationLoading) {
             return const LifeLinkLoadingState(
-              message: 'Checking for new LifeLink updates…',
+              message: 'جاري التحقق من التنبيهات الجديدة...',
             );
           }
 
           if (state is NotificationError) {
             return LifeLinkStatePanel(
               icon: Icons.cloud_off_rounded,
-              title: 'Notifications are unavailable',
+              title: 'تعذر تحميل الإشعارات',
               message: state.message,
-              actionLabel: 'Try again',
+              actionLabel: 'إعادة المحاولة',
               onAction: () => context
                   .read<NotificationBloc>()
                   .add(LoadNotificationsEvent()),
@@ -62,9 +62,9 @@ class NotificationsScreen extends StatelessWidget {
             if (state.notifications.isEmpty) {
               return const LifeLinkStatePanel(
                 icon: Icons.notifications_none_rounded,
-                title: 'You are all caught up',
+                title: 'لا توجد إشعارات جديدة',
                 message:
-                    'New updates about requests and donation activity will appear here.',
+                    'ستظهر هنا التحديثات الفورية المتعلقة بحالة طلبات الدم وتبرعاتك.',
               );
             }
 
@@ -212,15 +212,15 @@ class _NotificationTile extends StatelessWidget {
   String _triggerLabel() {
     switch (notification.trigger) {
       case 'URGENT_REQUEST':
-        return '🚨 Urgent Blood Request';
+        return '🚨 طلب دم عاجل وطارئ';
       case 'REQUEST_CREATED':
-        return 'New Request';
+        return 'طلب دم جديد';
       case 'REQUEST_ACKNOWLEDGED':
-        return 'Request Acknowledged';
+        return 'تم تأكيد استلام الطلب';
       case 'REQUEST_STATUS_CHANGED':
-        return 'Status Updated';
+        return 'تحديث في حالة الطلب';
       default:
-        return 'Notification';
+        return 'إشعار جديد';
     }
   }
 }
