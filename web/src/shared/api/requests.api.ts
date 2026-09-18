@@ -21,7 +21,7 @@ export interface BackendBloodRequestDTO {
   blood_type: string;
   component?: string | null;
   quantity_units: number;
-  urgency: string;
+  urgency: string | boolean;
   status: string;
   unit_price?: number | null;
   total_amount?: number | null;
@@ -40,6 +40,16 @@ export interface BackendTimelineEventDTO {
   changed_by?: string | null;
   reason?: string | null;
   created_at: string;
+}
+
+export function normalizeUrgency(val: unknown): UrgencyLevel {
+  if (typeof val === "boolean") {
+    return val ? "emergency" : "routine";
+  }
+  const s = String(val || "").toLowerCase().trim();
+  if (s === "emergency" || s === "critical") return "emergency";
+  if (s === "urgent" || s === "true" || s === "1") return "urgent";
+  return "routine";
 }
 
 export function mapBackendDtoToHospitalRequest(
@@ -68,7 +78,7 @@ export function mapBackendDtoToHospitalRequest(
     bloodGroup: dto.blood_type as BloodGroup,
     component: (dto.component as any) || "red_cells",
     quantity: dto.quantity_units,
-    urgency: dto.urgency.toLowerCase() as UrgencyLevel,
+    urgency: normalizeUrgency(dto.urgency),
     requiredAt: dto.created_at,
     reason: dto.notes || "Clinical Requisition",
     notes: dto.notes || undefined,
@@ -219,7 +229,7 @@ export function mapBackendDtoToBloodBankRequest(dto: any): BloodBankRequest {
     bloodGroup: (dto.blood_type || "O+") as BloodGroup,
     component: (dto.component as BloodBankComponent) || "red_cells",
     quantity: dto.quantity_units || dto.requested_quantity || 1,
-    urgency: (String(dto.urgency || "normal").toLowerCase() in { urgent: 1, critical: 1, emergency: 1 } ? "urgent" : "routine") as UrgencyLevel,
+    urgency: normalizeUrgency(dto.urgency),
     status: qStatus,
     createdAt: dto.created_at || new Date().toISOString(),
     requiredAt: dto.required_by || dto.created_at || new Date().toISOString(),
