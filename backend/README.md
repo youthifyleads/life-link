@@ -1,5 +1,5 @@
 # Life Link — Backend API
-
+ 
 FastAPI backend for the Life Link blood donation / blood request
 management system. Serves the React web app (Hospital/Blood Bank/Admin)
 and the Flutter mobile app (Donors) — both talk to SQL Server **only**
