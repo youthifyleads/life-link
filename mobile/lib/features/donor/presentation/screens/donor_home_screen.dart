@@ -42,51 +42,174 @@ class DonorHomeScreen extends StatelessWidget {
               AppSpacing.xxl,
             ),
             children: [
+              // Mode Switcher (Donor vs Caregiver)
+              _ModeSwitcher(
+                isDonorSelected: true,
+                onSelectDonor: () {},
+                onSelectCaregiver: () => context.go('/caregiver/home'),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
               const _DonorHero(),
               const SizedBox(height: AppSpacing.lg),
               const _ReadinessPanel(),
               const SizedBox(height: AppSpacing.lg),
-              Text('What needs your attention',
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text('الطلبات والتنبيهات العاجلة',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: AppSpacing.md),
               const _ActionGrid(),
               const SizedBox(height: AppSpacing.xl),
-              Text('Your donation journey',
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text('رحلة عطائك بالدم',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: AppSpacing.md),
               _JourneyRow(
+                icon: Icons.card_giftcard_rounded,
+                title: 'كوبونات ومكافآت التبرع',
+                subtitle: 'استعراض كوبونات الخصم المكتسبة من تبرعاتك.',
+                onTap: () => context.push('/donor/vouchers'),
+              ),
+              _JourneyRow(
                 icon: Icons.volunteer_activism_outlined,
-                title: 'Find a request',
-                subtitle: 'Review real blood requests that need support.',
+                title: 'البحث عن طلبات دم محتاجة',
+                subtitle: 'استعراض طلبات الاستغاثة القريبة المتوافقة معك.',
                 onTap: () => context.push('/donor/feed'),
               ),
               _JourneyRow(
                 icon: Icons.history_rounded,
-                title: 'Donation history',
-                subtitle: 'Keep track of your completed donations.',
+                title: 'سجل تبرعاتك السابقة',
+                subtitle: 'متابعة سجل التبرعات السابقة وشهادات التقدير.',
                 onTap: () => context.push('/donor/eligibility'),
               ),
               _JourneyRow(
                 icon: Icons.reply_outlined,
-                title: 'Response history',
-                subtitle: 'Review your responses to donation requests.',
+                title: 'سجل استجاباتك للنداءات',
+                subtitle: 'مراجعة استجاباتك وتأكيداتك لطلبات التبرع.',
                 onTap: () => context.push('/donor/responses'),
               ),
               _JourneyRow(
                 icon: Icons.verified_user_outlined,
-                title: 'Donation consents',
-                subtitle: 'Review and update consent choices.',
+                title: 'الموافقات الطبية والشروط',
+                subtitle: 'مراجعة وتحديث اختيارات الموافقة السريرية.',
                 onTap: () => context.push('/donor/consents'),
               ),
               _JourneyRow(
                 icon: Icons.menu_book_outlined,
-                title: 'How LifeLink works',
-                subtitle: 'Understand matching, consent, and eligibility.',
+                title: 'كيف يعمل LifeLink؟',
+                subtitle: 'فهم شروط الأهلية والتعافي وتوافق الفصائل.',
                 onTap: () => context.push('/help/donor'),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ModeSwitcher extends StatelessWidget {
+  final bool isDonorSelected;
+  final VoidCallback onSelectDonor;
+  final VoidCallback onSelectCaregiver;
+
+  const _ModeSwitcher({
+    required this.isDonorSelected,
+    required this.onSelectDonor,
+    required this.onSelectCaregiver,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: !isDonorSelected ? onSelectDonor : null,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isDonorSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isDonorSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.volunteer_activism_rounded,
+                      color: isDonorSelected ? Colors.white : Colors.grey[700],
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'أنا متبرع بالدم',
+                      style: TextStyle(
+                        color: isDonorSelected ? Colors.white : Colors.grey[800],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: isDonorSelected ? onSelectCaregiver : null,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: !isDonorSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: !isDonorSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.family_restroom_rounded,
+                      color: !isDonorSelected ? Colors.white : Colors.grey[700],
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'أنا مرافق مريض',
+                      style: TextStyle(
+                        color: !isDonorSelected ? Colors.white : Colors.grey[800],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

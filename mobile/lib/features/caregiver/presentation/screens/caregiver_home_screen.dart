@@ -11,12 +11,14 @@ class CaregiverHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Care coordination'),
+        title: const Text('خدمات المرافق والمريض'),
+        centerTitle: true,
         actions: [
           const NotificationBadgeButton(),
           IconButton(
-            tooltip: 'Profile and settings',
+            tooltip: 'الملف الشخصي والإعدادات',
             icon: const Icon(Icons.account_circle_outlined),
             onPressed: () => context.push('/profile'),
           ),
@@ -30,61 +32,97 @@ class CaregiverHomeScreen extends StatelessWidget {
           AppSpacing.xxl,
         ),
         children: [
-          _AttentionBanner(onTap: () => context.push('/caregiver/requests')),
+          // Mode Switcher (Donor vs Caregiver)
+          _ModeSwitcher(
+            isCaregiverSelected: true,
+            onSelectDonor: () => context.go('/donor/home'),
+            onSelectCaregiver: () {},
+          ),
           const SizedBox(height: AppSpacing.lg),
-          Text('Care workspace', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: AppSpacing.md),
+
+          // Primary Action Card: Scan Hospital Request QR
+          _ScanRequestHeroCard(onTap: () => context.push('/qr/scan')),
+          const SizedBox(height: AppSpacing.xl),
+
+          Text(
+            'خدمات المتابعة والرعاية',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.navy,
+                ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
           _WorkspaceTile(
-            icon: Icons.bloodtype_outlined,
-            title: 'Blood requests',
-            subtitle: 'Create and follow patient requests',
+            icon: Icons.qr_code_scanner_rounded,
+            title: 'مسح وتتبع إذن صرف الدم',
+            subtitle: 'امسح QR المستشفى للاطلاع على الفاتورة وتتبع المندوب',
             accent: AppColors.primary,
-            onTap: () => context.push('/caregiver/requests'),
+            onTap: () => context.push('/qr/scan'),
           ),
           _WorkspaceTile(
             icon: Icons.people_alt_outlined,
-            title: 'Patients',
-            subtitle: 'Review patient profiles and blood types',
+            title: 'سجل المرضى',
+            subtitle: 'إدارة ملفات المرضى التابعين لك وتحديث بياناتهم',
             accent: AppColors.teal,
             onTap: () => context.push('/caregiver/patients'),
           ),
           _WorkspaceTile(
-            icon: Icons.assignment_outlined,
-            title: 'Assignments',
-            subtitle: 'Review blood-bag assignments and notes',
-            accent: AppColors.navy,
-            onTap: () => context.push('/caregiver/assignments'),
-          ),
-          _WorkspaceTile(
-            icon: Icons.inventory_2_outlined,
-            title: 'Blood bags',
-            subtitle: 'Review bag status and movement history',
-            accent: AppColors.teal,
-            onTap: () => context.push('/caregiver/blood-bags'),
-          ),
-          _WorkspaceTile(
-            icon: Icons.qr_code_scanner_rounded,
-            title: 'Scan and track',
-            subtitle: 'Use the real QR and tracking workflow',
-            accent: AppColors.info,
-            onTap: () => context.push('/qr/scan'),
-          ),
-          _WorkspaceTile(
             icon: Icons.payments_outlined,
-            title: 'Payments',
-            subtitle: 'Review request-specific payment history',
+            title: 'الفواتير والمدفوعات الإلكترونية',
+            subtitle: 'استعراض إيصالات السداد وحالة الدفع عبر Paymob',
             accent: AppColors.warning,
             onTap: () => context.push('/caregiver/payment-history'),
           ),
+          _WorkspaceTile(
+            icon: Icons.assignment_outlined,
+            title: 'سجل التعيينات والتسليم',
+            subtitle: 'متابعة بيانات أكياس الدم المسندة وملاحظات المستشفى',
+            accent: AppColors.navy,
+            onTap: () => context.push('/caregiver/assignments'),
+          ),
+
           const SizedBox(height: AppSpacing.lg),
-          Text('Need a walkthrough?',
-              style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.xs),
-          TextButton.icon(
-            onPressed: () => context.push('/help/caregiver'),
-            icon: const Icon(Icons.menu_book_outlined),
-            label: const Text('How LifeLink works'),
-            style: TextButton.styleFrom(alignment: Alignment.centerLeft),
+
+          // Clinical Responsibility Disclaimer Banner
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline_rounded, color: AppColors.secondaryBlue, size: 22),
+                SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'إرشاد طبي هام',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: AppColors.secondaryBlue,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'طلبات صرف الدم تصدر حصرياً ومباشرةً من طبيب المستشفى المعالج وفق المعايير الطبية المعتمدة. كل ما عليك كمرافق هو مسح كود الطلب لمتابعة حالة وصول الدم وسداد الرسوم.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -92,51 +130,201 @@ class CaregiverHomeScreen extends StatelessWidget {
   }
 }
 
-class _AttentionBanner extends StatelessWidget {
+class _ModeSwitcher extends StatelessWidget {
+  final bool isCaregiverSelected;
+  final VoidCallback onSelectDonor;
+  final VoidCallback onSelectCaregiver;
+
+  const _ModeSwitcher({
+    required this.isCaregiverSelected,
+    required this.onSelectDonor,
+    required this.onSelectCaregiver,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: isCaregiverSelected ? onSelectDonor : null,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: !isCaregiverSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: !isCaregiverSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.volunteer_activism_rounded,
+                      color: !isCaregiverSelected ? Colors.white : Colors.grey[700],
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'أنا متبرع بالدم',
+                      style: TextStyle(
+                        color: !isCaregiverSelected ? Colors.white : Colors.grey[800],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: !isCaregiverSelected ? onSelectCaregiver : null,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isCaregiverSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isCaregiverSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.family_restroom_rounded,
+                      color: isCaregiverSelected ? Colors.white : Colors.grey[700],
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'أنا مرافق مريض',
+                      style: TextStyle(
+                        color: isCaregiverSelected ? Colors.white : Colors.grey[800],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScanRequestHeroCard extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _AttentionBanner({required this.onTap});
+  const _ScanRequestHeroCard({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: AppRadii.lg,
+      borderRadius: BorderRadius.circular(20),
       onTap: onTap,
       child: Ink(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.navy, AppColors.secondaryBlue],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.navy, Color(0xFF1E405E)],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
           ),
-          borderRadius: AppRadii.lg,
-          boxShadow: AppShadows.soft,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.navy.withValues(alpha: 0.25),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
-        child: Row(
+        child: Column(
           children: [
-            const Icon(Icons.task_alt_rounded, color: Colors.white, size: 34),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Stay on top of care',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(color: Colors.white),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  const Text(
-                    'Open requests and review the latest backend status.',
-                    style: TextStyle(color: Color(0xFFD7E3E8)),
+                  child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 36),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'مسح كود طلب المستشفى',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'امسح رمز QR الصادر من الطبيب لمتابعة الطلب والدفع',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.camera_alt_outlined, color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'فتح الكاميرا ومسح الكود الآن',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_rounded, color: Colors.white),
           ],
         ),
       ),
@@ -162,7 +350,12 @@ class _WorkspaceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.border),
+      ),
       child: ListTile(
         minVerticalPadding: AppSpacing.sm,
         contentPadding: const EdgeInsets.symmetric(
@@ -170,17 +363,23 @@ class _WorkspaceTile extends StatelessWidget {
           vertical: AppSpacing.xs,
         ),
         leading: Container(
-          width: 46,
-          height: 46,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             color: accent.withValues(alpha: 0.12),
-            borderRadius: AppRadii.sm,
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: accent),
+          child: Icon(icon, color: accent, size: 22),
         ),
-        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right_rounded),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+        trailing: const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
         onTap: onTap,
       ),
     );

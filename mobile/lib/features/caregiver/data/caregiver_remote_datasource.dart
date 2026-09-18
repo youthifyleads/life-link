@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_error_message.dart';
-import '../../blood_requests/domain/models/blood_request_model.dart';
 import '../domain/models/caregiver_models.dart';
 
 class CaregiverRemoteDataSource {
@@ -44,16 +43,13 @@ class CaregiverRemoteDataSource {
     }
   }
 
-  Future<BloodRequestPublic> createPatientBloodRequest({
-    required String patientId,
-    required BloodRequestCreate request,
-  }) async {
+  Future<Map<String, dynamic>> scanHospitalRequest(String qrCode) async {
     try {
       final response = await _dio.post(
-        ApiEndpoints.caregiverPatientRequests(patientId),
-        data: request.toJson(),
+        ApiEndpoints.caregiverScanRequest,
+        data: {'qr_code': qrCode},
       );
-      return BloodRequestPublic.fromJson(response.data as Map<String, dynamic>);
+      return response.data as Map<String, dynamic>;
     } on DioException catch (error) {
       throw apiErrorMessage(error);
     }

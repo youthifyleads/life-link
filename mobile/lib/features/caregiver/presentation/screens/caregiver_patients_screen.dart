@@ -161,23 +161,25 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
               itemBuilder: (context, index) {
                 final patient = patients[index];
                 return Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: const BorderSide(color: AppColors.border),
+                  ),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: AppColors.primaryLight,
-                      child: Text(patient.bloodType),
+                      child: Text(
+                        patient.bloodType,
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                      ),
                     ),
-                    title: Text(patient.fullName),
-                    subtitle: Text(patient.notes ?? 'No notes'),
+                    title: Text(patient.fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(patient.notes ?? 'لا توجد ملاحظات إضافية'),
                     trailing: IconButton(
-                      tooltip: 'Create blood request',
-                      icon: const Icon(Icons.add_circle_outline),
-                      onPressed: () async {
-                        final created = await context.push<bool>(
-                          '/caregiver/patients/request',
-                          extra: patient,
-                        );
-                        if (created == true && mounted) _reload();
-                      },
+                      tooltip: 'مسح كود طلب المستشفى للمريض',
+                      icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary),
+                      onPressed: () => context.push('/qr/scan'),
                     ),
                   ),
                 );
