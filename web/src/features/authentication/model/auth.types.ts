@@ -32,6 +32,20 @@ export interface LoginInput {
   password: string;
 }
 
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface ResetPasswordInput {
+  email: string;
+  otp: string;
+  new_password: string;
+}
+
+export interface AuthMessageResponse {
+  message?: string;
+}
+
 export interface TokenResponse {
   access_token: string;
   token_type: "bearer";

@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ClockAlert,
   ExternalLink,
+  History,
   Layers,
   MapPin,
   ScanLine,
@@ -25,9 +26,14 @@ import { Button } from "@/shared/components/ui/button";
 interface InventoryTableProps {
   units: BloodUnit[];
   onUpdateStatus?: (unitId: string, newStatus: BloodUnitStatus) => void;
+  onViewHistory?: (unitId: string) => void;
 }
 
-export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
+export function InventoryTable({
+  units,
+  onUpdateStatus,
+  onViewHistory,
+}: InventoryTableProps) {
   const { t } = useTranslation();
   const [now] = useState(() => Date.now());
 
@@ -262,6 +268,18 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
                       {/* Actions */}
                       <td className="px-3.5 py-2.5 text-end">
                         <div className="flex items-center justify-end gap-1.5">
+                          {onViewHistory ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => onViewHistory(unit.id)}
+                            >
+                              <History aria-hidden="true" className="size-3" />
+                              {t("bloodBank.viewCustodyHistory", "History")}
+                            </Button>
+                          ) : null}
                           <Button
                             asChild
                             variant="ghost"
@@ -376,7 +394,19 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-border flex items-center justify-end">
+                  <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-2">
+                    {onViewHistory ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={() => onViewHistory(unit.id)}
+                      >
+                        <History aria-hidden="true" className="size-3" />
+                        {t("bloodBank.viewCustodyHistory", "History")}
+                      </Button>
+                    ) : null}
                     <Button asChild size="sm" variant="secondary" className="h-7 text-xs">
                       <Link to={`/blood-bank/tracking?id=${unit.id}`}>
                         <ScanLine aria-hidden="true" className="size-3" />

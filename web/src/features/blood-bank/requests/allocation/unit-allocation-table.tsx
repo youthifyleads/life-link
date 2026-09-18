@@ -1,6 +1,7 @@
 import {
   BookmarkCheck,
   CheckCircle2,
+  History,
   LoaderCircle,
   PackagePlus,
   Search,
@@ -25,6 +26,7 @@ interface UnitAllocationTableProps {
   isPending: boolean;
   onAllocateUnits: (unitIds: string[]) => void;
   onReserveUnits: (unitIds: string[]) => void;
+  onViewHistory?: (unitId: string) => void;
 }
 
 export function UnitAllocationTable({
@@ -33,6 +35,7 @@ export function UnitAllocationTable({
   isPending,
   onAllocateUnits,
   onReserveUnits,
+  onViewHistory,
 }: UnitAllocationTableProps) {
   const { t } = useTranslation();
   const [matchingOnly, setMatchingOnly] = useState(true);
@@ -197,7 +200,7 @@ export function UnitAllocationTable({
 
       {/* Table */}
       <div
-        className="mt-4 overflow-x-auto border border-border"
+        className="mt-4 max-w-full overflow-x-auto border border-border"
         tabIndex={0}
         role="region"
         aria-label={t("bloodBank.availableMatching", "Available blood units matching table.")}
@@ -210,10 +213,10 @@ export function UnitAllocationTable({
             )}
           </div>
         ) : (
-          <table className="w-full table-fixed border-collapse text-start text-xs">
+          <table className="w-full min-w-[68rem] table-fixed border-collapse text-start text-xs">
             <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
               <tr>
-                <th scope="col" className="w-[5%] px-3 py-2.5 text-center">
+                <th scope="col" className="w-12 px-3 py-2.5 text-center">
                   <input
                     type="checkbox"
                     aria-label={t("bloodBank.selectAllUnits")}
@@ -225,28 +228,31 @@ export function UnitAllocationTable({
                     className="size-3.5 rounded border-field-stroke text-primary"
                   />
                 </th>
-                <th scope="col" className="w-[18%] px-3 py-2.5 text-start">
+                <th scope="col" className="w-36 px-3 py-2.5 text-start">
                   {t("bloodBank.unitId", "Unit ID")}
                 </th>
-                <th scope="col" className="w-[12%] px-3 py-2.5 text-start">
+                <th scope="col" className="w-24 px-3 py-2.5 text-start">
                   {t("common.bloodGroup", "Group")}
                 </th>
-                <th scope="col" className="w-[18%] px-3 py-2.5 text-start">
+                <th scope="col" className="w-40 px-3 py-2.5 text-start">
                   {t("common.component", "Component")}
                 </th>
-                <th scope="col" className="w-[13%] px-3 py-2.5 text-start">
+                <th scope="col" className="w-28 px-3 py-2.5 text-start">
                   {t("bloodBank.collection", "Collection")}
                 </th>
-                <th scope="col" className="w-[13%] px-3 py-2.5 text-start">
+                <th scope="col" className="w-28 px-3 py-2.5 text-start">
                   {t("bloodBank.expiry", "Expiry")}
                 </th>
-                <th scope="col" className="w-[18%] px-3 py-2.5 text-start">
+                <th scope="col" className="w-40 px-3 py-2.5 text-start">
                   {t("bloodBank.location", "Location")}
                 </th>
-                <th scope="col" className="w-[11%] px-3 py-2.5 text-start">
+                <th scope="col" className="w-28 px-3 py-2.5 text-start">
                   {t("common.status", "Status")}
                 </th>
-                <th scope="col" className="w-[16%] px-3 py-2.5 text-end">
+                <th
+                  scope="col"
+                  className="sticky end-0 z-10 w-44 border-s border-border bg-surface-subtle px-3 py-2.5 text-end"
+                >
                   {t("common.actions", "Actions")}
                 </th>
               </tr>
@@ -261,7 +267,7 @@ export function UnitAllocationTable({
                 return (
                   <tr
                     key={unit.id}
-                    className={`hover:bg-surface-subtle/60 ${
+                    className={`group hover:bg-surface-subtle/60 ${
                       isSelected ? "bg-primary/5" : ""
                     }`}
                   >
@@ -275,8 +281,20 @@ export function UnitAllocationTable({
                       />
                     </td>
                     <td className="px-3 py-2.5 font-semibold text-foreground tabular-nums">
-                      <div className="flex items-center gap-1.5">
-                        <bdi dir="ltr">{unit.id}</bdi>
+                      <div className="flex items-center gap-1.5 whitespace-nowrap">
+                        {onViewHistory ? (
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            onClick={() => onViewHistory(unit.id)}
+                            aria-label={`${t("bloodBank.viewCustodyHistory", "View custody history")} ${unit.id}`}
+                          >
+                            <History aria-hidden="true" className="size-3.5" />
+                            <bdi dir="ltr">{unit.id}</bdi>
+                          </button>
+                        ) : (
+                          <bdi dir="ltr">{unit.id}</bdi>
+                        )}
                         {isExactMatch ? (
                           <span
                             title={t("bloodBank.exactMatch", "Exact clinical match")}
@@ -291,18 +309,18 @@ export function UnitAllocationTable({
                     <td className="px-3 py-2.5 font-medium text-foreground">
                       {bloodBankComponentLabels[unit.component as BloodBankComponent]}
                     </td>
-                    <td className="px-3 py-2.5 text-muted-foreground tabular-nums">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground tabular-nums">
                       <bdi dir="ltr">{unit.collectionDate}</bdi>
                     </td>
-                    <td className="px-3 py-2.5 text-muted-foreground tabular-nums">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground tabular-nums">
                       <bdi dir="ltr">{unit.expiryDate}</bdi>
                     </td>
-                    <td className="px-3 py-2.5 text-muted-foreground">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
                       {unit.storageLocation}
                     </td>
                     <td className="px-3 py-2.5">
                       <span
-                        className={`inline-flex rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${
+                        className={`inline-flex whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${
                           unit.status === "available"
                             ? "bg-success-subtle text-success"
                             : unit.status === "reserved"
@@ -313,12 +331,12 @@ export function UnitAllocationTable({
                         {t(`status.${unit.status}`, unit.status)}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-end">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="sticky end-0 z-[1] border-s border-border bg-surface px-3 py-2.5 text-end transition-colors group-hover:bg-surface-subtle">
+                      <div className="flex flex-nowrap items-center justify-end gap-1.5">
                         <Button
                           type="button"
                           size="sm"
-                          className="h-6 px-2 text-xs"
+                          className="h-7 whitespace-nowrap px-2.5 text-xs"
                           disabled={isPending}
                           onClick={() => onAllocateUnits([unit.id])}
                           aria-label={`${t("bloodBank.allocate", "Allocate")} ${unit.id}`}
@@ -329,7 +347,7 @@ export function UnitAllocationTable({
                           type="button"
                           size="sm"
                           variant="secondary"
-                          className="h-6 px-2 text-xs"
+                          className="h-7 whitespace-nowrap px-2.5 text-xs"
                           disabled={isPending}
                           onClick={() => onReserveUnits([unit.id])}
                           aria-label={`${t("bloodBank.reserve", "Reserve")} ${unit.id}`}

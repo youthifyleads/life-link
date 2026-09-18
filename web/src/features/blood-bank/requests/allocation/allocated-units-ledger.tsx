@@ -1,4 +1,11 @@
-import { Check, LoaderCircle, PackageMinus, ShieldAlert } from "lucide-react";
+import {
+  Check,
+  History,
+  LoaderCircle,
+  PackageMinus,
+  ScanBarcode,
+  ShieldAlert,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { bloodBankComponentLabels } from "@/features/blood-bank/types/blood-bank.types";
@@ -17,6 +24,8 @@ interface AllocatedUnitsLedgerProps {
   isPending: boolean;
   activeUnitId?: string;
   onRemoveUnit: (unitId: string) => void;
+  onViewHistory?: (unitId: string) => void;
+  onOpenBarcodeAllocation?: () => void;
 }
 
 export function AllocatedUnitsLedger({
@@ -25,6 +34,8 @@ export function AllocatedUnitsLedger({
   isPending,
   activeUnitId,
   onRemoveUnit,
+  onViewHistory,
+  onOpenBarcodeAllocation,
 }: AllocatedUnitsLedgerProps) {
   const { t } = useTranslation();
   const allocatedUnits = allUnits.filter((u) =>
@@ -57,6 +68,18 @@ export function AllocatedUnitsLedger({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {onOpenBarcodeAllocation ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="h-8 text-xs"
+              onClick={onOpenBarcodeAllocation}
+            >
+              <ScanBarcode aria-hidden="true" className="size-3.5" />
+              {t("bloodBank.barcodeAllocationAction", "Barcode allocation")}
+            </Button>
+          ) : null}
           <span
             className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-semibold ${
               isFulfilled
@@ -152,7 +175,19 @@ export function AllocatedUnitsLedger({
                 {allocatedUnits.map((unit) => (
                   <tr key={unit.id} className="hover:bg-surface-subtle/50">
                     <td className="px-3 py-2.5 font-semibold text-foreground tabular-nums">
-                      <bdi dir="ltr">{unit.id}</bdi>
+                      {onViewHistory ? (
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          onClick={() => onViewHistory(unit.id)}
+                          aria-label={`${t("bloodBank.viewCustodyHistory", "View custody history")} ${unit.id}`}
+                        >
+                          <History aria-hidden="true" className="size-3.5" />
+                          <bdi dir="ltr">{unit.id}</bdi>
+                        </button>
+                      ) : (
+                        <bdi dir="ltr">{unit.id}</bdi>
+                      )}
                     </td>
                     <td className="px-3 py-2.5">
                       <BloodGroupBadge group={unit.bloodGroup as BloodGroup} />

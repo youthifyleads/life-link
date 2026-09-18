@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { BloodBankPageFrame } from "@/features/blood-bank/components/blood-bank-page-frame";
+import { BloodBagCustodyHistoryDrawer } from "@/features/blood-bank/custody/blood-bag-custody-history-drawer";
 import {
   useBloodStockMatrix,
   useInventoryKPIs,
@@ -42,6 +43,7 @@ export function BloodBankInventoryPage() {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<InventoryLedgerFilters>(defaultFilters);
   const [intakeOpen, setIntakeOpen] = useState(false);
+  const [historyBagId, setHistoryBagId] = useState<string>();
 
   const kpisQuery = useInventoryKPIs();
   const matrixQuery = useBloodStockMatrix();
@@ -149,6 +151,7 @@ export function BloodBankInventoryPage() {
 
             <InventoryTable
               units={unitsQuery.data ?? []}
+              onViewHistory={setHistoryBagId}
               onUpdateStatus={(unitId, status) => {
                 updateStatusMutation.mutate({ unitId, status });
               }}
@@ -165,6 +168,11 @@ export function BloodBankInventoryPage() {
         onSuccess={() => {
           // React query automatically invalidates through mutation onSuccess
         }}
+      />
+
+      <BloodBagCustodyHistoryDrawer
+        bagId={historyBagId}
+        onClose={() => setHistoryBagId(undefined)}
       />
     </BloodBankPageFrame>
   );

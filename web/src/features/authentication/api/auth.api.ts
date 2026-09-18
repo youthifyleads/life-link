@@ -1,7 +1,10 @@
 import { apiClient, authHttpClient } from "@/shared/api/http-client";
 import type {
+  AuthMessageResponse,
   AuthenticatedUser,
+  ForgotPasswordInput,
   LoginInput,
+  ResetPasswordInput,
   TokenResponse,
 } from "@/features/authentication/model/auth.types";
 
@@ -26,5 +29,21 @@ export const authApi = {
 
   async logout() {
     await authHttpClient.post("/auth/logout");
+  },
+
+  async forgotPassword(input: ForgotPasswordInput) {
+    const { data } = await authHttpClient.post<AuthMessageResponse>(
+      "/auth/forgot-password",
+      input,
+    );
+    return data;
+  },
+
+  async resetPassword(input: ResetPasswordInput) {
+    const { data } = await authHttpClient.post<AuthMessageResponse>(
+      "/auth/reset-password",
+      input,
+    );
+    return data;
   },
 };

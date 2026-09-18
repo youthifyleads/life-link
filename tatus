@@ -1,0 +1,11 @@
+warning: in the working copy of 'web/src/app/i18n/resources.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/app/router/router.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/features/authentication/api/auth.api.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/features/authentication/model/auth.types.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'web/src/pages/auth/login-page.tsx', LF will be replaced by CRLF the next time Git touches it
+ web/src/app/i18n/resources.ts                      | 96 [32m++++++++++++++++++++++[m
+ web/src/app/router/router.tsx                      | 16 [32m++++[m
+ web/src/features/authentication/api/auth.api.ts    | 19 [32m+++++[m
+ .../features/authentication/model/auth.types.ts    | 14 [32m++++[m
+ web/src/pages/auth/login-page.tsx                  | 12 [32m++[m[31m-[m
+ 5 files changed, 155 insertions(+), 2 deletions(-)

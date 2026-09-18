@@ -10,7 +10,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import { env } from "@/app/config/env";
@@ -406,6 +406,15 @@ export function LoginPage() {
               </Button>
             </form>
           )}
+
+          <div className="mt-6 text-center">
+            <Link
+              to="/forgot-password"
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t("auth.forgotPasswordLink")}
+            </Link>
+          </div>
 
           {!isDemoAuthenticationEnabled ? (
             <p className="mt-8 flex items-start gap-3 border-t border-border pt-5 text-xs leading-5 text-muted-foreground">

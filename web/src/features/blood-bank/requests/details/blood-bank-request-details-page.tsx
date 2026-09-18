@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { BloodBankPageFrame } from "@/features/blood-bank/components/blood-bank-page-frame";
+import { BloodBagCustodyHistoryDrawer } from "@/features/blood-bank/custody/blood-bag-custody-history-drawer";
 import {
   useAllocateUnits,
   useBloodBankRequest,
@@ -23,7 +24,9 @@ import {
   useUpdateDocumentReviewStatus,
 } from "@/features/blood-bank/hooks/use-blood-bank-requests";
 import { AllocatedUnitsLedger } from "@/features/blood-bank/requests/allocation/allocated-units-ledger";
+import { BarcodeAllocationDialog } from "@/features/blood-bank/requests/allocation/barcode-allocation-dialog";
 import { UnitAllocationTable } from "@/features/blood-bank/requests/allocation/unit-allocation-table";
+import { RequestAcceptPricingDialog } from "@/features/blood-bank/requests/acceptance/request-accept-pricing-dialog";
 import { BloodBankDocumentsSection } from "@/features/blood-bank/requests/details/blood-bank-documents-section";
 import { BloodBankRequestSummary } from "@/features/blood-bank/requests/details/blood-bank-request-summary";
 import { DispatchQrModal } from "@/features/blood-bank/requests/details/dispatch-qr-modal";
@@ -54,7 +57,11 @@ export function BloodBankRequestDetailsPage() {
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [dispatchQrOpen, setDispatchQrOpen] = useState(false);
+  const [barcodeAllocationOpen, setBarcodeAllocationOpen] = useState(false);
+  const [acceptPricingOpen, setAcceptPricingOpen] = useState(false);
+  const [acceptedUnitPrice, setAcceptedUnitPrice] = useState<number>();
   const [activeUnitId, setActiveUnitId] = useState<string>();
+  const [historyBagId, setHistoryBagId] = useState<string>();
   const [feedback, setFeedback] = useState<{
     tone: "success" | "error";
     message: string;
@@ -244,15 +251,17 @@ export function BloodBankRequestDetailsPage() {
   };
 
   // Workflow state controls
-  const canAcknowledge = request.status === "submitted";
+  const canAccept = request.status === "submitted" && acceptedUnitPrice === undefined;
   const canConfirm = request.status === "acknowledged";
   const canStartPreparation = request.status === "confirmed";
   const canComplete = request.status === "preparing";
   const canReject =
-    request.status === "submitted" || request.status === "acknowledged";
+    acceptedUnitPrice === undefined &&
+    (request.status === "submitted" || request.status === "acknowledged");
   const canGenerateQr = ["confirmed", "preparing", "completed"].includes(
     request.status,
   );
+  const canManageAllocation = ["confirmed", "preparing"].includes(request.status);
 
   const isTransitionPending = transitionMutation.isPending;
 
@@ -270,18 +279,13 @@ export function BloodBankRequestDetailsPage() {
       })}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          {canAcknowledge ? (
+          {canAccept ? (
             <Button
               type="button"
-              disabled={isTransitionPending}
-              onClick={() => void handleTransition("acknowledge")}
+              onClick={() => setAcceptPricingOpen(true)}
             >
-              {isTransitionPending ? (
-                <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
-              ) : (
-                <Check aria-hidden="true" className="size-4" />
-              )}
-              {t("bloodBank.acknowledgeRequest", "Acknowledge request")}
+              <Check aria-hidden="true" className="size-4" />
+              {t("bloodBank.acceptAndPrice", "Accept & set pricing")}
             </Button>
           ) : null}
 
@@ -390,6 +394,10 @@ export function BloodBankRequestDetailsPage() {
               isPending={deallocateMutation.isPending}
               activeUnitId={activeUnitId}
               onRemoveUnit={(unitId) => void handleRemoveUnit(unitId)}
+              onViewHistory={setHistoryBagId}
+              onOpenBarcodeAllocation={
+                canManageAllocation ? () => setBarcodeAllocationOpen(true) : undefined
+              }
             />
 
             <UnitAllocationTable
@@ -398,6 +406,7 @@ export function BloodBankRequestDetailsPage() {
               isPending={allocateMutation.isPending || reserveMutation.isPending}
               onAllocateUnits={(unitIds) => void handleAllocate(unitIds)}
               onReserveUnits={(unitIds) => void handleReserve(unitIds)}
+              onViewHistory={setHistoryBagId}
             />
           </div>
 
@@ -431,6 +440,22 @@ export function BloodBankRequestDetailsPage() {
         }}
       />
 
+      <RequestAcceptPricingDialog
+        open={acceptPricingOpen}
+        onOpenChange={setAcceptPricingOpen}
+        request={request}
+        onAccepted={(unitPrice) => {
+          setAcceptedUnitPrice(unitPrice);
+          setFeedback({
+            tone: "success",
+            message: t("bloodBank.requestAcceptedSuccess", {
+              id: request.id,
+              defaultValue: `Request ${request.id} was accepted successfully.`,
+            }),
+          });
+        }}
+      />
+
       {/* Dispatch QR & Cold Box Waybill Modal */}
       <DispatchQrModal
         open={dispatchQrOpen}
@@ -439,6 +464,22 @@ export function BloodBankRequestDetailsPage() {
         allocatedUnits={units.filter((u) =>
           request.allocatedUnitIds.includes(u.id),
         )}
+      />
+
+      <BarcodeAllocationDialog
+        open={barcodeAllocationOpen}
+        onOpenChange={setBarcodeAllocationOpen}
+        requestId={request.id}
+        quota={request.quantity}
+        allocatedUnits={units.filter((unit) =>
+          request.allocatedUnitIds.includes(unit.id),
+        )}
+        allUnits={units}
+      />
+
+      <BloodBagCustodyHistoryDrawer
+        bagId={historyBagId}
+        onClose={() => setHistoryBagId(undefined)}
       />
     </BloodBankPageFrame>
   );
