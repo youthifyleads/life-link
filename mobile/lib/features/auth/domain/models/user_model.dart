@@ -70,6 +70,30 @@ extension UserRoleX on UserRole {
   bool get isAdmin => this == UserRole.admin;
   bool get isKnown => this != UserRole.unknown;
 
+  /// Arabic display name for UI presentation
+  String get displayNameAr {
+    switch (this) {
+      case UserRole.donor:
+        return 'متبرع بالدم';
+      case UserRole.caregiver:
+        return 'مرافق مريض';
+      case UserRole.hospitalUser:
+        return 'طاقم طبي بالمستشفى';
+      case UserRole.bloodBankOperator:
+        return 'أخصائي بنك الدم';
+      case UserRole.medicalLead:
+        return 'مشرف طبي';
+      case UserRole.admin:
+        return 'مدير النظام';
+      case UserRole.platformSupport:
+        return 'دعم فني';
+      case UserRole.normalUser:
+        return 'مستخدم LifeLink';
+      case UserRole.unknown:
+        return 'مستخدم';
+    }
+  }
+
   /// Returns true for roles that may access the Donor feature area.
   /// The deployed backend assigns `normal_user` to mobile sign-ups, so
   /// all of these map to the donor home experience.

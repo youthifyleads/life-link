@@ -57,7 +57,7 @@ class _CaregiverAssignmentsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Assignments'),
+        title: const Text('تخصيصات أكياس الدم'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -66,23 +66,23 @@ class _CaregiverAssignmentsScreenState
         ],
       ),
       body: _loading
-          ? const LifeLinkLoadingState(message: 'Loading assignments…')
+          ? const LifeLinkLoadingState(message: 'جاري تحميل التخصيصات...')
           : _error != null
               ? LifeLinkStatePanel(
                   icon: Icons.cloud_off_rounded,
-                  title: 'Assignments are unavailable',
+                  title: 'تعذر تحميل التخصيصات',
                   message:
-                      'We could not load assignment data. Check your connection and try again.',
-                  actionLabel: 'Try again',
+                      'يرجى التحقق من اتصال الإنترنت والمحاولة مجدداً.',
+                  actionLabel: 'إعادة المحاولة',
                   onAction: _loadAssignments,
                   tone: AppColors.error,
                 )
               : _assignments.isEmpty
                   ? const LifeLinkStatePanel(
                       icon: Icons.assignment_outlined,
-                      title: 'No assignments yet',
+                      title: 'لا توجد تخصيصات حالياً',
                       message:
-                          'Confirmed blood-bag assignments will appear here.',
+                          'ستظهر هنا أكياس الدم المخصصة للمرضى فور اعتمادها من بنك الدم.',
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.all(20),
@@ -90,6 +90,11 @@ class _CaregiverAssignmentsScreenState
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final assignment = _assignments[index];
+                        final statusLabel = assignment.status == 'assigned'
+                            ? 'تم التخصيص'
+                            : assignment.status == 'completed'
+                                ? 'مكتمل ومسلّم'
+                                : assignment.status;
                         return Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -106,7 +111,7 @@ class _CaregiverAssignmentsScreenState
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      'Bag ${assignment.bloodBagId}',
+                                      'كيس دم #${assignment.bloodBagId}',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
@@ -114,7 +119,7 @@ class _CaregiverAssignmentsScreenState
                                     ),
                                   ),
                                   Chip(
-                                    label: Text(assignment.status),
+                                    label: Text(statusLabel),
                                     backgroundColor: assignment.status ==
                                             'assigned'
                                         ? AppColors.primary
@@ -125,14 +130,14 @@ class _CaregiverAssignmentsScreenState
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              _detailsRow('Hospital', assignment.hospitalId),
+                              _detailsRow('المستشفى', assignment.hospitalId),
                               _detailsRow(
-                                  'Caregiver', assignment.caregiverUserId),
-                              _detailsRow('Assigned',
+                                  'المرافق', assignment.caregiverUserId),
+                              _detailsRow('تاريخ التخصيص',
                                   _formatDate(assignment.assignmentDate)),
                               if (assignment.notes != null &&
                                   assignment.notes!.isNotEmpty)
-                                _detailsRow('Notes', assignment.notes!),
+                                _detailsRow('ملاحظات', assignment.notes!),
                             ],
                           ),
                         );

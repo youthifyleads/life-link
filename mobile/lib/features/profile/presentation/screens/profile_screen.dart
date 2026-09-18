@@ -17,7 +17,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('الملف الشخصي والإعدادات (Profile)'),
+        title: const Text('الملف الشخصي والإعدادات'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => context.pop(),
@@ -107,7 +107,7 @@ class ProfileScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    user.role.apiValue.toUpperCase(),
+                    user.role.displayNameAr,
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
@@ -124,45 +124,45 @@ class ProfileScreen extends StatelessWidget {
                     _settingTile(
                       context,
                       icon: Icons.favorite_border_rounded,
-                      title: 'أهلية وسجل التبرع (Eligibility & History)',
-                      subtitle: 'فحص نافذة الـ 6 أشهر وسجل التبرعات من Azure',
+                      title: 'أهلية وسجل التبرع بالدم',
+                      subtitle: 'فحص نافذة الـ 6 أشهر وسجل التبرعات المعتمد',
                       onTap: () => context.push('/donor/eligibility'),
                     ),
                   _settingTile(
                     context,
                     icon: Icons.edit_outlined,
                     title: 'تعديل البيانات الشخصية',
-                    subtitle: 'الاسم والبريد ورقم الهاتف',
+                    subtitle: 'الاسم ورقم الهاتف والبريد الإلكتروني',
                     onTap: () => _showEditProfile(context, user),
                   ),
                   _settingTile(
                     context,
                     icon: Icons.security_rounded,
-                    title: 'أمان الحساب (Account Security)',
-                    subtitle: 'إعدادات كلمة المرور والتحقق',
+                    title: 'أمان الحساب وكلمة المرور',
+                    subtitle: 'إعدادات تسجيل الدخول والتوثيق',
                     onTap: () => _showAccountSecurityInfo(context),
                   ),
                   _settingTile(
                     context,
                     icon: Icons.language_rounded,
-                    title: 'Language / اللغة',
+                    title: 'اللغة / Language',
                     subtitle: context.watch<LocaleCubit>().isArabic
-                        ? 'العربية (Arabic)'
-                        : 'English (الإنجليزية)',
+                        ? 'العربية'
+                        : 'English',
                     onTap: () => _showLanguageBottomSheet(context),
                   ),
                   _settingTile(
                     context,
                     icon: Icons.settings_outlined,
-                    title: 'إعدادات التطبيق (Settings)',
-                    subtitle: 'اللغة، الأمان، المساعدة وتسجيل الخروج',
+                    title: 'إعدادات التطبيق',
+                    subtitle: 'تفضيلات التنبيهات والأمان والمساعدة',
                     onTap: () => context.push('/settings'),
                   ),
                   _settingTile(
                     context,
                     icon: Icons.info_outline_rounded,
-                    title: 'حول التطبيق (About LifeLink)',
-                    subtitle: 'v1.0.0 (FastAPI Azure Cloud Integration)',
+                    title: 'حول تطبيق LifeLink',
+                    subtitle: 'الإصدار 1.0.0 • المنظومة الطبية الذكية لنقل وتبرع الدم',
                     onTap: () => _showAboutDialog(context),
                   ),
                 ]),
@@ -171,7 +171,7 @@ class ProfileScreen extends StatelessWidget {
 
                 // ── Logout ─────────────────────────────────────────
                 LifeLinkButton(
-                  label: 'تسجيل الخروج (Logout)',
+                  label: 'تسجيل الخروج',
                   icon: Icons.logout_rounded,
                   isOutlined: true,
                   onPressed: () {
@@ -338,15 +338,16 @@ class ProfileScreen extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('أمان الحساب'),
+        title: const Text('أمان الحساب وكلمة المرور'),
         content: const Text(
-          'تسجيل الدخول والجلسة محميان برمز وصول مخزن بأمان. '
-          'إعادة تعيين كلمة المرور غير متاحة من واجهة الخادم الحالية.',
+          'بيانات حسابك وجلسة تسجيل الدخول مشفرة ومحمية بأعلى معايير الأمان الطبية. '
+          'لتغيير كلمة المرور أو تحديث الصلاحيات المعتمدة، يرجى التواصل مع فريق الدعم الفني.',
+          style: TextStyle(fontSize: 14, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('حسناً'),
+            child: const Text('حسناً، فهمت'),
           ),
         ],
       ),
@@ -358,7 +359,7 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       applicationName: 'LifeLink',
       applicationVersion: '1.0.0',
-      applicationLegalese: 'Blood donation coordination platform',
+      applicationLegalese: 'منظومة التبرع ونقل الدم الذكية وحفظ سلسلة التبريد الطبية.',
     );
   }
 }

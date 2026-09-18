@@ -6,7 +6,7 @@ import 'lifelink_button.dart';
 class LifeLinkLoadingState extends StatelessWidget {
   final String message;
 
-  const LifeLinkLoadingState({super.key, this.message = 'Loading...'});
+  const LifeLinkLoadingState({super.key, this.message = 'جاري التحميل...'});
 
   @override
   Widget build(BuildContext context) {

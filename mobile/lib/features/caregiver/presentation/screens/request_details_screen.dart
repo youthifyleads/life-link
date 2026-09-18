@@ -46,7 +46,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Request Details'),
+        title: const Text('تفاصيل ومتابعة طلب الدم'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => context.pop(),
@@ -63,7 +63,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
           } else if (state is DocumentUploadSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('Document uploaded successfully'),
+                  content: Text('تم رفع المستند بنجاح'),
                   backgroundColor: AppColors.success),
             );
           }
@@ -82,7 +82,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                   '/caregiver/matches?requestId=${Uri.encodeComponent(widget.request.id)}',
                 ),
                 icon: const Icon(Icons.people_alt_outlined),
-                label: const Text('View matching donors'),
+                label: const Text('عرض المتبرعين المتطابقين'),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -91,20 +91,20 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                   extra: widget.request,
                 ),
                 icon: const Icon(Icons.receipt_long_rounded),
-                label: const Text('View payment history'),
+                label: const Text('سجل المدفوعات والفواتير'),
               ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Supporting Documents',
+                    'المستندات والروشتات الطبية',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   TextButton.icon(
                     onPressed: _pickAndUploadDocument,
                     icon: const Icon(Icons.upload_file),
-                    label: const Text('Upload'),
+                    label: const Text('رفع مستند'),
                   )
                 ],
               ),
@@ -114,7 +114,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
               if (widget.request.status == 'confirmed' ||
                   widget.request.status == 'prepared')
                 LifeLinkButton(
-                  label: 'Proceed to Payment & Checkout',
+                  label: 'سداد الرسوم وتأكيد الطلب',
                   icon: Icons.payment_rounded,
                   onPressed: () =>
                       context.push('/caregiver/payment', extra: widget.request),
@@ -143,7 +143,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${req.quantityUnits} Units • ${req.component}',
+                        '${req.quantityUnits} وحدات • ${req.component == 'whole_blood' ? 'دم كامل' : req.component}',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       LifeLinkStatusChip(req.status),
@@ -154,11 +154,11 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
             ],
           ),
           const Divider(height: 32),
-          _detailRow('Tracking Ref', req.trackingReference),
-          if (req.reason != null) _detailRow('Reason', req.reason!),
-          if (req.notes != null) _detailRow('Notes', req.notes!),
-          _detailRow('Created',
-              DateFormat('MMM d, y h:mm a').format(req.createdAt.toLocal())),
+          _detailRow('كود التتبع', req.trackingReference),
+          if (req.reason != null) _detailRow('السبب الطبي', req.reason!),
+          if (req.notes != null) _detailRow('ملاحظات', req.notes!),
+          _detailRow('تاريخ الإنشاء',
+              DateFormat('d MMMM yyyy • h:mm a').format(req.createdAt.toLocal())),
         ],
       ),
     );
@@ -267,7 +267,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'تم تخصيص كيس دم مطابق (${req.bloodType}) أو تطابق متبرع معتمد. يُرجى التوجه للدفع أو الاستلام عبر كود التتبع.',
+                  'تم تخصيص كيس دم مطابق (${req.bloodType}). يُرجى سداد الرسوم لمتابعة تحضير الكيس وتسليمه لمندوب النقل الطبي المتخصص لنقله للمستشفى.',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -334,9 +334,9 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                 Icon(Icons.description_outlined,
                     color: AppColors.textHint, size: 48),
                 SizedBox(height: 12),
-                Text('No documents uploaded yet',
+                Text('لا توجد مستندات مرفوعة حتى الآن',
                     style: TextStyle(color: AppColors.textSecondary)),
-                Text('Upload prescription or ID to verify request',
+                Text('قم برفع الروشتة أو إثبات الحالة لتوثيق ومطابقة الطلب',
                     style: TextStyle(fontSize: 12, color: AppColors.textHint)),
               ],
             ),
@@ -357,7 +357,9 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
                         color: AppColors.primary),
                     title: Text(doc.fileName,
                         maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text('Status: ${doc.status}'),
+                    subtitle: Text(
+                      'الحالة: ${doc.status == 'approved' ? 'معتمد ومقبول' : doc.status == 'rejected' ? 'مرفوض' : 'قيد المراجعة والتدقيق'}',
+                    ),
                     trailing: doc.status == 'approved'
                         ? const Icon(Icons.check_circle,
                             color: AppColors.success)

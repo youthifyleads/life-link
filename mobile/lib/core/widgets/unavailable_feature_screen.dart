@@ -66,7 +66,7 @@ class UnavailableFeatureScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
               if (Navigator.canPop(context))
                 LifeLinkButton(
-                  label: 'Go Back',
+                  label: 'الرجوع للصفحة السابقة',
                   onPressed: () => Navigator.of(context).pop(),
                   isOutlined: true,
                 ),

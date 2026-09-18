@@ -40,7 +40,7 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
     final created = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Add patient'),
+        title: const Text('إضافة مريض جديد'),
         content: Form(
           key: formKey,
           child: Column(
@@ -48,29 +48,32 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
             children: [
               TextFormField(
                 controller: name,
-                decoration: const InputDecoration(labelText: 'Full name'),
+                decoration: const InputDecoration(labelText: 'اسم المريض بالكامل'),
                 validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'Required' : null,
+                    value == null || value.trim().isEmpty ? 'هذا الحقل مطلوب' : null,
               ),
               TextFormField(
                 controller: bloodType,
-                decoration: const InputDecoration(labelText: 'Blood type'),
+                decoration: const InputDecoration(
+                  labelText: 'فصيلة الدم',
+                  hintText: 'مثال: O+, A-, AB+',
+                ),
                 validator: (value) => value == null || value.trim().length < 2
-                    ? 'Required'
+                    ? 'يرجى إدخال فصيلة دم صحيحة'
                     : null,
               ),
               TextFormField(
                 controller: hospitalId,
                 decoration: const InputDecoration(
-                  labelText: 'Hospital ID',
-                  helperText: 'Required to create a blood request',
+                  labelText: 'كود المستشفى أو رقم الملف الطبي',
+                  helperText: 'مطلوب لربط الحالة والطلبات بالمركز الطبي',
                 ),
                 validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'Required' : null,
+                    value == null || value.trim().isEmpty ? 'هذا الحقل مطلوب' : null,
               ),
               TextFormField(
                 controller: notes,
-                decoration: const InputDecoration(labelText: 'Notes'),
+                decoration: const InputDecoration(labelText: 'ملاحظات طبية (اختياري)'),
               ),
             ],
           ),
@@ -78,7 +81,7 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: const Text('إلغاء'),
           ),
           FilledButton(
             onPressed: () async {
@@ -104,7 +107,7 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
                 }
               }
             },
-            child: const Text('Save'),
+            child: const Text('حفظ المريض'),
           ),
         ],
       ),
@@ -119,25 +122,25 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Patients')),
+      appBar: AppBar(title: const Text('سجل المرضى التابعين')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addPatient,
         icon: const Icon(Icons.person_add_alt_1),
-        label: const Text('Add patient'),
+        label: const Text('إضافة مريض'),
       ),
       body: FutureBuilder<List<PatientModel>>(
         future: _patients,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LifeLinkLoadingState(message: 'Loading patients…');
+            return const LifeLinkLoadingState(message: 'جاري تحميل سجل المرضى...');
           }
           if (snapshot.hasError) {
             return LifeLinkStatePanel(
               icon: Icons.cloud_off_rounded,
-              title: 'Patients could not be loaded',
+              title: 'تعذر تحميل بيانات المرضى',
               message:
-                  'Check your connection and try again. No patient data was changed.',
-              actionLabel: 'Try again',
+                  'يرجى التحقق من الاتصال بالإنترنت والمحاولة مجدداً.',
+              actionLabel: 'إعادة المحاولة',
               onAction: _reload,
             );
           }
@@ -145,10 +148,10 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
           if (patients.isEmpty) {
             return LifeLinkStatePanel(
               icon: Icons.people_outline_rounded,
-              title: 'No patients yet',
+              title: 'لا يوجد مرضى مسجلون بعد',
               message:
-                  'Patients you add for blood requests will be listed here.',
-              actionLabel: 'Add patient',
+                  'أضف بيانات المرضى التابعين لك لتتمكن من متابعة أكياس الدم ومسح كود طلب المستشفى.',
+              actionLabel: 'إضافة مريض الآن',
               onAction: _addPatient,
             );
           }

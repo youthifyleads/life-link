@@ -262,8 +262,8 @@ class _ReadinessPanel extends StatelessWidget {
                         children: [
                           Text(
                             available
-                                ? 'You are ready to help'
-                                : 'Availability is off',
+                                ? 'أنت جاهز ومتاح للتبرع'
+                                : 'وضع الاستعداد متوقف',
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium
@@ -272,8 +272,8 @@ class _ReadinessPanel extends StatelessWidget {
                           const SizedBox(height: AppSpacing.xs),
                           Text(
                             profile.isEligible
-                                ? 'Let LifeLink know when you can respond to a request.'
-                                : 'Your eligibility will update when the required interval is complete.',
+                                ? 'فعّل الاستعداد لتلقي إشعارات الحالات العاجلة القريبة المتوافقة معك.'
+                                : 'سيتم تحديث أهليتك تلقائياً بعد اكتمال فترة التعافي المقررة طبياً.',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -299,19 +299,19 @@ class _ReadinessPanel extends StatelessWidget {
                   runSpacing: AppSpacing.sm,
                   children: [
                     _ProfileFact(
-                      label: 'Blood type',
+                      label: 'فصيلة الدم',
                       value: profile.bloodType,
                       icon: Icons.bloodtype_outlined,
                     ),
                     _ProfileFact(
-                      label: 'Donations',
+                      label: 'تبرعات سابقة',
                       value: '${profile.totalDonations}',
                       icon: Icons.volunteer_activism_outlined,
                     ),
                     _ProfileFact(
-                      label: 'Last donation',
+                      label: 'آخر تبرع',
                       value: profile.lastDonationDate == null
-                          ? 'Not recorded'
+                          ? 'غير مسجل'
                           : DateFormat.yMMMd().format(
                               profile.lastDonationDate!.toLocal(),
                             ),
@@ -324,7 +324,7 @@ class _ReadinessPanel extends StatelessWidget {
           );
         }
         return const _PanelShell(
-          child: Text('We could not load your readiness. Pull to try again.'),
+          child: Text('تعذر تحميل بيانات الجاهزية. اسحب للتحديث.'),
         );
       },
     );
@@ -398,7 +398,7 @@ class _DonorHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your impact starts here',
+                  'عطاؤك ينقذ حياة',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -406,7 +406,7 @@ class _DonorHero extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 const Text(
-                  'Stay ready and respond when your blood type is needed.',
+                  'كن على أهبة الاستعداد لإنقاذ مصاب أو مريض عند تطابق فصيلتك.',
                   style: TextStyle(color: Color(0xFFDDEBF3), height: 1.4),
                 ),
               ],
@@ -434,7 +434,7 @@ class _ActionGrid extends StatelessWidget {
               width: tileWidth,
               child: _ActionTile(
                 icon: Icons.volunteer_activism_outlined,
-                label: 'Requests',
+                label: 'طلبات التبرع',
                 color: AppColors.primary,
                 onTap: () => context.push('/donor/feed'),
               ),
@@ -443,7 +443,7 @@ class _ActionGrid extends StatelessWidget {
               width: tileWidth,
               child: _ActionTile(
                 icon: Icons.verified_outlined,
-                label: 'Eligibility',
+                label: 'فحص الأهلية',
                 color: AppColors.secondaryBlue,
                 onTap: () => context.push('/donor/eligibility'),
               ),

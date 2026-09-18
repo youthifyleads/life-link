@@ -133,18 +133,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 const SizedBox(height: 16),
                 Text(
                   isSuccessful
-                      ? 'Payment Confirmed'
+                      ? 'تم تأكيد السداد بنجاح'
                       : isFailure
-                          ? 'Payment Not Completed'
-                          : 'Payment Pending',
+                          ? 'لم يكتمل السداد'
+                          : 'في انتظار تأكيد السداد',
                   style: const TextStyle(
                       fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Payment status: ${currentStatus.toUpperCase()}\n'
-                  'Request: ${widget.request?.trackingReference ?? 'Allocation ${widget.allocationId}'}'
-                  '${currentTransactionReference == null ? '' : '\nTransaction: $currentTransactionReference'}',
+                  'حالة الدفع: ${isSuccessful ? 'مدفوع ومؤكد' : currentStatus.toUpperCase()}\n'
+                  'رقم الطلب: ${widget.request?.trackingReference ?? 'تخصيص ${widget.allocationId}'}'
+                  '${currentTransactionReference == null ? '' : '\nرقم المعاملة: $currentTransactionReference'}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       color: AppColors.textSecondary, fontSize: 13),
@@ -194,10 +194,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.refresh_rounded),
-                    label: const Text('Refresh payment status'),
+                    label: Text(isRefreshing ? 'جاري التحديث...' : 'تحديث حالة السداد'),
                   ),
                 LifeLinkButton(
-                  label: 'Done',
+                  label: 'تم الإنهاء',
                   onPressed: () {
                     Navigator.of(ctx).pop();
                     context.pop();
@@ -217,7 +217,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Checkout & Confirmation'),
+        title: const Text('سداد الرسوم وتأكيد الطلب'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => context.pop(),
@@ -239,43 +239,45 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Request Summary',
+                  Text('ملخص الطلب والفاتورة',
                       style: Theme.of(context).textTheme.titleMedium),
                   const Divider(height: 24),
                   _summaryRow(
-                      'Blood Type & Units',
+                      'فصيلة الدم والكمية',
                       widget.request == null
-                          ? 'Allocated blood bag'
-                          : '${widget.request!.bloodType} ($units Units)'),
+                          ? 'كيس دم مخصص'
+                          : '${widget.request!.bloodType} ($units وحدات)'),
                   _summaryRow(
-                    'Component',
-                    widget.request?.component ?? 'Confirmed allocation',
+                    'المكون المطلوب',
+                    widget.request?.component == 'whole_blood'
+                        ? 'دم كامل (Whole Blood)'
+                        : (widget.request?.component ?? 'طلب معتمد'),
                   ),
                   _summaryRow(
-                    'Reference',
+                    'رقم التتبع المعتمد',
                     widget.request?.trackingReference ??
-                        'Allocation ${widget.allocationId}',
+                        'تخصيص ${widget.allocationId}',
                   ),
                   const Divider(height: 24),
                   _summaryRow(
-                    'Amount confirmed by backend',
+                    'المبلغ المعتمد من المستشفى',
                     _confirmedAmount == null
-                        ? 'Calculated after payment initiation'
-                        : 'EGP $_confirmedAmount',
+                        ? 'يتم حسابه عند بدء السداد'
+                        : '$_confirmedAmount ج.م',
                   ),
                   const Divider(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Total Due',
+                        'إجمالي المبلغ المطلوب',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         _confirmedAmount == null
                             ? '—'
-                            : 'EGP $_confirmedAmount',
+                            : '$_confirmedAmount ج.م',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -290,7 +292,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
             const SizedBox(height: 28),
 
-            Text('Payment Method',
+            Text('طريقة الدفع الإلكتروني',
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
 
@@ -305,23 +307,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 children: [
                   _paymentOption(
                     id: 'card',
-                    title: 'Credit / Debit Card',
-                    subtitle: 'Visa, Mastercard, Meeza',
+                    title: 'بطاقة بنكية (فيزا / ماستركارد / ميزة)',
+                    subtitle: 'دفع آمن وفوري عبر بوابة Paymob',
                     icon: Icons.credit_card_rounded,
                   ),
                   const SizedBox(height: 12),
                   _paymentOption(
                     id: 'wallet',
-                    title: 'Smart Wallet / InstaPay',
-                    subtitle: 'Vodafone Cash, Orange, InstaPay',
+                    title: 'محفظة إلكترونية أو إنستاباي',
+                    subtitle: 'فودافون كاش، أورنج، إنستاباي، وغيرها',
                     icon: Icons.account_balance_wallet_rounded,
                   ),
                   const SizedBox(height: 12),
                   _paymentOption(
-                    id: 'cash',
-                    title: 'Cash at Blood Bank Desk',
-                    subtitle: 'Pay directly upon receiving blood bag',
-                    icon: Icons.local_atm_rounded,
+                    id: 'hospital_cash',
+                    title: 'سداد نقدي بخزينة المستشفى',
+                    subtitle: 'يتم السداد عند تسليم المندوب للشحنة بالمستشفى',
+                    icon: Icons.local_hospital_rounded,
                   ),
                 ],
               ),
@@ -331,8 +333,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
             LifeLinkButton(
               label: _confirmedAmount == null
-                  ? 'Start secure payment'
-                  : 'Pay EGP $_confirmedAmount',
+                  ? 'متابعة السداد الآمن'
+                  : 'سداد $_confirmedAmount ج.م الآن',
               icon: Icons.lock_outline_rounded,
               isLoading: _isProcessing,
               onPressed: _onPay,
