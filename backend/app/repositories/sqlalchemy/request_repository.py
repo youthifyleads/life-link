@@ -23,6 +23,7 @@ class SQLAlchemyRequestRepository(RequestRepository):
         obj = BloodRequestModel(
             blood_request_id=req_id, hospital_id=request.hospital_id, created_by_user_id=request.created_by,
             blood_type=request.blood_type, requested_quantity=request.quantity_units,
+            component=request.component or "whole_blood",
             urgency="urgent" if request.urgency else "normal", status=request.status.value, reason=request.notes,
             unit_price=getattr(request, "unit_price", None),
             created_at=request.created_at, required_by=request.required_by,

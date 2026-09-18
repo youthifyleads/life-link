@@ -92,7 +92,7 @@ def request_to_record(m: BloodRequestModel) -> BloodRequestRecord:
 
     return BloodRequestRecord(
         id=m.blood_request_id, hospital_id=m.hospital_id, blood_type=m.blood_type,
-        component="unspecified", quantity_units=m.requested_quantity,
+        component=getattr(m, "component", None) or "whole_blood", quantity_units=m.requested_quantity,
         urgency=(str(m.urgency).lower() in {"urgent", "true", "1", "emergency", "critical"}), notes=m.reason, status=st,
         tracking_reference=create_tracking_reference(m.blood_request_id),
         created_by=m.created_by_user_id, unit_price=unit_price, required_by=m.required_by, created_at=m.created_at, updated_at=m.created_at,

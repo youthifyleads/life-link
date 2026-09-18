@@ -8,7 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String, Table, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String, Table, Text, Unicode, UnicodeText
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -35,7 +35,7 @@ class PermissionModel(Base):
 
 class UserModel(Base):
     __tablename__ = "users"
-    user_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(String(200), nullable=False); email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
+    user_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(Unicode(200), nullable=False); email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
     date_of_birth: Mapped[Optional[date]] = mapped_column(Date); email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False); status: Mapped[Optional[str]] = mapped_column(String(40), default="active"); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     role_id: Mapped[str] = mapped_column(ForeignKey("roles.role_id"), nullable=False, index=True); hospital_id: Mapped[Optional[str]] = mapped_column(ForeignKey("hospitals.hospital_id"), index=True); blood_bank_id: Mapped[Optional[str]] = mapped_column(ForeignKey("blood_banks.blood_bank_id"), index=True)
@@ -50,7 +50,7 @@ class UserPhoneModel(Base):
 
 class HospitalModel(Base):
     __tablename__ = "hospitals"
-    hospital_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(String(200), nullable=False); governorate: Mapped[Optional[str]] = mapped_column(String(100)); address: Mapped[Optional[str]] = mapped_column(String(500)); status: Mapped[Optional[str]] = mapped_column(String(40), default="active")
+    hospital_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(Unicode(200), nullable=False); governorate: Mapped[Optional[str]] = mapped_column(Unicode(100)); address: Mapped[Optional[str]] = mapped_column(Unicode(500)); status: Mapped[Optional[str]] = mapped_column(String(40), default="active")
     phones: Mapped[list[HospitalPhoneModel]] = relationship(back_populates="hospital", cascade="all, delete-orphan"); users: Mapped[list[UserModel]] = relationship(back_populates="hospital"); requests: Mapped[list[BloodRequestModel]] = relationship(back_populates="hospital")
 
 class HospitalPhoneModel(Base):
@@ -60,7 +60,7 @@ class HospitalPhoneModel(Base):
 
 class BloodBankModel(Base):
     __tablename__ = "blood_banks"
-    blood_bank_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(String(200), nullable=False); governorate: Mapped[Optional[str]] = mapped_column(String(100)); address: Mapped[Optional[str]] = mapped_column(String(500)); status: Mapped[Optional[str]] = mapped_column(String(40), default="active")
+    blood_bank_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(Unicode(200), nullable=False); governorate: Mapped[Optional[str]] = mapped_column(Unicode(100)); address: Mapped[Optional[str]] = mapped_column(Unicode(500)); status: Mapped[Optional[str]] = mapped_column(String(40), default="active")
     phones: Mapped[list[BloodBankPhoneModel]] = relationship(back_populates="blood_bank", cascade="all, delete-orphan"); users: Mapped[list[UserModel]] = relationship(back_populates="blood_bank"); donations: Mapped[list[DonationModel]] = relationship(back_populates="blood_bank"); blood_bags: Mapped[list[BloodBagModel]] = relationship(back_populates="current_blood_bank")
 
 class BloodBankPhoneModel(Base):
@@ -107,7 +107,7 @@ class DonationVoucherModel(Base):
 
 class BloodRequestModel(Base):
     __tablename__ = "blood_requests"
-    blood_request_id: Mapped[str] = id_col(); blood_type: Mapped[str] = mapped_column(String(3), nullable=False); requested_quantity: Mapped[int] = mapped_column(Integer, nullable=False); urgency: Mapped[str] = mapped_column(String(40), nullable=False); reason: Mapped[Optional[str]] = mapped_column(Text); status: Mapped[str] = mapped_column(String(50), nullable=False); unit_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True); required_by: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); hospital_id: Mapped[str] = mapped_column(ForeignKey("hospitals.hospital_id"), index=True); created_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), index=True)
+    blood_request_id: Mapped[str] = id_col(); blood_type: Mapped[str] = mapped_column(String(3), nullable=False); requested_quantity: Mapped[int] = mapped_column(Integer, nullable=False); urgency: Mapped[str] = mapped_column(String(40), nullable=False); reason: Mapped[Optional[str]] = mapped_column(UnicodeText); status: Mapped[str] = mapped_column(String(50), nullable=False); unit_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True); required_by: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); hospital_id: Mapped[str] = mapped_column(ForeignKey("hospitals.hospital_id"), index=True); created_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), index=True); component: Mapped[Optional[str]] = mapped_column(String(50), default="whole_blood")
     hospital: Mapped[HospitalModel] = relationship(back_populates="requests"); allocations: Mapped[list[RequestAllocationModel]] = relationship(back_populates="blood_request", cascade="all, delete-orphan"); documents: Mapped[list[SupportingDocumentModel]] = relationship(back_populates="blood_request", cascade="all, delete-orphan"); status_history: Mapped[list[RequestStatusHistoryModel]] = relationship(back_populates="blood_request", cascade="all, delete-orphan"); donation_responses: Mapped[list[DonationResponseModel]] = relationship(back_populates="blood_request"); payments: Mapped[list[PaymentModel]] = relationship(back_populates="blood_request")
 
 class BloodBagModel(Base):
@@ -122,22 +122,22 @@ class RequestAllocationModel(Base):
 
 class ScanEventModel(Base):
     __tablename__ = "scan_events"
-    scan_id: Mapped[str] = id_col(); blood_bag_id: Mapped[str] = mapped_column(ForeignKey("blood_bags.blood_bag_id", ondelete="CASCADE"), index=True); scanned_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), index=True); scan_type: Mapped[str] = mapped_column(String(50), nullable=False); scanned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); location: Mapped[Optional[str]] = mapped_column(String(255)); notes: Mapped[Optional[str]] = mapped_column(Text)
+    scan_id: Mapped[str] = id_col(); blood_bag_id: Mapped[str] = mapped_column(ForeignKey("blood_bags.blood_bag_id", ondelete="CASCADE"), index=True); scanned_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), index=True); scan_type: Mapped[str] = mapped_column(String(50), nullable=False); scanned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); location: Mapped[Optional[str]] = mapped_column(String(255)); notes: Mapped[Optional[str]] = mapped_column(UnicodeText)
     blood_bag: Mapped[BloodBagModel] = relationship(back_populates="scan_events")
 
 class SupportingDocumentModel(Base):
     __tablename__ = "supporting_documents"
-    document_id: Mapped[str] = id_col(); file_name: Mapped[str] = mapped_column(String(255), nullable=False); file_path: Mapped[str] = mapped_column(String(1000), nullable=False); file_type: Mapped[Optional[str]] = mapped_column(String(120)); uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); rejection_reason: Mapped[Optional[str]] = mapped_column(Text); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="CASCADE"), index=True); uploaded_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), index=True); reviewed_by_user_id: Mapped[Optional[str]] = mapped_column(ForeignKey("users.user_id"), index=True)
+    document_id: Mapped[str] = id_col(); file_name: Mapped[str] = mapped_column(Unicode(255), nullable=False); file_path: Mapped[str] = mapped_column(String(1000), nullable=False); file_type: Mapped[Optional[str]] = mapped_column(String(120)); uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); rejection_reason: Mapped[Optional[str]] = mapped_column(UnicodeText); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="CASCADE"), index=True); uploaded_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), index=True); reviewed_by_user_id: Mapped[Optional[str]] = mapped_column(ForeignKey("users.user_id"), index=True)
     blood_request: Mapped[BloodRequestModel] = relationship(back_populates="documents")
 
 class RequestStatusHistoryModel(Base):
     __tablename__ = "request_status_history"
-    history_id: Mapped[str] = id_col(); status: Mapped[str] = mapped_column(String(50), nullable=False); changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); notes: Mapped[Optional[str]] = mapped_column(Text); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="CASCADE"), index=True); changed_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), index=True)
+    history_id: Mapped[str] = id_col(); status: Mapped[str] = mapped_column(String(50), nullable=False); changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); notes: Mapped[Optional[str]] = mapped_column(UnicodeText); blood_request_id: Mapped[str] = mapped_column(ForeignKey("blood_requests.blood_request_id", ondelete="CASCADE"), index=True); changed_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"), index=True)
     blood_request: Mapped[BloodRequestModel] = relationship(back_populates="status_history")
 
 class NotificationModel(Base):
     __tablename__ = "notifications"
-    notification_id: Mapped[str] = id_col(); title: Mapped[Optional[str]] = mapped_column(String(200)); message: Mapped[str] = mapped_column(Text, nullable=False); type: Mapped[str] = mapped_column(String(80), nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); read_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), index=True)
+    notification_id: Mapped[str] = id_col(); title: Mapped[Optional[str]] = mapped_column(Unicode(200)); message: Mapped[str] = mapped_column(UnicodeText, nullable=False); type: Mapped[str] = mapped_column(String(80), nullable=False); status: Mapped[str] = mapped_column(String(40), nullable=False); created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False); read_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True)); user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), index=True)
     # FLAGGED ADDITION (not in the originally supplied schema.pdf): nullable FK
     # so a notification can be traced back to the request it is about, the
     # same generic-linking pattern the supplied schema already uses for
