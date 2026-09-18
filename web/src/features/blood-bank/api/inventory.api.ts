@@ -38,7 +38,8 @@ export interface BackendBagHistoryDTO {
 
 export function mapBackendDtoToBloodUnit(dto: any): BloodUnit {
   let status: BloodUnitStatus;
-  const st = (dto.status || (dto.is_available ? "available" : "quarantined")).toLowerCase();
+  const rawStatus = dto?.status ?? (dto?.is_available ? "available" : "quarantined");
+  const st = String(rawStatus).toLowerCase();
   if (st === "allocated") status = "allocated";
   else if (st === "reserved") status = "reserved";
   else if (st === "quarantine" || st === "quarantined") status = "quarantined";
