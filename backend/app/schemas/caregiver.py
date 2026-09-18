@@ -38,6 +38,25 @@ class CaregiverBagScanPublic(BaseModel):
     payment_url: str | None = None
 
 
+class CaregiverRequestScanRequest(BaseModel):
+    qr_code: str = Field(..., description="Hospital-generated blood request QR payload or tracking reference")
+
+
+class CaregiverRequestScanPublic(BaseModel):
+    request_id: str
+    tracking_reference: str
+    status: str
+    blood_type: str
+    component: str | None = None
+    quantity: int = 1
+    bank_name: str | None = None
+    bank_location: str | None = None
+    unit_price: float | None = None
+    total_price: float | None = None
+    payment_status: str = "unpaid"
+    payment_url: str | None = None
+
+
 class PatientCreate(BaseModel):
     full_name: str
     blood_type: str

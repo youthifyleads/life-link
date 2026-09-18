@@ -8,16 +8,16 @@ from app.schemas.caregiver import (
     CaregiverBagScanPublic,
     CaregiverBagScanRequest,
     CaregiverPaymentInitiateRequest,
+    CaregiverRequestScanPublic,
+    CaregiverRequestScanRequest,
     PatientCreate,
     PatientPublic,
 )
 from app.schemas.payments import PaymentInitiateRequest, PaymentInitiateResponse, PaymentPublic
-from app.schemas.requests import BloodRequestCreate, BloodRequestPublic
 from app.services.caregiver_service import CaregiverService
 from app.repositories.interfaces.user_repository import UserRepository
-from app.services.dependencies import get_caregiver_service, get_payment_service, get_request_service, get_user_repository
+from app.services.dependencies import get_caregiver_service, get_payment_service, get_user_repository
 from app.services.payment_service import PaymentService
-from app.services.request_service import RequestService
 
 router = APIRouter(prefix="/caregiver", tags=["Caregiver"])
 
@@ -46,6 +46,25 @@ async def update(assignment_id: str, data: CaregiverAssignmentUpdate, current: C
     return await svc.update(assignment_id, data, current)
 
 
+@router.post("/scan-request", response_model=CaregiverRequestScanPublic, summary="Scan hospital-issued blood request QR for caregiver")
+async def scan_request(data: CaregiverRequestScanRequest, current: CurrentUser, svc: CaregiverService = Depends(get_caregiver_service)):
+    res = await svc.scan_bag(data.qr_code, current)
+    return CaregiverRequestScanPublic(
+        request_id=res.request_id or res.blood_bag_id or "",
+        tracking_reference=res.qr_code or data.qr_code,
+        status=res.status,
+        blood_type=res.blood_type,
+        component=res.component,
+        quantity=res.quantity,
+        bank_name=res.bank_name,
+        bank_location=res.bank_location,
+        unit_price=res.unit_price,
+        total_price=res.total_price,
+        payment_status=res.payment_status,
+        payment_url=res.payment_url,
+    )
+
+
 @router.post("/scan-bag", response_model=CaregiverBagScanPublic, summary="Scan blood bag QR for caregiver")
 async def scan_bag(data: CaregiverBagScanRequest, current: CurrentUser, svc: CaregiverService = Depends(get_caregiver_service)):
     return await svc.scan_bag(data.qr_code, current)
@@ -56,7 +75,7 @@ async def get_bag_by_qr(qr_code: str, current: CurrentUser, svc: CaregiverServic
     return await svc.scan_bag(qr_code, current)
 
 
-# ── Caregiver Patients & Requests (Flutter Mobile Compatibility) ──────────────
+# ── Caregiver Patients & Tracking (Flutter Mobile Compatibility) ──────────────
 @router.get("/patients", response_model=list[PatientPublic], summary="List patients managed by caregiver")
 async def list_patients(current: CurrentUser, svc: CaregiverService = Depends(get_caregiver_service)):
     return await svc.list_patients(current)
@@ -65,19 +84,6 @@ async def list_patients(current: CurrentUser, svc: CaregiverService = Depends(ge
 @router.post("/patients", response_model=PatientPublic, status_code=201, summary="Create patient profile")
 async def create_patient(data: PatientCreate, current: CurrentUser, svc: CaregiverService = Depends(get_caregiver_service)):
     return await svc.create_patient(data, current)
-
-
-@router.post("/patients/{patient_id}/blood-requests", response_model=BloodRequestPublic, status_code=201, summary="Create blood request for patient")
-async def create_patient_blood_request(
-    patient_id: str,
-    data: BloodRequestCreate,
-    current: CurrentUser,
-    req_svc: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
-):
-    note_extra = f"[Patient ID: {patient_id}]"
-    data.notes = f"{note_extra} {data.notes or ''}".strip()
-    return await req_svc.create_request(data, user_record)
 
 
 @router.get("/allocations", response_model=list[CaregiverAssignmentPublic], summary="List allocations assigned to caregiver")

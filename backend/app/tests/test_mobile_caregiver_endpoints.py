@@ -34,8 +34,73 @@ def test_caregiver_patients_and_blood_request_flow(client: TestClient, normal_us
     assert len(list_resp.json()) >= 1
     assert list_resp.json()[0]["id"] == patient["id"]
 
-    # 4. Create blood request for patient as hospital user
-    # (Note: request creation requires hospital_user role in RequestService)
+    # 4. Caregiver cannot create blood request (only hospital creates blood requisitions)
+    bad_req = client.post(
+        f"/api/v1/caregiver/patients/{patient['id']}/blood-requests",
+        json={"blood_type": "O+", "quantity_units": 1},
+        headers=headers,
+    )
+    assert bad_req.status_code == 404
+
+
+def test_caregiver_scans_hospital_request_qr_and_pays(
+    client: TestClient,
+    normal_user_token: str,
+    hospital_token: str,
+    bloodbank_token: str,
+):
+    caregiver_headers = auth_headers(normal_user_token)
+
+    # 1. Hospital creates the official blood requisition
+    req_resp = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "B+", "component": "plasma", "quantity_units": 2},
+        headers=auth_headers(hospital_token),
+    )
+    assert req_resp.status_code == 201
+    req_id = req_resp.json()["id"]
+
+    # 2. Blood bank sets price
+    price_resp = client.post(
+        f"/api/v1/requests/{req_id}/acknowledge",
+        json={"unit_price": 300.0},
+        headers=auth_headers(bloodbank_token),
+    )
+    assert price_resp.status_code == 200
+
+    # 3. Hospital displays/issues QR code for the request
+    qr_issue_resp = client.post(
+        f"/api/v1/requests/{req_id}/qr",
+        headers=auth_headers(hospital_token),
+    )
+    assert qr_issue_resp.status_code == 200
+    qr_payload = qr_issue_resp.json()["qr_payload"]
+    assert qr_payload
+
+    # 4. Caregiver scans the hospital's request QR on their mobile phone
+    scan_resp = client.post(
+        "/api/v1/caregiver/scan-request",
+        json={"qr_code": qr_payload},
+        headers=caregiver_headers,
+    )
+    assert scan_resp.status_code == 200
+    data = scan_resp.json()
+    assert data["request_id"] == req_id
+    assert data["blood_type"] == "B+"
+    assert data["component"] == "plasma"
+    assert data["quantity"] == 2
+    assert float(data["unit_price"]) == 300.0
+    assert float(data["total_price"]) == 600.0
+    assert data["payment_status"] == "unpaid"
+
+    # 5. Caregiver initiates payment from the scan screen
+    pay_resp = client.post(
+        "/api/v1/caregiver/payments/initiate",
+        json={"blood_request_id": data["request_id"]},
+        headers=caregiver_headers,
+    )
+    assert pay_resp.status_code == 201
+    assert float(pay_resp.json()["amount"]) == 600.0
 
 
 def test_donor_vouchers_compatibility_alias(client: TestClient, donor_token: str):

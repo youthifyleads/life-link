@@ -102,6 +102,12 @@ class CaregiverService:
         if self.request_repo:
             request_record = await self.request_repo.get_by_tracking_reference(code)
             if not request_record:
+                from app.core.security import decode_tracking_reference
+
+                decoded = decode_tracking_reference(code)
+                if decoded:
+                    request_record = await self.request_repo.get_by_id(decoded)
+            if not request_record:
                 request_record = await self.request_repo.get_by_id(code)
 
         if request_record:
