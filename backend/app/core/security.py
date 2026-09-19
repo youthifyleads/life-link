@@ -112,6 +112,29 @@ async def get_current_user(
 CurrentUser = Annotated[UserPublic, Depends(get_current_user)]
 
 
+async def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    user_repo: UserRepository = Depends(_get_user_repo_dep),
+) -> UserPublic | None:
+    """Validate a bearer JWT if provided, or return None."""
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        return None
+    try:
+        payload = decode_access_token(credentials.credentials)
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+        user = await user_repo.get_by_id(user_id)
+        if user is None or not user.is_active or user.status.lower() in ("banned", "suspended"):
+            return None
+        return UserPublic.model_validate(user)
+    except Exception:
+        return None
+
+
+OptionalCurrentUser = Annotated[UserPublic | None, Depends(get_optional_current_user)]
+
+
 def require_roles(*allowed_roles: Role):
     """
     RBAC dependency factory.

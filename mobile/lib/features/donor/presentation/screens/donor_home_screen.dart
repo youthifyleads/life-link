@@ -163,22 +163,6 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
                           ),
                           const SizedBox(height: AppSpacing.xl),
 
-                          // Availability Readiness Switch
-                          if (profile != null)
-                            LifeLinkFadeSlide(
-                              delay: const Duration(milliseconds: 75),
-                              child: _AvailabilityBanner(
-                                available: profile.availableToDonate,
-                                isEligible: profile.isEligible,
-                                onChanged: (val) {
-                                  context
-                                      .read<DonorBloc>()
-                                      .add(SetDonorAvailabilityEvent(val));
-                                },
-                              ),
-                            ),
-                          if (profile != null) const SizedBox(height: AppSpacing.lg),
-
                           // Section 1: "تبرعك القادم" / "Your next donations"
                           LifeLinkFadeSlide(
                             delay: const Duration(milliseconds: 100),
@@ -606,85 +590,6 @@ class _CategoryPillState extends State<_CategoryPill> {
   }
 }
 
-// ── 4. Availability Readiness Banner ──────────────────────────
-class _AvailabilityBanner extends StatelessWidget {
-  final bool available;
-  final bool isEligible;
-  final ValueChanged<bool> onChanged;
-
-  const _AvailabilityBanner({
-    required this.available,
-    required this.isEligible,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isAr = context.isArabic;
-
-    return LifeLinkCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: available ? AppColors.tealLight : AppColors.primaryLight,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              available ? Icons.check_circle_outline_rounded : Icons.pause_circle_outline_rounded,
-              color: available ? AppColors.teal : AppColors.primary,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  available
-                      ? (isAr ? 'أنت جاهز ومتاح للتبرع' : 'Ready & Available to Donate')
-                      : (isAr ? 'وضع الاستعداد متوقف' : 'Standby Mode Paused'),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                    fontFamily: 'Cairo',
-                  ),
-                ),
-                Text(
-                  isEligible
-                      ? (isAr
-                          ? 'تتلقى نداءات التبرع العاجلة المتوافقة'
-                          : 'Receiving matching urgent donation alerts')
-                      : (isAr
-                          ? 'فترة التعافي الطبية سارية حالياً'
-                          : 'Medical recovery period currently active'),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                    fontFamily: 'Cairo',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: available,
-            onChanged: isEligible ? onChanged : null,
-            activeThumbColor: AppColors.primary,
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ── 5. Section Header with "see all" ──────────────────────────
 class _SectionHeader extends StatelessWidget {
@@ -934,3 +839,4 @@ class _UrgentRequestsList extends StatelessWidget {
     );
   }
 }
+

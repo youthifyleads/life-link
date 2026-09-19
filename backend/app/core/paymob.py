@@ -116,6 +116,11 @@ class PaymobClient:
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.post(url, json=payload, headers=headers)
+                if response.status_code == 400 and "already exists" in response.text:
+                    import time
+                    payload["special_reference"] = f"{blood_request_id}_{int(time.time())}"
+                    logger.info("Retrying Paymob intention with updated reference: %s", payload["special_reference"])
+                    response = await client.post(url, json=payload, headers=headers)
                 response.raise_for_status()
                 data = response.json()
         except httpx.HTTPStatusError as exc:

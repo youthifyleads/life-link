@@ -25,4 +25,19 @@ class PaymentRepository {
   Future<List<PaymentModel>> getPaymentsForRequest(String bloodRequestId) {
     return _remoteDataSource.getPaymentsForRequest(bloodRequestId);
   }
+
+  Future<PaymentModel> initiate({
+    required String bloodRequestId,
+    required String paymentMethod,
+  }) =>
+      _remoteDataSource.initiate(
+        bloodRequestId: bloodRequestId,
+        paymentMethod: paymentMethod,
+      );
+
+  Future<PaymentModel> getById(String paymentId) =>
+      _remoteDataSource.getById(paymentId);
+
+  Future<List<PaymentModel>> getByRequestId(String requestId) =>
+      _remoteDataSource.getByRequestId(requestId);
 }

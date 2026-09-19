@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.core.security import CurrentUser
+from app.core.security import CurrentUser, OptionalCurrentUser
 from app.repositories.interfaces.user_repository import UserRepository
 from app.schemas.caregiver import CaregiverBagScanPublic, CaregiverBagScanRequest
 from app.schemas.qr import QRIssueResponse, QRScanRequest, TrackingPublic
@@ -13,6 +13,15 @@ router = APIRouter(tags=["QR / Tracking"])
 
 async def _load_user_record(current_user: CurrentUser, user_repo: UserRepository = Depends(get_user_repository)):
     return await user_repo.get_by_id(current_user.id)
+
+
+async def _load_optional_user_record(
+    current_user: OptionalCurrentUser = None,
+    user_repo: UserRepository = Depends(get_user_repository),
+):
+    if current_user:
+        return await user_repo.get_by_id(current_user.id)
+    return None
 
 
 @router.post(
@@ -35,9 +44,9 @@ async def issue_qr(request_id: str, current_user: CurrentUser, qr_service: QRSer
 )
 async def scan_qr(
     payload: QRScanRequest,
-    current_user: CurrentUser,
+    current_user: OptionalCurrentUser = None,
     qr_service: QRService = Depends(get_qr_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(_load_optional_user_record),
 ) -> TrackingPublic:
     return await qr_service.resolve_reference(payload.reference, user_record)
 
@@ -51,9 +60,9 @@ async def scan_qr(
 )
 async def get_tracking(
     reference: str,
-    current_user: CurrentUser,
+    current_user: OptionalCurrentUser = None,
     qr_service: QRService = Depends(get_qr_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(_load_optional_user_record),
 ) -> TrackingPublic:
     return await qr_service.resolve_reference(reference, user_record)
 

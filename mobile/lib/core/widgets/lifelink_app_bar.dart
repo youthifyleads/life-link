@@ -11,6 +11,7 @@ class LifeLinkHomeHeader extends StatelessWidget {
   final String userName;
   final VoidCallback? onAvatarTap;
   final VoidCallback? onNotificationTap;
+  final VoidCallback? onScanTap;
 
   const LifeLinkHomeHeader({
     super.key,
@@ -19,6 +20,7 @@ class LifeLinkHomeHeader extends StatelessWidget {
     required this.userName,
     this.onAvatarTap,
     this.onNotificationTap,
+    this.onScanTap,
   });
 
   @override
@@ -69,6 +71,24 @@ class LifeLinkHomeHeader extends StatelessWidget {
               ],
             ),
           ),
+
+          // Scan QR Button
+          if (onScanTap != null) ...[
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: AppShadows.soft,
+                border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary, size: 20),
+                onPressed: onScanTap,
+                tooltip: 'مسح كود الفاتورة',
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+          ],
 
           // Notification Bell
           Container(

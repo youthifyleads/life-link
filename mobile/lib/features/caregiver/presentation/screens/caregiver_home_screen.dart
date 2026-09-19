@@ -168,25 +168,26 @@ class CaregiverHomeScreen extends StatelessWidget {
                     runSpacing: 6,
                     children: [
                       ActionChip(
-                        label: const Text('REQ-2024-8842', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, fontFamily: 'Cairo')),
+                        label: const Text('طلب دم معتمد (700 ج.م - Paymob)',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Cairo')),
                         backgroundColor: const Color(0xFFF1F5F9),
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
-                        avatar: const Icon(Icons.touch_app_rounded, size: 14, color: AppColors.primary),
+                        side: const BorderSide(color: AppColors.primary),
+                        avatar: const Icon(Icons.payment_rounded, size: 14, color: AppColors.primary),
                         onPressed: () {
                           setModalState(() {
-                            controller.text = 'REQ-2024-8842';
+                            controller.text = '3c72d998-e459-484c-b8c3-457d79269436';
                             errorText = null;
                           });
                         },
                       ),
                       ActionChip(
-                        label: const Text('MED-9042', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, fontFamily: 'Cairo')),
+                        label: const Text('REQ-2024-8842', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, fontFamily: 'Cairo')),
                         backgroundColor: const Color(0xFFF1F5F9),
                         side: const BorderSide(color: Color(0xFFE2E8F0)),
                         avatar: const Icon(Icons.touch_app_rounded, size: 14, color: Color(0xFF1976D2)),
                         onPressed: () {
                           setModalState(() {
-                            controller.text = 'MED-9042';
+                            controller.text = 'REQ-2024-8842';
                             errorText = null;
                           });
                         },
@@ -206,7 +207,7 @@ class CaregiverHomeScreen extends StatelessWidget {
                     ),
                     child: TextField(
                       controller: controller,
-                      autofocus: true,
+                      autofocus: false,
                       textCapitalization: TextCapitalization.characters,
                       onChanged: (_) {
                         if (errorText != null) {
@@ -247,7 +248,27 @@ class CaregiverHomeScreen extends StatelessWidget {
                   ],
                   const SizedBox(height: AppSpacing.lg),
                   LifeLinkButton(
+                    label: isAr ? 'الانتقال للسداد عبر Paymob (700 ج.م)' : 'Pay via Paymob (700 EGP)',
+                    icon: Icons.lock_outline_rounded,
+                    onPressed: () {
+                      final code = controller.text.trim();
+                      if (code.isEmpty) {
+                        setModalState(() {
+                          errorText = isAr
+                              ? 'يرجى إدخال كود الطلب أولاً'
+                              : 'Please enter the request code';
+                        });
+                        return;
+                      }
+
+                      Navigator.of(modalCtx).pop();
+                      context.push('/caregiver/payment');
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  LifeLinkButton(
                     label: isAr ? 'تأكيد والبحث عن الشحنة' : 'Confirm & Track Shipment',
+                    isSecondary: true,
                     icon: Icons.search_rounded,
                     onPressed: () {
                       final code = controller.text.trim();
@@ -405,20 +426,43 @@ class _ScanRequestHeroCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      isAr ? 'مسح كود طلب المستشفى' : 'Scan Hospital Request QR',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                        fontFamily: 'Cairo',
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            isAr ? 'مسح طلب المستشفى وسداد Paymob' : 'Scan Request & Pay via Paymob',
+                            style: const TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              fontFamily: 'Cairo',
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'Paymob',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
                       isAr
-                          ? 'وجّه الكاميرا لكود QR بنموذج الطلب للربط الفوري وتتبع التوصيل'
-                          : 'Point camera at request QR code for instant pairing and live tracking',
+                          ? 'امسح كود إذن صرف المستشفى لمعاينة الفاتورة والسداد بـ Paymob وتتبع المسار'
+                          : 'Scan hospital blood request QR to pay via Paymob and track delivery',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -435,7 +479,7 @@ class _ScanRequestHeroCard extends StatelessWidget {
             children: [
               Expanded(
                 child: LifeLinkButton(
-                  label: isAr ? 'مسح بالكاميرا' : 'Camera Scan',
+                  label: isAr ? 'مسح الكود والسداد' : 'Scan & Pay',
                   icon: Icons.camera_alt_rounded,
                   onPressed: onScanTap,
                   height: 44,

@@ -28,17 +28,21 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     super.dispose();
   }
 
+  void _onProcessCode(String code, {bool force = false}) {
+    if (_hasScanned && !force) return;
+    setState(() => _hasScanned = true);
+    try {
+      _cameraController.stop();
+    } catch (_) {}
+    context.read<TrackingBloc>().add(ScanQrEvent(code));
+  }
+
   void _onDetect(BarcodeCapture capture) {
     if (_hasScanned) return;
     final barcode = capture.barcodes.firstOrNull;
     final rawValue = barcode?.rawValue;
     if (rawValue == null || rawValue.isEmpty) return;
-
-    setState(() => _hasScanned = true);
-    _cameraController.stop();
-
-    // Dispatch to BLoC — backend validates everything
-    context.read<TrackingBloc>().add(ScanQrEvent(rawValue));
+    _onProcessCode(rawValue);
   }
 
   @override
@@ -48,8 +52,34 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('مسح كود طلب المستشفى',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Flexible(
+              child: Text(
+                'مسح الفاتورة وسداد Paymob',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: const Text(
+                'Paymob',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
         leading: IconButton(
           icon: Icon(Icons.adaptive.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
@@ -69,9 +99,14 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       ),
       body: BlocListener<TrackingBloc, TrackingState>(
         listener: (context, state) {
+          debugPrint('QR_SCAN_STATE: $state');
           if (state is TrackingLoaded) {
-            // Navigate to tracking details screen
-            context.pushReplacement('/tracking/details', extra: state.tracking);
+            // Direct route to Paymob Payment Screen when request is unpaid!
+            if (!state.tracking.isPaid && state.tracking.totalPrice != null && state.tracking.totalPrice! > 0) {
+              context.pushReplacement('/caregiver/payment', extra: state.tracking);
+            } else {
+              context.pushReplacement('/tracking/details', extra: state.tracking);
+            }
           } else if (state is TrackingError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -80,7 +115,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             );
             // Allow re-scanning after error
             setState(() => _hasScanned = false);
-            _cameraController.start();
+            try {
+              _cameraController.start();
+            } catch (_) {}
           }
         },
         child: BlocBuilder<TrackingBloc, TrackingState>(
@@ -169,7 +206,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               const SizedBox(height: 20),
               TextField(
                 controller: controller,
-                autofocus: true,
+                autofocus: false,
                 textDirection: TextDirection.ltr,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
@@ -190,15 +227,44 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                alignment: WrapAlignment.center,
+                children: [
+                  ActionChip(
+                    label: const Text('طلب دم معتمد (700 ج.م)',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    avatar: const Icon(Icons.payment_rounded, size: 14, color: AppColors.primary),
+                    onPressed: () {
+                      Navigator.pop(modalContext);
+                      _onProcessCode('3c72d998-e459-484c-b8c3-457d79269436', force: true);
+                    },
+                  ),
+                  ActionChip(
+                    label: const Text('REQ-2024-8842',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    avatar: const Icon(Icons.local_hospital_rounded, size: 14, color: Color(0xFF1976D2)),
+                    onPressed: () {
+                      Navigator.pop(modalContext);
+                      _onProcessCode('REQ-2024-8842', force: true);
+                    },
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: () {
                   final code = controller.text.trim();
                   if (code.isNotEmpty) {
                     Navigator.pop(modalContext);
-                    context.push('/tracking', extra: code);
+                    _onProcessCode(code, force: true);
                   }
                 },
+                icon: const Icon(Icons.lock_outline_rounded, size: 18),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -207,9 +273,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'تأكيد والبحث عن الشحنة',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                label: const Text(
+                  'تأكيد الكود والانتقال للسداد عبر Paymob',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

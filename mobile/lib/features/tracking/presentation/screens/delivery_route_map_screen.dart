@@ -423,8 +423,8 @@ class _DeliveryRouteMapScreenState extends State<DeliveryRouteMapScreen>
                               ),
                               Text(
                                 isAr
-                                    ? 'سيارة نقل مبردة مجهزة • لوحة: أ ب ج 492'
-                                    : 'Refrigerated Vehicle • Plate: ABC-492',
+                                    ? 'سيارة نقل طبي مجهزة • لوحة: أ ب ج 492'
+                                    : 'Medical Transport Vehicle • Plate: ABC-492',
                                 style: const TextStyle(
                                   fontSize: 10,
                                   color: AppColors.textSecondary,

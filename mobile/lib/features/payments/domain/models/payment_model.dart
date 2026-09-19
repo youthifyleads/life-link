@@ -3,6 +3,9 @@ class PaymentModel {
   final String bloodRequestId;
   final String amount;
   final String currency;
+  final String provider;
+  final String? providerOrderId;
+  final String? clientSecret;
   final String paymentStatus;
   final String paymentMethod;
   final String? transactionReference;
@@ -18,6 +21,9 @@ class PaymentModel {
     required this.bloodRequestId,
     required this.amount,
     this.currency = 'EGP',
+    this.provider = 'paymob',
+    this.providerOrderId,
+    this.clientSecret,
     required this.paymentStatus,
     required this.paymentMethod,
     this.transactionReference,
@@ -30,16 +36,19 @@ class PaymentModel {
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
-    final rawAmount = json['amount'];
+    final rawAmount = json['amount'] ?? json['total_amount'];
     final paymentStatus = json['payment_status']?.toString() ?? 'pending';
 
     return PaymentModel(
-      paymentId: (json['id'] ?? json['payment_id'])?.toString() ?? '',
+      paymentId: (json['payment_id'] ?? json['id'])?.toString() ?? '',
       bloodRequestId: json['blood_request_id']?.toString() ?? '',
       amount: rawAmount == null ? '' : rawAmount.toString(),
       currency: json['currency']?.toString() ?? 'EGP',
+      provider: json['provider']?.toString() ?? 'paymob',
+      providerOrderId: json['provider_order_id']?.toString(),
+      clientSecret: json['client_secret']?.toString(),
       paymentStatus: paymentStatus,
-      paymentMethod: json['payment_method']?.toString() ?? '',
+      paymentMethod: json['payment_method']?.toString() ?? 'card',
       transactionReference: json['transaction_reference']?.toString(),
       checkoutUrl: json['checkout_url']?.toString(),
       createdAt: json['created_at'] != null

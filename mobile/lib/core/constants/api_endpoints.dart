@@ -37,6 +37,9 @@ class ApiEndpoints {
 
   // ── QR / Tracking ────────────────────────────────────────
   static const String qrScan = '/qr/scan';
+  static const String qrBagScan = '/caregiver/scan-bag';
+  static String qrBag(String code) =>
+      '/caregiver/bag/${Uri.encodeComponent(code)}';
   static String tracking(String reference) => '/tracking/$reference';
 
   // ── Inventory ────────────────────────────────────────────

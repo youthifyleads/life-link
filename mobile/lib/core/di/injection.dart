@@ -14,6 +14,7 @@ import '../../features/tracking/presentation/bloc/tracking_bloc.dart';
 import '../../features/notifications/data/notification_remote_datasource.dart';
 import '../../features/notifications/presentation/bloc/notification_bloc.dart';
 import '../../features/donor/data/donor_remote_datasource.dart';
+import '../../features/donor/data/donor_repository.dart';
 import '../../features/donor/presentation/bloc/donor_bloc.dart';
 import '../../features/caregiver/data/caregiver_remote_datasource.dart';
 import '../../features/payments/data/payment_remote_datasource.dart';
@@ -44,6 +45,8 @@ void configureDependencies() {
       () => NotificationRemoteDataSource(getIt<Dio>()));
   getIt.registerLazySingleton<DonorRemoteDataSource>(
       () => DonorRemoteDataSource(getIt<Dio>()));
+  getIt.registerLazySingleton<DonorRepository>(
+      () => DonorRepository(getIt<DonorRemoteDataSource>()));
   getIt.registerLazySingleton<CaregiverRemoteDataSource>(
       () => CaregiverRemoteDataSource(getIt<Dio>()));
   getIt.registerLazySingleton<PaymentRemoteDataSource>(

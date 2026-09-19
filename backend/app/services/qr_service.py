@@ -56,7 +56,7 @@ class QRService:
             request_id=request.id,
         )
 
-    async def resolve_reference(self, reference: str, current_user: UserRecord) -> TrackingPublic:
+    async def resolve_reference(self, reference: str, current_user: UserRecord | None = None) -> TrackingPublic:
         request = await self._request_repo.get_by_tracking_reference(reference)
         if request is None:
             decoded = decode_tracking_reference(reference)
@@ -71,15 +71,16 @@ class QRService:
         # requests; blood bank operators, admin, and platform support may
         # track any request in the MVP. Donors/mobile scanning authorization
         # scope is intentionally left for the approved donor/consent module.
-        if current_user.role == Role.HOSPITAL_USER and current_user.institution_id != request.hospital_id:
+        if current_user and current_user.role == Role.HOSPITAL_USER and current_user.institution_id != request.hospital_id:
             raise ForbiddenError("Not authorized to track this request", code="FORBIDDEN_TRACKING_ACCESS")
 
-        await self._audit_service.record(
-            actor_user_id=current_user.id,
-            action=AuditAction.QR_ACCESSED,
-            entity_type="blood_request",
-            entity_id=request.id,
-        )
+        if current_user:
+            await self._audit_service.record(
+                actor_user_id=current_user.id,
+                action=AuditAction.QR_ACCESSED,
+                entity_type="blood_request",
+                entity_id=request.id,
+            )
 
         unit_p = float(request.unit_price) if getattr(request, "unit_price", None) is not None else None
         qty = getattr(request, "quantity_units", 1) or 1

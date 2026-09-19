@@ -14,11 +14,15 @@ import '../bloc/payment_cubit.dart';
 class PaymentScreen extends StatefulWidget {
   final BloodRequestPublic? request;
   final String? allocationId;
+  final double? initialAmount;
+  final String? hospitalOrBankName;
 
   const PaymentScreen({
     super.key,
     this.request,
     this.allocationId,
+    this.initialAmount,
+    this.hospitalOrBankName,
   }) : assert(request != null || allocationId != null);
 
   @override
@@ -29,6 +33,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String _selectedMethod = 'card';
   bool _isProcessing = false;
   String? _confirmedAmount;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialAmount != null && widget.initialAmount! > 0) {
+      _confirmedAmount = widget.initialAmount!.toStringAsFixed(2);
+    }
+  }
 
   void _onPay() async {
     setState(() => _isProcessing = true);
@@ -217,7 +229,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('سداد الرسوم وتأكيد الطلب'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('سداد الطلب عبر Paymob'),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'Paymob',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
         leading: IconButton(
           icon: Icon(Icons.adaptive.arrow_back),
           onPressed: () => context.pop(),
@@ -242,6 +275,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   Text('ملخص الطلب والفاتورة',
                       style: Theme.of(context).textTheme.titleMedium),
                   const Divider(height: 24),
+                  if (widget.hospitalOrBankName != null && widget.hospitalOrBankName!.isNotEmpty)
+                    _summaryRow('المستشفى / بنك الدم', widget.hospitalOrBankName!),
                   _summaryRow(
                       'فصيلة الدم والكمية',
                       widget.request == null
@@ -333,11 +368,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
             LifeLinkButton(
               label: _confirmedAmount == null
-                  ? 'متابعة السداد الآمن'
-                  : 'سداد $_confirmedAmount ج.م الآن',
+                  ? 'متابعة السداد الآمن عبر Paymob'
+                  : 'سداد $_confirmedAmount ج.م الآن عبر Paymob',
               icon: Icons.lock_outline_rounded,
               isLoading: _isProcessing,
               onPressed: _onPay,
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: TextButton.icon(
+                onPressed: () {
+                  final ref = widget.request?.trackingReference ?? widget.request?.id;
+                  if (ref != null && ref.isNotEmpty) {
+                    context.push('/tracking', extra: ref);
+                  }
+                },
+                icon: const Icon(Icons.route_rounded, size: 18),
+                label: const Text(
+                  'معاينة مسار الشحنة ومركبة النقل',
+                  style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w600),
+                ),
+              ),
             ),
           ],
         ),
@@ -354,11 +405,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
           Text(label,
               style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 13)),
-          Text(value,
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
-                  fontSize: 13)),
+                  fontSize: 13),
+            ),
+          ),
         ],
       ),
     );

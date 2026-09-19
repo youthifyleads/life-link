@@ -45,6 +45,9 @@ import '../widgets/unavailable_feature_screen.dart';
 class AppRouter {
   AppRouter._();
 
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   static CustomTransitionPage<T> _buildSmoothPage<T>({
     required BuildContext context,
     required GoRouterState state,
@@ -77,6 +80,7 @@ class AppRouter {
 
   static GoRouter createRouter(AuthState authState) {
     return GoRouter(
+      navigatorKey: navigatorKey,
       initialLocation: '/login',
       errorBuilder: (context, state) => Scaffold(
         backgroundColor: Colors.white,
@@ -562,12 +566,12 @@ class AppRouter {
                 create: (_) => PaymentCubit(getIt<PaymentRepository>()),
                 child: PaymentScreen(request: extra),
               );
-            } else if (extra is TrackingPublic && extra.requestId != null) {
+            } else if (extra is TrackingPublic) {
               child = BlocProvider(
                 create: (_) => PaymentCubit(getIt<PaymentRepository>()),
                 child: PaymentScreen(
                   request: BloodRequestPublic(
-                    id: extra.requestId!,
+                    id: extra.requestId ?? extra.reference,
                     hospitalId: '',
                     bloodType: extra.bloodType,
                     component: extra.component,
@@ -577,6 +581,8 @@ class AppRouter {
                     trackingReference: extra.reference,
                     createdAt: extra.lastUpdated,
                   ),
+                  initialAmount: extra.totalPrice,
+                  hospitalOrBankName: extra.bankName,
                 ),
               );
             } else if (extra is String) {

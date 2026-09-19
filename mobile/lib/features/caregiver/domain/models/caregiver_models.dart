@@ -55,33 +55,108 @@ class CaregiverAssignmentModel {
       );
 }
 
+class CaregiverBagScanModel {
+  final String? bloodBagId;
+  final String? requestId;
+  final String bloodType;
+  final String? component;
+  final int quantity;
+  final String status;
+  final String bankName;
+  final String bankLocation;
+  final String? qrCode;
+  final double? unitPrice;
+  final double? totalPrice;
+  final String paymentStatus;
+  final String? paymentUrl;
+  final String? trackingReference;
+
+  const CaregiverBagScanModel({
+    this.bloodBagId,
+    this.requestId,
+    required this.bloodType,
+    this.component,
+    required this.quantity,
+    required this.status,
+    required this.bankName,
+    required this.bankLocation,
+    this.qrCode,
+    this.unitPrice,
+    this.totalPrice,
+    required this.paymentStatus,
+    this.paymentUrl,
+    this.trackingReference,
+  });
+
+  factory CaregiverBagScanModel.fromJson(Map<String, dynamic> json) {
+    return CaregiverBagScanModel(
+      bloodBagId: json['blood_bag_id'] as String?,
+      requestId: json['request_id'] as String?,
+      bloodType: json['blood_type'] as String? ?? '',
+      component: json['component'] as String?,
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+      status: json['status'] as String? ?? '',
+      bankName: json['bank_name'] as String? ?? '',
+      bankLocation: json['bank_location'] as String? ?? '',
+      qrCode: json['qr_code'] as String?,
+      unitPrice: (json['unit_price'] as num?)?.toDouble(),
+      totalPrice: (json['total_price'] as num?)?.toDouble(),
+      paymentStatus: json['payment_status'] as String? ?? '',
+      paymentUrl: json['payment_url'] as String?,
+      trackingReference:
+          (json['tracking_reference'] ?? json['reference']) as String?,
+    );
+  }
+}
+
 class DonorMatchModel {
   final String donorId;
+  final String? userId;
+  final String? fullName;
+  final String? phone;
   final String bloodType;
   final bool available;
   final bool eligible;
+  final String? governorate;
   final String eligibilityStatus;
   final int daysUntilEligible;
   final double distanceKm;
+  final DateTime? lastDonationDate;
+  final int? daysSinceLastDonation;
 
   const DonorMatchModel({
     required this.donorId,
+    this.userId,
+    this.fullName,
+    this.phone,
     required this.bloodType,
-    required this.available,
-    required this.eligible,
+    this.available = false,
+    this.eligible = false,
+    this.governorate,
     required this.eligibilityStatus,
-    required this.daysUntilEligible,
-    required this.distanceKm,
+    this.daysUntilEligible = 0,
+    this.distanceKm = 0.0,
+    this.lastDonationDate,
+    this.daysSinceLastDonation,
   });
 
   factory DonorMatchModel.fromJson(Map<String, dynamic> json) =>
       DonorMatchModel(
         donorId: json['donor_id'] as String? ?? '',
+        userId: json['user_id'] as String?,
+        fullName: json['full_name'] as String?,
+        phone: json['phone'] as String?,
         bloodType: json['blood_type'] as String? ?? '',
         available: json['available'] as bool? ?? false,
         eligible: json['eligible'] as bool? ?? false,
+        governorate: json['governorate'] as String?,
         eligibilityStatus: json['eligibility_status'] as String? ?? 'unknown',
-        daysUntilEligible: json['days_until_eligible'] as int? ?? 0,
-        distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0,
+        daysUntilEligible: (json['days_until_eligible'] as num?)?.toInt() ?? 0,
+        distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0.0,
+        lastDonationDate: json['last_donation_date'] != null
+            ? DateTime.tryParse(json['last_donation_date'].toString())
+            : null,
+        daysSinceLastDonation:
+            (json['days_since_last_donation'] as num?)?.toInt(),
       );
 }
