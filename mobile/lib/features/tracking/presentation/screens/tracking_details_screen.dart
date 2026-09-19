@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../domain/models/tracking_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../core/widgets/lifelink_app_bar.dart';
 
 class TrackingDetailsScreen extends StatelessWidget {
   final TrackingPublic tracking;
@@ -20,13 +21,8 @@ class TrackingDetailsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('تفاصيل ومتابعة الطلب'),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.pop(),
-        ),
+      appBar: const LifeLinkDetailAppBar(
+        title: 'تفاصيل ومتابعة الطلب',
       ),
       bottomNavigationBar: canPay
           ? Container(
@@ -79,44 +75,117 @@ class TrackingDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status Hero Card
+            // 1. Status & Spec Hero
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    _statusColor().withValues(alpha: 0.15),
-                    _statusColor().withValues(alpha: 0.04),
-                  ],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _statusColor().withValues(alpha: 0.35)),
+                color: Colors.white,
+                borderRadius: AppRadii.lg,
+                border: Border.all(color: AppColors.border),
+                boxShadow: AppShadows.soft,
               ),
               child: Column(
                 children: [
-                  Icon(_statusIcon(), size: 56, color: _statusColor()),
-                  const SizedBox(height: 12),
-                  Text(
-                    _statusLabel(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: _statusColor(),
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _statusColor().withValues(alpha: 0.12),
+                          borderRadius: AppRadii.md,
+                        ),
+                        child: Icon(_statusIcon(), size: 28, color: _statusColor()),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _statusLabel(),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: _statusColor(),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _statusDescription(),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _statusDescription(),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                      height: 1.4,
-                    ),
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Blood Type & Component Pill
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: AppRadii.sm,
+                            ),
+                            child: Text(
+                              tracking.bloodType,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _componentLabel(tracking.component),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: AppColors.navy,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Reference & Copy
+                      InkWell(
+                        borderRadius: AppRadii.sm,
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: tracking.reference));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('تم نسخ كود التتبع')),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                tracking.reference,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.copy, size: 14, color: AppColors.textSecondary),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -124,71 +193,54 @@ class TrackingDetailsScreen extends StatelessWidget {
 
             const SizedBox(height: AppSpacing.xl),
 
-            // Financial & Payment Card
-            Text('الفاتورة وتفاصيل السداد',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            // 2. Cold-Chain Logistics Stepper
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'مسار الشحنة والتبريد الطبي',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                TextButton.icon(
+                  onPressed: () => context.push('/tracking'),
+                  icon: const Icon(Icons.map_outlined, size: 18, color: AppColors.primary),
+                  label: const Text(
+                    'عرض الخريطة والمسافة',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _buildCourierStepper(context),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // 3. Consolidated Order & Invoice Summary
+            Text(
+              'بيانات التوريد والفاتورة',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: AppSpacing.sm),
             Card(
               elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: AppColors.border),
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppRadii.lg,
+                side: BorderSide(color: AppColors.border),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('حالة الدفع', style: TextStyle(color: AppColors.textSecondary)),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isPaid
-                                ? AppColors.success.withValues(alpha: 0.15)
-                                : AppColors.warning.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            isPaid ? 'تم السداد بنجاح' : 'غير مدفوع',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: isPaid ? AppColors.success : AppColors.warning,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 24),
-                    _summaryRow('سعر الوحدة', tracking.unitPrice != null ? '${tracking.unitPrice!.toStringAsFixed(2)} ج.م' : 'بانتظار التسعير'),
-                    const SizedBox(height: 8),
-                    _summaryRow('الكمية المطلوبة', '${tracking.quantity} كيس/وحدة'),
-                    const Divider(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'المبلغ الإجمالي',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        Text(
-                          hasPrice ? '${tracking.totalPrice!.toStringAsFixed(2)} ج.م' : 'بانتظار التأكيد',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
                     if (tracking.bankName != null) ...[
-                      const Divider(height: 24),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.local_hospital_outlined, size: 18, color: AppColors.textSecondary),
+                          const Icon(Icons.local_hospital_outlined, size: 18, color: AppColors.secondaryBlue),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Column(
@@ -208,47 +260,59 @@ class TrackingDetailsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+                      const Divider(height: 24),
                     ],
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            // Cold-Chain Logistics Stepper
-            Text('سلسلة النقل والتسليم (Cold-Chain)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: AppSpacing.sm),
-            _buildCourierStepper(context),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            // Clinical & Requisition Details
-            Text('بيانات الفصيلة وإذن الطلب',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: AppSpacing.sm),
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: AppColors.border),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  children: [
-                    _infoRow(context, Icons.bloodtype, 'فصيلة الدم المطلوبة', tracking.bloodType, isBadge: true),
-                    const Divider(height: 20),
-                    _infoRow(context, Icons.science_outlined, 'المكون الطبي', _componentLabel(tracking.component)),
-                    const Divider(height: 20),
-                    _infoRow(context, Icons.qr_code_2, 'كود التتبع', tracking.reference, isCopyable: true),
-                    const Divider(height: 20),
-                    _infoRow(
-                      context,
-                      Icons.access_time,
-                      'آخر تحديث',
-                      DateFormat('yyyy-MM-dd • h:mm a').format(tracking.lastUpdated.toLocal()),
+                    _summaryRow('الكمية المطلوبة', '${tracking.quantity} كيس/وحدة'),
+                    if (tracking.unitPrice != null) ...[
+                      const SizedBox(height: 8),
+                      _summaryRow('سعر الوحدة', '${tracking.unitPrice!.toStringAsFixed(2)} ج.م'),
+                    ],
+                    const Divider(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('حالة السداد', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                            const SizedBox(height: 2),
+                            Text(
+                              isPaid ? 'تم السداد بنجاح' : 'بانتظار السداد',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: isPaid ? AppColors.success : AppColors.warning,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Text('المبلغ الإجمالي', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                            const SizedBox(height: 2),
+                            Text(
+                              hasPrice ? '${tracking.totalPrice!.toStringAsFixed(2)} ج.م' : 'بانتظار التسعير',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('تاريخ التحديث', style: TextStyle(color: AppColors.textHint, fontSize: 11)),
+                        Text(
+                          DateFormat('yyyy-MM-dd • h:mm a').format(tracking.lastUpdated.toLocal()),
+                          style: const TextStyle(color: AppColors.textHint, fontSize: 11),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -402,50 +466,6 @@ class TrackingDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(BuildContext context, IconData icon, String label, String value,
-      {bool isBadge = false, bool isCopyable = false}) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: AppColors.primary),
-        const SizedBox(width: AppSpacing.md),
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-        const Spacer(),
-        if (isBadge)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: AppColors.primary,
-              ),
-            ),
-          )
-        else
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-          ),
-        if (isCopyable) ...[
-          const SizedBox(width: 6),
-          InkWell(
-            onTap: () {
-              Clipboard.setData(ClipboardData(text: value));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تم نسخ كود التتبع')),
-              );
-            },
-            child: const Icon(Icons.copy, size: 16, color: AppColors.textSecondary),
-          ),
-        ],
-      ],
-    );
-  }
 
   Color _statusColor() {
     switch (tracking.status.toLowerCase()) {

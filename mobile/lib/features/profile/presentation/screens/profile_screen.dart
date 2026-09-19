@@ -6,6 +6,8 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/domain/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/lifelink_button.dart';
+import '../../../../core/widgets/lifelink_app_bar.dart';
+import '../../../../core/widgets/lifelink_text_field.dart';
 import '../../../../core/localization/locale_cubit.dart';
 import '../../../../core/di/injection.dart';
 import '../../../auth/data/auth_remote_datasource.dart';
@@ -15,13 +17,11 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.watch<LocaleCubit>().isArabic;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('الملف الشخصي والإعدادات'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.pop(),
-        ),
+      appBar: LifeLinkDetailAppBar(
+        title: isAr ? 'الملف الشخصي والإعدادات' : 'Profile & Settings',
       ),
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
@@ -38,13 +38,19 @@ class ProfileScreen extends StatelessWidget {
                   const Icon(Icons.lock_outline,
                       size: 64, color: AppColors.textSecondary),
                   const SizedBox(height: 16),
-                  const Text('يرجى تسجيل الدخول لعرض الملف الشخصي',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    isAr
+                        ? 'يرجى تسجيل الدخول لعرض الملف الشخصي'
+                        : 'Please sign in to view your profile',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context.go('/login'),
-                    child: const Text('تسجيل الدخول'),
+                    child: Text(isAr ? 'تسجيل الدخول' : 'Sign In'),
                   ),
                 ],
               ),
@@ -107,7 +113,7 @@ class ProfileScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    user.role.displayNameAr,
+                    isAr ? user.role.displayNameAr : user.role.name.toUpperCase(),
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
@@ -124,45 +130,59 @@ class ProfileScreen extends StatelessWidget {
                     _settingTile(
                       context,
                       icon: Icons.favorite_border_rounded,
-                      title: 'أهلية وسجل التبرع بالدم',
-                      subtitle: 'فحص نافذة الـ 6 أشهر وسجل التبرعات المعتمد',
+                      title: isAr
+                          ? 'أهلية وسجل التبرع بالدم'
+                          : 'Donation Eligibility & History',
+                      subtitle: isAr
+                          ? 'فحص نافذة الـ 6 أشهر وسجل التبرعات المعتمد'
+                          : 'Check 6-month recovery window and verified donations',
                       onTap: () => context.push('/donor/eligibility'),
                     ),
                   _settingTile(
                     context,
                     icon: Icons.edit_outlined,
-                    title: 'تعديل البيانات الشخصية',
-                    subtitle: 'الاسم ورقم الهاتف والبريد الإلكتروني',
+                    title: isAr
+                        ? 'تعديل البيانات الشخصية'
+                        : 'Edit Personal Information',
+                    subtitle: isAr
+                        ? 'الاسم ورقم الهاتف والبريد الإلكتروني'
+                        : 'Name, phone number, and email',
                     onTap: () => _showEditProfile(context, user),
                   ),
                   _settingTile(
                     context,
                     icon: Icons.security_rounded,
-                    title: 'أمان الحساب وكلمة المرور',
-                    subtitle: 'إعدادات تسجيل الدخول والتوثيق',
+                    title: isAr
+                        ? 'أمان الحساب وكلمة المرور'
+                        : 'Account Security & Password',
+                    subtitle: isAr
+                        ? 'إعدادات تسجيل الدخول والتوثيق'
+                        : 'Login and authentication credentials',
                     onTap: () => _showAccountSecurityInfo(context),
                   ),
                   _settingTile(
                     context,
                     icon: Icons.language_rounded,
-                    title: 'اللغة / Language',
-                    subtitle: context.watch<LocaleCubit>().isArabic
-                        ? 'العربية'
-                        : 'English',
+                    title: isAr ? 'اللغة / Language' : 'Language / اللغة',
+                    subtitle: isAr ? 'العربية' : 'English',
                     onTap: () => _showLanguageBottomSheet(context),
                   ),
                   _settingTile(
                     context,
                     icon: Icons.settings_outlined,
-                    title: 'إعدادات التطبيق',
-                    subtitle: 'تفضيلات التنبيهات والأمان والمساعدة',
-                    onTap: () => context.push('/settings'),
+                    title: isAr ? 'إعدادات التطبيق' : 'App Settings',
+                    subtitle: isAr
+                        ? 'تفضيلات التنبيهات والأمان والمساعدة'
+                        : 'Notification, security, and display preferences',
+                    onTap: () => _showLanguageBottomSheet(context),
                   ),
                   _settingTile(
                     context,
                     icon: Icons.info_outline_rounded,
-                    title: 'حول تطبيق LifeLink',
-                    subtitle: 'الإصدار 1.0.0 • المنظومة الطبية الذكية لنقل وتبرع الدم',
+                    title: isAr ? 'حول تطبيق LifeLink' : 'About LifeLink',
+                    subtitle: isAr
+                        ? 'الإصدار 1.0.0 • المنظومة الطبية الذكية لنقل وتبرع الدم'
+                        : 'v1.0.0 • Smart Blood Logistics & Cold Chain System',
                     onTap: () => _showAboutDialog(context),
                   ),
                 ]),
@@ -171,7 +191,7 @@ class ProfileScreen extends StatelessWidget {
 
                 // ── Logout ─────────────────────────────────────────
                 LifeLinkButton(
-                  label: 'تسجيل الخروج',
+                  label: isAr ? 'تسجيل الخروج' : 'Log Out',
                   icon: Icons.logout_rounded,
                   isOutlined: true,
                   onPressed: () {
@@ -192,52 +212,201 @@ class ProfileScreen extends StatelessWidget {
     final emailController = TextEditingController(text: user.email);
     final phoneController = TextEditingController(text: user.phone ?? '');
     final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
+
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('تعديل البيانات الشخصية'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'الاسم')),
-              TextFormField(
-                  controller: emailController,
-                  decoration:
-                      const InputDecoration(labelText: 'البريد الإلكتروني')),
-              TextFormField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'رقم الهاتف')),
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.person_outline_rounded,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'تعديل البيانات الشخصية',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Cairo',
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 8),
+                    // 1. Full Name Field
+                    LifeLinkTextField(
+                      controller: nameController,
+                      label: 'الاسم بالكامل',
+                      hint: 'مثال: أحمد محمد',
+                      prefixIcon: Icons.badge_outlined,
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'يرجى إدخال الاسم';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // 2. Email Field
+                    LifeLinkTextField(
+                      controller: emailController,
+                      label: 'البريد الإلكتروني',
+                      hint: 'user@lifelink.org',
+                      keyboardType: TextInputType.emailAddress,
+                      textDirection: TextDirection.ltr,
+                      prefixIcon: Icons.email_outlined,
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'يرجى إدخال البريد الإلكتروني';
+                        }
+                        if (!val.contains('@')) {
+                          return 'بريد إلكتروني غير صالح';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // 3. Phone Field with proper LTR layout and prefix
+                    LifeLinkTextField(
+                      controller: phoneController,
+                      label: 'رقم الهاتف',
+                      hint: '+20 100 000 0000',
+                      keyboardType: TextInputType.phone,
+                      textDirection: TextDirection.ltr,
+                      prefixIcon: Icons.phone_android_rounded,
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'يرجى إدخال رقم الهاتف';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'إلغاء',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Cairo',
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              if (!(formKey.currentState?.validate() ?? true)) return;
+                              setDialogState(() => isSaving = true);
+                              final result = await getIt<AuthRemoteDataSource>().updateProfile(
+                                fullName: nameController.text.trim(),
+                                email: emailController.text.trim(),
+                                phone: phoneController.text.trim(),
+                              );
+                              if (!dialogContext.mounted) return;
+                              if (result is AuthSuccess<UserModel>) {
+                                Navigator.pop(dialogContext);
+                                context.read<AuthBloc>().add(AuthCheckSessionEvent());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('تم حفظ البيانات بنجاح'),
+                                    backgroundColor: AppColors.success,
+                                  ),
+                                );
+                              } else if (result is AuthFailure<UserModel>) {
+                                setDialogState(() => isSaving = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(result.message),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: isSaving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'حفظ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Cairo',
+                                fontSize: 14,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('إلغاء')),
-          FilledButton(
-            onPressed: () async {
-              if (!(formKey.currentState?.validate() ?? true)) return;
-              final result = await getIt<AuthRemoteDataSource>().updateProfile(
-                fullName: nameController.text.trim(),
-                email: emailController.text.trim(),
-                phone: phoneController.text.trim(),
-              );
-              if (!dialogContext.mounted) return;
-              if (result is AuthSuccess<UserModel>) {
-                Navigator.pop(dialogContext);
-                context.read<AuthBloc>().add(AuthCheckSessionEvent());
-              } else if (result is AuthFailure<UserModel>) {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text(result.message)));
-              }
-            },
-            child: const Text('حفظ'),
-          ),
-        ],
+          );
+        },
       ),
     );
     nameController.dispose();
@@ -273,8 +442,13 @@ class ProfileScreen extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
       subtitle: Text(subtitle,
           style: const TextStyle(color: AppColors.textHint, fontSize: 12)),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded,
-          size: 14, color: AppColors.textHint),
+      trailing: Icon(
+        Directionality.of(context) == TextDirection.rtl
+            ? Icons.chevron_left_rounded
+            : Icons.chevron_right_rounded,
+        size: 18,
+        color: AppColors.textHint,
+      ),
       onTap: onTap,
     );
   }

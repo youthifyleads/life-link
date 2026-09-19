@@ -8,8 +8,10 @@ import '../../../blood_requests/domain/models/blood_request_model.dart';
 import '../../../documents/presentation/bloc/document_bloc.dart';
 import '../../../documents/domain/models/document_model.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/lifelink_button.dart';
 import '../../../../core/widgets/lifelink_components.dart';
+import '../../../../core/widgets/lifelink_app_bar.dart';
 
 class RequestDetailsScreen extends StatefulWidget {
   final BloodRequestPublic request;
@@ -45,12 +47,8 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('تفاصيل ومتابعة طلب الدم'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.pop(),
-        ),
+      appBar: const LifeLinkDetailAppBar(
+        title: 'تفاصيل ومتابعة طلب الدم',
       ),
       body: BlocListener<DocumentBloc, DocumentState>(
         listener: (context, state) {
@@ -325,7 +323,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadii.md,
               border:
                   Border.all(color: AppColors.border, style: BorderStyle.none),
             ),
@@ -348,9 +346,9 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
             ...docs.map((doc) => Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: AppColors.border),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadii.md,
+                    side: BorderSide(color: AppColors.border),
                   ),
                   child: ListTile(
                     leading: const Icon(Icons.picture_as_pdf,

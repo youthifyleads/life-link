@@ -5,7 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../bloc/auth_bloc.dart';
 import '../../domain/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/design_tokens.dart';
+import '../../../../core/widgets/lifelink_app_bar.dart';
 import '../../../../core/widgets/lifelink_button.dart';
+import '../../../../core/widgets/lifelink_card.dart';
 import '../../../../core/widgets/lifelink_text_field.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -72,9 +75,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_hasAgreedConsent) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('يجب الموافقة على إقرار وتعهد المتبرع والشروط للمتابعة'),
+          content: Text('يجب الموافقة على الشروط والإقرار الطبي للمتابعة'),
           backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -99,15 +102,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      firstDate: DateTime(now.year - 120),
-      lastDate: DateTime(now.year - 16, now.month, now.day),
-      initialDate: DateTime(now.year - 25, now.month, now.day),
-      helpText: 'اختر تاريخ الميلاد',
+      initialDate: DateTime(now.year - 25),
+      firstDate: DateTime(now.year - 80),
+      lastDate: DateTime(now.year - 18),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
-    if (picked == null || !mounted) return;
-    _dobCtrl.text = '${picked.year.toString().padLeft(4, '0')}-'
-        '${picked.month.toString().padLeft(2, '0')}-'
-        '${picked.day.toString().padLeft(2, '0')}';
+    if (picked != null) {
+      final formatted =
+          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      setState(() => _dobCtrl.text = formatted);
+    }
   }
 
   @override
@@ -117,33 +132,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (state is AuthOtpRequiredState) {
           context.push('/otp', extra: {
             'email': state.email,
-            'isRegistration': true,
+            'isRegistration': state.isRegistration,
+            'pendingUserData': state.pendingUserData,
             'challengeId': state.challengeId,
           });
         }
         if (state is AuthAuthenticated) {
-          final role = state.user.role;
-          if (role.isCaregiver) {
+          if (state.user.role.isCaregiver) {
             context.go('/caregiver/home');
-          } else if (role.canAccessDonorFeatures) {
-            context.go('/donor/home');
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('دور المستخدم غير مدعوم، تواصل مع الدعم'),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            context.go('/donor/home');
           }
-        }
-        if (state is AuthRegistrationSucceeded) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم إنشاء الحساب. يمكنك تسجيل الدخول الآن.'),
-            ),
-          );
-          context.go('/login');
         }
         if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -157,299 +156,327 @@ class _RegisterScreenState extends State<RegisterScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded),
-            onPressed: () => context.pop(),
-            color: AppColors.textPrimary,
-          ),
-          title: const Text(
-            'إنشاء حساب جديد / Register',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
+        appBar: const LifeLinkDetailAppBar(
+          title: 'إنشاء حساب جديد',
         ),
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
+              constraints: const BoxConstraints(maxWidth: 480),
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.lg,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        'انضم إلى شبكة LifeLink',
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'سجل بياناتك لإرسال رمز التحقق إلى بريدك الإلكتروني وتفعيل الحساب',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Role Selector (Donor / Caregiver)
+                      // Role Selection Segmented Bar
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
+                          color: Colors.white,
+                          borderRadius: AppRadii.md,
+                          boxShadow: AppShadows.soft,
+                          border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
                         ),
                         child: Row(
                           children: [
                             Expanded(
-                              child: ChoiceChip(
-                                label: const Center(
+                              child: InkWell(
+                                borderRadius: AppRadii.sm,
+                                onTap: () => setState(() => _selectedRole = UserRole.donor),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: _selectedRole == UserRole.donor
+                                        ? AppColors.primaryLight
+                                        : Colors.transparent,
+                                    borderRadius: AppRadii.sm,
+                                  ),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.favorite,
-                                          size: 16, color: Colors.red),
-                                      SizedBox(width: 6),
-                                      Text('متبرع (Donor)',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
+                                      Icon(
+                                        Icons.volunteer_activism_rounded,
+                                        size: 16,
+                                        color: _selectedRole == UserRole.donor
+                                            ? AppColors.primary
+                                            : AppColors.textSecondary,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'متبرع بالدم',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: _selectedRole == UserRole.donor
+                                              ? AppColors.primary
+                                              : AppColors.textSecondary,
+                                          fontFamily: 'Cairo',
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                selected: _selectedRole == UserRole.donor,
-                                onSelected: (sel) {
-                                  if (sel) {
-                                    setState(
-                                        () => _selectedRole = UserRole.donor);
-                                  }
-                                },
-                                selectedColor: AppColors.primaryLight,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 4),
                             Expanded(
-                              child: ChoiceChip(
-                                label: const Center(
+                              child: InkWell(
+                                borderRadius: AppRadii.sm,
+                                onTap: () => setState(() => _selectedRole = UserRole.caregiver),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: _selectedRole == UserRole.caregiver
+                                        ? AppColors.secondaryBlueLight
+                                        : Colors.transparent,
+                                    borderRadius: AppRadii.sm,
+                                  ),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.local_hospital,
-                                          size: 16, color: Colors.blue),
-                                      SizedBox(width: 6),
-                                      Text('مرافق مريض (Caregiver)',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
+                                      Icon(
+                                        Icons.family_restroom_rounded,
+                                        size: 16,
+                                        color: _selectedRole == UserRole.caregiver
+                                            ? AppColors.secondaryBlue
+                                            : AppColors.textSecondary,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'مرافق مريض',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: _selectedRole == UserRole.caregiver
+                                              ? AppColors.secondaryBlue
+                                              : AppColors.textSecondary,
+                                          fontFamily: 'Cairo',
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                selected: _selectedRole == UserRole.caregiver,
-                                onSelected: (sel) {
-                                  if (sel) {
-                                    setState(() =>
-                                        _selectedRole = UserRole.caregiver);
-                                  }
-                                },
-                                selectedColor: Colors.blue.shade50,
                               ),
                             ),
                           ],
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpacing.lg),
 
-                      LifeLinkTextField(
-                        controller: _nameCtrl,
-                        label: 'الاسم الكامل (Full Name)',
-                        hint: 'أحمد محمود',
-                        prefixIcon: Icons.person_outline,
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) {
-                            return 'يرجى إدخال الاسم';
-                          }
-                          return null;
-                        },
-                      ),
+                      // Form Card
+                      LifeLinkCard(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            LifeLinkTextField(
+                              controller: _nameCtrl,
+                              label: 'الاسم الكامل',
+                              hint: 'أحمد محمود',
+                              prefixIcon: Icons.person_outline,
+                              validator: (v) =>
+                                  v == null || v.trim().isEmpty ? 'يرجى إدخال الاسم الكامل' : null,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
 
-                      const SizedBox(height: 16),
+                            LifeLinkTextField(
+                              controller: _emailCtrl,
+                              label: 'البريد الإلكتروني',
+                              hint: 'you@example.com',
+                              keyboardType: TextInputType.emailAddress,
+                              prefixIcon: Icons.email_outlined,
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) return 'يرجى إدخال البريد الإلكتروني';
+                                if (!v.contains('@')) return 'بريد إلكتروني غير صالح';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.md),
 
-                      LifeLinkTextField(
-                        controller: _emailCtrl,
-                        label: 'البريد الإلكتروني (Email Address)',
-                        hint: 'you@example.com',
-                        keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icons.email_outlined,
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) {
-                            return 'يرجى إدخال البريد الإلكتروني';
-                          }
-                          if (!v.contains('@')) return 'بريد إلكتروني غير صالح';
-                          return null;
-                        },
-                      ),
+                            LifeLinkTextField(
+                              controller: _phoneCtrl,
+                              label: 'رقم الهاتف المحمول',
+                              hint: '01012345678',
+                              keyboardType: TextInputType.phone,
+                              prefixIcon: Icons.phone_outlined,
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) return 'يرجى إدخال رقم الهاتف';
+                                if (v.replaceAll(RegExp(r'[^0-9]'), '').length < 10) {
+                                  return 'رقم هاتف غير صحيح';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.md),
 
-                      const SizedBox(height: 16),
+                            LifeLinkTextField(
+                              controller: _dobCtrl,
+                              label: 'تاريخ الميلاد',
+                              hint: 'YYYY-MM-DD (من 18 إلى 65 سنة)',
+                              readOnly: true,
+                              onTap: _pickDateOfBirth,
+                              prefixIcon: Icons.calendar_today_outlined,
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'يرجى تحديد تاريخ الميلاد' : null,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
 
-                      LifeLinkTextField(
-                        controller: _phoneCtrl,
-                        label: 'رقم الهاتف (Phone)',
-                        hint: '+201000000000',
-                        keyboardType: TextInputType.phone,
-                        prefixIcon: Icons.phone_outlined,
-                        validator: (v) {
-                          if (v == null || v.trim().length < 7) {
-                            return 'يرجى إدخال رقم هاتف صحيح';
-                          }
-                          return null;
-                        },
-                      ),
+                            // Blood Type chips (shown for donors)
+                            if (_selectedRole == UserRole.donor) ...[
+                              const Text(
+                                'فصيلة الدم',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _bloodTypes.map((type) {
+                                  final isSelected = _selectedBloodType == type;
+                                  return ChoiceChip(
+                                    label: Text(
+                                      type,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                    selected: isSelected,
+                                    selectedColor: AppColors.primary,
+                                    backgroundColor: AppColors.surfaceVariant,
+                                    shape: const RoundedRectangleBorder(borderRadius: AppRadii.sm),
+                                    side: BorderSide(
+                                      color: isSelected ? AppColors.primary : Colors.transparent,
+                                    ),
+                                    onSelected: (selected) {
+                                      if (selected) setState(() => _selectedBloodType = type);
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                            ],
 
-                      const SizedBox(height: 16),
+                            // Governorate Dropdown
+                            const Text(
+                              'المحافظة',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            DropdownButtonFormField<String>(
+                              initialValue: _selectedGovernorate,
+                              decoration: const InputDecoration(
+                                prefixIcon: Icon(Icons.location_on_outlined, size: 20),
+                              ),
+                              items: _governorates
+                                  .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                                  .toList(),
+                              onChanged: (val) {
+                                if (val != null) setState(() => _selectedGovernorate = val);
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.md),
 
-                      LifeLinkTextField(
-                        controller: _dobCtrl,
-                        label: 'تاريخ الميلاد (YYYY-MM-DD)',
-                        hint: '1995-01-31',
-                        prefixIcon: Icons.calendar_today_outlined,
-                        readOnly: true,
-                        textInputAction: TextInputAction.next,
-                        onTap: _pickDateOfBirth,
-                        validator: (v) {
-                          if (v == null ||
-                              RegExp(r'^\d{4}-\d{2}-\d{2}$')
-                                      .hasMatch(v.trim()) ==
-                                  false) {
-                            return 'استخدم صيغة YYYY-MM-DD';
-                          }
-                          return null;
-                        },
-                      ),
+                            LifeLinkTextField(
+                              controller: _passwordCtrl,
+                              label: 'كلمة المرور',
+                              hint: '••••••••',
+                              obscureText: _obscurePassword,
+                              prefixIcon: Icons.lock_outline_rounded,
+                              suffixIcon: _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                              validator: (v) =>
+                                  v != null && v.length >= 6 ? null : 'يجب ألا تقل عن 6 أحرف',
+                            ),
+                            const SizedBox(height: AppSpacing.md),
 
-                      const SizedBox(height: 16),
+                            // Medical Consent Checkbox
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.sm),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceVariant.withValues(alpha: 0.6),
+                                borderRadius: AppRadii.md,
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: CheckboxListTile(
+                                value: _hasAgreedConsent,
+                                onChanged: (val) => setState(() => _hasAgreedConsent = val ?? false),
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                activeColor: AppColors.primary,
+                                title: const Text(
+                                  'أوافق على الشروط الطبية وإقرار التبرع/الاستخدام لمنصة LifeLink',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.35,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
+                              ),
+                            ),
 
-                      LifeLinkTextField(
-                        controller: _passwordCtrl,
-                        label: 'كلمة المرور (Password)',
-                        hint: '••••••••',
-                        obscureText: _obscurePassword,
-                        prefixIcon: Icons.lock_outline,
-                        suffixIcon: _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        onSuffixTap: () => setState(
-                            () => _obscurePassword = !_obscurePassword),
-                        helperText:
-                            'استخدم 8 أحرف على الأقل، ولا تشارك كلمة المرور مع أي شخص.',
-                        validator: (v) {
-                          if (v == null || v.isEmpty) {
-                            return 'يرجى إدخال كلمة المرور';
-                          }
-                          if (v.length < 8) {
-                            return 'يجب أن تكون 8 أحرف على الأقل';
-                          }
-                          return null;
-                        },
-                      ),
+                            const SizedBox(height: AppSpacing.lg),
 
-                      const SizedBox(height: 16),
-
-                      // Governorate Dropdown
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedGovernorate,
-                        decoration: InputDecoration(
-                          labelText: 'المحافظة (Governorate)',
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          prefixIcon: const Icon(Icons.location_on_outlined),
+                            BlocBuilder<AuthBloc, AuthState>(
+                              builder: (context, state) {
+                                return LifeLinkButton(
+                                  label: 'إنشاء الحساب والمتابعة',
+                                  onPressed: _onRegister,
+                                  isLoading: state is AuthLoading,
+                                  icon: Icons.person_add_rounded,
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                        items: _governorates
-                            .map((gov) =>
-                                DropdownMenuItem(value: gov, child: Text(gov)))
-                            .toList(),
-                        onChanged: (val) =>
-                            setState(() => _selectedGovernorate = val!),
                       ),
 
-                      if (_selectedRole == UserRole.donor) ...[
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedBloodType,
-                          decoration: InputDecoration(
-                            labelText: 'فصيلة الدم (Blood Type)',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            prefixIcon: const Icon(Icons.bloodtype_outlined,
-                                color: Colors.red),
-                          ),
-                          items: _bloodTypes
-                              .map((type) => DropdownMenuItem(
-                                  value: type, child: Text(type)))
-                              .toList(),
-                          onChanged: (val) =>
-                              setState(() => _selectedBloodType = val!),
-                        ),
-                      ],
+                      const SizedBox(height: AppSpacing.md),
 
-                      const SizedBox(height: 16),
-
-                      // Donor Consent & Disclaimer Checkbox
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _hasAgreedConsent
-                                ? AppColors.primary
-                                : AppColors.border,
-                          ),
-                        ),
-                        child: CheckboxListTile(
-                          value: _hasAgreedConsent,
-                          onChanged: (val) =>
-                              setState(() => _hasAgreedConsent = val ?? false),
-                          activeColor: AppColors.primary,
-                          dense: true,
-                          title: const Text(
-                            'إقرار وتعهد المتبرع الإلزامي (Donor Consent)',
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'لديك حساب بالفعل؟',
                             style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 13),
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                              fontFamily: 'Cairo',
+                            ),
                           ),
-                          subtitle: const Text(
-                            'أقر باللياقة الطبية والصحة العامة والإفصاح عن السجل الصحي، والموافقة على شروط الاستخدام وسياسة الخصوصية لمنظومة LifeLink.',
-                            style: TextStyle(
-                                fontSize: 11, color: AppColors.textSecondary),
+                          TextButton(
+                            onPressed: () => context.pop(),
+                            child: const Text(
+                              'تسجيل الدخول',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
+                                fontSize: 13,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          return LifeLinkButton(
-                            label: 'إرسال رمز التحقق (Send OTP)',
-                            onPressed: _onRegister,
-                            isLoading: state is AuthLoading,
-                            icon: Icons.send_rounded,
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      Center(
-                        child: TextButton(
-                          onPressed: () => context.pop(),
-                          child: const Text('لديك حساب بالفعل؟ تسجيل الدخول'),
-                        ),
+                        ],
                       ),
                     ],
                   ),

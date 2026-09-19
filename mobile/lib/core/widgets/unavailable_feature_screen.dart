@@ -20,7 +20,7 @@ class UnavailableFeatureScreen extends StatelessWidget {
         title: const Text('LifeLink'),
         leading: Navigator.canPop(context)
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_rounded),
+                icon: Icon(Icons.adaptive.arrow_back),
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,

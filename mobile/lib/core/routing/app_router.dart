@@ -24,11 +24,16 @@ import '../../features/documents/presentation/bloc/document_bloc.dart';
 import '../../features/tracking/presentation/bloc/tracking_bloc.dart';
 import '../../features/tracking/presentation/screens/qr_scanner_screen.dart';
 import '../../features/tracking/presentation/screens/tracking_details_screen.dart';
+import '../../features/tracking/presentation/screens/delivery_route_map_screen.dart';
 import '../../features/tracking/domain/models/tracking_model.dart';
 import '../../features/notifications/presentation/bloc/notification_bloc.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/donor/presentation/screens/donor_eligibility_screen.dart';
 import '../../features/donor/presentation/screens/donor_vouchers_screen.dart';
+import '../../features/donor/presentation/screens/donor_urgent_alerts_screen.dart';
+import '../../features/donor/presentation/screens/donor_campaigns_screen.dart';
+import '../../features/donor/presentation/screens/hospital_location_screen.dart';
+import '../../features/donor/presentation/screens/donation_request_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/payments/presentation/screens/payment_screen.dart';
 import '../../features/payments/presentation/screens/payment_history_screen.dart';
@@ -39,6 +44,36 @@ import '../widgets/unavailable_feature_screen.dart';
 
 class AppRouter {
   AppRouter._();
+
+  static CustomTransitionPage<T> _buildSmoothPage<T>({
+    required BuildContext context,
+    required GoRouterState state,
+    required Widget child,
+  }) {
+    return CustomTransitionPage<T>(
+      key: state.pageKey,
+      child: child,
+      transitionDuration: const Duration(milliseconds: 260),
+      reverseTransitionDuration: const Duration(milliseconds: 220),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.04, 0.0),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: FadeTransition(
+            opacity: curvedAnimation,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
 
   static GoRouter createRouter(AuthState authState) {
     return GoRouter(
@@ -93,19 +128,32 @@ class AppRouter {
       routes: [
         GoRoute(
           path: '/login',
-          builder: (context, state) => const LoginScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const LoginScreen(),
+          ),
         ),
         GoRoute(
           path: '/register',
-          builder: (context, state) => const RegisterScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const RegisterScreen(),
+          ),
         ),
         GoRoute(
           path: '/forgot-password',
-          builder: (context, state) => const ForgotPasswordScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const ForgotPasswordScreen(),
+          ),
         ),
         GoRoute(
           path: '/otp',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
+            Widget child;
             if (state.extra is Map<String, dynamic>) {
               final map = Map<String, dynamic>.from(
                 state.extra! as Map<String, dynamic>,
@@ -113,250 +161,409 @@ class AppRouter {
               final email =
                   map['email'] is String ? (map['email'] as String).trim() : '';
               if (email.isEmpty) {
-                return const UnavailableFeatureScreen(
+                child = const UnavailableFeatureScreen(
                   title: 'OTP verification unavailable',
                   message: 'A valid verification destination is required. '
                       'Please return to sign in and request a new code.',
                 );
+              } else {
+                child = OtpVerificationScreen(
+                  email: email,
+                  isRegistration: map['isRegistration'] is bool
+                      ? map['isRegistration'] as bool
+                      : false,
+                  pendingUserData: map['pendingUserData'] is Map
+                      ? Map<String, dynamic>.from(map['pendingUserData'] as Map)
+                      : null,
+                  challengeId: map['challengeId'] is String
+                      ? map['challengeId'] as String
+                      : null,
+                );
               }
-              return OtpVerificationScreen(
-                email: email,
-                isRegistration: map['isRegistration'] is bool
-                    ? map['isRegistration'] as bool
-                    : false,
-                pendingUserData: map['pendingUserData'] is Map
-                    ? Map<String, dynamic>.from(map['pendingUserData'] as Map)
-                    : null,
-                challengeId: map['challengeId'] is String
-                    ? map['challengeId'] as String
-                    : null,
-              );
+            } else {
+              final email =
+                  state.extra is String ? (state.extra as String).trim() : '';
+              if (email.isEmpty) {
+                child = const UnavailableFeatureScreen(
+                  title: 'OTP verification unavailable',
+                  message: 'A valid verification destination is required. '
+                      'Please return to sign in and request a new code.',
+                );
+              } else {
+                child = OtpVerificationScreen(email: email);
+              }
             }
-            final email =
-                state.extra is String ? (state.extra as String).trim() : '';
-            if (email.isEmpty) {
-              return const UnavailableFeatureScreen(
-                title: 'OTP verification unavailable',
-                message: 'A valid verification destination is required. '
-                    'Please return to sign in and request a new code.',
-              );
-            }
-            return OtpVerificationScreen(email: email);
+            return _buildSmoothPage(
+              context: context,
+              state: state,
+              child: child,
+            );
           },
         ),
         GoRoute(
           path: '/donor/home',
-          builder: (context, state) => const DonorHomeScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const DonorHomeScreen(),
+          ),
         ),
         GoRoute(
           path: '/caregiver/home',
-          builder: (context, state) => const CaregiverHomeScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const CaregiverHomeScreen(),
+          ),
         ),
         GoRoute(
           path: '/donor/feed',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Donor Feed',
-            message: 'Donor feed is managed from Donor Home.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const DonorUrgentAlertsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/donor/campaigns',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const DonorCampaignsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/donor/location',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: HospitalLocationScreen(
+              hospitalData: state.extra is Map<String, dynamic>
+                  ? state.extra as Map<String, dynamic>
+                  : null,
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/donor/request-details',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: DonationRequestScreen(
+              requestData: state.extra is Map<String, dynamic>
+                  ? state.extra as Map<String, dynamic>
+                  : null,
+            ),
           ),
         ),
         GoRoute(
           path: '/caregiver/requests',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Requests',
-            message: 'Caregiver requests are available from the Home screen.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Requests',
+              message: 'Caregiver requests are available from the Home screen.',
+            ),
           ),
         ),
         GoRoute(
           path: '/donor/voucher',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Donation voucher',
-            message: 'Voucher feature is coming soon.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Donation voucher',
+              message: 'Voucher feature is coming soon.',
+            ),
           ),
         ),
         GoRoute(
           path: '/donor/responses',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Donor Responses',
-            message: 'Responses history is coming soon.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Donor Responses',
+              message: 'Responses history is coming soon.',
+            ),
           ),
         ),
         GoRoute(
           path: '/donor/consents',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Donor Consents',
-            message: 'Consents feature is coming soon.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Donor Consents',
+              message: 'Consents feature is coming soon.',
+            ),
           ),
         ),
         GoRoute(
           path: '/caregiver/blood-bags',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Blood bags',
-            message: 'Blood bags are scanned via Caregiver Home.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Blood bags',
+              message: 'Blood bags are scanned via Caregiver Home.',
+            ),
           ),
         ),
         GoRoute(
           path: '/blood-bags/details',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Blood bag',
-            message: 'Blood bag details are displayed upon scanning.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Blood bag',
+              message: 'Blood bag details are displayed upon scanning.',
+            ),
           ),
         ),
         GoRoute(
           path: '/caregiver/blood-bags/scan',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Blood bag scanner',
-            message: 'Scanner is accessible from Caregiver Home.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Blood bag scanner',
+              message: 'Scanner is accessible from Caregiver Home.',
+            ),
           ),
         ),
         GoRoute(
           path: '/donor/blood-bags/scan',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Blood bag scanner',
-            message: 'This operation is not available for this account.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Blood bag scanner',
+              message: 'This operation is not available for this account.',
+            ),
           ),
         ),
         GoRoute(
           path: '/blood-bags/scan-result',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Blood bag',
-            message: 'Scan result is displayed on the main screen.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Blood bag',
+              message: 'Scan result is displayed on the main screen.',
+            ),
           ),
         ),
         GoRoute(
           path: '/blood-bags/qr',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Blood bag QR',
-            message: 'Blood bag QR is generated hospital-side.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const UnavailableFeatureScreen(
+              title: 'Blood bag QR',
+              message: 'Blood bag QR is generated hospital-side.',
+            ),
           ),
         ),
         GoRoute(
           path: '/caregiver/patients',
-          builder: (context, state) => const CaregiverPatientsScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const CaregiverPatientsScreen(),
+          ),
         ),
         GoRoute(
           path: '/caregiver/assignments',
-          builder: (context, state) => const CaregiverAssignmentsScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const CaregiverAssignmentsScreen(),
+          ),
         ),
         GoRoute(
           path: '/caregiver/patients/request',
-          builder: (context, state) => state.extra is PatientModel
-              ? PatientBloodRequestScreen(patient: state.extra as PatientModel)
-              : const UnavailableFeatureScreen(
-                  title: 'Patient request',
-                  message: 'A valid patient is required.',
-                ),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: state.extra is PatientModel
+                ? PatientBloodRequestScreen(patient: state.extra as PatientModel)
+                : const UnavailableFeatureScreen(
+                    title: 'Patient request',
+                    message: 'A valid patient is required.',
+                  ),
+          ),
         ),
         GoRoute(
           path: '/caregiver/matches',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final requestId = state.uri.queryParameters['requestId'];
+            Widget child;
             if (authState is! AuthAuthenticated ||
                 !authState.user.role.isCaregiver ||
                 requestId == null ||
                 requestId.isEmpty) {
-              return const UnavailableFeatureScreen(
+              child = const UnavailableFeatureScreen(
                 title: 'Matching',
                 message: 'A valid caregiver request is required.',
               );
+            } else {
+              child = CaregiverMatchesScreen(requestId: requestId);
             }
-            return CaregiverMatchesScreen(requestId: requestId);
+            return _buildSmoothPage(
+              context: context,
+              state: state,
+              child: child,
+            );
           },
         ),
         GoRoute(
           path: '/caregiver/create-request',
-          builder: (context, state) => BlocProvider(
-            create: (_) => getIt<BloodRequestBloc>(),
-            child: const CreateBloodRequestScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: BlocProvider(
+              create: (_) => getIt<BloodRequestBloc>(),
+              child: const CreateBloodRequestScreen(),
+            ),
           ),
         ),
         GoRoute(
           path: '/caregiver/request/details',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final request = state.extra;
+            Widget child;
             if (request is! BloodRequestPublic) {
-              return const UnavailableFeatureScreen(
+              child = const UnavailableFeatureScreen(
                 title: 'Request details',
                 message: 'A valid blood request is required.',
               );
+            } else {
+              child = BlocProvider(
+                create: (_) => getIt<DocumentBloc>(),
+                child: RequestDetailsScreen(request: request),
+              );
             }
-            return BlocProvider(
-              create: (_) => getIt<DocumentBloc>(),
-              child: RequestDetailsScreen(request: request),
+            return _buildSmoothPage(
+              context: context,
+              state: state,
+              child: child,
             );
           },
         ),
         GoRoute(
           path: '/home',
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Web Portal Roles unsupported in Mobile')),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const Scaffold(
+              body: Center(child: Text('Web Portal Roles unsupported in Mobile')),
+            ),
           ),
         ),
 
         // ── QR Tracking ──────────────────────────────────────────
         GoRoute(
           path: '/qr/scan',
-          builder: (context, state) => BlocProvider(
-            create: (_) => getIt<TrackingBloc>(),
-            child: const QrScannerScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: BlocProvider(
+              create: (_) => getIt<TrackingBloc>(),
+              child: const QrScannerScreen(),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/tracking',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: DeliveryRouteMapScreen(
+              requestId: state.extra is String ? state.extra as String : null,
+            ),
           ),
         ),
         GoRoute(
           path: '/tracking/details',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final tracking = state.extra;
-            return tracking is TrackingPublic
+            final child = tracking is TrackingPublic
                 ? TrackingDetailsScreen(tracking: tracking)
                 : const UnavailableFeatureScreen(
                     title: 'Tracking',
                     message: 'Valid tracking data is required.',
                   );
+            return _buildSmoothPage(
+              context: context,
+              state: state,
+              child: child,
+            );
           },
         ),
 
         // ── Notifications ─────────────────────────────────────────
         GoRoute(
           path: '/notifications',
-          builder: (context, state) => BlocProvider(
-            create: (_) =>
-                getIt<NotificationBloc>()..add(LoadNotificationsEvent()),
-            child: const NotificationsScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: BlocProvider(
+              create: (_) =>
+                  getIt<NotificationBloc>()..add(LoadNotificationsEvent()),
+              child: const NotificationsScreen(),
+            ),
           ),
         ),
 
         // ── Profile & Eligibility ─────────────────────────────────
         GoRoute(
           path: '/profile',
-          builder: (context, state) => const ProfileScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const ProfileScreen(),
+          ),
         ),
         GoRoute(
           path: '/settings',
-          builder: (context, state) => const UnavailableFeatureScreen(
-            title: 'Settings',
-            message: 'Settings are coming soon.',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const ProfileScreen(),
           ),
         ),
         GoRoute(
           path: '/donor/eligibility',
-          builder: (context, state) => const DonorEligibilityScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const DonorEligibilityScreen(),
+          ),
         ),
         GoRoute(
           path: '/donor/vouchers',
-          builder: (context, state) => const DonorVouchersScreen(),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const DonorVouchersScreen(),
+          ),
         ),
 
         // ── Payment ───────────────────────────────────────────────
         GoRoute(
           path: '/caregiver/payment',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final extra = state.extra;
+            Widget child;
             if (extra is BloodRequestPublic) {
-              return BlocProvider(
+              child = BlocProvider(
                 create: (_) => PaymentCubit(getIt<PaymentRepository>()),
                 child: PaymentScreen(request: extra),
               );
-            }
-            if (extra is TrackingPublic && extra.requestId != null) {
-              return BlocProvider(
+            } else if (extra is TrackingPublic && extra.requestId != null) {
+              child = BlocProvider(
                 create: (_) => PaymentCubit(getIt<PaymentRepository>()),
                 child: PaymentScreen(
                   request: BloodRequestPublic(
@@ -372,9 +579,8 @@ class AppRouter {
                   ),
                 ),
               );
-            }
-            if (extra is String) {
-              return BlocProvider(
+            } else if (extra is String) {
+              child = BlocProvider(
                 create: (_) => PaymentCubit(getIt<PaymentRepository>()),
                 child: PaymentScreen(
                   request: BloodRequestPublic(
@@ -390,50 +596,78 @@ class AppRouter {
                   ),
                 ),
               );
+            } else {
+              child = const UnavailableFeatureScreen(
+                title: 'Payment',
+                message: 'A valid blood request is required.',
+              );
             }
-            return const UnavailableFeatureScreen(
-              title: 'Payment',
-              message: 'A valid blood request is required.',
+            return _buildSmoothPage(
+              context: context,
+              state: state,
+              child: child,
             );
           },
         ),
         GoRoute(
           path: '/caregiver/payment-history',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final extra = state.extra;
+            Widget child;
             if (extra is BloodRequestPublic) {
-              return PaymentHistoryScreen(request: extra);
+              child = PaymentHistoryScreen(request: extra);
+            } else if (extra is String) {
+              child = PaymentHistoryScreen(requestId: extra);
+            } else {
+              child = const PaymentHistoryScreen();
             }
-            if (extra is String) {
-              return PaymentHistoryScreen(requestId: extra);
-            }
-            return const PaymentHistoryScreen();
+            return _buildSmoothPage(
+              context: context,
+              state: state,
+              child: child,
+            );
           },
         ),
         GoRoute(
           path: '/caregiver/payment/allocation',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final allocationId = state.extra is String
                 ? state.extra as String
                 : state.uri.queryParameters['allocationId'];
-            return allocationId == null || allocationId.isEmpty
-                ? const UnavailableFeatureScreen(
-                    title: 'Payment',
-                    message: 'An allocation is required.',
-                  )
-                : BlocProvider(
-                    create: (_) => PaymentCubit(getIt<PaymentRepository>()),
-                    child: PaymentScreen(allocationId: allocationId),
-                  );
+            Widget child;
+            if (allocationId == null || allocationId.isEmpty) {
+              child = const UnavailableFeatureScreen(
+                title: 'Payment',
+                message: 'An allocation is required.',
+              );
+            } else {
+              child = BlocProvider(
+                create: (_) => PaymentCubit(getIt<PaymentRepository>()),
+                child: PaymentScreen(allocationId: allocationId),
+              );
+            }
+            return _buildSmoothPage(
+              context: context,
+              state: state,
+              child: child,
+            );
           },
         ),
         GoRoute(
           path: '/help/donor',
-          builder: (context, state) => const HelpScreen(role: 'donor'),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const HelpScreen(role: 'donor'),
+          ),
         ),
         GoRoute(
           path: '/help/caregiver',
-          builder: (context, state) => const HelpScreen(role: 'caregiver'),
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const HelpScreen(role: 'caregiver'),
+          ),
         ),
       ],
     );

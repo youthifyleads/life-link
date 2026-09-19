@@ -26,5 +26,9 @@ class LocaleCubit extends Cubit<Locale> {
     }
   }
 
+  Future<void> toggleLocale() async {
+    await changeLocale(isArabic ? 'en' : 'ar');
+  }
+
   bool get isArabic => state.languageCode == 'ar';
 }

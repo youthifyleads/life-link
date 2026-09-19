@@ -6,7 +6,10 @@ import 'package:go_router/go_router.dart';
 import '../bloc/auth_bloc.dart';
 import '../../domain/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/design_tokens.dart';
+import '../../../../core/widgets/lifelink_app_bar.dart';
 import '../../../../core/widgets/lifelink_button.dart';
+import '../../../../core/widgets/lifelink_card.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -142,119 +145,141 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded),
-            onPressed: () => context.pop(),
-            color: AppColors.textPrimary,
-          ),
-          title: const Text('التحقق من الرمز (OTP)'),
+        appBar: const LifeLinkDetailAppBar(
+          title: 'التحقق من الهوية',
         ),
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 72,
-                      height: 72,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primaryLight,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.mark_email_read_outlined,
-                          size: 36, color: AppColors.primary),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'تأكيد رمز التحقق (OTP)',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'تم إرسال رمز التحقق إلى بريدك الإلكتروني:\n${widget.email}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                  ),
-                  const SizedBox(height: 36),
-
-                  // PIN input
-                  TextField(
-                    controller: _otpCtrl,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 10,
-                    ),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      hintText: '••••••',
-                      hintStyle: TextStyle(
-                        color: AppColors.textSecondary.withValues(alpha: 0.3),
-                        letterSpacing: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: AppColors.primary, width: 2),
-                      ),
-                    ),
-                    onSubmitted: (_) => _onVerify(),
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) => LifeLinkButton(
-                      label: 'تأكيد ودخول',
-                      onPressed: _onVerify,
-                      isLoading: state is AuthLoading,
-                      icon: Icons.check_rounded,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Resend countdown
-                  Center(
-                    child: _canResend
-                        ? TextButton(
-                            onPressed: _onResend,
-                            child: const Text(
-                              'إعادة إرسال الرمز',
-                              style: TextStyle(
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.xl,
+                ),
+                child: Column(
+                  children: [
+                    LifeLinkCard(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 68,
+                              height: 68,
+                              decoration: const BoxDecoration(
+                                color: AppColors.primaryLight,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.mark_email_read_outlined,
+                                size: 34,
                                 color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          )
-                        : Text(
-                            'إعادة إرسال الرمز خلال $_secondsLeft ثانية',
-                            style:
-                                const TextStyle(color: AppColors.textSecondary),
                           ),
-                  ),
-                ],
+                          const SizedBox(height: AppSpacing.md),
+                          const Text(
+                            'تأكيد رمز التحقق (OTP)',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              fontFamily: 'Cairo',
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني:\n${widget.email}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                              fontFamily: 'Cairo',
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+
+                          // PIN input field
+                          TextField(
+                            controller: _otpCtrl,
+                            keyboardType: TextInputType.number,
+                            maxLength: 6,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 10,
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: InputDecoration(
+                              counterText: '',
+                              hintText: '••••••',
+                              fillColor: AppColors.background,
+                              filled: true,
+                              hintStyle: TextStyle(
+                                color: AppColors.textSecondary.withValues(alpha: 0.3),
+                                letterSpacing: 10,
+                              ),
+                              border: const OutlineInputBorder(
+                                borderRadius: AppRadii.md,
+                                borderSide: BorderSide(color: AppColors.border),
+                              ),
+                              focusedBorder: const OutlineInputBorder(
+                                borderRadius: AppRadii.md,
+                                borderSide: BorderSide(
+                                  color: AppColors.primary,
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            onSubmitted: (_) => _onVerify(),
+                          ),
+
+                          const SizedBox(height: AppSpacing.lg),
+
+                          BlocBuilder<AuthBloc, AuthState>(
+                            builder: (context, state) => LifeLinkButton(
+                              label: 'تأكيد ودخول',
+                              onPressed: _onVerify,
+                              isLoading: state is AuthLoading,
+                              icon: Icons.check_rounded,
+                            ),
+                          ),
+
+                          const SizedBox(height: AppSpacing.md),
+
+                          // Resend countdown
+                          Center(
+                            child: _canResend
+                                ? TextButton(
+                                    onPressed: _onResend,
+                                    child: const Text(
+                                      'إعادة إرسال الرمز',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w700,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    'إعادة إرسال الرمز خلال $_secondsLeft ثانية',
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                      fontFamily: 'Cairo',
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

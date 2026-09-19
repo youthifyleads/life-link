@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/lifelink_states.dart';
+import '../../../../core/widgets/lifelink_text_field.dart';
 import '../../../../core/network/api_error_message.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/caregiver_remote_datasource.dart';
@@ -40,74 +41,141 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
     final created = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('إضافة مريض جديد'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: name,
-                decoration: const InputDecoration(labelText: 'اسم المريض بالكامل'),
-                validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'هذا الحقل مطلوب' : null,
-              ),
-              TextFormField(
-                controller: bloodType,
-                decoration: const InputDecoration(
-                  labelText: 'فصيلة الدم',
-                  hintText: 'مثال: O+, A-, AB+',
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+        title: const Text(
+          'إضافة مريض جديد',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'Cairo',
+            color: AppColors.textPrimary,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 8),
+                LifeLinkTextField(
+                  controller: name,
+                  label: 'اسم المريض بالكامل',
+                  hint: 'مثال: كريم سعيد',
+                  prefixIcon: Icons.person_outline_rounded,
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'هذا الحقل مطلوب' : null,
                 ),
-                validator: (value) => value == null || value.trim().length < 2
-                    ? 'يرجى إدخال فصيلة دم صحيحة'
-                    : null,
-              ),
-              TextFormField(
-                controller: hospitalId,
-                decoration: const InputDecoration(
-                  labelText: 'كود المستشفى أو رقم الملف الطبي',
+                const SizedBox(height: 16),
+                LifeLinkTextField(
+                  controller: bloodType,
+                  label: 'فصيلة الدم',
+                  hint: 'مثال: O+, A-, AB+',
+                  prefixIcon: Icons.water_drop_outlined,
+                  validator: (value) => value == null || value.trim().length < 2
+                      ? 'يرجى إدخال فصيلة دم صحيحة'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                LifeLinkTextField(
+                  controller: hospitalId,
+                  label: 'كود المستشفى أو رقم الملف الطبي',
+                  hint: 'مثال: #HOSP-104',
                   helperText: 'مطلوب لربط الحالة والطلبات بالمركز الطبي',
+                  prefixIcon: Icons.local_hospital_outlined,
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'هذا الحقل مطلوب' : null,
                 ),
-                validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'هذا الحقل مطلوب' : null,
-              ),
-              TextFormField(
-                controller: notes,
-                decoration: const InputDecoration(labelText: 'ملاحظات طبية (اختياري)'),
-              ),
-            ],
+                const SizedBox(height: 16),
+                LifeLinkTextField(
+                  controller: notes,
+                  label: 'ملاحظات طبية (اختياري)',
+                  hint: 'أي توصيات أو تاريخ مرضي خاص',
+                  prefixIcon: Icons.description_outlined,
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('إلغاء'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
-              try {
-                await getIt<CaregiverRemoteDataSource>().createPatient(
-                  fullName: name.text.trim(),
-                  bloodType: bloodType.text.trim().toUpperCase(),
-                  hospitalId: hospitalId.text.trim(),
-                  notes: notes.text.trim(),
-                );
-                if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext, true);
-                }
-              } catch (error) {
-                if (dialogContext.mounted) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(
-                      content: Text(friendlyErrorMessage(error)),
-                      backgroundColor: AppColors.error,
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: const BorderSide(color: AppColors.border),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  );
-                }
-              }
-            },
-            child: const Text('حفظ المريض'),
+                  ),
+                  child: const Text(
+                    'إلغاء',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Cairo',
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (!formKey.currentState!.validate()) return;
+                    try {
+                      await getIt<CaregiverRemoteDataSource>().createPatient(
+                        fullName: name.text.trim(),
+                        bloodType: bloodType.text.trim().toUpperCase(),
+                        hospitalId: hospitalId.text.trim(),
+                        notes: notes.text.trim(),
+                      );
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext, true);
+                      }
+                    } catch (error) {
+                      if (dialogContext.mounted) {
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          SnackBar(
+                            content: Text(friendlyErrorMessage(error)),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'حفظ المريض',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Cairo',
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

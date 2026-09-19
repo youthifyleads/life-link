@@ -51,7 +51,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         title: const Text('مسح كود طلب المستشفى',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+          icon: Icon(Icons.adaptive.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -62,7 +62,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           ),
           // Camera flip
           IconButton(
-            icon: const Icon(Icons.flip_camera_ios, color: Colors.white),
+            icon: const Icon(Icons.cameraswitch_rounded, color: Colors.white),
             onPressed: () => _cameraController.switchCamera(),
           ),
         ],
@@ -120,6 +120,105 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     );
   }
 
+  void _showManualInputDialog() {
+    final controller = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(modalContext).viewInsets.bottom,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'إدخال كود الطلب يدوياً',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'إذا تعذر استخدام الكاميرا أو للمحاكي، يمكنك إدخال رقم الطلب أو كود التتبع يدوياً',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                textDirection: TextDirection.ltr,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'REQ-8820-EG',
+                  prefixIcon: const Icon(Icons.pin_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  final code = controller.text.trim();
+                  if (code.isNotEmpty) {
+                    Navigator.pop(modalContext);
+                    context.push('/tracking', extra: code);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'تأكيد والبحث عن الشحنة',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildScanOverlay() {
     return LayoutBuilder(builder: (context, constraints) {
       final boxSize = constraints.maxWidth * 0.65;
@@ -159,16 +258,16 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             child: _buildScanCorners(boxSize),
           ),
 
-          // Instructions
+          // Instructions & Manual Code Action
           Positioned(
-            bottom: 60,
+            bottom: 36,
             left: 24,
             right: 24,
             child: Column(
               children: [
                 const Icon(Icons.qr_code_scanner,
                     color: Colors.white, size: 36),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 const Text(
                   'وجّه الكاميرا نحو كود طلب الدم',
                   textAlign: TextAlign.center,
@@ -181,6 +280,23 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _showManualInputDialog,
+                  icon: const Icon(Icons.keyboard_outlined, color: Colors.white, size: 18),
+                  label: const Text(
+                    'إدخال كود الطلب يدوياً كرقم',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white70, width: 1.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    backgroundColor: Colors.black.withValues(alpha: 0.3),
+                  ),
                 ),
               ],
             ),

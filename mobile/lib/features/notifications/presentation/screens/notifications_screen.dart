@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../bloc/notification_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/lifelink_states.dart';
+import '../../../../core/widgets/lifelink_app_bar.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -13,12 +13,8 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('الإشعارات والتنبيهات'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.pop(),
-        ),
+      appBar: LifeLinkDetailAppBar(
+        title: 'الإشعارات والتنبيهات',
         actions: [
           BlocBuilder<NotificationBloc, NotificationState>(
             builder: (context, state) {
@@ -28,7 +24,11 @@ class NotificationsScreen extends StatelessWidget {
                       context.read<NotificationBloc>().add(MarkAllReadEvent()),
                   child: const Text(
                     'تحديد الكل كمقروء',
-                    style: TextStyle(color: AppColors.primary),
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Cairo',
+                    ),
                   ),
                 );
               }

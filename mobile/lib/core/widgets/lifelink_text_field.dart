@@ -18,6 +18,8 @@ class LifeLinkTextField extends StatelessWidget {
   final bool readOnly;
   final VoidCallback? onTap;
   final String? helperText;
+  final TextDirection? textDirection;
+  final TextAlign textAlign;
 
   const LifeLinkTextField({
     super.key,
@@ -36,6 +38,8 @@ class LifeLinkTextField extends StatelessWidget {
     this.readOnly = false,
     this.onTap,
     this.helperText,
+    this.textDirection,
+    this.textAlign = TextAlign.start,
   });
 
   @override
@@ -43,34 +47,49 @@ class LifeLinkTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
-        const SizedBox(height: AppSpacing.sm),
+        if (label.isNotEmpty) ...[
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              fontFamily: 'Cairo',
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         TextFormField(
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          textDirection: textDirection,
+          textAlign: textAlign,
           validator: validator,
           textInputAction: textInputAction,
           autofillHints: autofillHints,
           onFieldSubmitted: onFieldSubmitted,
           readOnly: readOnly,
           onTap: onTap,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Cairo',
+          ),
           decoration: InputDecoration(
             hintText: hint,
             helperText: helperText,
+            fillColor: Colors.white,
+            filled: true,
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.secondaryBlue, size: 21)
+                ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
                 : null,
             suffixIcon: suffixIcon != null
                 ? InkWell(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: AppRadii.full,
                     onTap: onSuffixTap,
-                    child:
-                        Icon(suffixIcon, color: AppColors.textHint, size: 22),
+                    child: Icon(suffixIcon, color: AppColors.textHint, size: 20),
                   )
                 : null,
           ),

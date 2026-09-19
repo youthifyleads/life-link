@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -9,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../data/donor_remote_datasource.dart';
 import '../../domain/models/voucher_model.dart';
+import '../../../../core/widgets/lifelink_app_bar.dart';
 
 class DonorVouchersScreen extends StatefulWidget {
   const DonorVouchersScreen({super.key});
@@ -135,13 +135,8 @@ class _DonorVouchersScreenState extends State<DonorVouchersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('كوبونات ومكافآت التبرع'),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.pop(),
-        ),
+      appBar: const LifeLinkDetailAppBar(
+        title: 'كوبونات ومكافآت التبرع',
       ),
       body: RefreshIndicator(
         color: AppColors.primary,
@@ -243,7 +238,7 @@ class _DonorVouchersScreenState extends State<DonorVouchersScreen> {
                             height: 60,
                             decoration: BoxDecoration(
                               color: isActive ? AppColors.primaryLight : Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: AppRadii.md,
                             ),
                             child: Center(
                               child: Text(

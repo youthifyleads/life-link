@@ -24,9 +24,9 @@ class PatientBloodRequestScreen extends StatelessWidget {
             // Patient Card
             Card(
               elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: AppColors.border),
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppRadii.lg,
+                side: BorderSide(color: AppColors.border),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
@@ -104,9 +104,9 @@ class PatientBloodRequestScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.blue.withValues(alpha: 0.25)),
+                color: AppColors.secondaryBlueLight,
+                borderRadius: AppRadii.lg,
+                border: Border.all(color: AppColors.secondaryBlue.withValues(alpha: 0.25)),
               ),
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,8 +153,8 @@ class PatientBloodRequestScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadii.md,
                 ),
                 elevation: 2,
               ),
@@ -170,8 +170,8 @@ class PatientBloodRequestScreen extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 side: const BorderSide(color: AppColors.secondaryBlue),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadii.md,
                 ),
               ),
             ),

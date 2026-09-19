@@ -74,6 +74,13 @@ class AuthResendOtpEvent extends AuthEvent {
 
 class AuthLogoutEvent extends AuthEvent {}
 
+class AuthSetDemoUserEvent extends AuthEvent {
+  final UserRole role;
+  AuthSetDemoUserEvent(this.role);
+  @override
+  List<Object?> get props => [role];
+}
+
 // ── States ────────────────────────────────────────────────
 abstract class AuthState extends Equatable {
   @override
@@ -139,6 +146,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthVerifyOtpEvent>(_onVerifyOtp);
     on<AuthResendOtpEvent>(_onResendOtp);
     on<AuthLogoutEvent>(_onLogout);
+    on<AuthSetDemoUserEvent>((event, emit) {
+      emit(AuthAuthenticated(
+        UserModel(
+          id: 'demo-user-1',
+          fullName: event.role == UserRole.caregiver ? 'د. أحمد فؤاد' : 'دينيش كابور',
+          email: 'demo@lifelink.org',
+          role: event.role,
+          phone: '+201000000000',
+        ),
+      ));
+    });
   }
 
   Future<void> _onCheckSession(

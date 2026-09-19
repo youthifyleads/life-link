@@ -95,8 +95,14 @@ class _CaregiverCard extends StatelessWidget {
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
+        trailing: Icon(
+          Directionality.of(context) == TextDirection.rtl
+              ? Icons.chevron_left_rounded
+              : Icons.chevron_right_rounded,
+          size: 20,
+          color: AppColors.textHint,
+        ),
       ),
     );
   }

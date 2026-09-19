@@ -59,7 +59,7 @@ class HelpScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('دليل استخدام LifeLink'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+          icon: Icon(Icons.adaptive.arrow_back),
           onPressed: () => context.pop(),
         ),
       ),

@@ -117,7 +117,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           appBar: AppBar(
             title: const Text('سجل المدفوعات والفواتير'),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_rounded),
+              icon: Icon(Icons.adaptive.arrow_back),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),

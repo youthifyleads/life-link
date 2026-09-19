@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/widgets/lifelink_states.dart';
 import '../../../../core/widgets/lifelink_components.dart';
+import '../../../../core/widgets/lifelink_app_bar.dart';
 
 class DonorEligibilityScreen extends StatelessWidget {
   const DonorEligibilityScreen({super.key});
@@ -17,12 +18,8 @@ class DonorEligibilityScreen extends StatelessWidget {
     return BlocProvider(
       create: (_) => getIt<DonorBloc>()..add(LoadDonorProfileEvent()),
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('أهلية وسجل التبرع'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded),
-            onPressed: () => context.pop(),
-          ),
+        appBar: const LifeLinkDetailAppBar(
+          title: 'أهلية وسجل التبرع',
         ),
         body: BlocBuilder<DonorBloc, DonorState>(
           builder: (context, state) {
