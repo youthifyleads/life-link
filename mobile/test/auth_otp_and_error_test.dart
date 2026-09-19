@@ -17,16 +17,9 @@ class _FakeAuthRemoteDataSource extends AuthRemoteDataSource {
   String? requestedEmail;
 
   @override
-  Future<AuthResult<Map<String, dynamic>>> requestOtp(
-    String email, {
-    String purpose = 'login',
-  }) async {
+  Future<AuthResult<Map<String, dynamic>>> resendSignupOtp(String email) async {
     requestedEmail = email;
-    return AuthSuccess({
-      'challenge_id': 'challenge_resend',
-      'expires_in_seconds': 300,
-      'attempts_remaining': 5,
-    });
+    return AuthSuccess({});
   }
 
   @override
@@ -45,9 +38,8 @@ class _FakeAuthRemoteDataSource extends AuthRemoteDataSource {
           id: 'u_123',
           email: email,
           fullName: name,
-          role: UserRole.donor,
+          role: UserRole.normalUser,
         ),
-        challengeId: 'challenge_123',
         expiresInSeconds: 300,
       ),
     );
@@ -142,7 +134,6 @@ void main() {
         phone: '+201000000000',
         dateOfBirth: '1995-01-01',
         password: 'StrongPassword1',
-        role: UserRole.donor,
         governorate: 'Cairo',
       ),
     );
@@ -150,20 +141,38 @@ void main() {
     final state =
         await bloc.stream.firstWhere((state) => state is AuthOtpRequiredState);
     expect(state is AuthOtpRequiredState, isTrue);
-    final otpState = state as AuthOtpRequiredState;
-    expect(otpState.pendingUserData, isNull);
-    expect(otpState.challengeId, 'challenge_123');
   });
 
   test('AuthBloc resends OTP using email as the only destination', () async {
     final dataSource = _FakeAuthRemoteDataSource();
     final bloc = AuthBloc(dataSource);
 
-    bloc.add(AuthResendOtpEvent('donor@example.com'));
+    bloc.add(AuthResendSignupOtpEvent('donor@example.com'));
 
     final state =
         await bloc.stream.firstWhere((state) => state is AuthOtpRequiredState);
     expect(dataSource.requestedEmail, 'donor@example.com');
     expect((state as AuthOtpRequiredState).email, 'donor@example.com');
+  });
+
+  testWidgets('OTP screen rejects codes that are not exactly six digits',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider<AuthBloc>(
+          create: (_) => AuthBloc(_FakeAuthRemoteDataSource()),
+          child: const OtpVerificationScreen(
+            email: 'donor@example.com',
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), '123');
+    await tester.tap(find.text('تأكيد ودخول'));
+    await tester.pump();
+
+    expect(
+        find.text('يرجى إدخال رمز تحقق OTP مكون من 6 أرقام'), findsOneWidget);
   });
 }

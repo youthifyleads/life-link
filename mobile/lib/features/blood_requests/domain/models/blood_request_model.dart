@@ -8,8 +8,6 @@ class BloodRequestCreate extends Equatable {
   final String? notes;
   final String? reason;
   final DateTime? requiredBy;
-  final double? latitude;
-  final double? longitude;
 
   const BloodRequestCreate({
     required this.bloodType,
@@ -19,8 +17,6 @@ class BloodRequestCreate extends Equatable {
     this.notes,
     this.reason,
     this.requiredBy,
-    this.latitude,
-    this.longitude,
   });
 
   Map<String, dynamic> toJson() => {
@@ -32,8 +28,6 @@ class BloodRequestCreate extends Equatable {
         if (reason != null) 'reason': reason,
         if (requiredBy != null)
           'required_by': requiredBy!.toUtc().toIso8601String(),
-        if (latitude != null) 'latitude': latitude,
-        if (longitude != null) 'longitude': longitude,
       };
 
   @override
@@ -45,8 +39,6 @@ class BloodRequestCreate extends Equatable {
         notes,
         reason,
         requiredBy,
-        latitude,
-        longitude,
       ];
 }
 
@@ -59,6 +51,8 @@ class BloodRequestPublic extends Equatable {
   final bool urgency;
   final String? notes;
   final String? reason;
+  final double? unitPrice;
+  final double? totalAmount;
   final String status;
   final String trackingReference;
   final DateTime createdAt;
@@ -72,6 +66,8 @@ class BloodRequestPublic extends Equatable {
     required this.urgency,
     this.notes,
     this.reason,
+    this.unitPrice,
+    this.totalAmount,
     required this.status,
     required this.trackingReference,
     required this.createdAt,
@@ -116,6 +112,8 @@ class BloodRequestPublic extends Equatable {
       urgency: urgency,
       notes: json['notes'] as String?,
       reason: json['reason'] as String?,
+      unitPrice: (json['unit_price'] as num?)?.toDouble(),
+      totalAmount: (json['total_amount'] as num?)?.toDouble(),
       status: status,
       trackingReference: trackingReference,
       createdAt: parsedCreatedAt,

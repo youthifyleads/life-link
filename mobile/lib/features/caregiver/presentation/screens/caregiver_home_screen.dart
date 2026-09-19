@@ -81,6 +81,26 @@ class CaregiverHomeScreen extends StatelessWidget {
             accent: AppColors.navy,
             onTap: () => context.push('/caregiver/assignments'),
           ),
+          _WorkspaceTile(
+            icon: Icons.inventory_outlined,
+            title: 'Allocations',
+            subtitle: 'Review blood preparation allocations',
+            accent: AppColors.navy,
+            onTap: () => context.push('/caregiver/allocations'),
+          ),
+          _WorkspaceTile(
+            icon: Icons.inventory_2_outlined,
+            title: 'Blood bags',
+            subtitle: 'Review bag status and movement history',
+            accent: AppColors.teal,
+            onTap: () => context.push('/caregiver/blood-bags'),
+          ),
+          _WorkspaceTile(
+            icon: Icons.qr_code_scanner_rounded,
+            title: 'Scan blood bag or request',
+            subtitle: 'Scan a caregiver blood-bag or request QR',
+            accent: AppColors.info,
+            onTap: () => context.push('/caregiver/scan'),
 
           const SizedBox(height: AppSpacing.lg),
 
@@ -192,6 +212,22 @@ class _ModeSwitcher extends StatelessWidget {
               ),
             ),
           ),
+          _WorkspaceTile(
+            icon: Icons.history_rounded,
+            title: 'Caregiver history',
+            subtitle: 'Review payment history returned by Azure',
+            accent: AppColors.info,
+            onTap: () => context.push('/caregiver/payment-history'),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text('Need a walkthrough?',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.xs),
+          TextButton.icon(
+            onPressed: () => context.push('/help/caregiver'),
+            icon: const Icon(Icons.menu_book_outlined),
+            label: const Text('How LifeLink works'),
+            style: TextButton.styleFrom(alignment: Alignment.centerLeft),
           Expanded(
             child: InkWell(
               onTap: !isCaregiverSelected ? onSelectCaregiver : null,

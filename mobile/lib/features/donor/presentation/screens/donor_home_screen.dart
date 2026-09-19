@@ -87,6 +87,12 @@ class DonorHomeScreen extends StatelessWidget {
                 onTap: () => context.push('/donor/responses'),
               ),
               _JourneyRow(
+                icon: Icons.card_giftcard_outlined,
+                title: 'Donation voucher',
+                subtitle: 'View vouchers returned by Azure.',
+                onTap: () => context.push('/donor/voucher'),
+              ),
+              _JourneyRow(
                 icon: Icons.verified_user_outlined,
                 title: 'الموافقات الطبية والشروط',
                 subtitle: 'مراجعة وتحديث اختيارات الموافقة السريرية.',
@@ -232,7 +238,7 @@ class _ReadinessPanel extends StatelessWidget {
         }
         if (state is DonorLoaded) {
           final profile = state.profile;
-          final available = profile.availableToDonate;
+          final eligibilityStatus = profile.eligibilityStatus;
           return _PanelShell(
             child: Column(
               children: [
@@ -242,16 +248,12 @@ class _ReadinessPanel extends StatelessWidget {
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(
-                        color: available
-                            ? AppColors.tealLight
-                            : AppColors.primaryLight,
+                        color: AppColors.primaryLight,
                         borderRadius: AppRadii.sm,
                       ),
                       child: Icon(
-                        available
-                            ? Icons.favorite_rounded
-                            : Icons.pause_circle_outline,
-                        color: available ? AppColors.teal : AppColors.primary,
+                        Icons.verified_user_outlined,
+                        color: AppColors.primary,
                         size: 28,
                       ),
                     ),
@@ -261,6 +263,8 @@ class _ReadinessPanel extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
+                            'Medical eligibility: $eligibilityStatus',
+
                             available
                                 ? 'أنت جاهز ومتاح للتبرع'
                                 : 'وضع الاستعداد متوقف',
@@ -271,6 +275,8 @@ class _ReadinessPanel extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
+                            'Availability is not provided by the current Azure contract.',
+
                             profile.isEligible
                                 ? 'فعّل الاستعداد لتلقي إشعارات الحالات العاجلة القريبة المتوافقة معك.'
                                 : 'سيتم تحديث أهليتك تلقائياً بعد اكتمال فترة التعافي المقررة طبياً.',
@@ -282,15 +288,6 @@ class _ReadinessPanel extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Switch(
-                      value: available,
-                      onChanged: profile.isEligible
-                          ? (value) => context
-                              .read<DonorBloc>()
-                              .add(SetDonorAvailabilityEvent(value))
-                          : null,
-                      activeThumbColor: AppColors.teal,
-                    ),
                   ],
                 ),
                 const Divider(height: AppSpacing.lg),
@@ -299,6 +296,13 @@ class _ReadinessPanel extends StatelessWidget {
                   runSpacing: AppSpacing.sm,
                   children: [
                     _ProfileFact(
+                      label: 'Blood type',
+                      value: profile.bloodType ?? 'Not recorded',
+                      icon: Icons.bloodtype_outlined,
+                    ),
+                    _ProfileFact(
+                      label: 'Last donation',
+
                       label: 'فصيلة الدم',
                       value: profile.bloodType,
                       icon: Icons.bloodtype_outlined,

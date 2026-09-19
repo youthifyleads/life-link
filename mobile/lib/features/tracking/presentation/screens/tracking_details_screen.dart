@@ -122,6 +122,41 @@ class TrackingDetailsScreen extends StatelessWidget {
               ),
             ),
 
+            const SizedBox(height: 32),
+
+            Text('Bag Details', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+
+            _buildInfoCard([
+              _infoRow(
+                  context, Icons.water_drop, 'Blood Type', tracking.bloodType),
+              _infoRow(context, Icons.science, 'Component',
+                  _componentLabel(tracking.component)),
+              _infoRow(context, Icons.qr_code, 'Reference', tracking.reference,
+                  monospace: true),
+              _infoRow(
+                  context,
+                  Icons.schedule,
+                  'Last Updated',
+                  DateFormat('MMM d, y • h:mm a')
+                      .format(tracking.lastUpdated.toLocal())),
+              if (tracking.requestId != null)
+                _infoRow(context, Icons.assignment, 'Request ID',
+                    tracking.requestId!),
+              if (tracking.bankName != null)
+                _infoRow(context, Icons.account_balance, 'Blood Bank',
+                    tracking.bankName!),
+              if (tracking.paymentStatus != null)
+                _infoRow(context, Icons.payment, 'Payment Status',
+                    tracking.paymentStatus!),
+              if (tracking.unitPrice != null)
+                _infoRow(context, Icons.sell, 'Unit Price',
+                    'EGP ${tracking.unitPrice}'),
+              if (tracking.totalPrice != null)
+                _infoRow(context, Icons.receipt_long, 'Total Price',
+                    'EGP ${tracking.totalPrice}'),
+            ]),
+
             const SizedBox(height: AppSpacing.xl),
 
             // Financial & Payment Card

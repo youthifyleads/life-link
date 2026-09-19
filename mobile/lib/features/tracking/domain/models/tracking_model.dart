@@ -9,6 +9,9 @@ class TrackingPublic extends Equatable {
   final String? requestId;
   final double? unitPrice;
   final double? totalPrice;
+  final String? paymentStatus;
+  final String? bankName;
+
   final String paymentStatus;
   final String? bankName;
   final String? bankLocation;
@@ -24,6 +27,9 @@ class TrackingPublic extends Equatable {
     this.requestId,
     this.unitPrice,
     this.totalPrice,
+    this.paymentStatus,
+    this.bankName,
+
     this.paymentStatus = 'unpaid',
     this.bankName,
     this.bankLocation,
@@ -40,6 +46,16 @@ class TrackingPublic extends Equatable {
     }
 
     return TrackingPublic(
+      reference: json['reference'] as String,
+      status: json['status'] as String,
+      bloodType: json['blood_type'] as String,
+      component: json['component'] as String,
+      lastUpdated: DateTime.parse(json['last_updated'] as String),
+      requestId: json['request_id'] as String?,
+      unitPrice: (json['unit_price'] as num?)?.toDouble(),
+      totalPrice: (json['total_price'] as num?)?.toDouble(),
+      paymentStatus: json['payment_status'] as String?,
+      bankName: json['bank_name'] as String?,
       reference: (json['reference'] ?? json['qr_code'] ?? json['tracking_reference'] ?? '') as String,
       status: (json['status'] ?? 'requested') as String,
       bloodType: (json['blood_type'] ?? '') as String,
@@ -59,6 +75,9 @@ class TrackingPublic extends Equatable {
   bool get isPaid => paymentStatus == 'paid' || paymentStatus == 'completed';
 
   @override
+  List<Object?> get props =>
+      [
+
   List<Object?> get props => [
         reference,
         status,
@@ -70,6 +89,7 @@ class TrackingPublic extends Equatable {
         totalPrice,
         paymentStatus,
         bankName,
+
         bankLocation,
         quantity,
       ];

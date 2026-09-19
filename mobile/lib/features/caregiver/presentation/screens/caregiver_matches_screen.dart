@@ -77,6 +77,14 @@ class _CaregiverMatchesScreenState extends State<CaregiverMatchesScreen> {
                         ? 'في فترة الراحة الطبية'
                         : 'غير مؤهل حالياً';
                 return LifeLinkMatchCard(
+                  donorLabel: match.fullName?.isNotEmpty == true
+                      ? match.fullName!
+                      : 'Donor ${match.donorId}',
+                  bloodType: match.bloodType,
+                  status: match.eligibilityStatus,
+                  distance: match.distanceKm != null
+                      ? '${match.distanceKm!.toStringAsFixed(1)} km away'
+
                   donorLabel: 'متبرع #${match.donorId}',
                   bloodType: match.bloodType,
                   status: statusLabel,

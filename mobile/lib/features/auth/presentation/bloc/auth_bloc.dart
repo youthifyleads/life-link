@@ -8,7 +8,7 @@ import '../../data/auth_remote_datasource.dart';
 abstract class AuthEvent extends Equatable {
   @override
   List<Object?> get props => [];
-}
+    }
 
 class AuthCheckSessionEvent extends AuthEvent {}
 
@@ -26,7 +26,6 @@ class AuthRegisterEvent extends AuthEvent {
   final String phone;
   final String dateOfBirth;
   final String password;
-  final UserRole role;
   final String? bloodType;
   final String governorate;
 
@@ -36,43 +35,42 @@ class AuthRegisterEvent extends AuthEvent {
     required this.phone,
     required this.dateOfBirth,
     required this.password,
-    required this.role,
     this.bloodType,
     required this.governorate,
   });
 
   @override
-  List<Object?> get props => [email, role];
+  List<Object?> get props => [email];
 }
 
-class AuthVerifyOtpEvent extends AuthEvent {
+class AuthVerifySignupOtpEvent extends AuthEvent {
   final String email;
-  final String? challengeId;
   final String otp;
-  final bool isRegistration;
-  final Map<String, dynamic>? pendingUserData;
 
-  AuthVerifyOtpEvent({
+  AuthVerifySignupOtpEvent({
     required this.email,
-    this.challengeId,
     required this.otp,
-    this.isRegistration = false,
-    this.pendingUserData,
   });
 
   @override
-  List<Object?> get props => [challengeId, otp];
+  List<Object?> get props => [email, otp];
 }
 
-class AuthResendOtpEvent extends AuthEvent {
+class AuthResendSignupOtpEvent extends AuthEvent {
   final String email;
-  final String purpose;
-  AuthResendOtpEvent(this.email, {this.purpose = 'login'});
+  AuthResendSignupOtpEvent(this.email);
   @override
-  List<Object?> get props => [email, purpose];
+  List<Object?> get props => [email];
 }
 
 class AuthLogoutEvent extends AuthEvent {}
+
+class AuthSelectFlowEvent extends AuthEvent {
+  final String flow;
+  AuthSelectFlowEvent(this.flow);
+  @override
+  List<Object?> get props => [flow];
+}
 
 // ── States ────────────────────────────────────────────────
 abstract class AuthState extends Equatable {
@@ -86,26 +84,28 @@ class AuthLoading extends AuthState {}
 
 class AuthOtpRequiredState extends AuthState {
   final String email;
-  final bool isRegistration;
-  final Map<String, dynamic>? pendingUserData;
-  final String? challengeId;
 
   AuthOtpRequiredState({
     required this.email,
-    this.isRegistration = false,
-    this.pendingUserData,
-    this.challengeId,
   });
 
   @override
-  List<Object?> get props => [email, isRegistration, challengeId];
+  List<Object?> get props => [email];
 }
 
 class AuthAuthenticated extends AuthState {
   final UserModel user;
+  final String? appFlow;
 
-  AuthAuthenticated(this.user);
+  AuthAuthenticated(this.user, {this.appFlow});
 
+  @override
+  List<Object?> get props => [user, appFlow];
+}
+
+class AuthFlowSelectionRequired extends AuthState {
+  final UserModel user;
+  AuthFlowSelectionRequired(this.user);
   @override
   List<Object?> get props => [user];
 }
@@ -136,9 +136,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthCheckSessionEvent>(_onCheckSession);
     on<AuthLoginEvent>(_onLogin);
     on<AuthRegisterEvent>(_onRegister);
-    on<AuthVerifyOtpEvent>(_onVerifyOtp);
-    on<AuthResendOtpEvent>(_onResendOtp);
+    on<AuthVerifySignupOtpEvent>(_onVerifySignupOtp);
+    on<AuthResendSignupOtpEvent>(_onResendSignupOtp);
     on<AuthLogoutEvent>(_onLogout);
+    on<AuthSelectFlowEvent>(_onSelectFlow);
   }
 
   Future<void> _onCheckSession(
@@ -155,7 +156,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await _dataSource.getMe();
     if (result is AuthSuccess<UserModel>) {
       await _dataSource.persistSession(token, result.data);
-      emit(AuthAuthenticated(result.data));
+      final flow = await _dataSource.getStoredAppFlow(result.data);
+      emit(flow == null
+          ? AuthFlowSelectionRequired(result.data)
+          : AuthAuthenticated(result.data, appFlow: flow));
     } else {
       await _dataSource.clearSession();
       emit(AuthUnauthenticated());
@@ -189,7 +193,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       token,
       user,
     );
-    emit(AuthAuthenticated(user));
+    final flow = await _dataSource.getStoredAppFlow(user);
+    emit(flow == null
+        ? AuthFlowSelectionRequired(user)
+        : AuthAuthenticated(user, appFlow: flow));
   }
 
   Future<void> _onRegister(
@@ -213,81 +220,39 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return;
     }
 
-    final registration = (regResult as AuthSuccess<RegistrationResult>).data;
     emit(AuthOtpRequiredState(
       email: event.email,
-      isRegistration: true,
-      challengeId: registration.challengeId,
-      pendingUserData: null,
     ));
   }
 
-  Future<void> _onVerifyOtp(
-    AuthVerifyOtpEvent event,
+  Future<void> _onVerifySignupOtp(
+    AuthVerifySignupOtpEvent event,
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
 
-    if (event.isRegistration) {
-      final result = await _dataSource.verifySignup(event.email, event.otp);
-      if (result is AuthFailure<UserModel>) {
-        emit(AuthError(result.message));
-        return;
-      }
-      final user = (result as AuthSuccess<UserModel>).data;
-      emit(AuthRegistrationSucceeded(user));
+    final result = await _dataSource.verifySignup(event.email, event.otp);
+    if (result is AuthFailure<UserModel>) {
+      emit(AuthError(result.message));
       return;
     }
-
-    final challengeId = event.challengeId;
-    if (challengeId == null || challengeId.isEmpty) {
-      emit(AuthError('جلسة OTP غير صالحة، اطلب رمزًا جديدًا'));
-      return;
-    }
-    final verifyResult = await _dataSource.verifyOtp(challengeId, event.otp);
-    if (verifyResult is AuthFailure<String>) {
-      emit(AuthError(verifyResult.message));
-      return;
-    }
-    final token = (verifyResult as AuthSuccess<String>).data;
-
-    // IMPORTANT: Save token FIRST before calling /auth/me
-    await _dataSource.saveToken(token);
-
+    final user = (result as AuthSuccess<UserModel>).data;
+    emit(AuthRegistrationSucceeded(user));
     // Fetch user profile from /auth/me with active Bearer token
-    final meResult = await _dataSource.getMe();
-    UserModel user;
-    if (meResult is AuthSuccess<UserModel>) {
-      user = meResult.data;
-    } else {
-      await _dataSource.clearSession();
-      emit(AuthError('تعذر تحميل ملف المستخدم من الخادم'));
-      return;
-    }
-
-    await _dataSource.persistSession(
-      token,
-      user,
-    );
-    emit(AuthAuthenticated(user));
   }
 
-  Future<void> _onResendOtp(
-    AuthResendOtpEvent event,
+  Future<void> _onResendSignupOtp(
+    AuthResendSignupOtpEvent event,
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    final result = event.purpose == 'signup'
-        ? await _dataSource.resendSignupOtp(event.email)
-        : await _dataSource.requestOtp(event.email, purpose: event.purpose);
+    final result = await _dataSource.resendSignupOtp(event.email);
     if (result is AuthFailure<Map<String, dynamic>>) {
       emit(AuthError(result.message));
       return;
     }
     emit(AuthOtpRequiredState(
       email: event.email,
-      challengeId: (result as AuthSuccess<Map<String, dynamic>>)
-          .data['challenge_id'] as String?,
     ));
   }
 
@@ -297,5 +262,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     await _dataSource.logout();
     emit(AuthUnauthenticated());
+  }
+
+  Future<void> _onSelectFlow(
+    AuthSelectFlowEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    final current = state;
+    if (current is! AuthFlowSelectionRequired) return;
+    if (event.flow != 'donor' && event.flow != 'caregiver') return;
+    final existingFlow = await _dataSource.getStoredAppFlow(current.user);
+    if (existingFlow != null) {
+      emit(AuthAuthenticated(current.user, appFlow: existingFlow));
+      return;
+    }
+    await _dataSource.saveAppFlow(current.user, event.flow);
+    emit(AuthAuthenticated(current.user, appFlow: event.flow));
   }
 }

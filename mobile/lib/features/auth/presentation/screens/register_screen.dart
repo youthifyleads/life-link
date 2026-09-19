@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../bloc/auth_bloc.dart';
-import '../../domain/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/lifelink_button.dart';
 import '../../../../core/widgets/lifelink_text_field.dart';
@@ -23,7 +22,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _dobCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
-  UserRole _selectedRole = UserRole.donor;
   String _selectedBloodType = 'O+';
   String _selectedGovernorate = 'القاهرة (Cairo)';
   bool _obscurePassword = true;
@@ -87,9 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             phone: _phoneCtrl.text.trim(),
             dateOfBirth: _dobCtrl.text.trim(),
             password: _passwordCtrl.text,
-            role: _selectedRole,
-            bloodType:
-                _selectedRole == UserRole.donor ? _selectedBloodType : null,
+            bloodType: _selectedBloodType,
             governorate: _selectedGovernorate,
           ),
         );
@@ -117,15 +113,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (state is AuthOtpRequiredState) {
           context.push('/otp', extra: {
             'email': state.email,
-            'isRegistration': true,
-            'challengeId': state.challengeId,
           });
         }
         if (state is AuthAuthenticated) {
-          final role = state.user.role;
-          if (role.isCaregiver) {
+          if (state.appFlow == 'caregiver') {
             context.go('/caregiver/home');
-          } else if (role.canAccessDonorFeatures) {
+          } else if (state.appFlow == 'donor') {
             context.go('/donor/home');
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -198,73 +191,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                       ),
                       const SizedBox(height: 24),
-
-                      // Role Selector (Donor / Caregiver)
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: ChoiceChip(
-                                label: const Center(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.favorite,
-                                          size: 16, color: Colors.red),
-                                      SizedBox(width: 6),
-                                      Text('متبرع (Donor)',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                ),
-                                selected: _selectedRole == UserRole.donor,
-                                onSelected: (sel) {
-                                  if (sel) {
-                                    setState(
-                                        () => _selectedRole = UserRole.donor);
-                                  }
-                                },
-                                selectedColor: AppColors.primaryLight,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ChoiceChip(
-                                label: const Center(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.local_hospital,
-                                          size: 16, color: Colors.blue),
-                                      SizedBox(width: 6),
-                                      Text('مرافق مريض (Caregiver)',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                ),
-                                selected: _selectedRole == UserRole.caregiver,
-                                onSelected: (sel) {
-                                  if (sel) {
-                                    setState(() =>
-                                        _selectedRole = UserRole.caregiver);
-                                  }
-                                },
-                                selectedColor: Colors.blue.shade50,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
 
                       LifeLinkTextField(
                         controller: _nameCtrl,
@@ -378,9 +304,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             setState(() => _selectedGovernorate = val!),
                       ),
 
-                      if (_selectedRole == UserRole.donor) ...[
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
                           initialValue: _selectedBloodType,
                           decoration: InputDecoration(
                             labelText: 'فصيلة الدم (Blood Type)',
@@ -395,8 +320,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               .toList(),
                           onChanged: (val) =>
                               setState(() => _selectedBloodType = val!),
-                        ),
-                      ],
+                      ),
 
                       const SizedBox(height: 16),
 

@@ -242,6 +242,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         const SizedBox(height: 12),
                         _detailsRow('طريقة الدفع', methodLabel),
                         _detailsRow(
+                            'Method',
+                            payment.paymentMethod.isEmpty
+                                ? '—'
+                                : payment.paymentMethod),
+                        _detailsRow(
+                            'Reference', payment.transactionReference ?? '—'),
+                        _detailsRow('Created', _formatDate(payment.createdAt)),
+                        _detailsRow('Paid', _formatDate(payment.paidAt)),
                             'رقم المعاملة', payment.transactionReference ?? '—'),
                         if (payment.patientId != null)
                           _detailsRow('كود المريض', payment.patientId!),

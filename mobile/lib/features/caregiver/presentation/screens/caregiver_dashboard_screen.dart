@@ -49,9 +49,9 @@ class CaregiverHomeScreen extends StatelessWidget {
           ),
           _CaregiverCard(
             icon: Icons.qr_code_scanner,
-            title: 'Blood-bag tracking',
-            subtitle: 'Request-level tracking and QR scan status',
-            onTap: () => context.push('/qr/scan'),
+            title: 'Scan Blood Bag QR',
+            subtitle: 'Scan a blood-bag QR code and view its status',
+            onTap: () => context.push('/caregiver/scan'),
           ),
           _CaregiverCard(
             icon: Icons.payments_outlined,

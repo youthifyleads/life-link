@@ -192,7 +192,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           LifeLinkTextField(
                             controller: _codeCtrl,
                             label: 'رمز الاستعادة (Reset Code)',
-                            hint: '123456',
+                            hint: 'رمز التحقق',
                             keyboardType: TextInputType.number,
                             prefixIcon: Icons.pin_outlined,
                             validator: (v) {

@@ -33,18 +33,6 @@ class DonorRemoteDataSource {
     }
   }
 
-  Future<DonorProfileModel> updateAvailability(bool available) async {
-    try {
-      final response = await _dio.patch(
-        ApiEndpoints.donorsMe,
-        data: {'available': available},
-      );
-      return DonorProfileModel.fromJson(response.data as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw _extractMessage(e);
-    }
-  }
-
   /// GET /api/v1/donors/me/donations
   Future<List<DonationHistoryItem>> getDonationHistory() async {
     try {
@@ -68,23 +56,6 @@ class DonorRemoteDataSource {
           .map((item) =>
               NearbyBloodRequest.fromJson(item as Map<String, dynamic>))
           .toList();
-    } on DioException catch (e) {
-      throw _extractMessage(e);
-    }
-  }
-
-  /// POST /api/v1/donors/me/responses
-  Future<void> respondToRequest(String requestId, String status,
-      {String notes = ''}) async {
-    try {
-      await _dio.post(
-        ApiEndpoints.donorResponses,
-        data: {
-          'blood_request_id': requestId,
-          'status': status,
-          'notes': notes,
-        },
-      );
     } on DioException catch (e) {
       throw _extractMessage(e);
     }
@@ -127,6 +98,17 @@ class DonorRemoteDataSource {
     }
   }
 
+  Future<List<DonationVoucher>> getVouchers() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.donorVouchers);
+      return (response.data as List)
+          .map((item) => DonationVoucher.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _extractMessage(e);
+    }
+  }
+
   Future<Map<String, dynamic>> addConsent(
       String consentType, bool granted) async {
     try {
@@ -142,6 +124,49 @@ class DonorRemoteDataSource {
 
   String _extractMessage(DioException e) {
     return apiErrorMessage(e);
+  }
+}
+
+class DonationVoucher {
+  const DonationVoucher({
+    required this.id,
+    required this.code,
+    this.donorId,
+    this.partnerId,
+    required this.value,
+    required this.status,
+    this.issuedAt,
+    this.expiresAt,
+    this.redeemedAt,
+    this.transactionReference,
+  });
+
+  final String code;
+  final String id;
+  final String? donorId;
+  final String? partnerId;
+  final String value;
+  final String status;
+  final DateTime? issuedAt;
+  final DateTime? expiresAt;
+  final DateTime? redeemedAt;
+  final String? transactionReference;
+
+  factory DonationVoucher.fromJson(Map<String, dynamic> json) {
+    DateTime? date(String key) =>
+        json[key] == null ? null : DateTime.tryParse(json[key].toString());
+    return DonationVoucher(
+      id: json['id']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
+      donorId: json['donor_id']?.toString(),
+      partnerId: json['partner_id']?.toString(),
+      value: json['value']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      issuedAt: date('issued_at'),
+      expiresAt: date('expires_at'),
+      redeemedAt: date('redeemed_at'),
+      transactionReference: json['transaction_reference']?.toString(),
+    );
   }
 }
 

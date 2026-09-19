@@ -4,22 +4,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../bloc/auth_bloc.dart';
-import '../../domain/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/lifelink_button.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
-  final bool isRegistration;
-  final Map<String, dynamic>? pendingUserData;
-  final String? challengeId;
 
   const OtpVerificationScreen({
     super.key,
     required this.email,
-    this.isRegistration = false,
-    this.pendingUserData,
-    this.challengeId,
   });
 
   @override
@@ -29,7 +22,6 @@ class OtpVerificationScreen extends StatefulWidget {
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   late final TextEditingController _otpCtrl;
   Timer? _timer;
-  late String? _challengeId;
   int _secondsLeft = 60;
   bool _canResend = false;
 
@@ -37,7 +29,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void initState() {
     super.initState();
     _otpCtrl = TextEditingController();
-    _challengeId = widget.challengeId;
     _startCountdown();
   }
 
@@ -61,29 +52,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   void _onVerify() {
     final code = _otpCtrl.text.trim();
-    if (code.length < 4) {
+    if (code.length != 6 || !RegExp(r'^\d{6}$').hasMatch(code)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى إدخال رمز التحقق OTP')),
-      );
-      return;
-    }
-
-    final challengeId = _challengeId;
-    if (!widget.isRegistration &&
-        (challengeId == null || challengeId.isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('جلسة OTP غير صالحة، اطلب رمزًا جديدًا')),
+        const SnackBar(
+            content: Text('يرجى إدخال رمز تحقق OTP مكون من 6 أرقام')),
       );
       return;
     }
 
     context.read<AuthBloc>().add(
-          AuthVerifyOtpEvent(
+          AuthVerifySignupOtpEvent(
             email: widget.email,
-            challengeId: challengeId,
             otp: code,
-            isRegistration: widget.isRegistration,
-            pendingUserData: widget.pendingUserData,
           ),
         );
   }
@@ -91,10 +71,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void _onResend() {
     if (!_canResend) return;
     _startCountdown();
-    context.read<AuthBloc>().add(AuthResendOtpEvent(
-          widget.email,
-          purpose: widget.isRegistration ? 'signup' : 'login',
-        ));
+    context.read<AuthBloc>().add(AuthResendSignupOtpEvent(widget.email));
   }
 
   @override
@@ -109,10 +86,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          final role = state.user.role;
-          if (role.isCaregiver) {
+          if (state.appFlow == 'caregiver') {
             context.go('/caregiver/home');
-          } else if (role.canAccessDonorFeatures) {
+          } else if (state.appFlow == 'donor') {
             context.go('/donor/home');
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -124,9 +100,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             );
           }
         }
-        if (state is AuthOtpRequiredState && state.challengeId != null) {
-          final otpState = state;
-          setState(() => _challengeId = otpState.challengeId);
+        if (state is AuthOtpRequiredState) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('تم إرسال رمز تحقق جديد')),
           );

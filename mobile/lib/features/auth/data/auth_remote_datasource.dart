@@ -33,17 +33,23 @@ class AuthTokens {
 
 class RegistrationResult {
   final UserModel? user;
-  final String? challengeId;
   final int? expiresInSeconds;
+  final String? userId;
+  final String? email;
+  final bool emailVerificationRequired;
 
   RegistrationResult({
     this.user,
-    this.challengeId,
     this.expiresInSeconds,
+    this.userId,
+    this.email,
+    this.emailVerificationRequired = true,
   });
 }
 
 class AuthRemoteDataSource {
+  static const _legacyAppFlowKey = 'lifelink_app_flow';
+  static const _appFlowKeyPrefix = 'lifelink_app_flow_';
   final Dio _dio;
   final FlutterSecureStorage _storage;
 
@@ -64,26 +70,7 @@ class AuthRemoteDataSource {
     }
   }
 
-  /// The deployed API exposes a legacy phone-based generic OTP endpoint.
-  /// LifeLink mobile deliberately does not call it; signup verification is
-  /// email-based through /auth/signup/verify.
-  Future<AuthResult<Map<String, dynamic>>> requestOtp(
-    String email, {
-    String purpose = 'login',
-  }) async {
-    return AuthFailure(
-      'تسجيل الدخول برمز OTP غير متاح في عقدة الخادم الحالية. استخدم البريد وكلمة المرور.',
-    );
-  }
-
-  /// Generic login OTP is not part of the deployed email-only mobile flow.
-  Future<AuthResult<String>> verifyOtp(String challengeId, String otp) async {
-    return AuthFailure(
-      'تسجيل الدخول برمز OTP غير متاح في عقدة الخادم الحالية. استخدم البريد وكلمة المرور.',
-    );
-  }
-
-  /// POST /api/v1/auth/register
+  /// POST /api/v1/auth/signup
   Future<AuthResult<RegistrationResult>> registerUser({
     required String email,
     required String name,
@@ -111,7 +98,10 @@ class AuthRemoteDataSource {
         user: body['user'] is Map<String, dynamic>
             ? UserModel.fromJson(body['user'] as Map<String, dynamic>)
             : null,
-        challengeId: body['challenge_id'] as String?,
+        userId: body['user_id'] as String?,
+        email: body['email'] as String?,
+        emailVerificationRequired:
+            body['email_verification_required'] as bool? ?? true,
       ));
     } on DioException catch (e) {
       return _handleDioError(e);
@@ -190,27 +180,6 @@ class AuthRemoteDataSource {
     }
   }
 
-  Future<AuthResult<UserModel>> updateProfile({
-    String? fullName,
-    String? email,
-    String? phone,
-  }) async {
-    try {
-      final response = await _dio.patch(
-        ApiEndpoints.myUserProfile,
-        data: {
-          if (fullName != null) 'full_name': fullName,
-          if (email != null) 'email': email,
-          if (phone != null) 'phone': phone,
-        },
-      );
-      return AuthSuccess(
-          UserModel.fromJson(response.data as Map<String, dynamic>));
-    } on DioException catch (e) {
-      return _handleDioError(e);
-    }
-  }
-
   Future<void> saveToken(String token) async {
     await _storage.write(key: AppConfig.accessTokenKey, value: token);
   }
@@ -280,6 +249,22 @@ class AuthRemoteDataSource {
   Future<String?> getStoredToken() =>
       _storage.read(key: AppConfig.accessTokenKey);
 
+  Future<String?> getStoredAppFlow(UserModel user) {
+    return _storage.read(key: _appFlowKey(user));
+  }
+
+  Future<void> saveAppFlow(UserModel user, String flow) {
+    return _storage.write(key: _appFlowKey(user), value: flow);
+  }
+
+  String _appFlowKey(UserModel user) {
+    final identity = user.id.trim().isNotEmpty
+        ? user.id.trim()
+        : user.email.trim().toLowerCase();
+    final encoded = base64UrlEncode(utf8.encode(identity));
+    return '$_appFlowKeyPrefix$encoded';
+  }
+
   Future<UserModel?> getStoredUser() async {
     final raw = await _storage.read(key: AppConfig.userKey);
     if (raw == null) return null;
@@ -294,6 +279,7 @@ class AuthRemoteDataSource {
     await _storage.delete(key: AppConfig.accessTokenKey);
     await _storage.delete(key: AppConfig.refreshTokenKey);
     await _storage.delete(key: AppConfig.userKey);
+    await _storage.delete(key: _legacyAppFlowKey);
   }
 
   AuthFailure<T> _handleDioError<T>(DioException e) {

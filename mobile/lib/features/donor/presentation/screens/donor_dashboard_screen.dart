@@ -54,19 +54,14 @@ class DonorHomeScreen extends StatelessWidget {
                 }
                 if (state is DonorLoaded) {
                   return Card(
-                    child: SwitchListTile(
-                      title: const Text('I am available to donate'),
-                      subtitle: Text(
-                        state.profile.isEligible
-                            ? 'Eligible donors can receive matching opportunities.'
-                            : 'Availability is disabled until the six-month interval is complete.',
+                    child: ListTile(
+                      leading: const Icon(Icons.verified_user_outlined),
+                      title: Text(
+                        'Medical eligibility: ${state.profile.eligibilityStatus}',
                       ),
-                      value: state.profile.availableToDonate,
-                      onChanged: state.profile.isEligible
-                          ? (value) => context
-                              .read<DonorBloc>()
-                              .add(SetDonorAvailabilityEvent(value))
-                          : null,
+                      subtitle: const Text(
+                        'Donor availability is not provided by the current Azure contract.',
+                      ),
                     ),
                   );
                 }
