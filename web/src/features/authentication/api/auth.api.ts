@@ -130,7 +130,11 @@ export const authApi = {
   async resetPassword(input: ResetPasswordInput) {
     const { data } = await authHttpClient.post<AuthMessageResponse>(
       "/auth/reset-password",
-      input,
+      {
+        email: input.email,
+        code: input.code ?? input.otp ?? "",
+        new_password: input.new_password,
+      },
     );
     return data;
   },
