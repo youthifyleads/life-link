@@ -63,23 +63,6 @@ class DonorEligibilityScreen extends StatelessWidget {
 
                       const SizedBox(height: 24),
 
-                      // ── Stats Row ────────────────────────────────────
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildStatCard(
-                              context,
-                              icon: Icons.volunteer_activism,
-                              label: 'Total Donations',
-                              value: '${history.length}',
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 32),
-
                       // ── Donation History Section ─────────────────────
                       Text(
                         'Donation History',
@@ -137,8 +120,8 @@ class DonorEligibilityScreen extends StatelessWidget {
   }
 
   Widget _buildEligibilityCard(BuildContext context, dynamic profile) {
-    final bool isEligible = profile.isEligible;
-    final int daysLeft = profile.daysUntilEligible;
+    final status = profile.eligibilityStatus;
+    final isEligible = status.toLowerCase() == 'eligible';
 
     final Color statusColor =
         isEligible ? AppColors.success : AppColors.warning;
@@ -159,7 +142,7 @@ class DonorEligibilityScreen extends StatelessWidget {
           Icon(statusIcon, color: statusColor, size: 56),
           const SizedBox(height: 12),
           Text(
-            isEligible ? 'Eligible to Donate' : 'Not Currently Eligible',
+            'Medical eligibility: $status',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -168,11 +151,8 @@ class DonorEligibilityScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            isEligible
-                ? 'The API reports that your donor profile is eligible.'
-                : daysLeft > 0
-                    ? 'The API reports that your donor profile is not eligible. Days remaining: $daysLeft.'
-                    : 'Eligibility information is provided by your donor profile.',
+            'This status is provided by the Azure donor profile contract. '
+            'No local countdown is calculated.',
             textAlign: TextAlign.center,
             style:
                 const TextStyle(color: AppColors.textSecondary, fontSize: 13),
@@ -198,48 +178,6 @@ class DonorEligibilityScreen extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: color.withValues(alpha: 0.12),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style:
-                const TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
         ],
       ),

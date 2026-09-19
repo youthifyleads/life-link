@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// All roles exactly as returned by the LifeLink API v0.1.0.
-/// Donor and Caregiver are documented as backend dependencies pending addition.
+/// All roles exactly as returned by the LifeLink API.
 enum UserRole {
   unknown,
   hospitalUser, // hospital_user
@@ -10,10 +9,6 @@ enum UserRole {
   admin, // admin
   platformSupport, // platform_support
   normalUser, // normal_user
-
-  // ── BACKEND DEPENDENCIES (not yet in API v0.1.0) ──────────
-  donor, // donor — Required by mobile MVP
-  caregiver, // caregiver — Required by mobile MVP
 }
 
 extension UserRoleX on UserRole {
@@ -31,10 +26,6 @@ extension UserRoleX on UserRole {
         return 'platform_support';
       case UserRole.normalUser:
         return 'normal_user';
-      case UserRole.donor:
-        return 'donor';
-      case UserRole.caregiver:
-        return 'caregiver';
       case UserRole.unknown:
         return 'unknown';
     }
@@ -54,30 +45,18 @@ extension UserRoleX on UserRole {
         return UserRole.platformSupport;
       case 'normal_user':
         return UserRole.normalUser;
-      case 'donor':
-        return UserRole.donor;
-      case 'caregiver':
-        return UserRole.caregiver;
       default:
         return UserRole.unknown;
     }
   }
 
-  bool get isDonor => this == UserRole.donor;
-  bool get isCaregiver => this == UserRole.caregiver;
   bool get isHospitalUser => this == UserRole.hospitalUser;
   bool get isBloodBankOperator => this == UserRole.bloodBankOperator;
   bool get isAdmin => this == UserRole.admin;
   bool get isKnown => this != UserRole.unknown;
 
-  /// Returns true for roles that may access the Donor feature area.
-  /// The deployed backend assigns `normal_user` to mobile sign-ups, so
-  /// all of these map to the donor home experience.
-  bool get canAccessDonorFeatures =>
-      this == UserRole.donor || this == UserRole.normalUser;
 }
 
-/// Domain model for the authenticated user (mapped from UserPublic schema).
 class UserModel extends Equatable {
   final String id;
   final String email;

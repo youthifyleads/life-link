@@ -16,7 +16,6 @@ class ApiEndpoints {
 
   // ── Users ────────────────────────────────────────────────
   static const String users = '/users';
-  static const String myUserProfile = '/users/me';
   static String userById(String id) => '/users/$id';
 
   // ── Blood Requests ───────────────────────────────────────
@@ -37,6 +36,9 @@ class ApiEndpoints {
 
   // ── QR / Tracking ────────────────────────────────────────
   static const String qrScan = '/qr/scan';
+  static const String qrBagScan = '/caregiver/scan-bag';
+  static String qrBag(String qrCode) =>
+      '/caregiver/bag/${Uri.encodeComponent(qrCode)}';
   static String tracking(String reference) => '/tracking/$reference';
 
   // ── Inventory ────────────────────────────────────────────
@@ -58,6 +60,7 @@ class ApiEndpoints {
   static const String donorNearbyRequests = '/donors/me/nearby-requests';
   static const String donorResponses = '/donors/me/responses';
   static const String donorConsents = '/donors/me/consents';
+  static const String donorVouchers = '/donors/me/vouchers';
 
   // ── Caregiver ────────────────────────────────────────────
   static const String caregiverAssignments = '/caregiver/assignments';
@@ -71,7 +74,8 @@ class ApiEndpoints {
       '/requests/$requestId/matching-donors';
   static String caregiverAssignmentById(String id) =>
       '/caregiver/assignments/$id';
-  static String caregiverBagDetails(String qrCode) => '/caregiver/bag/$qrCode';
+  static String caregiverBagDetails(String qrCode) =>
+      '/caregiver/bag/${Uri.encodeComponent(qrCode)}';
 
   // ── Payments ─────────────────────────────────────────────
   static const String payments = '/payments';
@@ -86,6 +90,7 @@ class ApiEndpoints {
   // ── Blood bags ──────────────────────────────────────────
   static const String bloodBags = '/blood-bags';
   static String bloodBagQr(String id) => '/blood-bags/$id/qr';
+  static String bloodBagStatus(String id) => '/blood-bags/$id/status';
   static String bloodBagHistory(String id) => '/blood-bags/$id/history';
   static const String caregiverScanBag = '/caregiver/scan-bag';
   static const String bloodBagScan = '/blood-bags/scan';

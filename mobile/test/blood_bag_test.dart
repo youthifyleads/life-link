@@ -85,4 +85,32 @@ void main() {
       'notes': 'Received',
     });
   });
+
+  test('updates blood bag status through the Azure status endpoint', () async {
+    const update = BloodBagStatusUpdate(
+      status: 'prepared',
+      location: 'Central bank',
+      notes: 'Moved',
+    );
+    when(
+      () => dio.patch(
+        ApiEndpoints.bloodBagStatus('bag-1'),
+        data: update.toJson(),
+      ),
+    ).thenAnswer(
+      (_) async => Response(
+        requestOptions:
+            RequestOptions(path: ApiEndpoints.bloodBagStatus('bag-1')),
+      ),
+    );
+
+    await source.updateStatus('bag-1', update);
+
+    verify(
+      () => dio.patch(
+        ApiEndpoints.bloodBagStatus('bag-1'),
+        data: update.toJson(),
+      ),
+    ).called(1);
+  });
 }

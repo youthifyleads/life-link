@@ -79,7 +79,8 @@ class BloodRequestError extends BloodRequestState {
 class BloodRequestBloc extends Bloc<BloodRequestEvent, BloodRequestState> {
   final BloodRequestRemoteDataSource _dataSource;
 
-  BloodRequestBloc(this._dataSource) : super(BloodRequestInitial()) {
+  BloodRequestBloc(this._dataSource)
+      : super(BloodRequestInitial()) {
     on<LoadRequestsEvent>(_onLoadRequests);
     on<CreateRequestEvent>(_onCreateRequest);
     on<RespondToRequestEvent>(_onRespondToRequest);
@@ -120,7 +121,7 @@ class BloodRequestBloc extends Bloc<BloodRequestEvent, BloodRequestState> {
         : const <BloodRequestPublic>[];
     emit(BloodRequestResponding(event.requestId, requests));
     try {
-      await _dataSource.respondToRequest(event.requestId);
+      await _dataSource.respondToRequest(event.requestId, 'accepted');
       emit(BloodRequestRespondSuccess(event.requestId));
     } catch (e) {
       emit(BloodRequestError(friendlyErrorMessage(e)));

@@ -13,11 +13,6 @@ abstract class DonorEvent extends Equatable {
 
 class LoadDonorProfileEvent extends DonorEvent {}
 
-class SetDonorAvailabilityEvent extends DonorEvent {
-  final bool available;
-  SetDonorAvailabilityEvent(this.available);
-}
-
 // ── States ────────────────────────────────────────────────
 abstract class DonorState extends Equatable {
   @override
@@ -51,7 +46,6 @@ class DonorBloc extends Bloc<DonorEvent, DonorState> {
 
   DonorBloc(this._dataSource) : super(DonorInitial()) {
     on<LoadDonorProfileEvent>(_onLoadProfile);
-    on<SetDonorAvailabilityEvent>(_onSetAvailability);
   }
 
   Future<void> _onLoadProfile(
@@ -63,21 +57,6 @@ class DonorBloc extends Bloc<DonorEvent, DonorState> {
       final profile = await _dataSource.getProfile();
       final history = await _dataSource.getDonationHistory();
       emit(DonorLoaded(profile: profile, history: history));
-    } catch (e) {
-      emit(DonorError(friendlyErrorMessage(e)));
-    }
-  }
-
-  Future<void> _onSetAvailability(
-    SetDonorAvailabilityEvent event,
-    Emitter<DonorState> emit,
-  ) async {
-    final current = state;
-    if (current is! DonorLoaded) return;
-    emit(DonorLoading());
-    try {
-      final profile = await _dataSource.updateAvailability(event.available);
-      emit(DonorLoaded(profile: profile, history: current.history));
     } catch (e) {
       emit(DonorError(friendlyErrorMessage(e)));
     }

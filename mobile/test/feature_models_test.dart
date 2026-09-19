@@ -14,20 +14,23 @@ class MockDio extends Mock implements Dio {}
 class MockStorage extends Mock implements FlutterSecureStorage {}
 
 void main() {
-  test('maps donor profile availability and eligibility', () {
+  test('maps the deployed donor profile contract', () {
     final profile = DonorProfileModel.fromJson(const {
       'id': 'donor-1',
-      'full_name': 'Donor One',
+      'user_id': 'user-1',
       'blood_type': 'A+',
-      'available_to_donate': true,
-      'is_eligible': true,
-      'days_until_eligible': 0,
-      'total_donations': 3,
+      'date_of_birth': '1990-01-01',
+      'governorate': 'Cairo',
+      'eligibility_status': 'eligible',
+      'last_donation_date': null,
+      'latitude': 30.0444,
+      'longitude': 31.2357,
     });
 
-    expect(profile.availableToDonate, isTrue);
-    expect(profile.isEligible, isTrue);
-    expect(profile.totalDonations, 3);
+    expect(profile.userId, 'user-1');
+    expect(profile.bloodType, 'A+');
+    expect(profile.eligibilityStatus, 'eligible');
+    expect(profile.latitude, 30.0444);
   });
 
   test('maps donor donation history', () {

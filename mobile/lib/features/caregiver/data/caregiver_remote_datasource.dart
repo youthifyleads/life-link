@@ -10,6 +10,42 @@ class CaregiverRemoteDataSource {
 
   CaregiverRemoteDataSource(this._dio);
 
+  Future<CaregiverBagScanModel> scanBag(String qrCode) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.qrBagScan,
+        data: {'qr_code': qrCode},
+      );
+      return CaregiverBagScanModel.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw apiErrorMessage(error);
+    }
+  }
+
+  Future<CaregiverBagScanModel> getBagByQr(String qrCode) async {
+    try {
+      final response = await _dio.get(ApiEndpoints.qrBag(qrCode));
+      return CaregiverBagScanModel.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw apiErrorMessage(error);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllocations() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.caregiverAllocations);
+      return (response.data as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+    } on DioException catch (error) {
+      throw apiErrorMessage(error);
+    }
+  }
+
   Future<List<PatientModel>> getPatients() async {
     try {
       final response = await _dio.get(ApiEndpoints.caregiverPatients);

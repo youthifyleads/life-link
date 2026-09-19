@@ -72,11 +72,13 @@ class _CaregiverMatchesScreenState extends State<CaregiverMatchesScreen> {
               itemBuilder: (context, index) {
                 final match = matches[index];
                 return LifeLinkMatchCard(
-                  donorLabel: 'Donor ${match.donorId}',
+                  donorLabel: match.fullName?.isNotEmpty == true
+                      ? match.fullName!
+                      : 'Donor ${match.donorId}',
                   bloodType: match.bloodType,
-                  status: match.eligible ? 'Eligible' : match.eligibilityStatus,
-                  distance: match.distanceKm > 0
-                      ? '${match.distanceKm.toStringAsFixed(1)} km away'
+                  status: match.eligibilityStatus,
+                  distance: match.distanceKm != null
+                      ? '${match.distanceKm!.toStringAsFixed(1)} km away'
                       : null,
                 );
               },

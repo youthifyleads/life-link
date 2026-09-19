@@ -111,8 +111,8 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
               const SizedBox(height: 16),
               _buildDocumentsList(),
               const SizedBox(height: 32),
-              if (widget.request.status == 'confirmed' ||
-                  widget.request.status == 'prepared')
+              if (widget.request.unitPrice != null &&
+                  widget.request.unitPrice! > 0)
                 LifeLinkButton(
                   label: 'Proceed to Payment & Checkout',
                   icon: Icons.payment_rounded,

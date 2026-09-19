@@ -7,8 +7,6 @@ import '../../../auth/domain/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/lifelink_button.dart';
 import '../../../../core/localization/locale_cubit.dart';
-import '../../../../core/di/injection.dart';
-import '../../../auth/data/auth_remote_datasource.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -120,7 +118,7 @@ class ProfileScreen extends StatelessWidget {
 
                 // ── Options List ───────────────────────────────────
                 _buildCardGroup([
-                  if (user.role.canAccessDonorFeatures)
+                  if (state.appFlow == 'donor')
                     _settingTile(
                       context,
                       icon: Icons.favorite_border_rounded,
@@ -133,7 +131,7 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.edit_outlined,
                     title: 'تعديل البيانات الشخصية',
                     subtitle: 'الاسم والبريد ورقم الهاتف',
-                    onTap: () => _showEditProfile(context, user),
+                    onTap: () => _showProfileUpdateUnavailable(context),
                   ),
                   _settingTile(
                     context,
@@ -187,62 +185,22 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showEditProfile(BuildContext context, UserModel user) async {
-    final nameController = TextEditingController(text: user.fullName);
-    final emailController = TextEditingController(text: user.email);
-    final phoneController = TextEditingController(text: user.phone ?? '');
-    final formKey = GlobalKey<FormState>();
+  Future<void> _showProfileUpdateUnavailable(BuildContext context) async {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('تعديل البيانات الشخصية'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'الاسم')),
-              TextFormField(
-                  controller: emailController,
-                  decoration:
-                      const InputDecoration(labelText: 'البريد الإلكتروني')),
-              TextFormField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'رقم الهاتف')),
-            ],
-          ),
+        title: const Text('Profile update unavailable'),
+        content: const Text(
+          'The current Azure contract does not provide a user profile update endpoint.',
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('إلغاء')),
-          FilledButton(
-            onPressed: () async {
-              if (!(formKey.currentState?.validate() ?? true)) return;
-              final result = await getIt<AuthRemoteDataSource>().updateProfile(
-                fullName: nameController.text.trim(),
-                email: emailController.text.trim(),
-                phone: phoneController.text.trim(),
-              );
-              if (!dialogContext.mounted) return;
-              if (result is AuthSuccess<UserModel>) {
-                Navigator.pop(dialogContext);
-                context.read<AuthBloc>().add(AuthCheckSessionEvent());
-              } else if (result is AuthFailure<UserModel>) {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text(result.message)));
-              }
-            },
-            child: const Text('حفظ'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('OK'),
           ),
         ],
       ),
     );
-    nameController.dispose();
-    emailController.dispose();
-    phoneController.dispose();
   }
 
   Widget _buildCardGroup(List<Widget> children) {

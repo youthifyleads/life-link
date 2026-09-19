@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../bloc/auth_bloc.dart';
-import '../../domain/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/lifelink_button.dart';
 import '../../../../core/widgets/lifelink_text_field.dart';
@@ -39,29 +38,11 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthOtpRequiredState) {
-          context.push('/otp', extra: {
-            'email': state.email,
-            'isRegistration': state.isRegistration,
-            'pendingUserData': state.pendingUserData,
-            'challengeId': state.challengeId,
-          });
-        }
         if (state is AuthAuthenticated) {
-          final role = state.user.role;
-          if (role.isCaregiver) {
+          if (state.appFlow == 'caregiver') {
             context.go('/caregiver/home');
-          } else if (role.canAccessDonorFeatures) {
+          } else if (state.appFlow == 'donor') {
             context.go('/donor/home');
-          } else {
-            // Unknown role — stay on login and show message
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('دور المستخدم غير مدعوم، تواصل مع الدعم'),
-                backgroundColor: AppColors.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
           }
         }
         if (state is AuthError) {

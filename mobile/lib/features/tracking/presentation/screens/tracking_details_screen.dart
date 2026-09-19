@@ -84,6 +84,21 @@ class TrackingDetailsScreen extends StatelessWidget {
                   'Last Updated',
                   DateFormat('MMM d, y • h:mm a')
                       .format(tracking.lastUpdated.toLocal())),
+              if (tracking.requestId != null)
+                _infoRow(context, Icons.assignment, 'Request ID',
+                    tracking.requestId!),
+              if (tracking.bankName != null)
+                _infoRow(context, Icons.account_balance, 'Blood Bank',
+                    tracking.bankName!),
+              if (tracking.paymentStatus != null)
+                _infoRow(context, Icons.payment, 'Payment Status',
+                    tracking.paymentStatus!),
+              if (tracking.unitPrice != null)
+                _infoRow(context, Icons.sell, 'Unit Price',
+                    'EGP ${tracking.unitPrice}'),
+              if (tracking.totalPrice != null)
+                _infoRow(context, Icons.receipt_long, 'Total Price',
+                    'EGP ${tracking.totalPrice}'),
             ]),
 
             const SizedBox(height: 32),

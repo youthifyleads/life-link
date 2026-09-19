@@ -68,7 +68,8 @@ void configureDependencies() {
   getIt
       .registerFactory<AuthBloc>(() => AuthBloc(getIt<AuthRemoteDataSource>()));
   getIt.registerFactory<BloodRequestBloc>(
-      () => BloodRequestBloc(getIt<BloodRequestRemoteDataSource>()));
+      () => BloodRequestBloc(
+          getIt<BloodRequestRemoteDataSource>()));
   getIt.registerFactory<DocumentBloc>(
       () => DocumentBloc(getIt<DocumentRemoteDataSource>()));
   getIt.registerFactory<TrackingBloc>(

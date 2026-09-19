@@ -100,15 +100,19 @@ void main() {
   test('parses donor match eligibility from the backend', () {
     final match = DonorMatchModel.fromJson({
       'donor_id': 'donor-1',
+      'user_id': 'user-1',
+      'full_name': 'Donor One',
       'blood_type': 'O+',
-      'available': true,
-      'eligible': false,
       'eligibility_status': 'ineligible',
-      'days_until_eligible': 12,
+      'last_donation_date': '2026-09-01T10:00:00Z',
+      'days_since_last_donation': 12,
+      'distance_km': 4.5,
     });
 
-    expect(match.eligible, isFalse);
-    expect(match.daysUntilEligible, 12);
+    expect(match.fullName, 'Donor One');
+    expect(match.eligibilityStatus, 'ineligible');
+    expect(match.daysSinceLastDonation, 12);
+    expect(match.distanceKm, 4.5);
   });
 
   test('parses caregiver assignment records from Azure contract', () {

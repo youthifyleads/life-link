@@ -240,12 +240,6 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                 : payment.paymentMethod),
                         _detailsRow(
                             'Reference', payment.transactionReference ?? '—'),
-                        if (payment.patientId != null)
-                          _detailsRow('Patient case', payment.patientId!),
-                        if (payment.allocationId != null)
-                          _detailsRow('Allocation', payment.allocationId!),
-                        if (payment.bloodBagId != null)
-                          _detailsRow('Blood bag', payment.bloodBagId!),
                         _detailsRow('Created', _formatDate(payment.createdAt)),
                         _detailsRow('Paid', _formatDate(payment.paidAt)),
                       ],

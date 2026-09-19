@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:lifelink_mobile/core/constants/api_endpoints.dart';
+import 'package:lifelink_mobile/features/blood_requests/data/blood_request_remote_datasource.dart';
 import 'package:lifelink_mobile/features/donor/data/donor_remote_datasource.dart';
 import 'package:lifelink_mobile/features/donor/domain/models/donor_profile_model.dart';
 
@@ -11,10 +12,12 @@ class _MockDio extends Mock implements Dio {}
 void main() {
   late _MockDio dio;
   late DonorRemoteDataSource dataSource;
+  late BloodRequestRemoteDataSource bloodRequestDataSource;
 
   setUp(() {
     dio = _MockDio();
     dataSource = DonorRemoteDataSource(dio);
+    bloodRequestDataSource = BloodRequestRemoteDataSource(dio);
   });
 
   test('loads nearby donor requests using the current API contract', () async {
@@ -73,7 +76,7 @@ void main() {
       ),
     );
 
-    await dataSource.respondToRequest('request-1', 'accepted');
+    await bloodRequestDataSource.respondToRequest('request-1', 'accepted');
 
     verify(
       () => dio.post(

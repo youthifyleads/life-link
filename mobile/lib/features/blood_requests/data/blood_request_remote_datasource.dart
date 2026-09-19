@@ -54,8 +54,8 @@ class BloodRequestRemoteDataSource {
   }
 
   /// POST /api/v1/donors/me/responses
-  Future<void> respondToRequest(String requestId,
-      {String status = 'accepted', String notes = ''}) async {
+  Future<void> respondToRequest(String requestId, String status,
+      {String notes = ''}) async {
     try {
       await _dio.post(
         ApiEndpoints.donorResponses,
@@ -66,9 +66,6 @@ class BloodRequestRemoteDataSource {
         },
       );
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw 'يرجى تسجيل الدخول كمتبرع معتمد للاستجابة لهذا الطلب.';
-      }
       throw _extractMessage(e);
     }
   }

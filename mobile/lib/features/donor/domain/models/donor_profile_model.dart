@@ -2,58 +2,56 @@ import 'package:equatable/equatable.dart';
 
 class DonorProfileModel extends Equatable {
   final String id;
-  final String fullName;
-  final String bloodType;
+  final String userId;
+  final String? bloodType;
+  final DateTime? dateOfBirth;
+  final String? governorate;
+  final String eligibilityStatus;
   final DateTime? lastDonationDate;
-  final bool isEligible;
-  final int daysUntilEligible;
-  final int totalDonations;
-  final bool availableToDonate;
+  final double? latitude;
+  final double? longitude;
 
   const DonorProfileModel({
     required this.id,
-    required this.fullName,
+    required this.userId,
     required this.bloodType,
+    this.dateOfBirth,
+    this.governorate,
+    required this.eligibilityStatus,
     this.lastDonationDate,
-    required this.isEligible,
-    required this.daysUntilEligible,
-    required this.totalDonations,
-    required this.availableToDonate,
+    this.latitude,
+    this.longitude,
   });
 
   factory DonorProfileModel.fromJson(Map<String, dynamic> json) {
-    final eligibilityStatus = json['eligibility_status'] as String?;
-    final isEligible = json['is_eligible'] as bool? ??
-        (eligibilityStatus != null
-            ? eligibilityStatus.toLowerCase() == 'eligible'
-            : false);
-
     return DonorProfileModel(
       id: json['id'] as String? ?? '',
-      fullName: json['full_name'] as String? ?? '—',
-      bloodType: json['blood_type'] as String? ?? '—',
-      lastDonationDate: json['last_donation_date'] != null
-          ? DateTime.tryParse(json['last_donation_date'] as String)
+      userId: json['user_id'] as String? ?? '',
+      bloodType: json['blood_type'] as String?,
+      dateOfBirth: json['date_of_birth'] != null
+          ? DateTime.tryParse(json['date_of_birth'].toString())
           : null,
-      isEligible: isEligible,
-      daysUntilEligible: json['days_until_eligible'] as int? ?? 0,
-      totalDonations: json['total_donations'] as int? ?? 0,
-      availableToDonate: json['available_to_donate'] as bool? ??
-          json['willing_to_donate'] as bool? ??
-          false,
+      governorate: json['governorate'] as String?,
+      eligibilityStatus: json['eligibility_status'] as String? ?? 'unknown',
+      lastDonationDate: json['last_donation_date'] != null
+          ? DateTime.tryParse(json['last_donation_date'].toString())
+          : null,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
     );
   }
 
   @override
   List<Object?> get props => [
         id,
-        fullName,
+        userId,
         bloodType,
+        dateOfBirth,
+        governorate,
+        eligibilityStatus,
         lastDonationDate,
-        isEligible,
-        daysUntilEligible,
-        totalDonations,
-        availableToDonate,
+        latitude,
+        longitude,
       ];
 }
 

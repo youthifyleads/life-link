@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/di/injection.dart';
 import '../../../../core/network/api_error_message.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/lifelink_button.dart';
+import '../../../blood_requests/data/blood_request_remote_datasource.dart';
 import '../../../blood_requests/domain/models/blood_request_model.dart';
+import '../../../caregiver/data/caregiver_remote_datasource.dart';
 import '../../domain/models/payment_model.dart';
 import '../bloc/payment_cubit.dart';
 
@@ -25,52 +27,151 @@ class PaymentScreen extends StatefulWidget {
   State<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState extends State<PaymentScreen> {
+class _PaymentScreenState extends State<PaymentScreen>
+    with WidgetsBindingObserver {
   String _selectedMethod = 'card';
   bool _isProcessing = false;
   String? _confirmedAmount;
+  String? _activePaymentId;
+  String? _latestRequestStatus;
+  bool _awaitingCheckoutReturn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        _awaitingCheckoutReturn &&
+        _activePaymentId != null) {
+      _refreshAfterCheckout();
+    }
+  }
 
   void _onPay() async {
     setState(() => _isProcessing = true);
     try {
       final cubit = context.read<PaymentCubit>();
-      final payment = await cubit.initiate(
-        bloodRequestId: widget.request?.id,
-        allocationId: widget.allocationId,
-        paymentMethod: _selectedMethod,
-      );
-      if (payment == null) {
-        throw Exception(cubit.state.error);
+      final PaymentModel? payment;
+      if (widget.request != null) {
+        payment = await cubit.initiate(
+          bloodRequestId: widget.request!.id,
+          paymentMethod: _selectedMethod,
+        );
+      } else {
+        final allocationId = widget.allocationId;
+        if (allocationId == null || allocationId.isEmpty) {
+          throw StateError('A payment target is required.');
+        }
+        final response = await getIt<CaregiverRemoteDataSource>()
+            .initiateAllocationPayment(allocationId);
+        payment = PaymentModel.fromJson(response);
       }
+      if (payment == null) {
+        if (mounted) {
+          _showPaymentError(cubit.state.error);
+        }
+        return;
+      }
+      final activePayment = payment;
       if (!mounted) return;
-      setState(() => _isProcessing = false);
       setState(() {
-        _confirmedAmount = payment.amount;
+        _confirmedAmount = activePayment.amount;
       });
-      final checkoutUrl = payment.checkoutUrl;
+      final checkoutUrl = activePayment.checkoutUrl;
       if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
-        final launched = await launchUrl(Uri.parse(checkoutUrl),
-            mode: LaunchMode.externalApplication);
-        if (!launched && mounted) {
-          _showPaymentStatus('checkout_unavailable',
-              transactionReference: payment.transactionReference);
+        final uri = Uri.tryParse(checkoutUrl);
+        if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
+          _showPaymentStatus(
+            'checkout_unavailable',
+            paymentId: activePayment.paymentId,
+            transactionReference: activePayment.transactionReference,
+          );
           return;
         }
+        bool launched;
+        try {
+          launched = await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          );
+        } catch (_) {
+          launched = false;
+        }
+        if (!launched && mounted) {
+          _awaitingCheckoutReturn = false;
+          _showPaymentStatus('checkout_unavailable',
+              paymentId: activePayment.paymentId,
+              transactionReference: activePayment.transactionReference);
+          return;
+        }
+        _activePaymentId = activePayment.paymentId;
+        _awaitingCheckoutReturn = true;
+        if (!mounted) return;
+        _showPaymentStatus(
+          activePayment.paymentStatus,
+          paymentId: activePayment.paymentId,
+          transactionReference: activePayment.transactionReference,
+        );
+        return;
       }
       if (!mounted) return;
-      _showPaymentStatus(payment.paymentStatus,
-          paymentId: payment.paymentId,
-          transactionReference: payment.transactionReference);
-    } on DioException catch (error) {
+      _showPaymentStatus(activePayment.paymentStatus,
+          paymentId: activePayment.paymentId,
+          transactionReference: activePayment.transactionReference);
+    } catch (error) {
+      if (mounted) {
+        _showPaymentError(friendlyErrorMessage(error));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  Future<void> _refreshAfterCheckout() async {
+    final paymentId = _activePaymentId;
+    if (paymentId == null || !mounted) return;
+    _awaitingCheckoutReturn = false;
+
+    try {
+      final latest = await _getPaymentStatus(paymentId);
+      await _refreshRequestStatus();
       if (!mounted) return;
-      setState(() => _isProcessing = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(apiErrorMessage(error)),
-          backgroundColor: AppColors.error,
+          content: Text(
+            'Payment status: ${latest.paymentStatus.toUpperCase()}'
+            '${_latestRequestStatus == null ? '' : ' · Request: ${_latestRequestStatus!.toUpperCase()}'}',
+          ),
         ),
       );
+    } catch (error) {
+      if (!mounted) return;
+      _showPaymentError(friendlyErrorMessage(error));
     }
+  }
+
+  void _showPaymentError(Object? error) {
+    final message = error is String && error.isNotEmpty
+        ? error
+        : friendlyErrorMessage(error ?? 'Payment failed');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+      ),
+    );
   }
 
   Future<PaymentModel> _getPaymentStatus(String paymentId) async {
@@ -80,6 +181,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
       throw Exception(cubit.state.error);
     }
     return payment;
+  }
+
+  Future<void> _refreshRequestStatus() async {
+    final requestId = widget.request?.id;
+    if (requestId == null || requestId.isEmpty) return;
+    final request =
+        await getIt<BloodRequestRemoteDataSource>().getRequestById(requestId);
+    if (mounted) {
+      setState(() => _latestRequestStatus = request.status);
+    }
   }
 
   void _showPaymentStatus(
@@ -143,6 +254,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Payment status: ${currentStatus.toUpperCase()}\n'
+                  '${_latestRequestStatus == null ? '' : 'Request status: ${_latestRequestStatus!.toUpperCase()}\n'}'
                   'Request: ${widget.request?.trackingReference ?? 'Allocation ${widget.allocationId}'}'
                   '${currentTransactionReference == null ? '' : '\nTransaction: $currentTransactionReference'}',
                   textAlign: TextAlign.center,
@@ -170,6 +282,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             });
                             try {
                               final latest = await _getPaymentStatus(paymentId);
+                              await _refreshRequestStatus();
                               if (latest.amount.isNotEmpty && mounted) {
                                 setState(
                                     () => _confirmedAmount = latest.amount);
@@ -180,9 +293,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     latest.transactionReference;
                                 isRefreshing = false;
                               });
-                            } on DioException catch (error) {
+                            } catch (error) {
                               setDialogState(() {
-                                refreshError = apiErrorMessage(error);
+                                refreshError = friendlyErrorMessage(error);
                                 isRefreshing = false;
                               });
                             }
