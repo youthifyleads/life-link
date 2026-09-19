@@ -1,32 +1,229 @@
+from __future__ import annotations
+
 from datetime import datetime, timezone
 from uuid import uuid4
-from app.core.exceptions import NotFoundError, ForbiddenError
+
+from app.core.exceptions import ForbiddenError, NotFoundError
 from app.repositories.interfaces.caregiver_repository import CaregiverRepository
 from app.repositories.interfaces.user_repository import UserRepository
 from app.repositories.models import CaregiverAssignmentRecord
+from app.schemas.caregiver import CaregiverBagScanPublic
+
+
 class CaregiverService:
-    def __init__(self,repo,user_repo): self.repo=repo; self.user_repo=user_repo
-    async def create(self,data,current):
-        user=await self.user_repo.get_by_id(data.caregiver_user_id)
-        if not user: raise NotFoundError("Caregiver user not found",code="CAREGIVER_NOT_FOUND")
-        return await self.repo.create(CaregiverAssignmentRecord(str(uuid4()),data.assignment_date or datetime.now(timezone.utc),data.status,data.notes,data.blood_bag_id,data.caregiver_user_id,data.hospital_id))
-    async def list(self,current):
-        # Admin/Medical Lead/Platform Support have oversight visibility and are
-        # not necessarily scoped to one hospital (e.g. Admin usually has no
-        # hospital_id at all) - filtering by current.hospital_id here used to
-        # silently return an empty list for them instead of everything.
-        if current.role.value in {"admin","medical_lead","platform_support"}: return await self.repo.list_all()
+    _patients: dict[str, list[dict]] = {}
+
+    def __init__(
+        self,
+        repo: CaregiverRepository,
+        user_repo: UserRepository,
+        inventory_repo=None,
+        institution_repo=None,
+        request_repo=None,
+        payment_repo=None,
+        blood_bag_repo=None,
+    ) -> None:
+        self.repo = repo
+        self.user_repo = user_repo
+        self.inventory_repo = inventory_repo
+        self.institution_repo = institution_repo
+        self.request_repo = request_repo
+        self.payment_repo = payment_repo
+        self.blood_bag_repo = blood_bag_repo
+
+    async def list_patients(self, current) -> list[dict]:
+        user_patients = self._patients.get(current.id, [])
+        if not user_patients and current.role.value in {"admin", "medical_lead", "platform_support"}:
+            all_pts = []
+            for pts in self._patients.values():
+                all_pts.extend(pts)
+            return all_pts
+        return user_patients
+
+    async def create_patient(self, data, current) -> dict:
+        p_dict = {
+            "id": str(uuid4()),
+            "full_name": data.full_name,
+            "blood_type": data.blood_type,
+            "hospital_id": data.hospital_id,
+            "notes": data.notes,
+        }
+        self._patients.setdefault(current.id, []).append(p_dict)
+        return p_dict
+
+    async def create(self, data, current) -> CaregiverAssignmentRecord:
+        user = await self.user_repo.get_by_id(data.caregiver_user_id)
+        if not user:
+            raise NotFoundError("Caregiver user not found", code="CAREGIVER_NOT_FOUND")
+        return await self.repo.create(
+            CaregiverAssignmentRecord(
+                str(uuid4()),
+                data.assignment_date or datetime.now(timezone.utc),
+                data.status,
+                data.notes,
+                data.blood_bag_id,
+                data.caregiver_user_id,
+                data.hospital_id,
+            )
+        )
+
+    async def list(self, current) -> list[CaregiverAssignmentRecord]:
+        role_val = current.role.value if hasattr(current.role, "value") else str(current.role)
+        if role_val in {"admin", "medical_lead", "platform_support"}:
+            return await self.repo.list_all()
         return await self.repo.list_for_user(current.id)
-    async def get(self,i,current):
-        r=await self.repo.get_by_id(i)
-        if not r: raise NotFoundError("Assignment not found",code="ASSIGNMENT_NOT_FOUND")
-        # `current` is the UserPublic API schema, which exposes `institution_id`
-        # (not `hospital_id`/`blood_bank_id`) - using the wrong attribute name
-        # crashed with an unhandled 500 for any hospital/blood-bank/normal user
-        # who was not themselves the assigned caregiver.
-        if current.role.value not in {"admin","medical_lead","platform_support"} and r.caregiver_user_id!=current.id and r.hospital_id!=current.institution_id: raise ForbiddenError("You cannot access this assignment",code="FORBIDDEN_ASSIGNMENT_ACCESS")
+
+    async def get(self, i: str, current) -> CaregiverAssignmentRecord:
+        r = await self.repo.get_by_id(i)
+        if not r:
+            raise NotFoundError("Assignment not found", code="ASSIGNMENT_NOT_FOUND")
+        role_val = current.role.value if hasattr(current.role, "value") else str(current.role)
+        if (
+            role_val not in {"admin", "medical_lead", "platform_support"}
+            and r.caregiver_user_id != current.id
+            and r.hospital_id != current.institution_id
+        ):
+            raise ForbiddenError("You cannot access this assignment", code="FORBIDDEN_ASSIGNMENT_ACCESS")
         return r
-    async def update(self,i,data,current):
-        r=await self.get(i,current)
-        for k,v in data.model_dump(exclude_unset=True).items(): setattr(r,k,v)
+
+    async def update(self, i: str, data, current) -> CaregiverAssignmentRecord:
+        r = await self.get(i, current)
+        for k, v in data.model_dump(exclude_unset=True).items():
+            setattr(r, k, v)
         return await self.repo.update(r)
+
+    async def scan_bag(self, qr_code: str, current) -> CaregiverBagScanPublic:
+        code = (qr_code or "").strip()
+        if not code:
+            raise NotFoundError("QR code or bag ID is required", code="INVALID_QR_CODE")
+
+        # 1. First check if it is a request QR generated by hospital staff
+        request_record = None
+        if self.request_repo:
+            request_record = await self.request_repo.get_by_tracking_reference(code)
+            if not request_record:
+                from app.core.security import decode_tracking_reference
+
+                decoded = decode_tracking_reference(code)
+                if decoded:
+                    request_record = await self.request_repo.get_by_id(decoded)
+            if not request_record:
+                request_record = await self.request_repo.get_by_id(code)
+
+        if request_record:
+            bank_id = "bloodbank_1"
+            # If blood bags are allocated, check their bank
+            if self.blood_bag_repo:
+                allocated = await self.blood_bag_repo.list_by_request(request_record.id)
+                if allocated and allocated[0].current_blood_bank_id:
+                    bank_id = allocated[0].current_blood_bank_id
+
+            bank_name = "Central Blood Bank"
+            bank_location = "15 Tahrir Square, Cairo"
+            if self.institution_repo:
+                inst = await self.institution_repo.get("blood_bank", bank_id)
+                if inst:
+                    bank_name = inst.name
+                    if inst.address and inst.governorate:
+                        bank_location = (
+                            inst.address
+                            if inst.governorate.lower() in inst.address.lower()
+                            else f"{inst.address}, {inst.governorate}"
+                        )
+                    elif inst.address:
+                        bank_location = inst.address
+                    elif inst.governorate:
+                        bank_location = inst.governorate
+
+            # Calculate price and payment status
+            unit_p = float(request_record.unit_price) if getattr(request_record, "unit_price", None) else None
+            qty = request_record.quantity_units
+            total_p = (unit_p * qty) if unit_p is not None else None
+
+            pay_status = "unpaid"
+            if self.payment_repo:
+                try:
+                    payments = await self.payment_repo.list_for_request(request_record.id)
+                    if any(p.payment_status.lower() in {"paid", "completed", "success"} for p in payments):
+                        pay_status = "paid"
+                    elif payments:
+                        pay_status = payments[-1].payment_status.lower()
+                except Exception:
+                    pass
+
+            return CaregiverBagScanPublic(
+                blood_bag_id=request_record.id,
+                request_id=request_record.id,
+                blood_type=request_record.blood_type,
+                component=getattr(request_record, "component", "whole_blood"),
+                quantity=qty,
+                status=request_record.status.value if hasattr(request_record.status, "value") else str(request_record.status),
+                bank_name=bank_name,
+                bank_location=bank_location,
+                qr_code=request_record.tracking_reference,
+                unit_price=unit_p,
+                total_price=total_p,
+                payment_status=pay_status,
+            )
+
+        # 2. Check individual blood bag in BloodBagRepository or Inventory
+        bag_record = None
+        if self.blood_bag_repo:
+            bag_record = await self.blood_bag_repo.get_by_qr(code)
+            if not bag_record:
+                bag_record = await self.blood_bag_repo.get(code)
+
+        if not bag_record and self.inventory_repo:
+            bag_record = await self.inventory_repo.get_by_id_or_qr(code)
+
+        assignments = await self.repo.list_all()
+        matching_assignment = next(
+            (a for a in assignments if a.blood_bag_id == code or a.id == code),
+            None,
+        )
+
+        if not bag_record and not matching_assignment:
+            raise NotFoundError("Blood bag or request not found", code="BLOOD_BAG_NOT_FOUND")
+
+        blood_bag_id = bag_record.id if bag_record else (matching_assignment.blood_bag_id if matching_assignment else code)
+        blood_type = bag_record.blood_type if bag_record else "O+"
+        component = getattr(bag_record, "component", "whole_blood") if bag_record else "whole_blood"
+        bag_status = matching_assignment.status if matching_assignment else (bag_record.status if bag_record else "available")
+        qr_code_val = (getattr(bag_record, "qr_code", None) if bag_record else None) or code
+        bank_id = (
+            getattr(bag_record, "current_blood_bank_id", None)
+            or getattr(bag_record, "blood_bank_id", None)
+            or (matching_assignment.hospital_id if matching_assignment else None)
+            or "bloodbank_1"
+        )
+
+        bank_name = "Central Blood Bank"
+        bank_location = "Cairo, Egypt"
+
+        if self.institution_repo and bank_id:
+            inst = await self.institution_repo.get("blood_bank", bank_id)
+            if not inst:
+                inst = await self.institution_repo.get("hospital", bank_id)
+            if inst:
+                bank_name = inst.name
+                if inst.address and inst.governorate:
+                    if inst.governorate.lower() in inst.address.lower():
+                        bank_location = inst.address
+                    else:
+                        bank_location = f"{inst.address}, {inst.governorate}"
+                elif inst.address:
+                    bank_location = inst.address
+                elif inst.governorate:
+                    bank_location = inst.governorate
+
+        return CaregiverBagScanPublic(
+            blood_bag_id=blood_bag_id,
+            request_id=getattr(bag_record, "allocated_request_id", None),
+            blood_type=blood_type,
+            component=component,
+            quantity=1,
+            status=bag_status,
+            bank_name=bank_name,
+            bank_location=bank_location,
+            qr_code=qr_code_val,
+        )

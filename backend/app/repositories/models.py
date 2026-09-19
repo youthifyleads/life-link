@@ -24,6 +24,8 @@ class UserRecord:
     hospital_id: str | None = None
     blood_bank_id: str | None = None
     created_at: datetime = field(default_factory=_utcnow)
+    date_of_birth: object | None = None
+    email_verified: bool = True
 
 
 @dataclass
@@ -38,6 +40,7 @@ class BloodRequestRecord:
     status: RequestStatus
     tracking_reference: str
     created_by: str
+    unit_price: float | None = None
     required_by: datetime | None = None
     created_at: datetime = field(default_factory=_utcnow)
     updated_at: datetime = field(default_factory=_utcnow)
@@ -53,6 +56,8 @@ class InventoryItemRecord:
     is_available: bool
     expiry_date: datetime | None
     last_updated: datetime = field(default_factory=_utcnow)
+    qr_code: str | None = None
+    status: str = "available"
 
 
 @dataclass
@@ -115,8 +120,10 @@ class DonorRecord:
     blood_type: str | None = None
     date_of_birth: object | None = None
     governorate: str | None = None
-    eligibility_status: str = "pending"
+    eligibility_status: str = "eligible"
     last_donation_date: object | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 @dataclass
 class DonationRecord:
@@ -150,9 +157,15 @@ class ConsentRecord:
 @dataclass
 class DonationVoucherRecord:
     id: str
-    voucher_number: str
-    issued_at: datetime
+    code: str
+    donor_id: str
+    partner_id: str | None
+    value: Decimal
     status: str
+    issued_at: datetime
+    expires_at: datetime
+    redeemed_at: datetime | None
+    transaction_reference: str | None
     donation_id: str
 
 @dataclass
@@ -175,3 +188,67 @@ class PaymentRecord:
     transaction_reference: str | None
     created_at: datetime
     blood_request_id: str
+    currency: str = "EGP"
+    provider: str = "paymob"
+    provider_order_id: str | None = None
+
+
+@dataclass
+class RefreshTokenRecord:
+    id: str
+    user_id: str
+    token_hash: str
+    expires_at: datetime
+    created_at: datetime = field(default_factory=_utcnow)
+    revoked_at: datetime | None = None
+    replaced_by_token_id: str | None = None
+
+
+@dataclass
+class PasswordResetTokenRecord:
+    id: str
+    user_id: str
+    token_hash: str
+    expires_at: datetime
+    created_at: datetime = field(default_factory=_utcnow)
+    used_at: datetime | None = None
+    attempts: int = 0
+
+
+@dataclass
+class DeviceTokenRecord:
+    id: str
+    user_id: str
+    token: str
+    provider: str
+    active: bool = True
+    created_at: datetime = field(default_factory=_utcnow)
+    updated_at: datetime = field(default_factory=_utcnow)
+
+
+@dataclass
+class BloodBagRecord:
+    id: str
+    blood_type: str
+    quantity: int
+    collection_date: object
+    expiry_date: object | None
+    qr_code: str
+    status: str
+    current_location: str | None
+    created_at: datetime = field(default_factory=_utcnow)
+    donation_id: str | None = None
+    current_blood_bank_id: str | None = None
+    component: str = "whole_blood"
+    allocated_request_id: str | None = None
+
+
+@dataclass
+class BloodBagHistoryRecord:
+    id: str
+    blood_bag_id: str
+    status: str
+    changed_at: datetime = field(default_factory=_utcnow)
+    changed_by_user_id: str = ""
+    location: str | None = None
+    notes: str | None = None

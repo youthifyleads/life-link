@@ -19,6 +19,38 @@ Life Link is engineered with modern, robust technologies tailored for high perfo
 | **Mobile** | `/mobile/` | Mobile Developer | `@Toqa10` |
 | **CI/CD & Security** | `/.github/` | Tech Lead + DevOps / Security Engineer | `@Ahmed-Esso` `@Mayar-hany-2005` |
 
+---
+
+## 📱 Platform Architecture & Target Roles
+
+Life Link connects healthcare institutions and citizens through two synchronized client applications:
+
+1. **Web Portal (`/web`)**:
+   - **Target Roles**: `HospitalStaff`, `BloodBankStaff`, `MedicalLead`, `PlatformSupport`, `SystemAdmin`.
+   - **Key Functions**: Emergency blood requests creation, inventory oversight, supporting document reviews, Paymob payment checkout, and finding/notifying nearest matching eligible donors.
+2. **Mobile Application (`/mobile`)**:
+   - **Target Role**: `NormalUser` (acting simultaneously as **Donor** and **Caregiver**).
+   - **Donor Functions**: Profile management with home address/GPS coordinates, nearby matching blood requests feed, one-tap accept/decline responses, donation history, and urgent notifications.
+   - **Caregiver Functions**: Scanning hospital-generated blood bag QR codes to verify bag authenticity, blood type, current status, and blood bank source details.
+
+---
+
+## ✨ Core System Capabilities
+
+- **📍 Intelligent Donor Matching & Haversine Distance Sorting**:
+  - Calculates real geographical distance in kilometers between donor home location and hospital/blood bank.
+  - Automatic fallback to Egyptian governorates central coordinates when GPS is missing.
+  - Enforces clinical blood compatibility (RBC rules) with optional exact-match filtering.
+  - Enforces 6-month donation interval rule (≥ 180 days) and active eligibility verification.
+  - Automatic quota management: When the required number of donors accept a request (`accepted_count == quantity_units`), the request is automatically fulfilled, hidden from other donors, and closed.
+- **💳 Paymob Payment Integration & Flexible Pricing**:
+  - Server-side price calculation with blood-bank configurable unit prices per bag.
+  - Secure Paymob payment checkout flow (`POST /payments/initiate`).
+  - HMAC-SHA512 authenticated webhook callback (`POST /payments/webhook`) ensuring idempotent payment status updates.
+- **📦 QR Code Bag Tracking & Caregiver Verification**:
+  - Encrypted tracking references for hospital blood bags.
+  - Safe mobile view for caregivers (`POST /caregiver/scan-bag`) displaying blood bank name, address, bag status, and blood type.
+
 
 ---
 
@@ -192,6 +224,26 @@ For testing across Web, Mobile, and Backend, 8 standardized QA accounts are seed
 | Banned User | `banned@lifelink.dev` | `Test@123` | `normal_user` (status: `suspended`) |
 
 See [`backend/docs/QA_TEST_ACCOUNTS.md`](backend/docs/QA_TEST_ACCOUNTS.md) for full credentials, role mappings, and sample API requests.
+
+---
+
+## 🧪 Automated Testing
+
+The backend includes **81 automated unit and integration tests** validating:
+- Authentication & JWT issuance
+- RBAC authorization across all 6 roles
+- Role mapping (database PascalCase & backend snake_case)
+- Emergency blood request lifecycle & state machine
+- Inventory management & QR generation
+- Caregiver blood bag QR lookup
+- Paymob server-side pricing calculation, payment initiation, and HMAC webhook verification
+- Haversine distance sorting, donor blood compatibility, 6-month rule, and automatic quota fulfillment
+
+Run all tests with:
+```bash
+cd backend
+python -m pytest app/tests -v
+```
 
 ---
 

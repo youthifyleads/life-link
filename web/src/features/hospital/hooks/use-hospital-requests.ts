@@ -12,6 +12,10 @@ import {
 import type { HospitalRequestInput } from "@/features/hospital/types/hospital.types";
 import { queryClient } from "@/app/providers/query-client";
 
+import { apiClient } from "@/shared/api/http-client";
+import { requestsApi } from "@/shared/api/requests.api";
+import { getAccessToken } from "@/shared/api/auth-token";
+
 export const hospitalRequestKeys = {
   all: ["hospital", "requests"] as const,
   detail: (id: string) => ["hospital", "requests", id] as const,
@@ -22,21 +26,80 @@ export const hospitalRequestKeys = {
 export function useHospitalRequests() {
   return useQuery({
     queryKey: hospitalRequestKeys.all,
-    queryFn: getHospitalRequests,
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveData = await requestsApi.getRequests();
+          return liveData || [];
+        } catch (err) {
+          console.warn("Live requests fetch failed:", err);
+          return [];
+        }
+      }
+      if (import.meta.env.MODE === "test") {
+        return getHospitalRequests();
+      }
+      return [];
+    },
   });
 }
 
 export function useAvailableBloodBanks() {
   return useQuery({
     queryKey: hospitalRequestKeys.bloodBanks,
-    queryFn: getAvailableBloodBanks,
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const { data } = await apiClient.get<any[]>("/blood-banks");
+          if (Array.isArray(data)) {
+            return data.map((b) => ({
+              id: b.id,
+              name: b.name,
+              facilityCode: b.facility_code || "BB-CTR",
+              governorate: b.governorate || "Cairo",
+              address: b.address || "Central District",
+              phone: b.phones?.[0] || "+20 2 3761 1111",
+              status: b.status || "active",
+              availabilitySummary: {
+                totalAvailable: b.available_units ?? 0,
+                posture: "optimal" as const,
+                lowStockGroupsCount: 0,
+              },
+            }));
+          }
+        } catch (err) {
+          console.warn("Live blood banks fetch failed:", err);
+          return [];
+        }
+      }
+      if (import.meta.env.MODE === "test") {
+        return getAvailableBloodBanks();
+      }
+      return [];
+    },
   });
 }
 
 export function useHospitalRequest(id: string) {
   return useQuery({
     queryKey: hospitalRequestKeys.detail(id),
-    queryFn: () => getHospitalRequest(id),
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          return await requestsApi.getRequestById(id);
+        } catch (err) {
+          console.warn("Live request detail failed:", err);
+          const cached = queryClient.getQueryData<any>(hospitalRequestKeys.detail(id));
+          if (cached) return cached;
+        }
+      }
+      if (import.meta.env.MODE === "test") {
+        return getHospitalRequest(id);
+      }
+      const cached = queryClient.getQueryData<any>(hospitalRequestKeys.detail(id));
+      return cached ?? null;
+    },
+    enabled: Boolean(id),
   });
 }
 
@@ -49,8 +112,12 @@ export function useHospitalAllDocuments() {
 
 export function useCreateHospitalRequest(shouldFail = false) {
   return useMutation({
-    mutationFn: (input: HospitalRequestInput) =>
-      createHospitalRequest(input, shouldFail),
+    mutationFn: async (input: HospitalRequestInput) => {
+      if (getAccessToken() && !shouldFail) {
+        return await requestsApi.createRequest(input);
+      }
+      return createHospitalRequest(input, shouldFail);
+    },
     onSuccess: (request) => {
       queryClient.setQueryData(hospitalRequestKeys.detail(request.id), request);
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.all });

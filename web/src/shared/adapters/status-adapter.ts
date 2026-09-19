@@ -31,7 +31,7 @@ export interface StatusPresentation {
 export function normalizeBackendRequestStatus(
   status: BackendRequestStatus | string,
 ): RequestStatus {
-  switch (status.toLowerCase()) {
+  switch (String(status || "").toLowerCase()) {
     case "requested":
     case "submitted":
       return "submitted";
@@ -164,6 +164,13 @@ export function getRequestStatusPresentation(
         code: "cancelled",
         label: "Cancelled",
         description: "Requisition withdrawn by requesting hospital clinician.",
+        variant: "outline",
+      };
+    default:
+      return {
+        code: "draft",
+        label: "Draft",
+        description: "Local draft, not transmitted to blood bank queue.",
         variant: "outline",
       };
   }

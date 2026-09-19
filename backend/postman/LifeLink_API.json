@@ -865,6 +865,32 @@
           }
         },
         {
+          "name": "Scan Blood Bag for Caregiver",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/caregiver/scan-bag",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "caregiver",
+                "scan-bag"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_code\": \"LL-BAG-sample123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
           "name": "Create Payment",
           "request": {
             "method": "POST",

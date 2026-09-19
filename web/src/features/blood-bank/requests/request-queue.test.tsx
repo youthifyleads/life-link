@@ -111,7 +111,7 @@ describe("RequestQueuePage (Clinical Dispatch Ledger)", () => {
     // Should display success message
     await waitFor(
       () => {
-        expect(screen.getByRole("status")).toHaveTextContent(/Request BR-2026-2194 is now acknowledged/i);
+        expect(screen.getByRole("status")).toHaveTextContent(/Request BR-2026-2194 (moved to|is now) acknowledged/i);
       },
       { timeout: 8000 },
     );

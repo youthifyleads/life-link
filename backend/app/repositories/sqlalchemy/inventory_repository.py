@@ -27,11 +27,14 @@ class SQLAlchemyInventoryRepository(InventoryRepository):
             bag_id = str(uuid.uuid4())
             item.id = bag_id
 
+        qr_str = item.qr_code or f"LL-BAG-{secrets.token_urlsafe(12)}"
+        item.qr_code = qr_str
+
         obj = BloodBagModel(
             blood_bag_id=bag_id, donation_id=None, current_blood_bank_id=item.blood_bank_id,
             collection_date=now, created_at=now, blood_type=item.blood_type,
-            qr_code=f"LL-BAG-{secrets.token_urlsafe(12)}",
-            status="available" if item.is_available else "unavailable",
+            qr_code=qr_str,
+            status=item.status if getattr(item, "status", None) else ("available" if item.is_available else "unavailable"),
             expiry_date=item.expiry_date, current_location=item.blood_bank_id,
             quantity=item.quantity_units,
         )
@@ -41,6 +44,20 @@ class SQLAlchemyInventoryRepository(InventoryRepository):
 
     async def get_by_id(self, item_id: str) -> InventoryItemRecord | None:
         result = await self.session.execute(select(BloodBagModel).where(BloodBagModel.blood_bag_id == item_id))
+        obj = result.scalar_one_or_none()
+        return inventory_to_record(obj) if obj else None
+
+    async def get_by_qr_code(self, qr_code: str) -> InventoryItemRecord | None:
+        result = await self.session.execute(select(BloodBagModel).where(BloodBagModel.qr_code == qr_code))
+        obj = result.scalar_one_or_none()
+        return inventory_to_record(obj) if obj else None
+
+    async def get_by_id_or_qr(self, identifier: str) -> InventoryItemRecord | None:
+        result = await self.session.execute(
+            select(BloodBagModel).where(
+                (BloodBagModel.blood_bag_id == identifier) | (BloodBagModel.qr_code == identifier)
+            )
+        )
         obj = result.scalar_one_or_none()
         return inventory_to_record(obj) if obj else None
 

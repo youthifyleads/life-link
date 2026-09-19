@@ -2,15 +2,49 @@ from fastapi import APIRouter, Depends
 from app.core.domain import Role
 from app.core.security import CurrentUser, require_roles
 from app.schemas.donors import *
-from app.services.dependencies import get_donor_service
+from app.schemas.vouchers import VoucherPublic
+from app.services.dependencies import get_donor_service, get_matching_service, get_voucher_service
 from app.services.donor_service import DonorService
+from app.services.matching_service import MatchingService
+from app.services.voucher_service import VoucherService
+
 router=APIRouter(prefix="/donors",tags=["Donors"])
 @router.get("/me",response_model=DonorPublic)
 async def me(current:CurrentUser,svc:DonorService=Depends(get_donor_service)): return await svc.get_me(current.id)
+@router.get("/me/vouchers", response_model=list[VoucherPublic], summary="List authenticated donor's vouchers")
+async def get_my_vouchers(current: CurrentUser, svc: VoucherService = Depends(get_voucher_service)):
+    return await svc.list_mine(current.id)
 @router.post("/me",response_model=DonorPublic,status_code=201)
 async def create(data:DonorCreate,current:CurrentUser,svc:DonorService=Depends(get_donor_service)): return await svc.create_for_user(current.id,data)
 @router.patch("/me",response_model=DonorPublic)
 async def update(data:DonorUpdate,current:CurrentUser,svc:DonorService=Depends(get_donor_service)): return await svc.update(current.id,data)
+@router.get("/matches",response_model=list[MatchingDonorPublic],summary="Find matching eligible donors sorted by distance")
+async def find_matches(
+    blood_type: str,
+    exact_match: bool = False,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    max_distance_km: float | None = None,
+    limit: int = 50,
+    current: CurrentUser = None,
+    matching_svc: MatchingService = Depends(get_matching_service),
+):
+    return await matching_svc.find_matching_donors(
+        blood_type=blood_type,
+        target_lat=latitude,
+        target_lng=longitude,
+        max_distance_km=max_distance_km,
+        exact_match=exact_match,
+        limit=limit,
+    )
+@router.get("/me/nearby-requests",response_model=list[NearbyBloodRequestPublic],summary="Get nearby blood requests matching donor blood type")
+async def nearby_requests(
+    current: CurrentUser,
+    limit: int = 20,
+    max_distance_km: float | None = None,
+    svc: DonorService = Depends(get_donor_service),
+):
+    return await svc.get_nearby_requests(current.id, limit=limit, max_distance_km=max_distance_km)
 @router.get("/{donor_id}",response_model=DonorPublic,dependencies=[Depends(require_roles(Role.ADMIN,Role.MEDICAL_LEAD))])
 async def get(donor_id:str,svc:DonorService=Depends(get_donor_service)): return await svc.get(donor_id)
 @router.get("/me/donations",response_model=list[DonationPublic])

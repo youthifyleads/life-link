@@ -1,0 +1,98 @@
+name: lifelink_mobile
+description: LifeLink Mobile — Blood Donation & Request Management (Donor & Caregiver)
+version: 1.0.0+1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Networking
+  dio: ^5.4.3
+  retrofit: any
+  pretty_dio_logger: ^1.3.1
+
+  # State Management
+  flutter_bloc: ^8.1.5
+  equatable: ^2.0.5
+
+  # Secure Storage
+  flutter_secure_storage: ^9.0.0
+
+  # Navigation
+  go_router: ^13.2.0
+
+  # Dependency Injection
+  get_it: ^7.7.0
+  injectable: ^2.4.2
+
+  # Local Storage
+  shared_preferences: ^2.2.3
+
+
+  # QR Code Scanner
+  mobile_scanner: ^5.1.1
+
+  # QR Code Display
+  qr_flutter: ^4.1.0
+
+  # Firebase
+  firebase_core: ^3.3.0
+  firebase_messaging: ^15.1.0
+  flutter_local_notifications: ^17.2.1+1
+
+  # UI / UX
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  lottie: ^3.1.2
+  flutter_svg: ^2.0.10+1
+  intl: ^0.20.3
+  timeago: ^3.6.1
+  pinput: ^5.0.0
+  image_picker: ^1.1.2
+  file_picker: ^8.0.7
+  url_launcher: ^6.3.0
+  package_info_plus: ^8.0.2
+
+  # Icons
+  cupertino_icons: ^1.0.6
+  iconsax: ^0.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.15.1
+  injectable_generator: ^2.4.3
+  retrofit_generator: ^10.0.0
+  json_serializable: ^6.8.0
+  json_annotation: ^4.9.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+    - assets/fonts/
+
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+        - asset: assets/fonts/Cairo-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
+
+
+
+
+

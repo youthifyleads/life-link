@@ -81,12 +81,21 @@ def user_to_record(m: UserModel) -> UserRecord:
 
 
 def request_to_record(m: BloodRequestModel) -> BloodRequestRecord:
+    unit_price = float(m.unit_price) if getattr(m, "unit_price", None) is not None else None
+    status_str = str(m.status or "requested").lower()
+    if status_str == "submitted":
+        status_str = "requested"
+    try:
+        st = RequestStatus(status_str)
+    except ValueError:
+        st = RequestStatus.REQUESTED
+
     return BloodRequestRecord(
         id=m.blood_request_id, hospital_id=m.hospital_id, blood_type=m.blood_type,
-        component="unspecified", quantity_units=m.requested_quantity,
-        urgency=(str(m.urgency).lower() in {"urgent", "true", "1"}), notes=m.reason, status=RequestStatus(m.status),
+        component=getattr(m, "component", None) or "whole_blood", quantity_units=m.requested_quantity,
+        urgency=(str(m.urgency).lower() in {"urgent", "true", "1", "emergency", "critical"}), notes=m.reason, status=st,
         tracking_reference=create_tracking_reference(m.blood_request_id),
-        created_by=m.created_by_user_id, required_by=m.required_by, created_at=m.created_at, updated_at=m.created_at,
+        created_by=m.created_by_user_id, unit_price=unit_price, required_by=m.required_by, created_at=m.created_at, updated_at=m.created_at,
     )
 
 
@@ -96,6 +105,7 @@ def inventory_to_record(m: BloodBagModel) -> InventoryItemRecord:
         component="blood_bag", quantity_units=m.quantity,
         is_available=(m.status or "").lower() in {"available", "reserved"},
         expiry_date=m.expiry_date, last_updated=m.created_at,
+        qr_code=m.qr_code, status=m.status or "available",
     )
 
 

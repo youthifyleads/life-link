@@ -26,3 +26,8 @@ class TrackingPublic(BaseModel):
     blood_type: str
     component: str
     last_updated: datetime
+    request_id: str | None = None
+    unit_price: float | None = None
+    total_price: float | None = None
+    payment_status: str | None = "unpaid"
+    bank_name: str | None = None

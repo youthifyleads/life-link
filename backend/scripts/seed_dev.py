@@ -102,6 +102,7 @@ async def main() -> None:
                     status=user_status, created_at=datetime.now(timezone.utc), role_id=roles[role].role_id,
                     hospital_id=hospital.hospital_id if hospital_ref else None,
                     blood_bank_id=blood_bank.blood_bank_id if bank_ref else None,
+                    email_verified=True,
                 ))
         for uid, phone in SEED_PHONE_MAP.items():
             exists_phone = (await session.execute(select(UserPhoneModel).where(UserPhoneModel.user_id == uid, UserPhoneModel.phone == phone))).scalar_one_or_none()

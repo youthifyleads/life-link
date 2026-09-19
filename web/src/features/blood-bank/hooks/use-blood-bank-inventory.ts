@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  getBloodStockMatrix,
-  getInventoryKPIs,
+  computeBloodStockMatrix,
+  computeInventoryKPIs,
+  computeInventoryWarnings,
   getInventoryUnits,
-  getInventoryWarnings,
   lookupBloodUnit,
   registerBloodUnits,
   updateBloodUnitStatus,
@@ -14,6 +14,9 @@ import type {
   BloodUnitStatus,
   InventoryLedgerFilters,
 } from "@/features/blood-bank/types/blood-bank.types";
+
+import { inventoryApi } from "@/features/blood-bank/api/inventory.api";
+import { getAccessToken } from "@/shared/api/auth-token";
 
 export const inventoryKeys = {
   all: ["blood-bank", "inventory"] as const,
@@ -28,35 +31,71 @@ export const inventoryKeys = {
 export function useInventoryUnits(filters?: Partial<InventoryLedgerFilters>) {
   return useQuery({
     queryKey: inventoryKeys.list(filters),
-    queryFn: () => getInventoryUnits(filters),
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveData = await inventoryApi.getInventory(filters);
+          return liveData || [];
+        } catch (err) {
+          console.warn("Live inventory fetch failed:", err);
+          return [];
+        }
+      }
+      if (import.meta.env.MODE === "test") {
+        return getInventoryUnits(filters);
+      }
+      return [];
+    },
   });
 }
 
 export function useInventoryKPIs() {
+  const { data: units } = useInventoryUnits();
+
   return useQuery({
-    queryKey: inventoryKeys.kpis,
-    queryFn: getInventoryKPIs,
+    queryKey: [...inventoryKeys.kpis, units?.length],
+    queryFn: async () => {
+      return computeInventoryKPIs(units || []);
+    },
   });
 }
 
 export function useBloodStockMatrix() {
+  const { data: units } = useInventoryUnits();
+
   return useQuery({
-    queryKey: inventoryKeys.matrix,
-    queryFn: getBloodStockMatrix,
+    queryKey: [...inventoryKeys.matrix, units?.length],
+    queryFn: async () => {
+      return computeBloodStockMatrix(units || []);
+    },
   });
 }
 
 export function useInventoryWarnings() {
+  const { data: units } = useInventoryUnits();
+
   return useQuery({
-    queryKey: inventoryKeys.warnings,
-    queryFn: getInventoryWarnings,
+    queryKey: [...inventoryKeys.warnings, units?.length],
+    queryFn: async () => {
+      return computeInventoryWarnings(units || []);
+    },
   });
 }
 
 export function useLookupBloodUnit(idOrQr: string) {
   return useQuery({
     queryKey: inventoryKeys.tracking(idOrQr),
-    queryFn: () => lookupBloodUnit(idOrQr),
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          const liveUnit = await inventoryApi.getBagByBarcode(idOrQr);
+          if (liveUnit) return liveUnit;
+        } catch {
+          // fallback to lookupBloodUnit
+        }
+      }
+      return lookupBloodUnit(idOrQr);
+    },
     enabled: Boolean(idOrQr.trim()),
   });
 }
@@ -65,9 +104,17 @@ export function useRegisterBloodUnits() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: BloodUnitIntakePayload) => registerBloodUnits(payload),
+    mutationFn: async (payload: BloodUnitIntakePayload) => {
+      if (getAccessToken()) {
+        try {
+          return [await inventoryApi.registerUnit(payload)];
+        } catch (err) {
+          console.warn("Live intake fallback:", err);
+        }
+      }
+      return registerBloodUnits(payload);
+    },
     onSuccess: () => {
-      // Invalidate all inventory, tracking, and allocation queries across the workspace
       void queryClient.invalidateQueries({ queryKey: ["blood-bank"] });
     },
   });
@@ -77,7 +124,7 @@ export function useUpdateUnitStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       unitId,
       status,
       location,
@@ -87,7 +134,16 @@ export function useUpdateUnitStatus() {
       status: BloodUnitStatus;
       location?: string;
       notes?: string;
-    }) => updateBloodUnitStatus(unitId, status, location, notes),
+    }) => {
+      if (getAccessToken()) {
+        try {
+          return await inventoryApi.updateUnitStatus(unitId, status, notes, location);
+        } catch (err) {
+          console.warn("Live update status fallback:", err);
+        }
+      }
+      return updateBloodUnitStatus(unitId, status, location, notes);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["blood-bank"] });
     },

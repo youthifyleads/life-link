@@ -29,7 +29,7 @@ interface UrgencyBadgeProps {
 
 export function UrgencyBadge({ urgency, className }: UrgencyBadgeProps) {
   const { t } = useTranslation();
-  const definition = urgencyDefinitions[urgency];
+  const definition = urgencyDefinitions[urgency] ?? urgencyDefinitions.routine;
   const Icon = definition.icon;
   const label = t(`urgency.${urgency}`, definition.label);
 

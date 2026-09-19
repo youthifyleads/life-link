@@ -19,6 +19,27 @@ class Role(str, Enum):
     PLATFORM_SUPPORT = "platform_support"
 
 
+class BloodType(str, Enum):
+    A_POS = "A+"
+    A_NEG = "A-"
+    B_POS = "B+"
+    B_NEG = "B-"
+    AB_POS = "AB+"
+    AB_NEG = "AB-"
+    O_POS = "O+"
+    O_NEG = "O-"
+
+
+VALID_BLOOD_TYPES: set[str] = {bt.value for bt in BloodType}
+
+
+class VoucherStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    REDEEMED = "REDEEMED"
+    EXPIRED = "EXPIRED"
+    CANCELLED = "CANCELLED"
+
+
 class RequestStatus(str, Enum):
     REQUESTED = "requested"
     ACKNOWLEDGED = "acknowledged"
@@ -58,3 +79,26 @@ class AuditAction(str, Enum):
     INVENTORY_UPDATED = "INVENTORY_UPDATED"
     QR_ACCESSED = "QR_ACCESSED"
     AUTHORIZATION_DENIED = "AUTHORIZATION_DENIED"
+
+
+class BloodBagStatus(str, Enum):
+    AVAILABLE = "available"
+    RESERVED = "reserved"
+    ALLOCATED = "allocated"
+    IN_TRANSIT = "in_transit"
+    DELIVERED = "delivered"
+    RECEIVED = "received"
+    QUARANTINE = "quarantine"
+    DISPOSED = "disposed"
+
+
+BLOOD_BAG_TRANSITIONS: dict[BloodBagStatus, set[BloodBagStatus]] = {
+    BloodBagStatus.AVAILABLE: {BloodBagStatus.RESERVED, BloodBagStatus.ALLOCATED, BloodBagStatus.QUARANTINE},
+    BloodBagStatus.RESERVED: {BloodBagStatus.ALLOCATED, BloodBagStatus.AVAILABLE, BloodBagStatus.QUARANTINE},
+    BloodBagStatus.ALLOCATED: {BloodBagStatus.IN_TRANSIT, BloodBagStatus.AVAILABLE, BloodBagStatus.QUARANTINE},
+    BloodBagStatus.IN_TRANSIT: {BloodBagStatus.DELIVERED, BloodBagStatus.RECEIVED, BloodBagStatus.QUARANTINE},
+    BloodBagStatus.DELIVERED: {BloodBagStatus.RECEIVED, BloodBagStatus.QUARANTINE},
+    BloodBagStatus.RECEIVED: {BloodBagStatus.QUARANTINE, BloodBagStatus.DISPOSED},
+    BloodBagStatus.QUARANTINE: {BloodBagStatus.AVAILABLE, BloodBagStatus.DISPOSED},
+    BloodBagStatus.DISPOSED: set(),
+}
