@@ -3,87 +3,69 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:lifelink_mobile/core/constants/api_endpoints.dart';
-import 'package:lifelink_mobile/features/blood_bags/data/blood_bag_remote_datasource.dart';
-import 'package:lifelink_mobile/features/blood_bags/domain/models/blood_bag_models.dart';
+import 'package:lifelink_mobile/features/tracking/data/tracking_remote_datasource.dart';
+import 'package:lifelink_mobile/features/tracking/domain/models/tracking_model.dart';
 
 class _MockDio extends Mock implements Dio {}
 
 void main() {
   late _MockDio dio;
-  late BloodBagRemoteDataSource source;
+  late TrackingRemoteDataSource source;
 
   setUp(() {
     dio = _MockDio();
-    source = BloodBagRemoteDataSource(dio);
+    source = TrackingRemoteDataSource(dio);
   });
 
-  test('loads and parses blood bags', () async {
-    when(() => dio.get(ApiEndpoints.bloodBags)).thenAnswer(
+  test('scans hospital blood request QR and parses full tracking and pricing data', () async {
+    when(() => dio.post(
+          ApiEndpoints.qrScan,
+          data: {'reference': 'req_12345'},
+        )).thenAnswer(
       (_) async => Response(
-        requestOptions: RequestOptions(path: ApiEndpoints.bloodBags),
-        data: [
-          {
-            'id': 'bag-1',
-            'blood_type': 'O+',
-            'component': 'whole_blood',
-            'quantity': 1,
-            'collection_date': '2026-09-15',
-            'qr_code': 'qr-1',
-            'status': 'available',
-            'donation_id': 'donation-1',
-          }
-        ],
-      ),
-    );
-
-    final bags = await source.list();
-    expect(bags.single.id, 'bag-1');
-    expect(bags.single.status, 'available');
-  });
-
-  test('scans a blood bag through the backend', () async {
-    when(
-      () => dio.post(ApiEndpoints.bloodBagScan, data: {'qr_code': 'qr-1'}),
-    ).thenAnswer(
-      (_) async => Response(
-        requestOptions: RequestOptions(path: ApiEndpoints.bloodBagScan),
+        requestOptions: RequestOptions(path: ApiEndpoints.qrScan),
         data: {
-          'blood_bag': {
-            'id': 'bag-1',
-            'blood_type': 'O+',
-            'quantity': 1,
-            'qr_code': 'qr-1',
-            'status': 'available',
-            'donation_id': 'donation-1',
-          },
-          'movement_history': [],
+          'reference': 'req_12345',
+          'status': 'prepared',
+          'blood_type': 'O+',
+          'component': 'plasma',
+          'last_updated': '2026-09-18T10:00:00Z',
+          'request_id': 'req_12345',
+          'unit_price': 350.0,
+          'total_price': 700.0,
+          'payment_status': 'unpaid',
+          'bank_name': 'Central Blood Bank',
+          'bank_location': 'Tahrir Sq, Cairo',
+          'quantity': 2,
         },
       ),
     );
 
-    final result = await source.scan('qr-1');
-    expect(result.bloodBag.id, 'bag-1');
-    verify(
-        () => dio.post(ApiEndpoints.bloodBagScan, data: {'qr_code': 'qr-1'}));
+    final result = await source.scanQr('req_12345');
+    expect(result.reference, 'req_12345');
+    expect(result.requestId, 'req_12345');
+    expect(result.bloodType, 'O+');
+    expect(result.component, 'plasma');
+    expect(result.unitPrice, 350.0);
+    expect(result.totalPrice, 700.0);
+    expect(result.paymentStatus, 'unpaid');
+    expect(result.isPaid, isFalse);
+    expect(result.bankName, 'Central Blood Bank');
+    expect(result.quantity, 2);
   });
 
-  test('parses the Azure QR payload and status update request', () {
-    final qr = BloodBagQrModel.fromJson(const {
-      'blood_bag_id': 'bag-1',
-      'qr_payload': 'lifelink:bag-1',
+  test('parses paid status correctly', () {
+    final tracking = TrackingPublic.fromJson(const {
+      'reference': 'ref_paid',
+      'status': 'completed',
+      'blood_type': 'A+',
+      'component': 'whole_blood',
+      'last_updated': '2026-09-18T12:00:00Z',
+      'payment_status': 'paid',
     });
-    const update = BloodBagStatusUpdate(
-      status: 'available',
-      location: 'Central bank',
-      notes: 'Received',
-    );
 
-    expect(qr.qrPayload, 'lifelink:bag-1');
-    expect(update.toJson(), const {
-      'status': 'available',
-      'location': 'Central bank',
-      'notes': 'Received',
-    });
+    expect(tracking.isPaid, isTrue);
+    expect(tracking.status, 'completed');
   });
 
   test('updates blood bag status through the Azure status endpoint', () async {

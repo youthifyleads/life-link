@@ -34,22 +34,22 @@ class _CaregiverMatchesScreenState extends State<CaregiverMatchesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Matching donors')),
+      appBar: AppBar(title: const Text('المتبرعون المتطابقون')),
       body: FutureBuilder<List<DonorMatchModel>>(
         future: _matches,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LifeLinkLoadingState(
-              message: 'Checking real matching results…',
+              message: 'جاري البحث عن متبرعين متطابقين...',
             );
           }
           if (snapshot.hasError) {
             return LifeLinkStatePanel(
               icon: Icons.cloud_off_rounded,
-              title: 'Matching is unavailable',
+              title: 'تعذر جلب بيانات المتبرعين',
               message:
-                  'The service did not return matching results. Try again when you have a connection.',
-              actionLabel: 'Try again',
+                  'يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.',
+              actionLabel: 'إعادة المحاولة',
               onAction: _reload,
               tone: Colors.orange.shade800,
             );
@@ -58,9 +58,9 @@ class _CaregiverMatchesScreenState extends State<CaregiverMatchesScreen> {
           if (matches.isEmpty) {
             return const LifeLinkStatePanel(
               icon: Icons.person_search_rounded,
-              title: 'No matches available',
+              title: 'لا يوجد متبرعون متاحون حالياً',
               message:
-                  'No eligible matching donors were returned for this request.',
+                  'لم يتم العثور على متبرعين مؤهلين ومطابقين لهذه الفصيلة في الوقت الحالي. سيتم تنبيهك فور توفر متبرع.',
             );
           }
           return RefreshIndicator(
@@ -71,6 +71,11 @@ class _CaregiverMatchesScreenState extends State<CaregiverMatchesScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final match = matches[index];
+                final statusLabel = match.eligible
+                    ? 'مؤهل للتبرع'
+                    : match.eligibilityStatus == 'cooling_down'
+                        ? 'في فترة الراحة الطبية'
+                        : 'غير مؤهل حالياً';
                 return LifeLinkMatchCard(
                   donorLabel: match.fullName?.isNotEmpty == true
                       ? match.fullName!
@@ -79,6 +84,12 @@ class _CaregiverMatchesScreenState extends State<CaregiverMatchesScreen> {
                   status: match.eligibilityStatus,
                   distance: match.distanceKm != null
                       ? '${match.distanceKm!.toStringAsFixed(1)} km away'
+
+                  donorLabel: 'متبرع #${match.donorId}',
+                  bloodType: match.bloodType,
+                  status: statusLabel,
+                  distance: match.distanceKm > 0
+                      ? 'على بعد ${match.distanceKm.toStringAsFixed(1)} كم'
                       : null,
                 );
               },

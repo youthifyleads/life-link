@@ -18,7 +18,7 @@ class DonorEligibilityScreen extends StatelessWidget {
       create: (_) => getIt<DonorBloc>()..add(LoadDonorProfileEvent()),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Donation Eligibility & History'),
+          title: const Text('أهلية وسجل التبرع'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_rounded),
             onPressed: () => context.pop(),
@@ -28,16 +28,16 @@ class DonorEligibilityScreen extends StatelessWidget {
           builder: (context, state) {
             if (state is DonorLoading) {
               return const LifeLinkLoadingState(
-                message: 'Checking your donation eligibility…',
+                message: 'جاري التحقق من أهلية وسجل التبرع...',
               );
             }
 
             if (state is DonorError) {
               return LifeLinkStatePanel(
                 icon: Icons.cloud_off_rounded,
-                title: 'Eligibility is unavailable',
+                title: 'تعذر تحميل بيانات الأهلية',
                 message: state.message,
-                actionLabel: 'Try again',
+                actionLabel: 'إعادة المحاولة',
                 onAction: () =>
                     context.read<DonorBloc>().add(LoadDonorProfileEvent()),
                 tone: AppColors.error,
@@ -63,9 +63,27 @@ class DonorEligibilityScreen extends StatelessWidget {
 
                       const SizedBox(height: 24),
 
+
+                      // ── Stats Row ────────────────────────────────────
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildStatCard(
+                              context,
+                              icon: Icons.volunteer_activism,
+                              label: 'إجمالي مرات التبرع',
+                              value: '${history.length}',
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+
                       // ── Donation History Section ─────────────────────
                       Text(
-                        'Donation History',
+                        'سجل التبرعات السابقة',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 12),
@@ -73,9 +91,9 @@ class DonorEligibilityScreen extends StatelessWidget {
                       if (history.isEmpty)
                         const LifeLinkStatePanel(
                           icon: Icons.history_rounded,
-                          title: 'No donations recorded',
+                          title: 'لا توجد تبرعات سابقة مسجلة',
                           message:
-                              'Completed donations returned by LifeLink will appear here.',
+                              'ستظهر هنا التبرعات المعتمدة ومكافآت التقدير فور توثيقها في بنك الدم.',
                         )
                       else
                         ListView.separated(
@@ -88,19 +106,21 @@ class DonorEligibilityScreen extends StatelessWidget {
                             final item = history[index];
                             return LifeLinkHistoryCard(
                               title: item.bloodBankId ??
-                                  'Donation center unavailable',
+                                  'مركز تبرع معتمد',
                               date: item.donationDate == null
-                                  ? 'Date unavailable'
-                                  : DateFormat('MMMM d, yyyy')
+                                  ? 'تاريخ غير محدد'
+                                  : DateFormat('d MMMM yyyy')
                                       .format(item.donationDate!),
-                              status: item.status,
+                              status: item.status == 'completed'
+                                  ? 'مكتمل'
+                                  : item.status,
                               trailing: item.status.toLowerCase() == 'completed'
                                   ? TextButton(
                                       onPressed: () => context.push(
                                         '/donor/voucher',
                                         extra: item.id,
                                       ),
-                                      child: const Text('View voucher'),
+                                      child: const Text('عرض قسيمة التقدير'),
                                     )
                                   : null,
                             );
@@ -143,6 +163,7 @@ class DonorEligibilityScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Medical eligibility: $status',
+            isEligible ? 'مؤهل للتبرع بالدم الآن' : 'غير متاح للتبرع حالياً',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -153,9 +174,15 @@ class DonorEligibilityScreen extends StatelessWidget {
           Text(
             'This status is provided by the Azure donor profile contract. '
             'No local countdown is calculated.',
+
+            isEligible
+                ? 'أنت مستوفٍ لكافة المعايير الطبية وجاهز للمساهمة في إنقاذ حياة مصاب أو مريض.'
+                : daysLeft > 0
+                    ? 'حرصاً على صحتك، يلزم استكمال فترة الأمان الطبية المقررة بين التبرعات (متبقي $daysLeft يوم).'
+                    : 'يتم احتساب الأهلية بناءً على تاريخ آخر تبرع والضوابط الصحية المعتمدة (180 يوماً).',
             textAlign: TextAlign.center,
             style:
-                const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                const TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
           ),
           const SizedBox(height: 16),
           Container(
@@ -172,7 +199,7 @@ class DonorEligibilityScreen extends StatelessWidget {
                     color: AppColors.primary, size: 16),
                 const SizedBox(width: 6),
                 Text(
-                  'Blood Group: ${profile.bloodType}',
+                  'فصيلة الدم: ${profile.bloodType}',
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 13),
                 ),

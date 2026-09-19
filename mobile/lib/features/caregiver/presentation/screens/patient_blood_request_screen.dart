@@ -1,158 +1,179 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/di/injection.dart';
-import '../../../../core/widgets/lifelink_button.dart';
-import '../../../../core/network/api_error_message.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../blood_requests/domain/models/blood_request_model.dart';
-import '../../data/caregiver_remote_datasource.dart';
+import '../../../../core/theme/design_tokens.dart';
 import '../../domain/models/caregiver_models.dart';
 
-class PatientBloodRequestScreen extends StatefulWidget {
+class PatientBloodRequestScreen extends StatelessWidget {
   final PatientModel patient;
 
   const PatientBloodRequestScreen({super.key, required this.patient});
 
   @override
-  State<PatientBloodRequestScreen> createState() =>
-      _PatientBloodRequestScreenState();
-}
-
-class _PatientBloodRequestScreenState extends State<PatientBloodRequestScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _quantityController = TextEditingController(text: '1');
-  final _reasonController = TextEditingController();
-  final _notesController = TextEditingController();
-  late String _component;
-  bool _urgent = false;
-  bool _submitting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _component = 'whole_blood';
-  }
-
-  @override
-  void dispose() {
-    _quantityController.dispose();
-    _reasonController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _submitting = true);
-    try {
-      final request = BloodRequestCreate(
-        bloodType: widget.patient.bloodType,
-        component: _component,
-        quantityUnits: int.parse(_quantityController.text),
-        urgency: _urgent,
-        reason: _reasonController.text.trim().isEmpty
-            ? null
-            : _reasonController.text.trim(),
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
-      );
-      final created =
-          await getIt<CaregiverRemoteDataSource>().createPatientBloodRequest(
-        patientId: widget.patient.id,
-        request: request,
-      );
-      if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Request created'),
-          content: Text(
-            'Tracking reference: ${created.trackingReference}',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Done'),
-            ),
-          ],
-        ),
-      );
-      if (mounted) context.pop(true);
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(friendlyErrorMessage(error)),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Request for ${widget.patient.fullName}')),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
+      appBar: AppBar(
+        title: Text('بيانات المريض: ${patient.fullName}'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Blood type: ${widget.patient.bloodType}'),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _component,
-              decoration: const InputDecoration(labelText: 'Component'),
-              items: const [
-                DropdownMenuItem(
-                    value: 'whole_blood', child: Text('Whole blood')),
-                DropdownMenuItem(value: 'plasma', child: Text('Plasma')),
-                DropdownMenuItem(value: 'platelets', child: Text('Platelets')),
-                DropdownMenuItem(value: 'red_cells', child: Text('Red cells')),
-              ],
-              onChanged: (value) {
-                if (value != null) setState(() => _component = value);
-              },
+            // Patient Card
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: AppColors.border),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              patient.bloodType,
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                patient.fullName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: AppColors.navy,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'الفصيلة المسجلة: ${patient.bloodType}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (patient.notes != null && patient.notes!.isNotEmpty) ...[
+                      const Divider(height: 28),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.notes_rounded, size: 18, color: AppColors.textSecondary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              patient.notes!,
+                              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _quantityController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Quantity'),
-              validator: (value) {
-                final quantity = int.tryParse(value ?? '');
-                return quantity == null || quantity <= 0
-                    ? 'Enter a positive quantity'
-                    : null;
-              },
+            const SizedBox(height: AppSpacing.xl),
+
+            // Guidance & Medical Rule Box
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.25)),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.verified_user_rounded, color: AppColors.secondaryBlue, size: 24),
+                      SizedBox(width: 10),
+                      Text(
+                        'إجراءات طلب أكياس الدم',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.secondaryBlue,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'حفاظاً على سلامة المريض وسلسلة التبريد المعتمدة:\n\n'
+                    '1. يقوم طبيب المستشفى المعالج بإصدار طلب كيس الدم رسمياً عبر منظومة LifeLink.\n'
+                    '2. بعد تأكيد الطلب، اطلب من المستشفى رمز الاستجابة السريع (QR Code) أو رقم التتبع للطلب.\n'
+                    '3. امسح كود طلب المستشفى عبر الزر أدناه لمراجعة الفاتورة، السداد الإلكتروني، ومتابعة وصول المندوب حتى باب المستشفى.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.6,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Urgent request'),
-              value: _urgent,
-              onChanged: (value) => setState(() => _urgent = value),
+            const SizedBox(height: AppSpacing.xxl),
+
+            // Action Button to scan hospital QR
+            ElevatedButton.icon(
+              onPressed: () => context.push('/qr/scan'),
+              icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 24),
+              label: const Text(
+                'مسح كود طلب المستشفى',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 2,
+              ),
             ),
-            TextFormField(
-              controller: _reasonController,
-              decoration: const InputDecoration(labelText: 'Medical reason'),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _notesController,
-              maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Notes'),
-            ),
-            const SizedBox(height: 24),
-            LifeLinkButton(
-              label: 'Create blood request',
-              isLoading: _submitting,
-              onPressed: _submit,
+            const SizedBox(height: AppSpacing.md),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/tracking'),
+              icon: const Icon(Icons.search_rounded, color: AppColors.secondaryBlue),
+              label: const Text(
+                'إدخال رقم التتبع يدوياً',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.secondaryBlue),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: const BorderSide(color: AppColors.secondaryBlue),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
             ),
           ],
         ),

@@ -65,8 +65,7 @@ class ApiEndpoints {
   // ── Caregiver ────────────────────────────────────────────
   static const String caregiverAssignments = '/caregiver/assignments';
   static const String caregiverPatients = '/caregiver/patients';
-  static String caregiverPatientRequests(String patientId) =>
-      '/caregiver/patients/$patientId/blood-requests';
+  static const String caregiverScanRequest = '/caregiver/scan-request';
   static const String caregiverAllocations = '/caregiver/allocations';
   static const String caregiverPaymentInitiate = '/caregiver/payments/initiate';
   static const String caregiverPaymentHistory = '/caregiver/payments/history';

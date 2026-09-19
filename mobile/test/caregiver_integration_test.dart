@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:lifelink_mobile/features/blood_requests/domain/models/blood_request_model.dart';
 import 'package:lifelink_mobile/features/caregiver/data/caregiver_remote_datasource.dart';
 import 'package:lifelink_mobile/features/caregiver/domain/models/caregiver_models.dart';
 
@@ -52,47 +51,39 @@ void main() {
     verify(() => dio.get('/caregiver/patients')).called(1);
   });
 
-  test('creates a patient-specific blood request', () async {
+  test('scans hospital request via caregiver endpoint', () async {
     when(
       () => dio.post(
-        '/caregiver/patients/patient-1/blood-requests',
+        '/caregiver/scan-request',
         data: any(named: 'data'),
       ),
     ).thenAnswer(
       (_) async => Response(
         requestOptions: RequestOptions(
-          path: '/caregiver/patients/patient-1/blood-requests',
+          path: '/caregiver/scan-request',
         ),
         data: {
-          'id': 'request-1',
-          'hospital_id': 'hospital-1',
+          'tracking_reference': 'TRACK-HOSP-001',
+          'request_id': 'req-1',
+          'status': 'dispatched',
+          'hospital_name': 'مستشفى السلام الدولي',
           'blood_type': 'O+',
-          'component': 'whole_blood',
           'quantity_units': 2,
-          'urgency': true,
-          'status': 'requested',
-          'tracking_reference': 'track-1',
-          'created_at': '2026-09-11T10:00:00Z',
+          'total_price': 1500.0,
+          'is_paid': false,
         },
       ),
     );
 
-    final request = await dataSource.createPatientBloodRequest(
-      patientId: 'patient-1',
-      request: const BloodRequestCreate(
-        bloodType: 'O+',
-        component: 'whole_blood',
-        quantityUnits: 2,
-        urgency: true,
-      ),
-    );
+    final result = await dataSource.scanHospitalRequest('REQ-TOKEN-123');
 
-    expect(request.id, 'request-1');
-    expect(request.quantityUnits, 2);
+    expect(result['tracking_reference'], 'TRACK-HOSP-001');
+    expect(result['request_id'], 'req-1');
+    expect(result['total_price'], 1500.0);
     verify(
       () => dio.post(
-        '/caregiver/patients/patient-1/blood-requests',
-        data: any(named: 'data'),
+        '/caregiver/scan-request',
+        data: {'qr_code': 'REQ-TOKEN-123'},
       ),
     ).called(1);
   });
