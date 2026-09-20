@@ -1,24 +1,26 @@
-import { AlarmClock, AlertTriangle, Clock3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { UrgencyLevel } from "@/shared/components/clinical/clinical.types";
-import { cn } from "@/shared/lib/utils";
+import {
+  StatusIndicator,
+  type StatusTone,
+} from "@/shared/components/clinical/status-indicator";
 
 const urgencyDefinitions = {
   routine: {
     label: "Routine",
-    icon: Clock3,
-    className: "border-border bg-surface text-muted-foreground",
+    tone: "neutral" as StatusTone,
+    indicator: undefined,
   },
   urgent: {
     label: "Urgent",
-    icon: AlarmClock,
-    className: "border-warning/30 bg-warning-subtle text-[#6f4a00]",
+    tone: "warning" as StatusTone,
+    indicator: "⚠️",
   },
   emergency: {
     label: "Emergency",
-    icon: AlertTriangle,
-    className: "border-destructive/30 bg-emergency-subtle text-[#8d1c14]",
+    tone: "danger" as StatusTone,
+    indicator: "🚨",
   },
 } as const;
 
@@ -30,19 +32,15 @@ interface UrgencyBadgeProps {
 export function UrgencyBadge({ urgency, className }: UrgencyBadgeProps) {
   const { t } = useTranslation();
   const definition = urgencyDefinitions[urgency] ?? urgencyDefinitions.routine;
-  const Icon = definition.icon;
   const label = t(`urgency.${urgency}`, definition.label);
 
   return (
-    <span
-      className={cn(
-        "inline-flex min-h-7 items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold leading-none",
-        definition.className,
-        className,
-      )}
+    <StatusIndicator
+      tone={definition.tone}
+      indicator={definition.indicator}
+      className={className}
     >
-      <Icon aria-hidden="true" className="size-3.5" />
       {label}
-    </span>
+    </StatusIndicator>
   );
 }

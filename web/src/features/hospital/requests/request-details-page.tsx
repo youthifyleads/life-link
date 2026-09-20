@@ -96,7 +96,9 @@ export function RequestDetailsPage() {
           description={t("hospital.noMatchingRequestDescription")}
           action={
             <Button asChild variant="secondary">
-              <Link to="/hospital/requests">{t("hospital.returnToRequests")}</Link>
+              <Link to="/hospital/requests">
+                {t("hospital.returnToRequests")}
+              </Link>
             </Button>
           }
         />
@@ -109,7 +111,9 @@ export function RequestDetailsPage() {
     currentStatus,
   );
   const canReroute = currentStatus === "rejected";
-  const canTrack = ["confirmed", "preparing", "completed"].includes(currentStatus);
+  const canTrack = ["confirmed", "preparing", "completed"].includes(
+    currentStatus,
+  );
   const displayedHistory = localCancellation
     ? [...request.history, localCancellation]
     : request.history;
@@ -124,16 +128,16 @@ export function RequestDetailsPage() {
       actor: t("auth.hospitalStaffName"),
       note: t("hospital.localCancellationNote"),
     });
-    setActionMessage(
-      t("hospital.localCancellationMessage"),
-    );
+    setActionMessage(t("hospital.localCancellationMessage"));
   };
 
   const handleRerouteSuccess = (updated: typeof request) => {
     setStatusOverride(null);
     setLocalCancellation(null);
     setActionMessage(
-      t("hospital.rerouteSuccessMessage", { name: updated.targetBloodBank?.name }),
+      t("hospital.rerouteSuccessMessage", {
+        name: updated.targetBloodBank?.name,
+      }),
     );
     void requestQuery.refetch();
   };
@@ -186,7 +190,10 @@ export function RequestDetailsPage() {
               size="sm"
               onClick={() => setRerouteOpen(true)}
             >
-              <RefreshCw className="size-3.5 rtl:rotate-180" aria-hidden="true" />
+              <RefreshCw
+                className="size-3.5 rtl:rotate-180"
+                aria-hidden="true"
+              />
               {t("hospital.rerouteAlternative")}
             </Button>
             <Button
@@ -207,23 +214,32 @@ export function RequestDetailsPage() {
           {request.targetBloodBank ? (
             <section
               aria-labelledby="target-bank-title"
-              className="border border-border bg-surface p-4 sm:p-5"
+              className="rounded-lg border border-border/80 bg-surface p-4 sm:p-5 shadow-2xs"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Building2 className="size-4 text-primary" aria-hidden="true" />
+                    <Building2
+                      className="size-4 text-primary"
+                      aria-hidden="true"
+                    />
                     <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       {t("hospital.recipientBank")}
                     </span>
                   </div>
-                  <h3 id="target-bank-title" className="mt-1 text-base font-semibold text-foreground">
+                  <h3
+                    id="target-bank-title"
+                    className="mt-1 text-base font-semibold text-foreground"
+                  >
                     <BidiText>{request.targetBloodBank.name}</BidiText>
                   </h3>
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <MapPin className="size-3.5" aria-hidden="true" />
-                      <BidiText>{request.targetBloodBank.governorate} — {request.targetBloodBank.address}</BidiText>
+                      <BidiText>
+                        {request.targetBloodBank.governorate} —{" "}
+                        {request.targetBloodBank.address}
+                      </BidiText>
                     </span>
                     <span className="flex items-center gap-1">
                       <Phone className="size-3.5" aria-hidden="true" />
@@ -232,7 +248,9 @@ export function RequestDetailsPage() {
                   </div>
                 </div>
                 <span className="rounded bg-muted px-2.5 py-1 text-xs font-mono font-medium text-muted-foreground">
-                  <TechnicalText>{request.targetBloodBank.facilityCode}</TechnicalText>
+                  <TechnicalText>
+                    {request.targetBloodBank.facilityCode}
+                  </TechnicalText>
                 </span>
               </div>
             </section>
@@ -250,16 +268,26 @@ export function RequestDetailsPage() {
                 {t("hospital.createRequestDescription")}
               </p>
             </div>
-            <dl className="grid border border-border bg-surface sm:grid-cols-2 lg:grid-cols-3">
+            <dl className="grid rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden sm:grid-cols-2 lg:grid-cols-3">
               <SummaryItem label={t("common.bloodGroup")}>
                 <BloodGroupBadge group={request.bloodGroup} />
               </SummaryItem>
               <SummaryItem label={t("common.component")}>
-                {String(t(`healthcare.${request.component}`, { defaultValue: (bloodComponentLabels as Record<string, string>)[request.component] ?? request.component }))}
+                {String(
+                  t(`healthcare.${request.component}`, {
+                    defaultValue:
+                      (bloodComponentLabels as Record<string, string>)[
+                        request.component
+                      ] ?? request.component,
+                  }),
+                )}
               </SummaryItem>
               <SummaryItem label={t("common.quantity")}>
                 <span className="font-semibold tabular-nums">
-                  {request.quantity} {request.quantity === 1 ? t("common.unit") : t("common.units")}
+                  {request.quantity}{" "}
+                  {request.quantity === 1
+                    ? t("common.unit")
+                    : t("common.units")}
                 </span>
               </SummaryItem>
               <SummaryItem label={t("common.urgency")}>
@@ -307,7 +335,7 @@ export function RequestDetailsPage() {
                 {t("hospital.operationsDesc")}
               </p>
             </div>
-            <div className="border border-border bg-surface p-5 sm:p-6">
+            <div className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs">
               <RequestTimeline events={displayedHistory} />
             </div>
           </section>
@@ -357,7 +385,7 @@ function RequestActions({
   const { t } = useTranslation();
 
   return (
-    <aside className="border border-border bg-surface">
+    <aside className="rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden">
       <div className="border-b border-border px-5 py-4">
         <h2 className="text-sm font-semibold">{t("common.actions")}</h2>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">

@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
@@ -6,9 +7,15 @@ import { DashboardKpi } from "@/features/hospital/dashboard/dashboard-kpi";
 import { HospitalPageFrame } from "@/features/hospital/components/hospital-page-frame";
 import { formatStatusLabel } from "@/features/hospital/components/hospital-formatters";
 import { useHospitalRequests } from "@/features/hospital/hooks/use-hospital-requests";
+import { RequestFilters } from "@/features/hospital/requests/request-filters";
 import { RequestTable } from "@/features/hospital/requests/request-table";
+import {
+  bloodComponentLabels,
+  type RequestFilters as RequestFilterValues,
+} from "@/features/hospital/types/hospital.types";
 import type { RequestStatus } from "@/shared/components/clinical/clinical.types";
 import {
+  EmptyState,
   ErrorState,
   LoadingState,
 } from "@/shared/components/feedback/system-states";
@@ -24,10 +31,54 @@ const overviewStatuses: RequestStatus[] = [
   "cancelled",
 ];
 
+const initialFilters: RequestFilterValues = {
+  search: "",
+  status: "all",
+  urgency: "all",
+  bloodGroup: "all",
+  sort: "newest",
+};
+
 export function HospitalDashboardPage() {
   const { t } = useTranslation();
   const requestsQuery = useHospitalRequests();
   const requests = requestsQuery.data ?? [];
+  const [filters, setFilters] = useState(initialFilters);
+
+  const filteredRequests = useMemo(() => {
+    const query = filters.search.trim().toLowerCase();
+
+    return [...requests]
+      .filter(
+        (request) =>
+          !query ||
+          request.id.toLowerCase().includes(query) ||
+          request.reason.toLowerCase().includes(query) ||
+          bloodComponentLabels[request.component].toLowerCase().includes(query),
+      )
+      .filter(
+        (request) =>
+          filters.status === "all" || request.status === filters.status,
+      )
+      .filter(
+        (request) =>
+          filters.urgency === "all" || request.urgency === filters.urgency,
+      )
+      .filter(
+        (request) =>
+          filters.bloodGroup === "all" ||
+          request.bloodGroup === filters.bloodGroup,
+      )
+      .sort((left, right) => {
+        if (filters.sort === "oldest") {
+          return Date.parse(left.createdAt) - Date.parse(right.createdAt);
+        }
+        if (filters.sort === "required_soonest") {
+          return Date.parse(left.requiredAt) - Date.parse(right.requiredAt);
+        }
+        return Date.parse(right.createdAt) - Date.parse(left.createdAt);
+      });
+  }, [filters, requests]);
 
   const completed = requests.filter(
     (request) => request.status === "completed",
@@ -85,7 +136,7 @@ export function HospitalDashboardPage() {
                 {t("hospital.statusOverviewDesc")}
               </p>
             </div>
-            <dl className="grid grid-cols-2 gap-px border border-border bg-border md:grid-cols-4 xl:grid-cols-7">
+            <dl className="grid grid-cols-2 gap-px rounded-lg border border-border/80 bg-border shadow-2xs overflow-hidden md:grid-cols-4 xl:grid-cols-7">
               {overviewStatuses.map((status) => (
                 <div
                   key={status}
@@ -124,7 +175,22 @@ export function HospitalDashboardPage() {
                 </Link>
               </Button>
             </div>
-            <RequestTable requests={requests.slice(0, 6)} compact />
+            <div className="space-y-3">
+              <RequestFilters
+                value={filters}
+                onChange={setFilters}
+                resultCount={filteredRequests.length}
+                statusPresentation="tags"
+              />
+              {filteredRequests.length === 0 ? (
+                <EmptyState
+                  title={t("common.noRecordsTitle")}
+                  description={t("common.noRecordsDesc")}
+                />
+              ) : (
+                <RequestTable requests={filteredRequests.slice(0, 6)} compact />
+              )}
+            </div>
           </section>
         </div>
       )}

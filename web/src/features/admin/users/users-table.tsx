@@ -1,7 +1,10 @@
 import { Edit, Eye, Power, PowerOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { formatDate, formatTimeShort } from "@/features/admin/components/admin-formatters";
+import {
+  formatDate,
+  formatTimeShort,
+} from "@/features/admin/components/admin-formatters";
 import { AdminRoleBadge } from "@/features/admin/components/admin-role-badge";
 import { AdminStatusBadge } from "@/features/admin/components/admin-status-badge";
 import { useToggleUserStatus } from "@/features/admin/hooks/use-admin";
@@ -24,7 +27,7 @@ export function UsersTable({ users, onView, onEdit }: UsersTableProps) {
 
   if (users.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card p-12 text-center">
+      <div className="overflow-hidden rounded-lg border border-border/80 bg-card p-12 text-center shadow-2xs">
         <h3 className="text-sm font-semibold text-foreground">
           {t("admin.noUsersFoundTitle", "No users match your filter criteria")}
         </h3>
@@ -39,15 +42,15 @@ export function UsersTable({ users, onView, onEdit }: UsersTableProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-border/80 bg-card shadow-2xs">
       <div
         tabIndex={0}
         role="region"
         aria-label={t("admin.usersTableLabel")}
         className="overflow-x-auto"
       >
-        <table className="w-full text-start text-xs">
-          <thead className="border-b border-border bg-muted/40 font-semibold uppercase tracking-wider text-muted-foreground">
+        <table className="clinical-table">
+          <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-3 text-start">
                 {t("admin.auditEntityIdCol", "User ID")}
@@ -101,7 +104,10 @@ export function UsersTable({ users, onView, onEdit }: UsersTableProps) {
                   <bdi dir="ltr">{user.email}</bdi>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <AdminRoleBadge role={user.primaryRole} />
+                  <AdminRoleBadge
+                    role={user.primaryRole}
+                    className="bg-transparent px-0 text-foreground"
+                  />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                   <span className="font-medium text-foreground">
@@ -121,7 +127,7 @@ export function UsersTable({ users, onView, onEdit }: UsersTableProps) {
                   <div className="inline-flex items-center gap-1 justify-end">
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => onView(user)}
                       className="size-7 p-0"
@@ -132,7 +138,7 @@ export function UsersTable({ users, onView, onEdit }: UsersTableProps) {
                     </Button>
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => onEdit(user)}
                       className="size-7 p-0"
@@ -143,7 +149,7 @@ export function UsersTable({ users, onView, onEdit }: UsersTableProps) {
                     </Button>
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleToggle(user)}
                       disabled={toggleMutation.isPending}

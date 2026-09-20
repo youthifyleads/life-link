@@ -22,6 +22,13 @@ interface KpiItem {
   tone?: "warning" | "emergency" | "success";
 }
 
+const iconTone = {
+  default: "text-primary",
+  warning: "text-warning",
+  emergency: "text-emergency",
+  success: "text-success",
+} as const;
+
 export function BloodBankDashboardKpi({
   availableUnits,
   pending,
@@ -70,33 +77,28 @@ export function BloodBankDashboardKpi({
           {t("bloodBank.operationsDesc")}
         </p>
       </div>
-      <dl className="grid grid-cols-2 gap-px border border-border bg-border xl:grid-cols-4">
+      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {items.map(({ label, value, description, icon: Icon, tone }) => (
-          <div key={label} className="bg-surface p-4 sm:p-5">
-            <dt className="text-sm font-medium text-muted-foreground">
+          <div
+            key={label}
+            className="rounded-xl border border-border/80 bg-surface p-4"
+          >
+            <dt className="text-xs font-medium leading-5 text-muted-foreground">
               {label}
             </dt>
-            <dd>
-              <div className="mt-2 flex items-start justify-between gap-4">
-                <span className="text-3xl font-semibold tabular-nums text-foreground">
+            <dd className="mt-2">
+              <div className="flex items-start justify-between gap-4">
+                <bdi
+                  dir="ltr"
+                  className="text-3xl font-semibold tracking-tight tabular-nums text-foreground"
+                >
                   {value}
-                </span>
-                <Icon
-                  aria-hidden="true"
-                  className={
-                    tone === "emergency"
-                      ? "size-5 text-emergency"
-                      : tone === "success"
-                        ? "size-5 text-success"
-                        : tone === "warning"
-                          ? "size-5 text-warning"
-                          : "size-5 text-primary"
-                  }
-                />
+                </bdi>
+                <Icon aria-hidden="true" className={`size-6 shrink-0 ${iconTone[tone ?? "default"]}`} />
               </div>
-              <span className="mt-3 block text-xs text-muted-foreground">
+              <p className="mt-3 border-t border-border/60 pt-3 text-xs leading-5 text-muted-foreground">
                 {description}
-              </span>
+              </p>
             </dd>
           </div>
         ))}

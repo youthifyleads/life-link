@@ -41,7 +41,9 @@ export function NotificationPreferencesPage() {
   const preferencesQuery = useNotificationPreferences();
   const updateMutation = useUpdateNotificationPreferences();
 
-  const [overrides, setOverrides] = useState<Partial<NotificationPreferences>>({});
+  const [overrides, setOverrides] = useState<Partial<NotificationPreferences>>(
+    {},
+  );
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const effectivePreferences: NotificationPreferences = {
@@ -107,13 +109,19 @@ export function NotificationPreferencesPage() {
       {preferencesQuery.isLoading ? (
         <div className="mt-8">
           <LoadingState
-            label={t("notifications.loadingLedger", "Loading notification preferences")}
+            label={t(
+              "notifications.loadingLedger",
+              "Loading notification preferences",
+            )}
           />
         </div>
       ) : preferencesQuery.isError ? (
         <div className="mt-8">
           <ErrorState
-            title={t("notifications.failedToLoadPreferences", "Failed to load preferences")}
+            title={t(
+              "notifications.failedToLoadPreferences",
+              "Failed to load preferences",
+            )}
             description={t(
               "notifications.failedToLoadPreferencesDesc",
               "Could not retrieve your stored notification settings.",
@@ -125,7 +133,10 @@ export function NotificationPreferencesPage() {
         <form onSubmit={handleSave} className="mt-6 space-y-6">
           {saveSuccess ? (
             <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs font-medium text-emerald-800 dark:text-emerald-300">
-              <CheckCircle2 className="size-4 shrink-0 text-emerald-600" aria-hidden="true" />
+              <CheckCircle2
+                className="size-4 shrink-0 text-emerald-600"
+                aria-hidden="true"
+              />
               <span>
                 {t(
                   "notifications.preferencesSavedSuccess",
@@ -136,7 +147,7 @@ export function NotificationPreferencesPage() {
           ) : null}
 
           {/* Section 1: In-App Operational Channels */}
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
+          <div className="rounded-lg border border-border/80 bg-card p-5 sm:p-6 shadow-2xs space-y-4">
             <div>
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Bell className="size-4 text-primary shrink-0" />
@@ -283,7 +294,7 @@ export function NotificationPreferencesPage() {
           </div>
 
           {/* Section 2: Audio & Secondary Dispatch Channels */}
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm space-y-4">
+          <div className="rounded-lg border border-border/80 bg-card p-5 sm:p-6 shadow-2xs space-y-4">
             <div>
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Radio className="size-4 text-primary shrink-0" />
@@ -297,7 +308,7 @@ export function NotificationPreferencesPage() {
               <p className="text-xs text-muted-foreground mt-0.5">
                 {t(
                   "notifications.dispatchSectionDesc",
-                  "Simulated external channels for urgent off-screen alerts.",
+                  "Secondary channels for urgent off-screen alerts.",
                 )}
               </p>
             </div>
@@ -342,10 +353,7 @@ export function NotificationPreferencesPage() {
                   <div className="flex items-center gap-1.5">
                     <MessageSquare className="size-3.5 text-muted-foreground shrink-0" />
                     <p className="text-xs font-semibold text-foreground">
-                      {t(
-                        "notifications.prefSmsTitle",
-                        "SMS Emergency Alerts (Simulated)",
-                      )}
+                      {t("notifications.prefSmsTitle", "SMS Emergency Alerts")}
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -364,7 +372,7 @@ export function NotificationPreferencesPage() {
                     id="pref-sms"
                     aria-label={t(
                       "notifications.prefSmsTitle",
-                      "SMS Emergency Alerts (Simulated)",
+                      "SMS Emergency Alerts",
                     )}
                   />
                   <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
@@ -431,7 +439,10 @@ export function NotificationPreferencesPage() {
               <span>
                 {updateMutation.isPending
                   ? t("notifications.savingPreferences", "Saving...")
-                  : t("notifications.savePreferencesAction", "Save Preferences")}
+                  : t(
+                      "notifications.savePreferencesAction",
+                      "Save Preferences",
+                    )}
               </span>
             </Button>
           </div>

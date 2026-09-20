@@ -1,4 +1,4 @@
-import { KeyRound, ShieldCheck, Droplets } from "lucide-react";
+import { KeyRound, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -22,17 +22,20 @@ export function PasswordResetShell({
     <main className="grid min-h-svh bg-background lg:grid-cols-[minmax(20rem,38%)_1fr]">
       <section className="bg-clinical-navy px-6 py-8 text-white sm:px-10 lg:flex lg:flex-col lg:justify-between lg:px-12 lg:py-12">
         <div>
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-md border border-white/25 bg-white/10">
-              <Droplets
-                aria-hidden="true"
-                className="size-6"
-                strokeWidth={1.8}
-              />
-            </span>
-            <span className="text-xl font-semibold tracking-[-0.02em]">
-              {t("common.appName", env.appName)}
-            </span>
+          <div className="flex items-center gap-5">
+            <img
+              src="/logo.png"
+              alt="Life Link Logo"
+              className="h-16 w-auto shrink-0 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] sm:h-20"
+            />
+            <div>
+              <span className="text-2xl font-bold tracking-[-0.025em] text-white">
+                {t("common.appName", env.appName)}
+              </span>
+              <p className="mt-1 text-xs font-medium text-[#adc1c9]">
+                Clinical Blood Coordination Platform
+              </p>
+            </div>
           </div>
 
           <div className="mt-12 max-w-md lg:mt-24">

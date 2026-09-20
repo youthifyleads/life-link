@@ -28,7 +28,7 @@ export function AdminKPIs({ kpis }: AdminKPIsProps) {
         </span>
       ),
       icon: Users,
-      accent: "text-slate-900 border-slate-200 bg-white",
+      iconTone: "text-foreground",
     },
     {
       id: "active-users",
@@ -36,12 +36,14 @@ export function AdminKPIs({ kpis }: AdminKPIsProps) {
       value: kpis.activeUsers,
       helper: (
         <span>
-          <bdi dir="ltr">{Math.round((kpis.activeUsers / (kpis.totalUsers || 1)) * 100)}%</bdi>{" "}
+          <bdi dir="ltr">
+            {Math.round((kpis.activeUsers / (kpis.totalUsers || 1)) * 100)}%
+          </bdi>{" "}
           {t("admin.activeUsersHelper")}
         </span>
       ),
       icon: UserCheck,
-      accent: "text-emerald-950 border-emerald-200 bg-emerald-50/40",
+      iconTone: "text-success",
     },
     {
       id: "total-hospitals",
@@ -49,7 +51,7 @@ export function AdminKPIs({ kpis }: AdminKPIsProps) {
       value: kpis.totalHospitals,
       helper: t("admin.totalHospitalsHelper"),
       icon: Hospital,
-      accent: "text-sky-950 border-sky-200 bg-sky-50/40",
+      iconTone: "text-primary",
     },
     {
       id: "total-blood-banks",
@@ -57,7 +59,7 @@ export function AdminKPIs({ kpis }: AdminKPIsProps) {
       value: kpis.totalBloodBanks,
       helper: t("admin.totalBloodBanksHelper"),
       icon: Building2,
-      accent: "text-rose-950 border-rose-200 bg-rose-50/40",
+      iconTone: "text-emergency",
     },
     {
       id: "active-requests",
@@ -65,7 +67,7 @@ export function AdminKPIs({ kpis }: AdminKPIsProps) {
       value: kpis.activeBloodRequests,
       helper: t("admin.activeRequestsHelper"),
       icon: ClipboardList,
-      accent: "text-indigo-950 border-indigo-200 bg-indigo-50/40",
+      iconTone: "text-primary",
     },
     {
       id: "recent-changes",
@@ -73,7 +75,7 @@ export function AdminKPIs({ kpis }: AdminKPIsProps) {
       value: kpis.recentAdminChanges,
       helper: t("admin.recentChangesHelper"),
       icon: ScrollText,
-      accent: "text-amber-950 border-amber-200 bg-amber-50/40",
+      iconTone: "text-warning",
     },
   ];
 
@@ -82,29 +84,27 @@ export function AdminKPIs({ kpis }: AdminKPIsProps) {
       <h2 id="governance-kpis-heading" className="sr-only">
         {t("admin.operations")}
       </h2>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => {
           const Icon = card.icon;
           return (
             <div
               key={card.id}
-              className={`flex flex-col justify-between rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md ${card.accent}`}
+              className="rounded-xl border border-border/80 bg-surface p-4"
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {card.label}
-                </span>
-                <span className="flex size-7 items-center justify-center rounded-md border border-black/5 bg-black/5 text-foreground">
-                  <Icon className="size-4" aria-hidden="true" />
-                </span>
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="text-xs font-medium leading-5 text-muted-foreground">
+                    {card.label}
+                  </div>
+                  <div className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-foreground">
+                    <bdi dir="ltr">{card.value}</bdi>
+                  </div>
+                </div>
+                <Icon className={`size-6 shrink-0 ${card.iconTone}`} aria-hidden="true" />
               </div>
-              <div className="mt-3">
-                <div className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                  <bdi dir="ltr">{card.value}</bdi>
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {card.helper}
-                </div>
+              <div className="mt-3 border-t border-border/60 pt-3 text-xs leading-5 text-muted-foreground">
+                {card.helper}
               </div>
             </div>
           );

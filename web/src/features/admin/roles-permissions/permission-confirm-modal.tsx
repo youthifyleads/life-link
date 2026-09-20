@@ -36,9 +36,7 @@ export function PermissionConfirmModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-full bg-amber-100 text-amber-800 mb-2">
-            <AlertTriangle className="size-5" aria-hidden="true" />
-          </div>
+          <AlertTriangle className="mb-2 size-6 text-warning" aria-hidden="true" />
           <DialogTitle className="text-base">
             {t("admin.confirmRoleChange", "High-Impact Permission Modification")}
           </DialogTitle>

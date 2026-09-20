@@ -1,12 +1,9 @@
 import {
   AlertCircle,
-  Building2,
   Check,
-  Clock,
   ExternalLink,
   Eye,
   FileText,
-  Filter,
   LoaderCircle,
   Search,
   ShieldAlert,
@@ -33,6 +30,7 @@ import type {
   DocumentReviewStatus,
 } from "@/features/blood-bank/types/blood-bank.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import {
   EmptyState,
   ErrorState,
@@ -56,12 +54,15 @@ function formatFileSize(bytes: number): string {
 
 function formatDocDate(dateStr: string): string {
   const d = new Date(dateStr);
-  return d.toLocaleDateString(i18n.language.startsWith("ar") ? "ar-EG" : "en-GB", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return d.toLocaleDateString(
+    i18n.language.startsWith("ar") ? "ar-EG" : "en-GB",
+    {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+  );
 }
 
 function ReviewStatusBadge({ status }: { status: DocumentReviewStatus }) {
@@ -69,25 +70,20 @@ function ReviewStatusBadge({ status }: { status: DocumentReviewStatus }) {
   switch (status) {
     case "accepted":
       return (
-        <span className="inline-flex items-center gap-1 rounded border border-success/30 bg-success-subtle px-2 py-0.5 text-[11px] font-semibold text-success">
-          <ShieldCheck className="size-3" aria-hidden="true" />
-          {t("status.accepted")}
-        </span>
+        <StatusIndicator tone="success">{t("status.accepted")}</StatusIndicator>
       );
     case "changes_requested":
       return (
-        <span className="inline-flex items-center gap-1 rounded border border-destructive/30 bg-emergency-subtle px-2 py-0.5 text-[11px] font-semibold text-emergency">
-          <ShieldAlert className="size-3" aria-hidden="true" />
+        <StatusIndicator tone="danger">
           {t("status.changes_requested")}
-        </span>
+        </StatusIndicator>
       );
     case "pending":
     default:
       return (
-        <span className="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-          <Clock className="size-3" aria-hidden="true" />
+        <StatusIndicator tone="pending">
           {t("status.pending_review")}
-        </span>
+        </StatusIndicator>
       );
   }
 }
@@ -156,11 +152,20 @@ export function BloodBankDocumentsPage() {
       if (search.trim()) {
         const q = search.toLowerCase();
         const matchName = doc.name.toLowerCase().includes(q);
-        const matchLocalizedTitle = formatDocumentTitle(doc.name).toLowerCase().includes(q);
+        const matchLocalizedTitle = formatDocumentTitle(doc.name)
+          .toLowerCase()
+          .includes(q);
         const matchReq = doc.requestId.toLowerCase().includes(q);
         const matchHosp = doc.hospital.name.toLowerCase().includes(q);
-        const matchLocalizedHosp = formatHospitalName(doc.hospital.name, doc.hospital.id).toLowerCase().includes(q);
-        const matchComp = formatBloodBankComponent(doc.component).toLowerCase().includes(q);
+        const matchLocalizedHosp = formatHospitalName(
+          doc.hospital.name,
+          doc.hospital.id,
+        )
+          .toLowerCase()
+          .includes(q);
+        const matchComp = formatBloodBankComponent(doc.component)
+          .toLowerCase()
+          .includes(q);
         if (
           !matchName &&
           !matchLocalizedTitle &&
@@ -198,7 +203,9 @@ export function BloodBankDocumentsPage() {
       setActionFeedback(t("bloodBank.quickVerifySuccess", { name: doc.name }));
     } catch (err) {
       setActionFeedback(
-        err instanceof Error ? err.message : "Failed to update document status.",
+        err instanceof Error
+          ? err.message
+          : "Failed to update document status.",
       );
     }
   };
@@ -225,7 +232,9 @@ export function BloodBankDocumentsPage() {
       setRejectionReason("");
     } catch (err) {
       setRejectionError(
-        err instanceof Error ? err.message : t("bloodBank.recordRejectionFailed"),
+        err instanceof Error
+          ? err.message
+          : t("bloodBank.recordRejectionFailed"),
       );
     }
   };
@@ -242,7 +251,10 @@ export function BloodBankDocumentsPage() {
         <Button asChild variant="secondary" size="sm" className="h-9 text-xs">
           <Link to="/blood-bank/requests">
             {t("bloodBank.openQueue")}
-            <ExternalLink className="size-3.5 rtl:rotate-180" aria-hidden="true" />
+            <ExternalLink
+              className="size-3.5 rtl:rotate-180"
+              aria-hidden="true"
+            />
           </Link>
         </Button>
       }
@@ -272,7 +284,7 @@ export function BloodBankDocumentsPage() {
             <h2 id="bb-docs-kpi-heading" className="sr-only">
               {t("bloodBank.documentTriageMetrics")}
             </h2>
-            <dl className="grid grid-cols-2 border border-border bg-border sm:grid-cols-4">
+            <dl className="grid grid-cols-2 rounded-lg border border-border/80 bg-border shadow-2xs overflow-hidden sm:grid-cols-4">
               <div className="bg-surface p-4">
                 <dt className="text-xs font-medium text-muted-foreground">
                   {t("bloodBank.totalDocuments")}
@@ -309,7 +321,7 @@ export function BloodBankDocumentsPage() {
           </section>
 
           {/* Filters Bar */}
-          <div className="border border-border bg-surface p-4 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <div className="rounded-lg border border-border/80 bg-surface p-4 shadow-2xs space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
             <div className="relative flex-1 max-w-md">
               <Search
                 className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
@@ -320,13 +332,12 @@ export function BloodBankDocumentsPage() {
                 placeholder={t("bloodBank.searchDocumentsPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full border border-border bg-surface ps-9 pe-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-md border border-border bg-surface ps-9 pe-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                <Filter className="size-3.5" aria-hidden="true" />
+              <span className="text-xs font-medium text-muted-foreground">
                 {t("bloodBank.statusFilterLabel")}
               </span>
               {(
@@ -341,12 +352,19 @@ export function BloodBankDocumentsPage() {
                   key={val}
                   type="button"
                   onClick={() => setStatusFilter(val)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded border transition-colors ${
+                  className={`px-2.5 py-1 text-xs font-medium transition-colors ${
                     statusFilter === val
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-surface hover:bg-surface-subtle text-muted-foreground"
+                      ? "rounded-md bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
+                  {val === "pending"
+                    ? "⏳ "
+                    : val === "accepted"
+                      ? "✅ "
+                      : val === "changes_requested"
+                        ? "⚠️ "
+                        : ""}
                   {label}
                 </button>
               ))}
@@ -365,7 +383,9 @@ export function BloodBankDocumentsPage() {
                 ))}
               </select>
 
-              {(search || statusFilter !== "all" || hospitalFilter !== "all") && (
+              {(search ||
+                statusFilter !== "all" ||
+                hospitalFilter !== "all") && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -407,9 +427,9 @@ export function BloodBankDocumentsPage() {
               tabIndex={0}
               role="region"
               aria-label={t("bloodBank.documentsTableLabel")}
-              className="overflow-x-auto border border-border bg-surface"
+              className="overflow-x-auto rounded-lg border border-border/80 bg-surface shadow-2xs"
             >
-              <table className="w-full min-w-[58rem] border-collapse text-start text-xs">
+              <table className="clinical-table min-w-[58rem] border-collapse">
                 <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-4 py-3 text-start">
@@ -445,26 +465,25 @@ export function BloodBankDocumentsPage() {
                         className="hover:bg-surface-subtle/70 transition-colors"
                       >
                         <td className="px-4 py-3 font-medium text-foreground">
-                          <div className="flex items-center gap-2">
-                            <FileText
-                              className="size-4 text-primary shrink-0"
-                              aria-hidden="true"
-                            />
-                            <div className="min-w-0">
-                              <span className="block truncate font-semibold">
-                                {formatDocumentTitle(doc.name)}
-                              </span>
-                              <span className="text-[11px] text-muted-foreground font-mono">
-                                <bdi dir="ltr">{doc.name} • {formatFileSize(doc.sizeBytes)} • {doc.mimeType}</bdi>
-                              </span>
-                            </div>
+                          <div className="min-w-0">
+                            <span className="block truncate font-semibold">
+                              {formatDocumentTitle(doc.name)}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground font-mono">
+                              <bdi dir="ltr">
+                                {doc.name} • {formatFileSize(doc.sizeBytes)} •{" "}
+                                {doc.mimeType}
+                              </bdi>
+                            </span>
                           </div>
                         </td>
 
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5 text-foreground font-medium">
-                            <Building2 className="size-3.5 text-primary shrink-0" aria-hidden="true" />
-                            <span>{formatHospitalName(doc.hospital.name, doc.hospital.id)}</span>
+                          <div className="font-medium text-foreground">
+                            {formatHospitalName(
+                              doc.hospital.name,
+                              doc.hospital.id,
+                            )}
                           </div>
                           <span className="font-mono text-[10px] text-muted-foreground">
                             <bdi dir="ltr">{doc.hospital.facilityCode}</bdi>
@@ -474,10 +493,9 @@ export function BloodBankDocumentsPage() {
                         <td className="px-4 py-3">
                           <Link
                             to={`/blood-bank/requests/${doc.requestId}`}
-                            className="inline-flex items-center gap-1 font-mono font-semibold text-primary hover:underline"
+                            className="font-mono font-semibold text-primary hover:underline"
                           >
                             <bdi dir="ltr">{doc.requestId}</bdi>
-                            <ExternalLink className="size-3 rtl:rotate-180" aria-hidden="true" />
                           </Link>
                         </td>
 
@@ -499,45 +517,49 @@ export function BloodBankDocumentsPage() {
                         </td>
 
                         <td className="px-4 py-3 text-end">
-                          <div className="flex items-center justify-end gap-1.5">
+                          <div className="flex items-center justify-end gap-1">
                             {isPending ? (
                               <>
                                 <Button
                                   type="button"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs"
+                                  size="icon"
+                                  variant="ghost"
+                                  className="size-8 text-success hover:text-success"
                                   disabled={updateDocMutation.isPending}
                                   onClick={() => void handleQuickApprove(doc)}
+                                  title={t("bloodBank.acceptAction")}
+                                  aria-label={`${t("bloodBank.acceptAction")} ${formatDocumentTitle(doc.name)}`}
                                 >
-                                  <Check className="size-3" aria-hidden="true" />
-                                  {t("bloodBank.acceptAction")}
+                                  <Check aria-hidden="true" />
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="secondary"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 text-destructive hover:text-destructive"
                                   disabled={updateDocMutation.isPending}
                                   onClick={() => {
                                     setRejectDocTarget(doc);
                                     setRejectionReason("");
                                     setRejectionError(null);
                                   }}
+                                  title={t("common.rejected")}
+                                  aria-label={`${t("common.rejected")} ${formatDocumentTitle(doc.name)}`}
                                 >
-                                  <X className="size-3" aria-hidden="true" />
-                                  {t("common.rejected")}
+                                  <X aria-hidden="true" />
                                 </Button>
                               </>
                             ) : null}
                             <Button
                               type="button"
                               variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
+                              size="icon"
+                              className="size-8"
                               onClick={() => setInspectDoc(doc)}
+                              title={t("bloodBank.inspectDocAction")}
+                              aria-label={`${t("bloodBank.inspectDocAction")} ${formatDocumentTitle(doc.name)}`}
                             >
-                              <Eye className="size-3.5" aria-hidden="true" />
-                              {t("bloodBank.inspectDocAction")}
+                              <Eye aria-hidden="true" />
                             </Button>
                           </div>
                         </td>
@@ -563,7 +585,10 @@ export function BloodBankDocumentsPage() {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-base">
-                  <FileText className="size-4 text-primary" aria-hidden="true" />
+                  <FileText
+                    className="size-4 text-primary"
+                    aria-hidden="true"
+                  />
                   <span>{formatDocumentTitle(inspectDoc.name)}</span>
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
@@ -573,47 +598,73 @@ export function BloodBankDocumentsPage() {
 
               <div className="space-y-3 py-2 text-xs">
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("bloodBank.reviewStatusCol")}</span>
+                  <span className="text-muted-foreground">
+                    {t("bloodBank.reviewStatusCol")}
+                  </span>
                   <ReviewStatusBadge status={inspectDoc.reviewStatus} />
                 </div>
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("bloodBank.hospitalCol")}</span>
+                  <span className="text-muted-foreground">
+                    {t("bloodBank.hospitalCol")}
+                  </span>
                   <span className="font-medium text-foreground">
-                    {formatHospitalName(inspectDoc.hospital.name, inspectDoc.hospital.id)} (<bdi dir="ltr">{inspectDoc.hospital.facilityCode}</bdi>)
+                    {formatHospitalName(
+                      inspectDoc.hospital.name,
+                      inspectDoc.hospital.id,
+                    )}{" "}
+                    (<bdi dir="ltr">{inspectDoc.hospital.facilityCode}</bdi>)
                   </span>
                 </div>
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("bloodBank.requisitionCol")}</span>
+                  <span className="text-muted-foreground">
+                    {t("bloodBank.requisitionCol")}
+                  </span>
                   <Link
                     to={`/blood-bank/requests/${inspectDoc.requestId}`}
                     className="font-mono font-semibold text-primary hover:underline inline-flex items-center gap-1"
                   >
                     <bdi dir="ltr">{inspectDoc.requestId}</bdi>
-                    <ExternalLink className="size-3 rtl:rotate-180" aria-hidden="true" />
+                    <ExternalLink
+                      className="size-3 rtl:rotate-180"
+                      aria-hidden="true"
+                    />
                   </Link>
                 </div>
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("bloodBank.transfusionProfileCol")}</span>
+                  <span className="text-muted-foreground">
+                    {t("bloodBank.transfusionProfileCol")}
+                  </span>
                   <div className="flex items-center gap-1.5">
                     <BloodGroupBadge group={inspectDoc.bloodGroup} />
-                    <span>{formatBloodBankComponent(inspectDoc.component)}</span>
+                    <span>
+                      {formatBloodBankComponent(inspectDoc.component)}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("common.quantity")}</span>
+                  <span className="text-muted-foreground">
+                    {t("common.quantity")}
+                  </span>
                   <span className="font-mono text-foreground">
-                    <bdi dir="ltr">{formatFileSize(inspectDoc.sizeBytes)} ({inspectDoc.mimeType})</bdi>
+                    <bdi dir="ltr">
+                      {formatFileSize(inspectDoc.sizeBytes)} (
+                      {inspectDoc.mimeType})
+                    </bdi>
                   </span>
                 </div>
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("bloodBank.uploadedCol")}</span>
+                  <span className="text-muted-foreground">
+                    {t("bloodBank.uploadedCol")}
+                  </span>
                   <span className="tabular-nums text-foreground">
                     <bdi dir="ltr">{formatDocDate(inspectDoc.uploadedAt)}</bdi>
                   </span>
                 </div>
 
                 <div className="rounded border border-border bg-surface-subtle p-3 text-[11px] text-muted-foreground">
-                  <span className="font-semibold text-foreground">{t("activity.eventDetails")}:</span>{" "}
+                  <span className="font-semibold text-foreground">
+                    {t("activity.eventDetails")}:
+                  </span>{" "}
                   {t("bloodBank.traceabilityNotice")}
                 </div>
               </div>
@@ -663,7 +714,10 @@ export function BloodBankDocumentsPage() {
                     className="flex items-center gap-2 border border-destructive/30 bg-emergency-subtle p-3 text-emergency"
                     role="alert"
                   >
-                    <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                    <AlertCircle
+                      className="size-4 shrink-0"
+                      aria-hidden="true"
+                    />
                     <span>{rejectionError}</span>
                   </div>
                 ) : null}
@@ -672,7 +726,8 @@ export function BloodBankDocumentsPage() {
                   <span className="font-semibold text-foreground">
                     {t("bloodBank.documentFileCol")}:
                   </span>{" "}
-                  {formatDocumentTitle(rejectDocTarget.name)} • {t("bloodBank.requisitionCol")}:{" "}
+                  {formatDocumentTitle(rejectDocTarget.name)} •{" "}
+                  {t("bloodBank.requisitionCol")}:{" "}
                   <span className="font-mono font-semibold text-foreground">
                     <bdi dir="ltr">{rejectDocTarget.requestId}</bdi>
                   </span>
@@ -726,10 +781,15 @@ export function BloodBankDocumentsPage() {
                 <Button
                   type="submit"
                   variant="destructive"
-                  disabled={updateDocMutation.isPending || !rejectionReason.trim()}
+                  disabled={
+                    updateDocMutation.isPending || !rejectionReason.trim()
+                  }
                 >
                   {updateDocMutation.isPending ? (
-                    <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+                    <LoaderCircle
+                      className="size-3.5 animate-spin"
+                      aria-hidden="true"
+                    />
                   ) : null}
                   {t("bloodBank.confirmRejection")}
                 </Button>

@@ -32,7 +32,7 @@ export function AppShell({
 
   return (
     <Sheet open={navigationOpen} onOpenChange={setNavigationOpen}>
-      <div className="min-h-svh bg-background lg:grid lg:grid-cols-[16.5rem_minmax(0,1fr)]">
+      <div className="min-h-svh bg-background lg:grid lg:grid-cols-[4.5rem_minmax(0,1fr)]">
         <a
           href="#main-content"
           className="fixed start-4 top-3 z-[70] -translate-y-20 rounded-md bg-surface px-4 py-2 text-sm font-semibold text-foreground shadow-[var(--shadow-overlay)] transition-transform focus:translate-y-0"
@@ -40,16 +40,19 @@ export function AppShell({
           {t("common.skipToContent")}
         </a>
 
-        <aside className="sticky top-0 hidden h-svh border-e border-sidebar-border lg:block">
+        <aside className="sticky top-0 z-40 hidden h-svh lg:block">
           <AppSidebar
             user={user}
             activePath={activePath}
             onOrganizationChange={onOrganizationChange}
+            collapsible
           />
         </aside>
 
         <SheetContent aria-describedby="mobile-navigation-description">
-          <SheetTitle className="sr-only">{t("nav.primaryNavigation")}</SheetTitle>
+          <SheetTitle className="sr-only">
+            {t("nav.primaryNavigation")}
+          </SheetTitle>
           <SheetDescription
             id="mobile-navigation-description"
             className="sr-only"

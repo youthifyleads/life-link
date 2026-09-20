@@ -31,21 +31,53 @@ function getEventIcon(eventType: CustodyEventType) {
     case "registered":
       return <PackagePlus aria-hidden="true" className="size-4 text-primary" />;
     case "reserved":
-      return <BookmarkCheck aria-hidden="true" className="size-4 text-amber-600 dark:text-amber-400" />;
+      return (
+        <BookmarkCheck
+          aria-hidden="true"
+          className="size-4 text-amber-600 dark:text-amber-400"
+        />
+      );
     case "allocated":
       return <Layers aria-hidden="true" className="size-4 text-primary" />;
     case "deallocated":
-      return <RotateCcw aria-hidden="true" className="size-4 text-muted-foreground rtl:rotate-180" />;
+      return (
+        <RotateCcw
+          aria-hidden="true"
+          className="size-4 text-muted-foreground rtl:rotate-180"
+        />
+      );
     case "prepared":
-      return <CheckCircle2 aria-hidden="true" className="size-4 text-emerald-600 dark:text-emerald-400" />;
+      return (
+        <CheckCircle2
+          aria-hidden="true"
+          className="size-4 text-emerald-600 dark:text-emerald-400"
+        />
+      );
     case "released":
-      return <ArrowRight aria-hidden="true" className="size-4 text-primary rtl:rotate-180" />;
+      return (
+        <ArrowRight
+          aria-hidden="true"
+          className="size-4 text-primary rtl:rotate-180"
+        />
+      );
     case "handoff_completed":
-      return <ShieldCheck aria-hidden="true" className="size-4 text-emerald-600 dark:text-emerald-400" />;
+      return (
+        <ShieldCheck
+          aria-hidden="true"
+          className="size-4 text-emerald-600 dark:text-emerald-400"
+        />
+      );
     case "quarantined":
-      return <ShieldAlert aria-hidden="true" className="size-4 text-purple-600 dark:text-purple-400" />;
+      return (
+        <ShieldAlert
+          aria-hidden="true"
+          className="size-4 text-purple-600 dark:text-purple-400"
+        />
+      );
     case "expired":
-      return <AlertOctagon aria-hidden="true" className="size-4 text-emergency" />;
+      return (
+        <AlertOctagon aria-hidden="true" className="size-4 text-emergency" />
+      );
     default:
       return <Clock aria-hidden="true" className="size-4 text-primary" />;
   }
@@ -56,7 +88,7 @@ export function CustodyTimeline({ events = [] }: CustodyTimelineProps) {
 
   if (events.length === 0) {
     return (
-      <div className="border border-border bg-surface p-6 text-center text-xs text-muted-foreground">
+      <div className="rounded-lg border border-border/80 bg-surface py-8 text-center text-xs text-muted-foreground shadow-2xs">
         {t("bloodBank.noCustodyRecords")}
       </div>
     );
@@ -81,12 +113,12 @@ export function CustodyTimeline({ events = [] }: CustodyTimelineProps) {
         </span>
       </div>
 
-      <div className="relative border border-border bg-surface p-5 sm:p-6">
-        <ol className="relative space-y-6 before:absolute before:start-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
+      <div className="relative rounded-lg border border-border/80 bg-surface p-4 sm:p-6 shadow-2xs">
+        <ol className="relative space-y-5 before:absolute before:start-3.5 before:top-2 before:bottom-2 before:w-px before:bg-border/70">
           {sortedEvents.map((evt, idx) => (
-            <li key={evt.id || idx} className="relative ps-10">
+            <li key={evt.id || idx} className="relative ps-9">
               {/* Event Icon Pin */}
-              <span className="absolute start-0 top-0.5 flex size-8 items-center justify-center border border-border bg-surface">
+              <span className="absolute start-0 top-0.5 flex size-7 items-center justify-center rounded-full border border-border bg-surface shadow-2xs">
                 {getEventIcon(evt.event)}
               </span>
 
@@ -97,27 +129,38 @@ export function CustodyTimeline({ events = [] }: CustodyTimelineProps) {
                     {evt.title}
                   </span>
                   <time className="font-mono text-[11px] text-muted-foreground">
-                    <bdi dir="ltr">{evt.timestamp.replace("T", " ").split(".")[0]}</bdi>
+                    <bdi dir="ltr">
+                      {evt.timestamp.replace("T", " ").split(".")[0]}
+                    </bdi>
                   </time>
                 </div>
 
                 {/* Actor, Role & Facility Location */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <UserCheck aria-hidden="true" className="size-3 text-primary shrink-0" />
+                    <UserCheck
+                      aria-hidden="true"
+                      className="size-3 text-primary shrink-0"
+                    />
                     <span>
                       {evt.actor} ({evt.role})
                     </span>
                   </span>
 
                   <span className="flex items-center gap-1">
-                    <MapPin aria-hidden="true" className="size-3 text-primary shrink-0" />
+                    <MapPin
+                      aria-hidden="true"
+                      className="size-3 text-primary shrink-0"
+                    />
                     <span>{evt.location}</span>
                   </span>
 
                   {evt.relatedRequestId ? (
                     <span className="flex items-center gap-1 font-mono font-semibold text-primary">
-                      <Building2 aria-hidden="true" className="size-3 shrink-0" />
+                      <Building2
+                        aria-hidden="true"
+                        className="size-3 shrink-0"
+                      />
                       <Link
                         to={`/blood-bank/requests/${evt.relatedRequestId}`}
                         className="inline-flex items-center gap-1 hover:underline"
@@ -141,10 +184,11 @@ export function CustodyTimeline({ events = [] }: CustodyTimelineProps) {
         </ol>
 
         <div className="mt-6 border-t border-border pt-4 text-[11px] text-muted-foreground flex items-center gap-2">
-          <ShieldCheck aria-hidden="true" className="size-4 text-emerald-600 shrink-0" />
-          <span>
-            {t("bloodBank.traceabilityNotice")}
-          </span>
+          <ShieldCheck
+            aria-hidden="true"
+            className="size-4 text-emerald-600 shrink-0"
+          />
+          <span>{t("bloodBank.traceabilityNotice")}</span>
         </div>
       </div>
     </section>

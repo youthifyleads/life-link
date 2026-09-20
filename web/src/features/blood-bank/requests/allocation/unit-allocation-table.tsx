@@ -1,7 +1,6 @@
 import {
   BookmarkCheck,
   CheckCircle2,
-  History,
   LoaderCircle,
   PackagePlus,
   Search,
@@ -17,6 +16,7 @@ import type {
 } from "@/features/blood-bank/types/blood-bank.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
 import type { BloodGroup } from "@/shared/components/clinical/clinical.types";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 
@@ -45,7 +45,9 @@ export function UnitAllocationTable({
   // Filter available and reserved units (not currently allocated to this request)
   const candidateUnits = useMemo(() => {
     return units.filter(
-      (unit) => !request.allocatedUnitIds.includes(unit.id) && unit.status !== "quarantined",
+      (unit) =>
+        !request.allocatedUnitIds.includes(unit.id) &&
+        unit.status !== "quarantined",
     );
   }, [units, request.allocatedUnitIds]);
 
@@ -62,7 +64,9 @@ export function UnitAllocationTable({
       if (search.trim()) {
         const query = search.trim().toLowerCase();
         const matchesId = unit.id.toLowerCase().includes(query);
-        const matchesLocation = unit.storageLocation.toLowerCase().includes(query);
+        const matchesLocation = unit.storageLocation
+          .toLowerCase()
+          .includes(query);
         const matchesGroup = unit.bloodGroup.toLowerCase().includes(query);
         if (!matchesId && !matchesLocation && !matchesGroup) {
           return false;
@@ -70,7 +74,13 @@ export function UnitAllocationTable({
       }
       return true;
     });
-  }, [candidateUnits, matchingOnly, search, request.bloodGroup, request.component]);
+  }, [
+    candidateUnits,
+    matchingOnly,
+    search,
+    request.bloodGroup,
+    request.component,
+  ]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -82,7 +92,9 @@ export function UnitAllocationTable({
 
   const toggleSelectUnit = (unitId: string) => {
     setSelectedUnitIds((prev) =>
-      prev.includes(unitId) ? prev.filter((id) => id !== unitId) : [...prev, unitId],
+      prev.includes(unitId)
+        ? prev.filter((id) => id !== unitId)
+        : [...prev, unitId],
     );
   };
 
@@ -103,15 +115,21 @@ export function UnitAllocationTable({
   return (
     <section
       aria-labelledby="available-inventory-heading"
-      className="border border-border bg-surface p-5"
+      className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id="available-inventory-heading" className="text-base font-semibold">
+          <h2
+            id="available-inventory-heading"
+            className="text-base font-semibold"
+          >
             {t("bloodBank.availableMatching", "Available blood unit matching")}
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("bloodBank.availableMatchingDesc", "Locate and allocate compatible blood units from Central Blood Bank stock.")}
+            {t(
+              "bloodBank.availableMatchingDesc",
+              "Locate and allocate compatible blood units from Central Blood Bank stock.",
+            )}
           </p>
         </div>
 
@@ -125,7 +143,8 @@ export function UnitAllocationTable({
               className="size-3.5 rounded border-field-stroke text-primary focus:ring-1 focus:ring-primary"
             />
             <span>
-              {t("bloodBank.matchingOnly", "Matching only")} (<bdi dir="ltr">{request.bloodGroup}</bdi> ·{" "}
+              {t("bloodBank.matchingOnly", "Matching only")} (
+              <bdi dir="ltr">{request.bloodGroup}</bdi> ·{" "}
               {bloodBankComponentLabels[request.component]})
             </span>
           </label>
@@ -137,8 +156,14 @@ export function UnitAllocationTable({
             />
             <Input
               type="search"
-              aria-label={t("bloodBank.searchUnits", "Search available units by ID or location")}
-              placeholder={t("bloodBank.searchUnits", "Search ID / location...")}
+              aria-label={t(
+                "bloodBank.searchUnits",
+                "Search available units by ID or location",
+              )}
+              placeholder={t(
+                "bloodBank.searchUnits",
+                "Search ID / location...",
+              )}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="h-8 ps-8 text-xs"
@@ -168,7 +193,10 @@ export function UnitAllocationTable({
               onClick={handleBatchAllocate}
             >
               {isPending ? (
-                <LoaderCircle aria-hidden="true" className="size-3.5 animate-spin" />
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="size-3.5 animate-spin"
+                />
               ) : (
                 <PackagePlus aria-hidden="true" className="size-3.5" />
               )}
@@ -200,20 +228,23 @@ export function UnitAllocationTable({
 
       {/* Table */}
       <div
-        className="mt-4 max-w-full overflow-x-auto border border-border"
+        className="mt-4 max-w-full overflow-x-auto rounded-lg border border-border/80 shadow-2xs"
         tabIndex={0}
         role="region"
-        aria-label={t("bloodBank.availableMatching", "Available blood units matching table.")}
+        aria-label={t(
+          "bloodBank.availableMatching",
+          "Available blood units matching table.",
+        )}
       >
         {filteredUnits.length === 0 ? (
           <div className="p-8 text-center text-xs text-muted-foreground">
             {t(
               "bloodBank.noMatchingUnits",
-              "No blood units found matching the active criteria. Uncheck \"Matching only\" or adjust the search query.",
+              'No blood units found matching the active criteria. Uncheck "Matching only" or adjust the search query.',
             )}
           </div>
         ) : (
-          <table className="w-full min-w-[68rem] table-fixed border-collapse text-start text-xs">
+          <table className="clinical-table min-w-[68rem] table-fixed border-collapse">
             <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
               <tr>
                 <th scope="col" className="w-12 px-3 py-2.5 text-center">
@@ -285,21 +316,23 @@ export function UnitAllocationTable({
                         {onViewHistory ? (
                           <button
                             type="button"
-                            className="inline-flex items-center gap-1.5 text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             onClick={() => onViewHistory(unit.id)}
                             aria-label={`${t("bloodBank.viewCustodyHistory", "View custody history")} ${unit.id}`}
+                            title={t(
+                              "bloodBank.viewCustodyHistory",
+                              "View custody history",
+                            )}
                           >
-                            <History aria-hidden="true" className="size-3.5" />
                             <bdi dir="ltr">{unit.id}</bdi>
                           </button>
                         ) : (
                           <bdi dir="ltr">{unit.id}</bdi>
                         )}
                         {isExactMatch ? (
-                          <span
-                            title={t("bloodBank.exactMatch", "Exact clinical match")}
-                            className="inline-block size-1.5 rounded-full bg-success"
-                          />
+                          <span className="sr-only">
+                            {t("bloodBank.exactMatch", "Exact clinical match")}
+                          </span>
                         ) : null}
                       </div>
                     </td>
@@ -307,7 +340,11 @@ export function UnitAllocationTable({
                       <BloodGroupBadge group={unit.bloodGroup as BloodGroup} />
                     </td>
                     <td className="px-3 py-2.5 font-medium text-foreground">
-                      {bloodBankComponentLabels[unit.component as BloodBankComponent]}
+                      {
+                        bloodBankComponentLabels[
+                          unit.component as BloodBankComponent
+                        ]
+                      }
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground tabular-nums">
                       <bdi dir="ltr">{unit.collectionDate}</bdi>
@@ -319,40 +356,40 @@ export function UnitAllocationTable({
                       {unit.storageLocation}
                     </td>
                     <td className="px-3 py-2.5">
-                      <span
-                        className={`inline-flex whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${
-                          unit.status === "available"
-                            ? "bg-success-subtle text-success"
-                            : unit.status === "reserved"
-                              ? "bg-warning-subtle text-[#6f4a00]"
-                              : "bg-surface-subtle text-muted-foreground"
-                        }`}
+                      <StatusIndicator
+                        tone={
+                          unit.status === "available" ? "success" : "pending"
+                        }
+                        className="whitespace-nowrap capitalize"
                       >
                         {t(`status.${unit.status}`, unit.status)}
-                      </span>
+                      </StatusIndicator>
                     </td>
                     <td className="sticky end-0 z-[1] border-s border-border bg-surface px-3 py-2.5 text-end transition-colors group-hover:bg-surface-subtle">
                       <div className="flex flex-nowrap items-center justify-end gap-1.5">
                         <Button
                           type="button"
-                          size="sm"
-                          className="h-7 whitespace-nowrap px-2.5 text-xs"
+                          size="icon"
+                          variant="ghost"
+                          className="size-8 text-primary"
                           disabled={isPending}
                           onClick={() => onAllocateUnits([unit.id])}
                           aria-label={`${t("bloodBank.allocate", "Allocate")} ${unit.id}`}
+                          title={t("bloodBank.allocate", "Allocate")}
                         >
-                          {t("bloodBank.allocate", "Allocate")}
+                          <PackagePlus aria-hidden="true" />
                         </Button>
                         <Button
                           type="button"
-                          size="sm"
-                          variant="secondary"
-                          className="h-7 whitespace-nowrap px-2.5 text-xs"
+                          size="icon"
+                          variant="ghost"
+                          className="size-8"
                           disabled={isPending}
                           onClick={() => onReserveUnits([unit.id])}
                           aria-label={`${t("bloodBank.reserve", "Reserve")} ${unit.id}`}
+                          title={t("bloodBank.reserve", "Reserve")}
                         >
-                          {t("bloodBank.reserve", "Reserve")}
+                          <BookmarkCheck aria-hidden="true" />
                         </Button>
                       </div>
                     </td>

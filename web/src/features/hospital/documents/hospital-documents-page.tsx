@@ -1,13 +1,9 @@
 import {
   AlertCircle,
-  Clock,
   ExternalLink,
   Eye,
   FileText,
-  Filter,
   Search,
-  ShieldAlert,
-  ShieldCheck,
   Upload,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -27,6 +23,7 @@ import type {
   HospitalDocumentItem,
 } from "@/features/hospital/types/hospital.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import {
   EmptyState,
   ErrorState,
@@ -54,25 +51,16 @@ function ReviewStatusBadge({ status }: { status: DocumentReviewStatus }) {
   switch (status) {
     case "accepted":
       return (
-        <span className="inline-flex items-center gap-1 rounded border border-success/30 bg-success-subtle px-2 py-0.5 text-[11px] font-semibold text-success">
-          <ShieldCheck className="size-3" aria-hidden="true" />
-          {t("common.verified")}
-        </span>
+        <StatusIndicator tone="success">{t("common.verified")}</StatusIndicator>
       );
     case "changes_requested":
       return (
-        <span className="inline-flex items-center gap-1 rounded border border-destructive/30 bg-emergency-subtle px-2 py-0.5 text-[11px] font-semibold text-emergency">
-          <ShieldAlert className="size-3" aria-hidden="true" />
-          {t("common.rejected")}
-        </span>
+        <StatusIndicator tone="danger">{t("common.rejected")}</StatusIndicator>
       );
     case "pending":
     default:
       return (
-        <span className="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-          <Clock className="size-3" aria-hidden="true" />
-          {t("common.pending")}
-        </span>
+        <StatusIndicator tone="pending">{t("common.pending")}</StatusIndicator>
       );
   }
 }
@@ -196,7 +184,7 @@ export function HospitalDocumentsPage() {
             <h2 id="documents-kpis-title" className="sr-only">
               {t("hospital.documentMetricsSummary")}
             </h2>
-            <dl className="grid grid-cols-2 border border-border bg-border sm:grid-cols-4">
+            <dl className="grid grid-cols-2 rounded-lg border border-border/80 bg-border shadow-2xs overflow-hidden sm:grid-cols-4">
               <div className="bg-surface p-4">
                 <dt className="text-xs font-medium text-muted-foreground">
                   {t("hospital.documentsRegister")}
@@ -233,7 +221,7 @@ export function HospitalDocumentsPage() {
           </section>
 
           {/* Filter Bar */}
-          <div className="border border-border bg-surface p-4 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <div className="rounded-lg border border-border/80 bg-surface p-4 shadow-2xs space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4">
             <div className="relative flex-1 max-w-md">
               <Search
                 className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
@@ -244,13 +232,12 @@ export function HospitalDocumentsPage() {
                 placeholder={t("hospital.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full border border-border bg-surface ps-9 pe-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-md border border-border bg-surface ps-9 pe-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                <Filter className="size-3.5" aria-hidden="true" />
+              <span className="text-xs font-medium text-muted-foreground">
                 {t("common.status")}:
               </span>
               {(
@@ -265,12 +252,19 @@ export function HospitalDocumentsPage() {
                   key={val}
                   type="button"
                   onClick={() => setStatusFilter(val)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded border transition-colors ${
+                  className={`px-2.5 py-1 text-xs font-medium transition-colors ${
                     statusFilter === val
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-surface hover:bg-surface-subtle text-muted-foreground"
+                      ? "rounded-md bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
+                  {val === "pending"
+                    ? "⏳ "
+                    : val === "accepted"
+                      ? "✅ "
+                      : val === "changes_requested"
+                        ? "❌ "
+                        : ""}
                   {label}
                 </button>
               ))}
@@ -315,9 +309,9 @@ export function HospitalDocumentsPage() {
               tabIndex={0}
               role="region"
               aria-label={t("hospital.documentsTableLabel")}
-              className="overflow-x-auto border border-border bg-surface"
+              className="overflow-x-auto rounded-lg border border-border/80 bg-surface shadow-2xs"
             >
-              <table className="w-full min-w-[56rem] border-collapse text-start text-xs">
+              <table className="clinical-table min-w-[56rem] border-collapse">
                 <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-4 py-3 text-start">
@@ -350,29 +344,22 @@ export function HospitalDocumentsPage() {
                       className="hover:bg-surface-subtle/70 transition-colors"
                     >
                       <td className="px-4 py-3 font-medium text-foreground">
-                        <div className="flex items-center gap-2">
-                          <FileText
-                            className="size-4 text-primary shrink-0"
-                            aria-hidden="true"
-                          />
-                          <div className="min-w-0">
-                            <span className="block truncate font-semibold">
-                              {doc.name}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground font-mono">
-                              {formatFileSize(doc.sizeBytes)} • {doc.mimeType}
-                            </span>
-                          </div>
+                        <div className="min-w-0">
+                          <span className="block truncate font-semibold">
+                            {doc.name}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground font-mono">
+                            {formatFileSize(doc.sizeBytes)} • {doc.mimeType}
+                          </span>
                         </div>
                       </td>
 
                       <td className="px-4 py-3">
                         <Link
                           to={`/hospital/requests/${doc.requestId}`}
-                          className="inline-flex items-center gap-1 font-mono font-semibold text-primary hover:underline"
+                          className="font-mono font-semibold text-primary hover:underline"
                         >
                           {doc.requestId}
-                          <ExternalLink className="size-3" aria-hidden="true" />
                         </Link>
                       </td>
 
@@ -380,7 +367,10 @@ export function HospitalDocumentsPage() {
                         <div className="flex items-center gap-2">
                           <BloodGroupBadge group={doc.bloodGroup} />
                           <span className="text-muted-foreground truncate">
-                            {t(`healthcare.${doc.component}`, bloodComponentLabels[doc.component])}
+                            {t(
+                              `healthcare.${doc.component}`,
+                              bloodComponentLabels[doc.component],
+                            )}
                           </span>
                         </div>
                       </td>
@@ -398,25 +388,30 @@ export function HospitalDocumentsPage() {
                       </td>
 
                       <td className="px-4 py-3 text-end">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
                           <Button
                             type="button"
                             variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
+                            size="icon"
+                            className="size-8"
                             onClick={() => setPreviewDoc(doc)}
+                            title={t("common.view")}
+                            aria-label={`${t("common.view")} ${doc.name}`}
                           >
-                            <Eye className="size-3.5" aria-hidden="true" />
-                            {t("common.view")}
+                            <Eye aria-hidden="true" />
                           </Button>
                           <Button
                             asChild
-                            variant="secondary"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
                           >
-                            <Link to={`/hospital/requests/${doc.requestId}`}>
-                              {t("hospital.openRequisition")}
+                            <Link
+                              to={`/hospital/requests/${doc.requestId}`}
+                              title={t("hospital.openRequisition")}
+                              aria-label={`${t("hospital.openRequisition")} ${doc.requestId}`}
+                            >
+                              <ExternalLink aria-hidden="true" />
                             </Link>
                           </Button>
                         </div>
@@ -443,7 +438,10 @@ export function HospitalDocumentsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleUploadSubmit} className="space-y-4 py-2 text-xs">
+          <form
+            onSubmit={handleUploadSubmit}
+            className="space-y-4 py-2 text-xs"
+          >
             {uploadError ? (
               <div
                 className="flex items-center gap-2 border border-destructive/30 bg-emergency-subtle p-3 text-emergency"
@@ -467,10 +465,13 @@ export function HospitalDocumentsPage() {
                 onChange={(e) => setSelectedRequestId(e.target.value)}
                 className="mt-1 w-full border border-border bg-surface px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               >
-                <option value="">— {t("hospital.selectActiveRequisition")} —</option>
+                <option value="">
+                  — {t("hospital.selectActiveRequisition")} —
+                </option>
                 {activeRequests.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.id} • {r.bloodGroup} {r.quantity} {t("common.units")} • {r.targetBloodBank?.name}
+                    {r.id} • {r.bloodGroup} {r.quantity} {t("common.units")} •{" "}
+                    {r.targetBloodBank?.name}
                   </option>
                 ))}
               </select>
@@ -516,7 +517,9 @@ export function HospitalDocumentsPage() {
             </div>
 
             <div className="rounded border border-border bg-surface-subtle p-3 text-[11px] text-muted-foreground">
-              <span className="font-semibold text-foreground">{t("hospital.clinicalPrivacyNote")}:</span>{" "}
+              <span className="font-semibold text-foreground">
+                {t("hospital.clinicalPrivacyNote")}:
+              </span>{" "}
               {t("hospital.clinicalPrivacyDescription")}
             </div>
 
@@ -530,7 +533,9 @@ export function HospitalDocumentsPage() {
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={uploadMutation.isPending}>
-                {uploadMutation.isPending ? t("hospital.uploading") : t("hospital.uploadAndAttach")}
+                {uploadMutation.isPending
+                  ? t("hospital.uploading")
+                  : t("hospital.uploadAndAttach")}
               </Button>
             </DialogFooter>
           </form>
@@ -549,7 +554,10 @@ export function HospitalDocumentsPage() {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-base">
-                  <FileText className="size-4 text-primary" aria-hidden="true" />
+                  <FileText
+                    className="size-4 text-primary"
+                    aria-hidden="true"
+                  />
                   {previewDoc.name}
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
@@ -559,12 +567,16 @@ export function HospitalDocumentsPage() {
 
               <div className="space-y-3 py-2 text-xs">
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("hospital.verificationStatus")}</span>
+                  <span className="text-muted-foreground">
+                    {t("hospital.verificationStatus")}
+                  </span>
                   <ReviewStatusBadge status={previewDoc.reviewStatus} />
                 </div>
 
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("hospital.associatedRequisition")}</span>
+                  <span className="text-muted-foreground">
+                    {t("hospital.associatedRequisition")}
+                  </span>
                   <Link
                     to={`/hospital/requests/${previewDoc.requestId}`}
                     className="font-mono font-semibold text-primary hover:underline inline-flex items-center gap-1"
@@ -575,35 +587,45 @@ export function HospitalDocumentsPage() {
                 </div>
 
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("hospital.bloodBankAuthority")}</span>
+                  <span className="text-muted-foreground">
+                    {t("hospital.bloodBankAuthority")}
+                  </span>
                   <span className="font-medium text-foreground">
                     {previewDoc.targetBloodBankName}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("hospital.fileSize")}</span>
+                  <span className="text-muted-foreground">
+                    {t("hospital.fileSize")}
+                  </span>
                   <span className="font-mono font-medium text-foreground">
                     {formatFileSize(previewDoc.sizeBytes)}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("hospital.mimeFormat")}</span>
+                  <span className="text-muted-foreground">
+                    {t("hospital.mimeFormat")}
+                  </span>
                   <span className="font-mono font-medium text-foreground">
                     {previewDoc.mimeType}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-muted-foreground">{t("hospital.uploadedAtLabel")}</span>
+                  <span className="text-muted-foreground">
+                    {t("hospital.uploadedAtLabel")}
+                  </span>
                   <span className="tabular-nums text-foreground">
                     {formatDateTime(previewDoc.uploadedAt)}
                   </span>
                 </div>
 
                 <div className="rounded border border-border bg-surface-subtle p-3 text-[11px] text-muted-foreground">
-                  <span className="font-semibold text-foreground">{t("hospital.complianceSeal")}:</span>{" "}
+                  <span className="font-semibold text-foreground">
+                    {t("hospital.complianceSeal")}:
+                  </span>{" "}
                   {t("hospital.complianceSealDescription")}
                 </div>
               </div>

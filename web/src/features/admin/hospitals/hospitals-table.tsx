@@ -26,9 +26,12 @@ export function HospitalsTable({
 
   if (hospitals.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card p-12 text-center">
+      <div className="overflow-hidden rounded-lg border border-border/80 bg-card p-12 text-center shadow-2xs">
         <h3 className="text-sm font-semibold text-foreground">
-          {t("admin.noUsersFoundTitle", "No hospital facilities match your criteria")}
+          {t(
+            "admin.noUsersFoundTitle",
+            "No hospital facilities match your criteria",
+          )}
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">
           {t(
@@ -41,15 +44,15 @@ export function HospitalsTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-border/80 bg-card shadow-2xs">
       <div
         tabIndex={0}
         role="region"
         aria-label={t("admin.hospitalsTableLabel")}
         className="overflow-x-auto"
       >
-        <table className="w-full text-start text-xs">
-          <thead className="border-b border-border bg-muted/40 font-semibold uppercase tracking-wider text-muted-foreground">
+        <table className="clinical-table">
+          <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-3 text-start">
                 {t("admin.auditEntityIdCol", "Hospital ID")}
@@ -116,11 +119,11 @@ export function HospitalsTable({
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-center">
                   <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    className={
                       hospital.activeRequestsCount > 0
-                        ? "bg-amber-100 text-amber-900"
-                        : "bg-muted text-muted-foreground"
-                    }`}
+                        ? "font-semibold text-warning"
+                        : "text-muted-foreground"
+                    }
                   >
                     <bdi dir="ltr">{hospital.activeRequestsCount}</bdi>
                   </span>
@@ -129,7 +132,7 @@ export function HospitalsTable({
                   <div className="inline-flex items-center gap-1 justify-end">
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => onView(hospital)}
                       className="size-7 p-0"
@@ -140,7 +143,7 @@ export function HospitalsTable({
                     </Button>
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => onEdit(hospital)}
                       className="size-7 p-0"
@@ -151,7 +154,7 @@ export function HospitalsTable({
                     </Button>
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleToggle(hospital)}
                       disabled={toggleMutation.isPending}
@@ -162,7 +165,10 @@ export function HospitalsTable({
                       }`}
                       title={
                         hospital.status === "active"
-                          ? t("admin.deactivateUserAction", "Deactivate facility")
+                          ? t(
+                              "admin.deactivateUserAction",
+                              "Deactivate facility",
+                            )
                           : t("admin.activateUserAction", "Activate facility")
                       }
                       aria-label={
@@ -185,7 +191,8 @@ export function HospitalsTable({
         </table>
       </div>
       <div className="border-t border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-        {t("hospital.records", "records")}: <bdi dir="ltr">{hospitals.length}</bdi>
+        {t("hospital.records", "records")}:{" "}
+        <bdi dir="ltr">{hospitals.length}</bdi>
       </div>
     </div>
   );

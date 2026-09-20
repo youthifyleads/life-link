@@ -1,4 +1,4 @@
-import { QrCode, Search, Sparkles } from "lucide-react";
+import { Layers, Loader2, ScanBarcode, Search, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -11,13 +11,22 @@ interface TrackingLookupProps {
   isScanning?: boolean;
 }
 
-const demoPresets = [
-  { id: "UNT-O-NEG-0142", label: "O− Available Unit (UNT-O-NEG-0142)" },
-  { id: "UNT-B-POS-0331", label: "B+ Allocated Unit (UNT-B-POS-0331 -> BR-2026-2192)" },
-  { id: "UNT-AB-POS-0451", label: "AB+ Allocated Unit (UNT-AB-POS-0451 -> BR-2026-2191)" },
-  { id: "UNT-A-POS-0211", label: "A+ Expiring Soon Platelets (UNT-A-POS-0211)" },
-  { id: "UNT-O-NEG-0992", label: "O− Quarantined Unit (UNT-O-NEG-0992)" },
-  { id: "UNT-O-NEG-0991", label: "O− Expired Unit (UNT-O-NEG-0991)" },
+const registeredUnitOptions = [
+  { id: "UNT-O-NEG-0142", label: "UNT-O-NEG-0142 · O− Available (In Stock)" },
+  {
+    id: "UNT-B-POS-0331",
+    label: "UNT-B-POS-0331 · B+ Allocated (Req BR-2026-2192)",
+  },
+  {
+    id: "UNT-AB-POS-0451",
+    label: "UNT-AB-POS-0451 · AB+ Allocated (Req BR-2026-2191)",
+  },
+  {
+    id: "UNT-A-POS-0211",
+    label: "UNT-A-POS-0211 · A+ Platelets (Expiring Soon)",
+  },
+  { id: "UNT-O-NEG-0992", label: "UNT-O-NEG-0992 · O− Quarantined" },
+  { id: "UNT-O-NEG-0991", label: "UNT-O-NEG-0991 · O− Expired" },
 ];
 
 export function TrackingLookup({
@@ -40,8 +49,12 @@ export function TrackingLookup({
     onSearch(id);
   };
 
+  const handleClear = () => {
+    setInputValue("");
+  };
+
   return (
-    <div className="border border-border bg-surface p-5 space-y-4">
+    <div className="no-print rounded-lg border border-border/80 bg-surface p-4 sm:p-5 shadow-2xs space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">
@@ -53,21 +66,22 @@ export function TrackingLookup({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground font-medium">
-            {t("bloodBank.demoPresetsLabel")}
+          <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+            <Layers aria-hidden="true" className="size-3.5 text-primary shrink-0" />
+            {t("bloodBank.registeredUnitsLabel")}
           </span>
           <select
-            aria-label={t("bloodBank.demoPresetsLabel")}
+            aria-label={t("bloodBank.registeredUnitsLabel")}
             onChange={(e) => {
               if (e.target.value) handleSelectPreset(e.target.value);
             }}
-            defaultValue=""
-            className="h-8 max-w-[17rem] truncate rounded-none border border-field-stroke bg-surface-subtle px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            value=""
+            className="h-8 max-w-[17rem] truncate rounded-md border border-field-stroke bg-surface-subtle px-2 text-xs text-foreground focus:border-primary focus:outline-none"
           >
             <option value="" disabled>
-              {t("bloodBank.selectDemoPreset")}
+              {t("bloodBank.selectRegisteredUnit")}
             </option>
-            {demoPresets.map((p) => (
+            {registeredUnitOptions.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.label}
               </option>
@@ -76,7 +90,7 @@ export function TrackingLookup({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-wrap gap-2.5">
+      <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2.5">
         <div className="relative flex-1 min-w-[16rem]">
           <Search
             aria-hidden="true"
@@ -88,26 +102,40 @@ export function TrackingLookup({
             placeholder={t("bloodBank.scanOrTypePlaceholder")}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            className="h-10 ps-9 font-mono text-xs"
+            className="h-10 ps-9 pe-9 font-mono text-xs"
             dir="ltr"
           />
+          {inputValue ? (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute end-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground focus:outline-none"
+              title={t("bloodBank.clearSearch", "Clear input")}
+              aria-label={t("bloodBank.clearSearch", "Clear input")}
+            >
+              <X aria-hidden="true" className="size-3.5" />
+            </button>
+          ) : null}
         </div>
 
-        <Button type="submit" disabled={isScanning} className="h-10 text-xs">
-          <QrCode aria-hidden="true" className="size-4" />
-          {isScanning ? t("common.loading") : t("bloodBank.lookupUnitAction")}
-        </Button>
-
         <Button
-          type="button"
-          variant="secondary"
-          className="h-10 text-xs"
-          onClick={() => handleSelectPreset("UNT-B-POS-0331")}
+          type="submit"
+          disabled={isScanning || !inputValue.trim()}
+          className="h-10 gap-1.5 text-xs font-medium"
         >
-          <Sparkles aria-hidden="true" className="size-3.5" />
-          {t("bloodBank.simulateScanAction")}
+          {isScanning ? (
+            <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+          ) : (
+            <ScanBarcode aria-hidden="true" className="size-4" />
+          )}
+          <span>
+            {isScanning
+              ? t("common.loading", "Searching…")
+              : t("bloodBank.lookupUnitAction", "Track Unit")}
+          </span>
         </Button>
       </form>
     </div>
   );
 }
+

@@ -1,6 +1,5 @@
 import {
   Check,
-  History,
   LoaderCircle,
   PackageMinus,
   ScanBarcode,
@@ -53,7 +52,7 @@ export function AllocatedUnitsLedger({
   return (
     <section
       aria-labelledby="allocated-units-heading"
-      className="border border-border bg-surface p-5"
+      className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -104,13 +103,20 @@ export function AllocatedUnitsLedger({
       {/* Progress Bar */}
       <div className="mt-4">
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{t("bloodBank.allocationProgress", "Allocation progress")}</span>
-          <span className="font-semibold tabular-nums"><bdi dir="ltr">{percentage}%</bdi></span>
+          <span>
+            {t("bloodBank.allocationProgress", "Allocation progress")}
+          </span>
+          <span className="font-semibold tabular-nums">
+            <bdi dir="ltr">{percentage}%</bdi>
+          </span>
         </div>
         <div
           className="mt-1.5 flex h-2 w-full overflow-hidden rounded-full bg-surface-subtle"
           role="progressbar"
-          aria-label={t("bloodBank.allocationProgress", "Blood unit allocation progress")}
+          aria-label={t(
+            "bloodBank.allocationProgress",
+            "Blood unit allocation progress",
+          )}
           aria-valuenow={allocatedCount}
           aria-valuemin={0}
           aria-valuemax={requiredCount}
@@ -143,12 +149,15 @@ export function AllocatedUnitsLedger({
           </div>
         ) : (
           <div
-            className="overflow-x-auto border border-border"
+            className="overflow-x-auto rounded-lg border border-border/80 shadow-2xs"
             tabIndex={0}
             role="region"
-            aria-label={t("bloodBank.allocatedUnits", "Allocated blood units table.")}
+            aria-label={t(
+              "bloodBank.allocatedUnits",
+              "Allocated blood units table.",
+            )}
           >
-            <table className="w-full table-fixed border-collapse text-start text-xs">
+            <table className="clinical-table table-fixed border-collapse">
               <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-3 py-2.5 text-start w-[22%]">
@@ -178,11 +187,14 @@ export function AllocatedUnitsLedger({
                       {onViewHistory ? (
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1.5 text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                           onClick={() => onViewHistory(unit.id)}
                           aria-label={`${t("bloodBank.viewCustodyHistory", "View custody history")} ${unit.id}`}
+                          title={t(
+                            "bloodBank.viewCustodyHistory",
+                            "View custody history",
+                          )}
                         >
-                          <History aria-hidden="true" className="size-3.5" />
                           <bdi dir="ltr">{unit.id}</bdi>
                         </button>
                       ) : (
@@ -193,7 +205,11 @@ export function AllocatedUnitsLedger({
                       <BloodGroupBadge group={unit.bloodGroup as BloodGroup} />
                     </td>
                     <td className="px-3 py-2.5 font-medium text-foreground">
-                      {bloodBankComponentLabels[unit.component as BloodBankComponent]}
+                      {
+                        bloodBankComponentLabels[
+                          unit.component as BloodBankComponent
+                        ]
+                      }
                     </td>
                     <td className="px-3 py-2.5 text-muted-foreground">
                       {unit.storageLocation}
@@ -204,19 +220,25 @@ export function AllocatedUnitsLedger({
                     <td className="px-3 py-2.5 text-end">
                       <Button
                         type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                        size="icon"
+                        variant="ghost"
+                        className="size-8 text-destructive hover:text-destructive"
                         disabled={isPending}
                         onClick={() => onRemoveUnit(unit.id)}
                         aria-label={`${t("bloodBank.remove", "Remove")} ${unit.id}`}
+                        title={t("bloodBank.remove", "Remove")}
                       >
                         {isPending && activeUnitId === unit.id ? (
-                          <LoaderCircle aria-hidden="true" className="size-3.5 animate-spin" />
+                          <LoaderCircle
+                            aria-hidden="true"
+                            className="size-3.5 animate-spin"
+                          />
                         ) : (
-                          <PackageMinus aria-hidden="true" className="size-3.5" />
+                          <PackageMinus
+                            aria-hidden="true"
+                            className="size-3.5"
+                          />
                         )}
-                        {t("bloodBank.remove", "Remove")}
                       </Button>
                     </td>
                   </tr>

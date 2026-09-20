@@ -102,7 +102,7 @@ export function BloodBankDashboardPage() {
                 {t("bloodBank.queueOverviewDesc")}
               </p>
             </div>
-            <dl className="grid grid-cols-2 gap-px border border-border bg-border md:grid-cols-3 xl:grid-cols-6">
+            <dl className="grid grid-cols-2 gap-px rounded-lg border border-border/80 bg-border shadow-2xs overflow-hidden md:grid-cols-3 xl:grid-cols-6">
               {overviewStatuses.map((status) => (
                 <div key={status} className="bg-surface px-4 py-4">
                   <dt className="text-xs font-medium text-muted-foreground">

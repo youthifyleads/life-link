@@ -23,6 +23,7 @@ import type {
   BloodUnitStatus,
 } from "@/features/blood-bank/types/blood-bank.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import type { BloodGroup } from "@/shared/components/clinical/clinical.types";
 import { normalizeApiError } from "@/shared/api/api-error";
 import { Button } from "@/shared/components/ui/button";
@@ -90,7 +91,10 @@ export function BarcodeAllocationDialog({
         barcode: z
           .string()
           .trim()
-          .min(1, t("bloodBank.barcodeRequired", "Scan or enter a bag barcode.")),
+          .min(
+            1,
+            t("bloodBank.barcodeRequired", "Scan or enter a bag barcode."),
+          ),
       }),
     [t],
   );
@@ -177,7 +181,9 @@ export function BarcodeAllocationDialog({
 
     if (
       allocatedBags.some(
-        (bag) => bag.barcode.toLocaleLowerCase() === normalizedBarcode.toLocaleLowerCase(),
+        (bag) =>
+          bag.barcode.toLocaleLowerCase() ===
+          normalizedBarcode.toLocaleLowerCase(),
       )
     ) {
       setBarcodeError("barcode", {
@@ -190,7 +196,8 @@ export function BarcodeAllocationDialog({
     }
 
     const knownUnit = allUnits.find(
-      (unit) => unit.id.toLocaleLowerCase() === normalizedBarcode.toLocaleLowerCase(),
+      (unit) =>
+        unit.id.toLocaleLowerCase() === normalizedBarcode.toLocaleLowerCase(),
     );
 
     if (knownUnit?.status === "quarantined") {
@@ -290,7 +297,10 @@ export function BarcodeAllocationDialog({
         <DialogHeader className="shrink-0 border-b border-border px-5 py-5 pe-14 sm:px-6 sm:pe-14">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <ScanBarcode aria-hidden="true" className="size-5 text-primary" />
-            {t("bloodBank.barcodeAllocationTitle", "One-by-one barcode allocation")}
+            {t(
+              "bloodBank.barcodeAllocationTitle",
+              "One-by-one barcode allocation",
+            )}
           </DialogTitle>
           <DialogDescription className="max-w-[70ch] leading-5">
             {t("bloodBank.barcodeAllocationDescription", {
@@ -304,7 +314,10 @@ export function BarcodeAllocationDialog({
           <section aria-labelledby="barcode-quota-heading">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <h2 id="barcode-quota-heading" className="text-sm font-semibold text-foreground">
+                <h2
+                  id="barcode-quota-heading"
+                  className="text-sm font-semibold text-foreground"
+                >
                   {t("bloodBank.quotaProgress", "Request quota progress")}
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -316,13 +329,18 @@ export function BarcodeAllocationDialog({
                 </p>
               </div>
               <strong className="text-lg tabular-nums text-foreground">
-                <bdi dir="ltr">{allocatedCount} / {quota}</bdi>
+                <bdi dir="ltr">
+                  {allocatedCount} / {quota}
+                </bdi>
               </strong>
             </div>
             <div
               className="mt-3 h-2 overflow-hidden rounded-full bg-surface-subtle"
               role="progressbar"
-              aria-label={t("bloodBank.quotaProgress", "Request quota progress")}
+              aria-label={t(
+                "bloodBank.quotaProgress",
+                "Request quota progress",
+              )}
               aria-valuemin={0}
               aria-valuemax={quota}
               aria-valuenow={Math.min(allocatedCount, quota)}
@@ -337,8 +355,14 @@ export function BarcodeAllocationDialog({
             </div>
           </section>
 
-          <section aria-labelledby="barcode-entry-heading" className="border border-border bg-surface-subtle p-4">
-            <h2 id="barcode-entry-heading" className="text-sm font-semibold text-foreground">
+          <section
+            aria-labelledby="barcode-entry-heading"
+            className="border border-border bg-surface-subtle p-4"
+          >
+            <h2
+              id="barcode-entry-heading"
+              className="text-sm font-semibold text-foreground"
+            >
               {t("bloodBank.scanNextBag", "Scan the next blood bag")}
             </h2>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -348,7 +372,10 @@ export function BarcodeAllocationDialog({
               )}
             </p>
 
-            <form className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-start" onSubmit={submitBarcode}>
+            <form
+              className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-start"
+              onSubmit={submitBarcode}
+            >
               <div className="min-w-0 flex-1">
                 <Label htmlFor="allocation-barcode" className="sr-only">
                   {t("bloodBank.bagBarcode", "Blood bag barcode")}
@@ -364,27 +391,48 @@ export function BarcodeAllocationDialog({
                     autoComplete="off"
                     spellCheck={false}
                     dir="ltr"
-                    placeholder={t("bloodBank.barcodePlaceholder", "BAG-A-POS-0901")}
+                    placeholder={t(
+                      "bloodBank.barcodePlaceholder",
+                      "BAG-A-POS-0901",
+                    )}
                     aria-invalid={Boolean(barcodeErrors.barcode)}
-                    aria-describedby={barcodeErrors.barcode ? "allocation-barcode-error" : "allocation-barcode-help"}
+                    aria-describedby={
+                      barcodeErrors.barcode
+                        ? "allocation-barcode-error"
+                        : "allocation-barcode-help"
+                    }
                     className="ps-10 font-mono"
                     disabled={isBusy || isQuotaFilled}
                     {...registerBarcode("barcode")}
                   />
                 </div>
                 {barcodeErrors.barcode ? (
-                  <p id="allocation-barcode-error" role="alert" className="mt-1.5 text-xs text-destructive">
+                  <p
+                    id="allocation-barcode-error"
+                    role="alert"
+                    className="mt-1.5 text-xs text-destructive"
+                  >
                     {barcodeErrors.barcode.message}
                   </p>
                 ) : (
                   <p id="allocation-barcode-help" className="sr-only">
-                    {t("bloodBank.scannerInputHelp", "Scan or manually enter a barcode and press Enter.")}
+                    {t(
+                      "bloodBank.scannerInputHelp",
+                      "Scan or manually enter a barcode and press Enter.",
+                    )}
                   </p>
                 )}
               </div>
-              <Button type="submit" disabled={isBusy || isQuotaFilled} className="sm:min-w-36">
+              <Button
+                type="submit"
+                disabled={isBusy || isQuotaFilled}
+                className="sm:min-w-36"
+              >
                 {allocateMutation.isPending ? (
-                  <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+                  <LoaderCircle
+                    aria-hidden="true"
+                    className="size-4 animate-spin"
+                  />
                 ) : (
                   <ScanBarcode aria-hidden="true" className="size-4" />
                 )}
@@ -393,9 +441,14 @@ export function BarcodeAllocationDialog({
             </form>
 
             <div className="mt-3 flex items-start gap-2 border border-warning/30 bg-warning-subtle p-3 text-xs leading-5 text-[#6f4a00]">
-              <ShieldAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+              <ShieldAlert
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0"
+              />
               <p>
-                <strong>{t("bloodBank.quarantineWarning", "Quarantine warning:")}</strong>{" "}
+                <strong>
+                  {t("bloodBank.quarantineWarning", "Quarantine warning:")}
+                </strong>{" "}
                 {t(
                   "bloodBank.quarantineWarningDescription",
                   "Quarantined blood bags cannot be allocated. Review the bag status and custody record before retrying.",
@@ -409,15 +462,21 @@ export function BarcodeAllocationDialog({
               role={notice.tone === "success" ? "status" : "alert"}
               className={cn(
                 "flex items-start gap-2 border p-3 text-sm leading-5",
-                notice.tone === "success" && "border-success/30 bg-success-subtle text-success",
-                notice.tone === "error" && "border-destructive/30 bg-emergency-subtle text-destructive",
-                notice.tone === "quarantine" && "border-warning/30 bg-warning-subtle text-[#6f4a00]",
+                notice.tone === "success" &&
+                  "border-success/30 bg-success-subtle text-success",
+                notice.tone === "error" &&
+                  "border-destructive/30 bg-emergency-subtle text-destructive",
+                notice.tone === "quarantine" &&
+                  "border-warning/30 bg-warning-subtle text-[#6f4a00]",
               )}
             >
               {notice.tone === "success" ? (
                 <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
               ) : (
-                <ShieldAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                <ShieldAlert
+                  aria-hidden="true"
+                  className="mt-0.5 size-4 shrink-0"
+                />
               )}
               <span>{notice.message}</span>
             </div>
@@ -425,7 +484,10 @@ export function BarcodeAllocationDialog({
 
           <section aria-labelledby="allocated-bags-heading">
             <div className="mb-2 flex items-center justify-between gap-3">
-              <h2 id="allocated-bags-heading" className="text-sm font-semibold text-foreground">
+              <h2
+                id="allocated-bags-heading"
+                className="text-sm font-semibold text-foreground"
+              >
                 {t("bloodBank.allocatedBags", "Allocated bags")}
               </h2>
               <span className="text-xs tabular-nums text-muted-foreground">
@@ -436,53 +498,91 @@ export function BarcodeAllocationDialog({
               </span>
             </div>
 
-            <div className="overflow-x-auto border border-border" role="region" tabIndex={0} aria-label={t("bloodBank.allocatedBags", "Allocated bags table")}>
-              <table className="w-full min-w-[42rem] border-collapse text-start text-xs">
+            <div
+              className="overflow-x-auto rounded-lg border border-border/80 shadow-2xs"
+              role="region"
+              tabIndex={0}
+              aria-label={t("bloodBank.allocatedBags", "Allocated bags table")}
+            >
+              <table className="clinical-table min-w-[42rem] border-collapse">
                 <thead className="border-b border-border bg-surface-subtle text-muted-foreground">
                   <tr>
-                    <th scope="col" className="px-3.5 py-2.5 text-start">{t("bloodBank.barcode", "Barcode")}</th>
-                    <th scope="col" className="px-3 py-2.5 text-start">{t("common.bloodGroup", "Blood group")}</th>
-                    <th scope="col" className="px-3 py-2.5 text-start">{t("common.component", "Component")}</th>
-                    <th scope="col" className="px-3 py-2.5 text-start">{t("common.status", "Status")}</th>
-                    <th scope="col" className="px-3.5 py-2.5 text-end">{t("common.actions", "Actions")}</th>
+                    <th scope="col" className="px-3.5 py-2.5 text-start">
+                      {t("bloodBank.barcode", "Barcode")}
+                    </th>
+                    <th scope="col" className="px-3 py-2.5 text-start">
+                      {t("common.bloodGroup", "Blood group")}
+                    </th>
+                    <th scope="col" className="px-3 py-2.5 text-start">
+                      {t("common.component", "Component")}
+                    </th>
+                    <th scope="col" className="px-3 py-2.5 text-start">
+                      {t("common.status", "Status")}
+                    </th>
+                    <th scope="col" className="px-3.5 py-2.5 text-end">
+                      {t("common.actions", "Actions")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border bg-surface">
                   {allocatedBags.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                        {t("bloodBank.noBagsAllocated", "No blood bags have been allocated to this request.")}
+                      <td
+                        colSpan={5}
+                        className="px-4 py-8 text-center text-sm text-muted-foreground"
+                      >
+                        {t(
+                          "bloodBank.noBagsAllocated",
+                          "No blood bags have been allocated to this request.",
+                        )}
                       </td>
                     </tr>
                   ) : (
                     allocatedBags.map((bag) => (
-                      <tr key={bag.barcode} className="hover:bg-surface-subtle/60">
+                      <tr
+                        key={bag.barcode}
+                        className="hover:bg-surface-subtle/60"
+                      >
                         <td className="px-3.5 py-3 font-mono font-semibold text-foreground">
                           <bdi dir="ltr">{bag.barcode}</bdi>
                         </td>
                         <td className="px-3 py-3">
-                          {bag.bloodGroup ? <BloodGroupBadge group={bag.bloodGroup} /> : <span aria-hidden="true">—</span>}
+                          {bag.bloodGroup ? (
+                            <BloodGroupBadge group={bag.bloodGroup} />
+                          ) : (
+                            <span aria-hidden="true">—</span>
+                          )}
                         </td>
                         <td className="px-3 py-3 font-medium text-foreground">
-                          {bag.component ? t(`healthcare.${bag.component}`, bag.component.replaceAll("_", " ")) : <span aria-hidden="true">—</span>}
+                          {bag.component ? (
+                            t(
+                              `healthcare.${bag.component}`,
+                              bag.component.replaceAll("_", " "),
+                            )
+                          ) : (
+                            <span aria-hidden="true">—</span>
+                          )}
                         </td>
                         <td className="px-3 py-3">
-                          <span className="inline-flex border border-primary/25 bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+                          <StatusIndicator tone="success">
                             {t(`status.${bag.status}`, bag.status)}
-                          </span>
+                          </StatusIndicator>
                         </td>
                         <td className="px-3.5 py-3 text-end">
                           <Button
                             type="button"
                             variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-destructive hover:text-destructive"
+                            size="icon"
+                            className="size-8 text-destructive hover:text-destructive"
                             disabled={isBusy}
                             onClick={() => beginDeallocation(bag.barcode)}
                             aria-label={`${t("bloodBank.deallocateBag", "Deallocate bag")} ${bag.barcode}`}
+                            title={t(
+                              "bloodBank.deallocateBag",
+                              "Deallocate bag",
+                            )}
                           >
-                            <PackageMinus aria-hidden="true" className="size-3.5" />
-                            {t("bloodBank.deallocate", "Deallocate")}
+                            <PackageMinus aria-hidden="true" />
                           </Button>
                         </td>
                       </tr>
@@ -494,10 +594,16 @@ export function BarcodeAllocationDialog({
           </section>
 
           {deallocationBarcode ? (
-            <section aria-labelledby="deallocation-heading" className="border border-destructive/25 bg-emergency-subtle p-4">
+            <section
+              aria-labelledby="deallocation-heading"
+              className="border border-destructive/25 bg-emergency-subtle p-4"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 id="deallocation-heading" className="text-sm font-semibold text-foreground">
+                  <h2
+                    id="deallocation-heading"
+                    className="text-sm font-semibold text-foreground"
+                  >
                     {t("bloodBank.deallocateBag", "Deallocate blood bag")}
                   </h2>
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -507,16 +613,27 @@ export function BarcodeAllocationDialog({
                     })}
                   </p>
                 </div>
-                <Button type="button" variant="ghost" size="icon" className="size-8" onClick={cancelDeallocation} disabled={deallocateMutation.isPending}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={cancelDeallocation}
+                  disabled={deallocateMutation.isPending}
+                >
                   <X aria-hidden="true" className="size-4" />
-                  <span className="sr-only">{t("common.cancel", "Cancel")}</span>
+                  <span className="sr-only">
+                    {t("common.cancel", "Cancel")}
+                  </span>
                 </Button>
               </div>
 
               <form className="mt-4" onSubmit={submitDeallocation}>
                 <Label htmlFor="deallocation-reason">
                   {t("bloodBank.deallocationReason", "Deallocation reason")}
-                  <span aria-hidden="true" className="text-destructive">*</span>
+                  <span aria-hidden="true" className="text-destructive">
+                    *
+                  </span>
                 </Label>
                 <textarea
                   id="deallocation-reason"
@@ -526,23 +643,43 @@ export function BarcodeAllocationDialog({
                     "Example: Bag seal damaged during preparation",
                   )}
                   aria-invalid={Boolean(reasonErrors.reason)}
-                  aria-describedby={reasonErrors.reason ? "deallocation-reason-error" : undefined}
+                  aria-describedby={
+                    reasonErrors.reason
+                      ? "deallocation-reason-error"
+                      : undefined
+                  }
                   disabled={deallocateMutation.isPending}
                   className="mt-2 w-full resize-y rounded-md border border-input bg-surface px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 disabled:opacity-70"
                   {...registerReason("reason")}
                 />
                 {reasonErrors.reason ? (
-                  <p id="deallocation-reason-error" role="alert" className="mt-1.5 text-xs text-destructive">
+                  <p
+                    id="deallocation-reason-error"
+                    role="alert"
+                    className="mt-1.5 text-xs text-destructive"
+                  >
                     {reasonErrors.reason.message}
                   </p>
                 ) : null}
                 <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                  <Button type="button" variant="secondary" onClick={cancelDeallocation} disabled={deallocateMutation.isPending}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={cancelDeallocation}
+                    disabled={deallocateMutation.isPending}
+                  >
                     {t("common.cancel", "Cancel")}
                   </Button>
-                  <Button type="submit" variant="destructive" disabled={deallocateMutation.isPending}>
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                    disabled={deallocateMutation.isPending}
+                  >
                     {deallocateMutation.isPending ? (
-                      <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+                      <LoaderCircle
+                        aria-hidden="true"
+                        className="size-4 animate-spin"
+                      />
                     ) : (
                       <PackageMinus aria-hidden="true" className="size-4" />
                     )}
@@ -555,7 +692,12 @@ export function BarcodeAllocationDialog({
         </div>
 
         <DialogFooter className="m-0 shrink-0 border-t border-border bg-surface-subtle px-5 py-4 sm:px-6">
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={isBusy}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => onOpenChange(false)}
+            disabled={isBusy}
+          >
             {t("common.close", "Close")}
           </Button>
         </DialogFooter>

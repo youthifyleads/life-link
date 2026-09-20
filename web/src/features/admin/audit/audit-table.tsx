@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, Eye, ShieldAlert } from "lucide-react";
+import { Clock, Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { formatDateTime } from "@/features/admin/components/admin-formatters";
@@ -16,7 +16,7 @@ export function AuditTable({ logs, onInspect }: AuditTableProps) {
 
   if (logs.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card p-12 text-center">
+      <div className="overflow-hidden rounded-lg border border-border/80 bg-card p-12 text-center shadow-2xs">
         <h3 className="text-sm font-semibold text-foreground">
           {t("admin.noUsersFoundTitle", "No audit records match your filters")}
         </h3>
@@ -31,14 +31,14 @@ export function AuditTable({ logs, onInspect }: AuditTableProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-border/80 bg-card shadow-2xs">
       <div
         tabIndex={0}
         role="region"
         aria-label={t("admin.auditTableLabel")}
         className="overflow-x-auto"
       >
-        <table className="w-full text-start text-xs">
+        <table className="clinical-table">
           <thead className="border-b border-border bg-muted/40 font-semibold uppercase tracking-wider text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-3 text-start">
@@ -86,7 +86,10 @@ export function AuditTable({ logs, onInspect }: AuditTableProps) {
                   {log.actor.name}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <AdminRoleBadge role={log.actor.role} />
+                  <AdminRoleBadge
+                    role={log.actor.role}
+                    className="bg-transparent px-0 text-foreground"
+                  />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                   {log.organization}
@@ -102,7 +105,7 @@ export function AuditTable({ logs, onInspect }: AuditTableProps) {
                   ) : null}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <span className="inline-flex rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+                  <span className="font-mono text-[11px] text-foreground">
                     <bdi dir="ltr">{log.entityType}</bdi>
                   </span>
                 </td>
@@ -112,17 +115,17 @@ export function AuditTable({ logs, onInspect }: AuditTableProps) {
                 <td className="whitespace-nowrap px-4 py-3">
                   {log.result === "success" ? (
                     <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
-                      <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                      <span aria-hidden="true">✅</span>
                       <span>{t("common.success", "Success")}</span>
                     </span>
                   ) : log.result === "warning" ? (
                     <span className="inline-flex items-center gap-1 font-medium text-amber-700">
-                      <ShieldAlert className="size-3.5" aria-hidden="true" />
+                      <span aria-hidden="true">⚠️</span>
                       <span>{t("common.warning", "Warning")}</span>
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 font-medium text-rose-700">
-                      <ShieldAlert className="size-3.5" aria-hidden="true" />
+                      <span aria-hidden="true">❌</span>
                       <span>{t("common.error", "Failure")}</span>
                     </span>
                   )}
@@ -130,7 +133,7 @@ export function AuditTable({ logs, onInspect }: AuditTableProps) {
                 <td className="whitespace-nowrap px-4 py-3 text-end">
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
                     onClick={() => onInspect(log)}
                     className="size-7 p-0"

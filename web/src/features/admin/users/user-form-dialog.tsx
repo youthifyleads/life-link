@@ -462,9 +462,7 @@ export function UserFormDialog({
 
         {step === "success" && (
           <div className="py-6 text-center">
-            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-              <CheckCircle2 className="size-7" aria-hidden="true" />
-            </div>
+            <CheckCircle2 className="mx-auto size-9 text-success" aria-hidden="true" />
             <h3 className="mt-3 text-base font-semibold text-foreground">
               {isEditing
                 ? t("common.success", "User Updated Successfully")

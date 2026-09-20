@@ -156,10 +156,15 @@ export function RequestForm() {
       >
         <CheckCircle2 aria-hidden="true" className="size-8 text-success" />
         <h2 id="request-created-title" className="mt-5 text-xl font-semibold">
-          {t("common.success")} • {mutation.data.targetBloodBank?.name ?? t("healthcare.bloodBank")}
+          {t("common.success")} •{" "}
+          {mutation.data.targetBloodBank?.name ?? t("healthcare.bloodBank")}
         </h2>
         <p className="mt-2 max-w-[65ch] text-sm leading-6 text-muted-foreground">
-          {t("hospital.requestId")}: <strong className="text-foreground"><bdi dir="ltr">{mutation.data.id}</bdi></strong> —{" "}
+          {t("hospital.requestId")}:{" "}
+          <strong className="text-foreground">
+            <bdi dir="ltr">{mutation.data.id}</bdi>
+          </strong>{" "}
+          —{" "}
           <strong className="text-foreground">
             {mutation.data.targetBloodBank?.name}
           </strong>{" "}
@@ -169,7 +174,10 @@ export function RequestForm() {
           <Button asChild>
             <Link to={`/hospital/requests/${mutation.data.id}`}>
               {t("common.viewDetails")}
-              <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
+              <ArrowRight
+                aria-hidden="true"
+                className="size-4 rtl:rotate-180"
+              />
             </Link>
           </Button>
           <Button asChild variant="secondary">
@@ -182,7 +190,7 @@ export function RequestForm() {
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-      <section className="border border-border bg-surface">
+      <section className="rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden">
         {/* Step Indicator Header */}
         <div className="flex items-center gap-2 border-b border-border px-5 py-4 sm:gap-3">
           <span
@@ -194,7 +202,9 @@ export function RequestForm() {
           >
             {step === "details" ? "1" : <CheckCircle2 className="size-4" />}
           </span>
-          <span className="text-xs font-semibold sm:text-sm">{t("hospital.step1")}</span>
+          <span className="text-xs font-semibold sm:text-sm">
+            {t("hospital.step1")}
+          </span>
           <span className="h-px flex-1 bg-border" />
           <span
             className={`flex size-7 items-center justify-center rounded-full text-xs font-semibold ${
@@ -207,7 +217,9 @@ export function RequestForm() {
           >
             {step === "review" ? <CheckCircle2 className="size-4" /> : "2"}
           </span>
-          <span className="text-xs font-semibold sm:text-sm">{t("hospital.step2")}</span>
+          <span className="text-xs font-semibold sm:text-sm">
+            {t("hospital.step2")}
+          </span>
           <span className="h-px flex-1 bg-border" />
           <span
             className={`flex size-7 items-center justify-center rounded-full text-xs font-semibold ${
@@ -218,12 +230,18 @@ export function RequestForm() {
           >
             3
           </span>
-          <span className="text-xs font-semibold sm:text-sm">{t("common.confirm")}</span>
+          <span className="text-xs font-semibold sm:text-sm">
+            {t("common.confirm")}
+          </span>
         </div>
 
         {/* STEP 1: Clinical Requirements */}
         {step === "details" && (
-          <form className="p-5 sm:p-6" noValidate onSubmit={proceedToBankSelection}>
+          <form
+            className="p-5 sm:p-6"
+            noValidate
+            onSubmit={proceedToBankSelection}
+          >
             <div className="grid gap-5 sm:grid-cols-2">
               <Field
                 id="blood-group"
@@ -257,7 +275,10 @@ export function RequestForm() {
                 >
                   {bloodComponents.map((component) => (
                     <option key={component} value={component}>
-                      {t(`healthcare.${component}`, bloodComponentLabels[component])}
+                      {t(
+                        `healthcare.${component}`,
+                        bloodComponentLabels[component],
+                      )}
                     </option>
                   ))}
                 </select>
@@ -349,7 +370,10 @@ export function RequestForm() {
               </Button>
               <Button type="submit">
                 {t("hospital.selectTargetBank")}
-                <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
+                <ArrowRight
+                  aria-hidden="true"
+                  className="size-4 rtl:rotate-180"
+                />
               </Button>
             </div>
           </form>
@@ -359,13 +383,19 @@ export function RequestForm() {
         {step === "blood_bank" && (
           <div className="p-5 sm:p-6">
             <div>
-              <h2 className="text-lg font-semibold">{t("hospital.selectTargetBank")}</h2>
+              <h2 className="text-lg font-semibold">
+                {t("hospital.selectTargetBank")}
+              </h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 {t("hospital.recommendedBanks")}
               </p>
             </div>
 
-            <div className="mt-6 space-y-4" role="radiogroup" aria-label={t("hospital.availableBloodBanks")}>
+            <div
+              className="mt-6 space-y-4"
+              role="radiogroup"
+              aria-label={t("hospital.availableBloodBanks")}
+            >
               {availableBanks.map((bank) => {
                 const isSelected = selectedBloodBankId === bank.id;
                 const isInactive = bank.status === "inactive";
@@ -443,8 +473,11 @@ export function RequestForm() {
                                 : "bg-emergency-subtle text-destructive border border-destructive/30"
                           }`}
                         >
-                          {posture === "warning" && <AlertTriangle className="size-3" />}
-                          {bank.availabilitySummary.totalAvailable} {t("common.units")}
+                          {posture === "warning" && (
+                            <AlertTriangle className="size-3" />
+                          )}
+                          {bank.availabilitySummary.totalAvailable}{" "}
+                          {t("common.units")}
                         </span>
                         <p className="mt-1 text-[11px] text-muted-foreground capitalize">
                           {posture}
@@ -462,15 +495,18 @@ export function RequestForm() {
                 variant="ghost"
                 onClick={() => setStep("details")}
               >
-                <ArrowLeft aria-hidden="true" className="size-4 rtl:rotate-180" />
+                <ArrowLeft
+                  aria-hidden="true"
+                  className="size-4 rtl:rotate-180"
+                />
                 {t("common.back")}
               </Button>
-              <Button
-                type="button"
-                onClick={proceedToReview}
-              >
+              <Button type="button" onClick={proceedToReview}>
                 {t("common.next")}
-                <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
+                <ArrowRight
+                  aria-hidden="true"
+                  className="size-4 rtl:rotate-180"
+                />
               </Button>
             </div>
           </div>
@@ -526,22 +562,33 @@ export function RequestForm() {
                 <BloodGroupBadge group={values.bloodGroup} />
               </ReviewItem>
               <ReviewItem label={t("common.component")}>
-                {t(`healthcare.${values.component}`, bloodComponentLabels[values.component])}
+                {t(
+                  `healthcare.${values.component}`,
+                  bloodComponentLabels[values.component],
+                )}
               </ReviewItem>
               <ReviewItem label={t("common.quantity")}>
                 <span className="font-semibold tabular-nums">
-                  {values.quantity} {values.quantity === 1 ? t("common.unit") : t("common.units")}
+                  {values.quantity}{" "}
+                  {values.quantity === 1 ? t("common.unit") : t("common.units")}
                 </span>
               </ReviewItem>
               <ReviewItem label={t("common.urgency")}>
                 <UrgencyBadge urgency={values.urgency} />
               </ReviewItem>
               <ReviewItem label={t("hospital.requiredBy")}>
-                <bdi dir="ltr">{formatDateTime(new Date(values.requiredAt).toISOString())}</bdi>
+                <bdi dir="ltr">
+                  {formatDateTime(new Date(values.requiredAt).toISOString())}
+                </bdi>
               </ReviewItem>
-              <ReviewItem label={t("hospital.diagnosis")}>{values.reason}</ReviewItem>
+              <ReviewItem label={t("hospital.diagnosis")}>
+                {values.reason}
+              </ReviewItem>
               {values.notes ? (
-                <ReviewItem label={t("hospital.operationalNotes")} className="sm:col-span-2">
+                <ReviewItem
+                  label={t("hospital.operationalNotes")}
+                  className="sm:col-span-2"
+                >
                   {values.notes}
                 </ReviewItem>
               ) : null}
@@ -557,7 +604,10 @@ export function RequestForm() {
                   setStep("blood_bank");
                 }}
               >
-                <ArrowLeft aria-hidden="true" className="size-4 rtl:rotate-180" />
+                <ArrowLeft
+                  aria-hidden="true"
+                  className="size-4 rtl:rotate-180"
+                />
                 {t("hospital.selectTargetBank")}
               </Button>
               <Button
@@ -575,9 +625,11 @@ export function RequestForm() {
 
       <aside
         aria-label={t("hospital.guidelinesTitle")}
-        className="self-start border border-border bg-surface-subtle p-5 xl:sticky xl:top-24"
+        className="self-start rounded-lg border border-border/80 bg-surface-subtle p-5 shadow-2xs xl:sticky xl:top-24"
       >
-        <h2 className="text-sm font-semibold">{t("hospital.guidelinesTitle")}</h2>
+        <h2 className="text-sm font-semibold">
+          {t("hospital.guidelinesTitle")}
+        </h2>
         <ul className="mt-3 space-y-3 text-sm leading-6 text-muted-foreground">
           <li>{t("hospital.guidelineNearestBank")}</li>
           <li>{t("hospital.guidelineCompatibility")}</li>

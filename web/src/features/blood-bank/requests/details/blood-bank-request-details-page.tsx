@@ -74,8 +74,14 @@ export function BloodBankRequestDetailsPage() {
     return (
       <BloodBankPageFrame
         breadcrumbs={[
-          { label: t("nav.bloodBankOperations", "Blood bank"), href: "/blood-bank/dashboard" },
-          { label: t("nav.requestQueue", "Request queue"), href: "/blood-bank/requests" },
+          {
+            label: t("nav.bloodBankOperations", "Blood bank"),
+            href: "/blood-bank/dashboard",
+          },
+          {
+            label: t("nav.requestQueue", "Request queue"),
+            href: "/blood-bank/requests",
+          },
           { label: id || t("common.loading", "Loading") },
         ]}
         title={t("common.loadingRecords", "Loading clinical records…")}
@@ -90,16 +96,28 @@ export function BloodBankRequestDetailsPage() {
     return (
       <BloodBankPageFrame
         breadcrumbs={[
-          { label: t("nav.bloodBankOperations", "Blood bank"), href: "/blood-bank/dashboard" },
-          { label: t("nav.requestQueue", "Request queue"), href: "/blood-bank/requests" },
+          {
+            label: t("nav.bloodBankOperations", "Blood bank"),
+            href: "/blood-bank/dashboard",
+          },
+          {
+            label: t("nav.requestQueue", "Request queue"),
+            href: "/blood-bank/requests",
+          },
           { label: id },
         ]}
         title={t("common.error", "Error")}
-        description={t("errors.notFoundDescription", "The requested clinical page or resource does not exist or has moved.")}
+        description={t(
+          "errors.notFoundDescription",
+          "The requested clinical page or resource does not exist or has moved.",
+        )}
       >
         <ErrorState
           title={t("common.error", "Error")}
-          description={t("errors.notFoundDescription", "The requested clinical page or resource does not exist or has moved.")}
+          description={t(
+            "errors.notFoundDescription",
+            "The requested clinical page or resource does not exist or has moved.",
+          )}
           onRetry={() => {
             void requestQuery.refetch();
             void unitsQuery.refetch();
@@ -113,20 +131,35 @@ export function BloodBankRequestDetailsPage() {
     return (
       <BloodBankPageFrame
         breadcrumbs={[
-          { label: t("nav.bloodBankOperations", "Blood bank"), href: "/blood-bank/dashboard" },
-          { label: t("nav.requestQueue", "Request queue"), href: "/blood-bank/requests" },
+          {
+            label: t("nav.bloodBankOperations", "Blood bank"),
+            href: "/blood-bank/dashboard",
+          },
+          {
+            label: t("nav.requestQueue", "Request queue"),
+            href: "/blood-bank/requests",
+          },
           { label: id },
         ]}
         title={t("common.noRecordsTitle", "No records found")}
-        description={t("common.noRecordsDesc", "There are no clinical records matching your active filters or search criteria.")}
+        description={t(
+          "common.noRecordsDesc",
+          "There are no clinical records matching your active filters or search criteria.",
+        )}
       >
         <EmptyState
           title={t("common.noRecordsTitle", "No records found")}
-          description={t("common.noRecordsDesc", "There are no clinical records matching your active filters or search criteria.")}
+          description={t(
+            "common.noRecordsDesc",
+            "There are no clinical records matching your active filters or search criteria.",
+          )}
           action={
             <Button asChild variant="secondary">
               <Link to="/blood-bank/requests">
-                <ArrowLeft aria-hidden="true" className="size-4 rtl:rotate-180" />
+                <ArrowLeft
+                  aria-hidden="true"
+                  className="size-4 rtl:rotate-180"
+                />
                 {t("bloodBank.backToQueue", "Back to queue")}
               </Link>
             </Button>
@@ -218,8 +251,7 @@ export function BloodBankRequestDetailsPage() {
     } catch (err) {
       setFeedback({
         tone: "error",
-        message:
-          err instanceof Error ? err.message : "Failed to remove unit.",
+        message: err instanceof Error ? err.message : "Failed to remove unit.",
       });
     } finally {
       setActiveUnitId(undefined);
@@ -245,13 +277,16 @@ export function BloodBankRequestDetailsPage() {
       setFeedback({
         tone: "error",
         message:
-          err instanceof Error ? err.message : "Failed to update document status.",
+          err instanceof Error
+            ? err.message
+            : "Failed to update document status.",
       });
     }
   };
 
   // Workflow state controls
-  const canAccept = request.status === "submitted" && acceptedUnitPrice === undefined;
+  const canAccept =
+    request.status === "submitted" && acceptedUnitPrice === undefined;
   const canConfirm = request.status === "acknowledged";
   const canStartPreparation = request.status === "confirmed";
   const canComplete = request.status === "preparing";
@@ -261,15 +296,23 @@ export function BloodBankRequestDetailsPage() {
   const canGenerateQr = ["confirmed", "preparing", "completed"].includes(
     request.status,
   );
-  const canManageAllocation = ["confirmed", "preparing"].includes(request.status);
+  const canManageAllocation = ["confirmed", "preparing"].includes(
+    request.status,
+  );
 
   const isTransitionPending = transitionMutation.isPending;
 
   return (
     <BloodBankPageFrame
       breadcrumbs={[
-        { label: t("nav.bloodBankOperations", "Blood bank"), href: "/blood-bank/dashboard" },
-        { label: t("nav.requestQueue", "Request queue"), href: "/blood-bank/requests" },
+        {
+          label: t("nav.bloodBankOperations", "Blood bank"),
+          href: "/blood-bank/dashboard",
+        },
+        {
+          label: t("nav.requestQueue", "Request queue"),
+          href: "/blood-bank/requests",
+        },
         { label: request.id },
       ]}
       title={`${request.id} — ${t("bloodBank.requisitionReview", "Requisition Review")}`}
@@ -282,79 +325,106 @@ export function BloodBankRequestDetailsPage() {
           {canAccept ? (
             <Button
               type="button"
+              size="icon"
               onClick={() => setAcceptPricingOpen(true)}
+              title={t("bloodBank.acceptAndPrice", "Accept & set pricing")}
+              aria-label={t("bloodBank.acceptAndPrice", "Accept & set pricing")}
             >
-              <Check aria-hidden="true" className="size-4" />
-              {t("bloodBank.acceptAndPrice", "Accept & set pricing")}
+              <Check aria-hidden="true" />
             </Button>
           ) : null}
 
           {canConfirm ? (
             <Button
               type="button"
+              size="icon"
               disabled={isTransitionPending}
               onClick={() => void handleTransition("confirm")}
+              title={t("bloodBank.confirmAllocation", "Confirm allocation")}
+              aria-label={t(
+                "bloodBank.confirmAllocation",
+                "Confirm allocation",
+              )}
             >
               {isTransitionPending ? (
-                <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="size-4 animate-spin"
+                />
               ) : (
                 <PackageCheck aria-hidden="true" className="size-4" />
               )}
-              {t("bloodBank.confirmAllocation", "Confirm allocation")}
             </Button>
           ) : null}
 
           {canStartPreparation ? (
             <Button
               type="button"
+              size="icon"
               disabled={isTransitionPending}
               onClick={() => void handleTransition("start_preparation")}
+              title={t("bloodBank.startPreparation", "Start preparation")}
+              aria-label={t("bloodBank.startPreparation", "Start preparation")}
             >
               {isTransitionPending ? (
-                <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="size-4 animate-spin"
+                />
               ) : (
                 <PackageOpen aria-hidden="true" className="size-4" />
               )}
-              {t("bloodBank.startPreparation", "Start preparation")}
             </Button>
           ) : null}
 
           {canComplete ? (
             <Button
               type="button"
+              size="icon"
               disabled={isTransitionPending}
               onClick={() => void handleTransition("complete")}
+              title={t("bloodBank.markCompleted", "Mark completed")}
+              aria-label={t("bloodBank.markCompleted", "Mark completed")}
             >
               {isTransitionPending ? (
-                <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="size-4 animate-spin"
+                />
               ) : (
                 <CheckCircle2 aria-hidden="true" className="size-4" />
               )}
-              {t("bloodBank.markCompleted", "Mark completed")}
             </Button>
           ) : null}
 
           {canGenerateQr ? (
             <Button
               type="button"
+              size="icon"
               variant="secondary"
               onClick={() => setDispatchQrOpen(true)}
+              title={t("bloodBank.dispatchQrWaybill", "Dispatch QR & Waybill")}
+              aria-label={t(
+                "bloodBank.dispatchQrWaybill",
+                "Dispatch QR & Waybill",
+              )}
             >
-              <QrCode aria-hidden="true" className="size-4 text-primary" />
-              {t("bloodBank.dispatchQrWaybill", "Dispatch QR & Waybill")}
+              <QrCode aria-hidden="true" className="text-primary" />
             </Button>
           ) : null}
 
           {canReject ? (
             <Button
               type="button"
+              size="icon"
               variant="secondary"
               className="text-destructive hover:text-destructive"
               disabled={isTransitionPending}
               onClick={() => setRejectModalOpen(true)}
+              title={t("bloodBank.rejectRequest", "Reject request")}
+              aria-label={t("bloodBank.rejectRequest", "Reject request")}
             >
-              <X aria-hidden="true" className="size-4" />
-              {t("bloodBank.rejectRequest", "Reject request")}
+              <X aria-hidden="true" />
             </Button>
           ) : null}
 
@@ -396,14 +466,18 @@ export function BloodBankRequestDetailsPage() {
               onRemoveUnit={(unitId) => void handleRemoveUnit(unitId)}
               onViewHistory={setHistoryBagId}
               onOpenBarcodeAllocation={
-                canManageAllocation ? () => setBarcodeAllocationOpen(true) : undefined
+                canManageAllocation
+                  ? () => setBarcodeAllocationOpen(true)
+                  : undefined
               }
             />
 
             <UnitAllocationTable
               request={request}
               units={units}
-              isPending={allocateMutation.isPending || reserveMutation.isPending}
+              isPending={
+                allocateMutation.isPending || reserveMutation.isPending
+              }
               onAllocateUnits={(unitIds) => void handleAllocate(unitIds)}
               onReserveUnits={(unitIds) => void handleReserve(unitIds)}
               onViewHistory={setHistoryBagId}

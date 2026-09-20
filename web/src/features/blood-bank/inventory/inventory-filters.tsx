@@ -1,4 +1,4 @@
-import { RotateCcw, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -31,11 +31,14 @@ export function InventoryFilters({
 
   const statusOptions: { value: BloodUnitStatus | "all"; label: string }[] = [
     { value: "all", label: t("hospital.allStatuses", "All statuses") },
-    { value: "available", label: t("status.available", "Available") },
-    { value: "reserved", label: t("status.reserved", "Reserved") },
-    { value: "allocated", label: t("status.allocated", "Allocated") },
-    { value: "quarantined", label: t("status.quarantined", "Quarantined") },
-    { value: "expired", label: t("status.expired", "Expired") },
+    { value: "available", label: `✅ ${t("status.available", "Available")}` },
+    { value: "reserved", label: `🕒 ${t("status.reserved", "Reserved")}` },
+    { value: "allocated", label: `🕒 ${t("status.allocated", "Allocated")}` },
+    {
+      value: "quarantined",
+      label: `⚠️ ${t("status.quarantined", "Quarantined")}`,
+    },
+    { value: "expired", label: `❌ ${t("status.expired", "Expired")}` },
   ];
 
   const expiryOptions: { value: ExpiryWindowFilter; label: string }[] = [
@@ -55,7 +58,7 @@ export function InventoryFilters({
     filters.sortBy !== "expiry_soonest";
 
   return (
-    <div className="flex flex-col gap-3 border border-border bg-surface p-4">
+    <div className="flex flex-col gap-2.5 rounded-lg border border-border/80 bg-surface p-4 shadow-2xs">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative min-w-[15rem] flex-1">
@@ -65,8 +68,14 @@ export function InventoryFilters({
           />
           <Input
             type="search"
-            aria-label={t("bloodBank.searchUnits", "Search units by ID, location, or request")}
-            placeholder={t("bloodBank.searchUnits", "Search Unit ID, location, or notes...")}
+            aria-label={t(
+              "bloodBank.searchUnits",
+              "Search units by ID, location, or request",
+            )}
+            placeholder={t(
+              "bloodBank.searchUnits",
+              "Search Unit ID, location, or notes...",
+            )}
             value={filters.search}
             onChange={(e) => onChange({ ...filters, search: e.target.value })}
             className="h-9 ps-9 text-xs"
@@ -82,7 +91,6 @@ export function InventoryFilters({
             onClick={onReset}
             className="h-9 text-xs"
           >
-            <RotateCcw aria-hidden="true" className="size-3.5" />
             {t("hospital.clearFilters", "Reset filters")}
           </Button>
         ) : null}
@@ -104,9 +112,11 @@ export function InventoryFilters({
                 bloodGroup: e.target.value as BloodGroup | "all",
               })
             }
-            className="h-8 w-full rounded-none border border-field-stroke bg-background px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            className="h-9 w-full rounded-md border border-input bg-surface px-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           >
-            <option value="all">{t("hospital.allBloodGroups", "All blood groups")}</option>
+            <option value="all">
+              {t("hospital.allBloodGroups", "All blood groups")}
+            </option>
             {ALL_BLOOD_GROUPS.map((g) => (
               <option key={g} value={g}>
                 {g}
@@ -129,9 +139,11 @@ export function InventoryFilters({
                 component: e.target.value as BloodBankComponent | "all",
               })
             }
-            className="h-8 w-full rounded-none border border-field-stroke bg-background px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            className="h-9 w-full rounded-md border border-input bg-surface px-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           >
-            <option value="all">{t("bloodBank.allComponents", "All components")}</option>
+            <option value="all">
+              {t("bloodBank.allComponents", "All components")}
+            </option>
             {ALL_COMPONENTS.map((c) => (
               <option key={c} value={c}>
                 {bloodBankComponentLabels[c]}
@@ -154,7 +166,7 @@ export function InventoryFilters({
                 status: e.target.value as BloodUnitStatus | "all",
               })
             }
-            className="h-8 w-full rounded-none border border-field-stroke bg-background px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            className="h-9 w-full rounded-md border border-input bg-surface px-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           >
             {statusOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -178,7 +190,7 @@ export function InventoryFilters({
                 expiryWindow: e.target.value as ExpiryWindowFilter,
               })
             }
-            className="h-8 w-full rounded-none border border-field-stroke bg-background px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            className="h-9 w-full rounded-md border border-input bg-surface px-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           >
             {expiryOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -202,12 +214,20 @@ export function InventoryFilters({
                 sortBy: e.target.value as InventoryLedgerFilters["sortBy"],
               })
             }
-            className="h-8 w-full rounded-none border border-field-stroke bg-background px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            className="h-9 w-full rounded-md border border-input bg-surface px-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           >
-            <option value="expiry_soonest">{t("hospital.requiredSoonest", "Expiry: Soonest first")}</option>
-            <option value="expiry_latest">{t("hospital.oldestFirst", "Expiry: Latest first")}</option>
-            <option value="collection_newest">{t("hospital.newestFirst", "Collection: Newest first")}</option>
-            <option value="id_asc">{t("bloodBank.unitId", "Unit ID: A to Z")}</option>
+            <option value="expiry_soonest">
+              {t("hospital.requiredSoonest", "Expiry: Soonest first")}
+            </option>
+            <option value="expiry_latest">
+              {t("hospital.oldestFirst", "Expiry: Latest first")}
+            </option>
+            <option value="collection_newest">
+              {t("hospital.newestFirst", "Collection: Newest first")}
+            </option>
+            <option value="id_asc">
+              {t("bloodBank.unitId", "Unit ID: A to Z")}
+            </option>
           </select>
         </div>
       </div>

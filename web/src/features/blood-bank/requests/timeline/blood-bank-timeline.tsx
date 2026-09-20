@@ -14,7 +14,10 @@ interface BloodBankTimelineProps {
   events: BloodBankRequestHistoryEvent[];
 }
 
-const standardWorkflowStages: { status: BloodBankQueueStatus; labelKey: string }[] = [
+const standardWorkflowStages: {
+  status: BloodBankQueueStatus;
+  labelKey: string;
+}[] = [
   { status: "submitted", labelKey: "status.submitted" },
   { status: "acknowledged", labelKey: "status.acknowledged" },
   { status: "confirmed", labelKey: "status.confirmed" },
@@ -38,14 +41,20 @@ export function BloodBankTimeline({
   return (
     <section
       aria-labelledby="blood-bank-timeline-heading"
-      className="border border-border bg-surface p-5"
+      className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs"
     >
       <div className="mb-4">
-        <h2 id="blood-bank-timeline-heading" className="text-base font-semibold">
+        <h2
+          id="blood-bank-timeline-heading"
+          className="text-base font-semibold"
+        >
           {t("bloodBank.timelineAudit", "Operational timeline & audit log")}
         </h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {t("bloodBank.timelineAuditDesc", "Track lifecycle state transitions, technician handoffs, and dispatch checkpoints.")}
+          {t(
+            "bloodBank.timelineAuditDesc",
+            "Track lifecycle state transitions, technician handoffs, and dispatch checkpoints.",
+          )}
         </p>
       </div>
 
@@ -100,7 +109,9 @@ export function BloodBankTimeline({
           <XCircle aria-hidden="true" className="size-4 shrink-0" />
           <span>
             {t("bloodBank.terminalNotice", {
-              status: isRejected ? t("status.rejected", "rejected") : t("status.cancelled", "cancelled"),
+              status: isRejected
+                ? t("status.rejected", "rejected")
+                : t("status.cancelled", "cancelled"),
               defaultValue: `This request was ${isRejected ? "rejected" : "cancelled"} and is in a terminal state.`,
             })}
           </span>
@@ -115,15 +126,23 @@ export function BloodBankTimeline({
             <li key={event.id} className="relative pb-6 ps-6 last:pb-0">
               <span className="absolute -start-2.5 top-0.5 flex size-5 items-center justify-center rounded-full bg-surface text-primary">
                 {isLatest ? (
-                  <CheckCircle2 aria-hidden="true" className="size-4 text-primary" />
+                  <CheckCircle2
+                    aria-hidden="true"
+                    className="size-4 text-primary"
+                  />
                 ) : (
-                  <Circle aria-hidden="true" className="size-3 text-muted-foreground" />
+                  <Circle
+                    aria-hidden="true"
+                    className="size-3 text-muted-foreground"
+                  />
                 )}
               </span>
               <div className="flex flex-wrap items-center gap-2">
                 <RequestStatusBadge status={event.status} />
                 <time className="text-xs text-muted-foreground tabular-nums">
-                  <BidiText>{formatBloodBankDateTime(event.occurredAt)}</BidiText>
+                  <BidiText>
+                    {formatBloodBankDateTime(event.occurredAt)}
+                  </BidiText>
                 </time>
               </div>
               <p className="mt-1.5 text-xs font-semibold text-foreground">
