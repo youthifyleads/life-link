@@ -113,13 +113,14 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
 
               return Column(
                 children: [
-                  // 1. Top Bar / Header (Avatar + Greeting + Notification Bell)
+                  // 1. Top Bar / Header (Avatar + Greeting + Guide + Notification Bell)
                   LifeLinkHomeHeader(
                     greeting: greeting,
                     greetingIcon: _getTimeBasedGreetingIcon(),
                     userName: userName,
                     onAvatarTap: () => context.push('/profile'),
                     onNotificationTap: () => context.push('/notifications'),
+                    onGuideTap: () => context.push('/donor/guide'),
                   ),
 
                   // 2. Scrollable Body
@@ -149,7 +150,7 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
                           LifeLinkFadeSlide(
                             delay: const Duration(milliseconds: 25),
                             child: _HeroDonationBanner(
-                              onTap: () => context.push('/donor/eligibility'),
+                              onTap: () => context.push('/donor/guide'),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.lg),
@@ -164,7 +165,16 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
                               onHistoryTap: () => context.push('/donor/vouchers'),
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.xl),
+                          const SizedBox(height: AppSpacing.md),
+
+                          // Quick Egyptian Donation Guide Card
+                          LifeLinkFadeSlide(
+                            delay: const Duration(milliseconds: 75),
+                            child: _EgyptianGuideQuickCard(
+                              onTap: () => context.push('/donor/guide'),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
 
                           // Section 1: "تبرعك القادم" / "Your next donations"
                           LifeLinkFadeSlide(
@@ -465,11 +475,10 @@ class _HeroDonationBannerState extends State<_HeroDonationBanner> {
         children: [
           Row(
             children: [
-              // Brand Logo (clean and static)
+              // Brand Logo (clean, un-squeezed native proportions)
               Image.asset(
                 'assets/images/logo.webp',
-                width: 72,
-                height: 72,
+                height: 74,
                 fit: BoxFit.contain,
               ),
               const SizedBox(width: AppSpacing.md),
@@ -706,6 +715,80 @@ class _CategoryPillState extends State<_CategoryPill> {
   }
 }
 
+// ── 4b. Egyptian Guide Quick Card ─────────────────────────────
+class _EgyptianGuideQuickCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _EgyptianGuideQuickCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isAr = context.isArabic;
+
+    return LifeLinkCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm + 4,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: AppRadii.md,
+            ),
+            child: const Icon(
+              Icons.menu_book_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isAr ? 'دليل وكتالوج التبرع بالدم' : 'Blood Donation Guide',
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    fontFamily: 'Cairo',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isAr
+                      ? 'الشروط، فترات الحظر الطبية، دليل التغذية، والأسئلة الشائعة'
+                      : 'Egyptian standards, deferrals, nutrition & FAQs',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                    fontFamily: 'Cairo',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Icon(
+            isAr ? Icons.arrow_back_ios_new_rounded : Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: AppColors.textSecondary,
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 // ── 5. Section Header with "see all" ──────────────────────────
 class _SectionHeader extends StatelessWidget {

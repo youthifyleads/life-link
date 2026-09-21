@@ -13,6 +13,13 @@ class NotificationBadgeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!getIt.isRegistered<NotificationBloc>()) {
+      return IconButton(
+        tooltip: 'Notifications',
+        icon: const Icon(Icons.notifications_outlined),
+        onPressed: () => context.push('/notifications'),
+      );
+    }
     return BlocProvider(
       create: (_) => getIt<NotificationBloc>()..add(LoadNotificationsEvent()),
       child: BlocBuilder<NotificationBloc, NotificationState>(

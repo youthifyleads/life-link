@@ -424,13 +424,18 @@ class _DonationRequestScreenState extends State<DonationRequestScreen> {
                     backgroundColor: _isConfirmed ? const Color(0xFF2E7D32) : AppColors.primary,
                     onPressed: _isConfirmed
                         ? null // Locked once confirmed; cancellation requires explicit confirmation
-                        : () => _showConfirmAppointmentDialog(
-                              context,
-                              isAr,
-                              hospital: hospital,
-                              date: date,
-                              time: time,
-                            ),
+                        : () async {
+                            final eligible = await context.push<bool>('/donor/medical-quiz');
+                            if (eligible == true && context.mounted) {
+                              _showConfirmAppointmentDialog(
+                                context,
+                                isAr,
+                                hospital: hospital,
+                                date: date,
+                                time: time,
+                              );
+                            }
+                          },
                   ),
                   if (_isConfirmed) ...[
                     const SizedBox(height: AppSpacing.sm),

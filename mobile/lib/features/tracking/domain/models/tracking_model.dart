@@ -16,6 +16,17 @@ class TrackingPublic extends Equatable {
   final String? paymentUrl;
   final String? patientName;
   final String? medicalFileNumber;
+  final int? patientAge;
+  final String? patientGender;
+  final String? hospitalName;
+  final String? department;
+  final String? roomBed;
+  final String? attendingDoctor;
+  final String? diagnosis;
+  final String? currentHemoglobin;
+  final String? urgencyLevel;
+  final String? crossMatchStatus;
+  final String? staffNotes;
 
   const TrackingPublic({
     required this.reference,
@@ -33,6 +44,17 @@ class TrackingPublic extends Equatable {
     this.paymentUrl,
     this.patientName,
     this.medicalFileNumber,
+    this.patientAge,
+    this.patientGender,
+    this.hospitalName,
+    this.department,
+    this.roomBed,
+    this.attendingDoctor,
+    this.diagnosis,
+    this.currentHemoglobin,
+    this.urgencyLevel,
+    this.crossMatchStatus,
+    this.staffNotes,
   });
 
   factory TrackingPublic.fromJson(Map<String, dynamic> json) {
@@ -59,6 +81,17 @@ class TrackingPublic extends Equatable {
       paymentUrl: json['payment_url'] as String?,
       patientName: (json['patient_name'] ?? json['patient_full_name']) as String?,
       medicalFileNumber: (json['medical_record_number'] ?? json['medical_file_number'] ?? json['patient_file']) as String?,
+      patientAge: (json['patient_age'] as num?)?.toInt(),
+      patientGender: json['patient_gender'] as String?,
+      hospitalName: (json['hospital_name'] ?? json['hospital']) as String?,
+      department: (json['department'] ?? json['ward'] ?? json['unit']) as String?,
+      roomBed: (json['room_bed'] ?? json['room'] ?? json['bed']) as String?,
+      attendingDoctor: (json['attending_doctor'] ?? json['doctor_name'] ?? json['doctor']) as String?,
+      diagnosis: (json['diagnosis'] ?? json['clinical_indication'] ?? json['reason']) as String?,
+      currentHemoglobin: json['current_hemoglobin']?.toString(),
+      urgencyLevel: (json['urgency_level'] ?? json['urgency'])?.toString(),
+      crossMatchStatus: (json['cross_match_status'] ?? json['crossmatch']) as String?,
+      staffNotes: (json['staff_notes'] ?? json['hospital_notes'] ?? json['notes']) as String?,
     );
   }
 
@@ -80,5 +113,16 @@ class TrackingPublic extends Equatable {
         quantity,
         patientName,
         medicalFileNumber,
+        patientAge,
+        patientGender,
+        hospitalName,
+        department,
+        roomBed,
+        attendingDoctor,
+        diagnosis,
+        currentHemoglobin,
+        urgencyLevel,
+        crossMatchStatus,
+        staffNotes,
       ];
 }

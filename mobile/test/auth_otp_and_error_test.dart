@@ -38,6 +38,9 @@ class _FakeAuthRemoteDataSource extends AuthRemoteDataSource {
     required String password,
     String? bloodType,
     String? governorate,
+    String? gender,
+    String? nationalId,
+    double? weight,
   }) async {
     return AuthSuccess(
       RegistrationResult(

@@ -101,6 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Image.asset(
                         'assets/images/logo.webp',
                         height: 100,
+                        cacheHeight: 200,
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(height: AppSpacing.sm),

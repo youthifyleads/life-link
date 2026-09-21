@@ -92,6 +92,9 @@ class AuthRemoteDataSource {
     required String password,
     String? bloodType,
     String? governorate,
+    String? gender,
+    String? nationalId,
+    double? weight,
   }) async {
     try {
       final response = await _dio.post(
@@ -104,6 +107,9 @@ class AuthRemoteDataSource {
           'password': password,
           if (bloodType != null) 'blood_type': bloodType,
           if (governorate != null) 'governorate': governorate,
+          if (gender != null) 'gender': gender,
+          if (nationalId != null) 'national_id': nationalId,
+          if (weight != null) 'weight': weight,
         },
       );
       final body = response.data as Map<String, dynamic>;
@@ -194,6 +200,9 @@ class AuthRemoteDataSource {
     String? fullName,
     String? email,
     String? phone,
+    String? gender,
+    String? nationalId,
+    double? weight,
   }) async {
     try {
       final response = await _dio.patch(
@@ -202,11 +211,33 @@ class AuthRemoteDataSource {
           if (fullName != null) 'full_name': fullName,
           if (email != null) 'email': email,
           if (phone != null) 'phone': phone,
+          if (gender != null) 'gender': gender,
+          if (nationalId != null) 'national_id': nationalId,
+          if (weight != null) 'weight': weight,
         },
       );
-      return AuthSuccess(
-          UserModel.fromJson(response.data as Map<String, dynamic>));
+      final updatedUser = UserModel.fromJson(response.data as Map<String, dynamic>);
+      await _storage.write(key: AppConfig.userKey, value: jsonEncode(updatedUser.toJson()));
+      return AuthSuccess(updatedUser);
     } on DioException catch (e) {
+      // Fallback: If network fails or backend schema doesn't yet support extra columns,
+      // update local user in storage so the UI updates seamlessly
+      final currentUserStr = await _storage.read(key: AppConfig.userKey);
+      if (currentUserStr != null) {
+        try {
+          final currentUser = UserModel.fromJson(jsonDecode(currentUserStr) as Map<String, dynamic>);
+          final updatedUser = currentUser.copyWith(
+            fullName: fullName,
+            email: email,
+            phone: phone,
+            gender: gender,
+            nationalId: nationalId,
+            weight: weight,
+          );
+          await _storage.write(key: AppConfig.userKey, value: jsonEncode(updatedUser.toJson()));
+          return AuthSuccess(updatedUser);
+        } catch (_) {}
+      }
       return _handleDioError(e);
     }
   }

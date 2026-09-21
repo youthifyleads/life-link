@@ -30,6 +30,31 @@ void main() {
     expect(patient.bloodType, 'A+');
   });
 
+  test('parses patient with clinical requisition details from hospital staff', () {
+    final patient = PatientModel.fromJson({
+      'id': 'patient-2',
+      'caregiver_id': 'caregiver-1',
+      'full_name': 'سارة أحمد محمود',
+      'blood_type': 'O-',
+      'age': 38,
+      'gender': 'أنثى',
+      'hospital_name': 'مستشفى الدمرداش الجامعي',
+      'department': 'العناية المركزة للباطنة',
+      'room_bed': 'سرير 6 - قسم B',
+      'attending_doctor': 'د. محمود فهمي',
+      'diagnosis': 'فقر دم انحلالي حاد مع هبوط ضغط',
+      'current_hemoglobin': '6.8 g/dL',
+      'urgency_level': 'حرجة للغاية',
+    });
+
+    expect(patient.age, 38);
+    expect(patient.gender, 'أنثى');
+    expect(patient.hospitalName, 'مستشفى الدمرداش الجامعي');
+    expect(patient.currentHemoglobin, '6.8 g/dL');
+    expect(patient.attendingDoctor, 'د. محمود فهمي');
+    expect(patient.urgencyLevel, 'حرجة للغاية');
+  });
+
   test('lists patients from GET /caregiver/patients', () async {
     when(() => dio.get('/caregiver/patients')).thenAnswer(
       (_) async => Response(

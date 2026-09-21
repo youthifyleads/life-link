@@ -123,10 +123,97 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
+
+                // ── Medical & Identity Stats (Gender, Weight, National ID) ──
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Icon(
+                              (user.gender == 'female') ? Icons.female_rounded : Icons.male_rounded,
+                              color: AppColors.primary,
+                              size: 24,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              isAr ? 'النوع' : 'Gender',
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontFamily: 'Cairo'),
+                            ),
+                            Text(
+                              user.gender == 'female'
+                                  ? (isAr ? 'أنثى' : 'Female')
+                                  : (user.gender == 'male' ? (isAr ? 'ذكر' : 'Male') : (isAr ? 'غير محدد' : 'Unspecified')),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(width: 1, height: 40, color: AppColors.border),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            const Icon(Icons.monitor_weight_outlined, color: AppColors.secondaryBlue, size: 24),
+                            const SizedBox(height: 4),
+                            Text(
+                              isAr ? 'الوزن' : 'Weight',
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontFamily: 'Cairo'),
+                            ),
+                            Text(
+                              user.weight != null
+                                  ? '${user.weight!.toStringAsFixed(0)} ${isAr ? "كجم" : "kg"}'
+                                  : (isAr ? 'غير مسجل' : 'N/A'),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(width: 1, height: 40, color: AppColors.border),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            const Icon(Icons.badge_outlined, color: AppColors.success, size: 24),
+                            const SizedBox(height: 4),
+                            Text(
+                              isAr ? 'الرقم القومي' : 'National ID',
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontFamily: 'Cairo'),
+                            ),
+                            Text(
+                              user.nationalId != null && user.nationalId!.isNotEmpty
+                                  ? (user.nationalId!.length == 14 ? '••••••${user.nationalId!.substring(10)}' : user.nationalId!)
+                                  : (isAr ? 'غير موثق' : 'Unverified'),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
 
                 // ── Options List ───────────────────────────────────
                 _buildCardGroup([
+                  _settingTile(
+                    context,
+                    icon: Icons.menu_book_rounded,
+                    title: isAr
+                        ? 'دليل وكتالوج التبرع بالدم المصري'
+                        : 'Egyptian Blood Donation Guide',
+                    subtitle: isAr
+                        ? 'شروط بنوك الدم، فترات الانتظار، الأسباب الطبية، والتغذية'
+                        : 'Egyptian criteria, deferral rules, medical rationale & nutrition',
+                    onTap: () => context.push('/donor/guide'),
+                  ),
                   if (user.role.canAccessDonorFeatures)
                     _settingTile(
                       context,
@@ -213,6 +300,11 @@ class ProfileScreen extends StatelessWidget {
     final nameController = TextEditingController(text: user.fullName);
     final emailController = TextEditingController(text: user.email);
     final phoneController = TextEditingController(text: user.phone ?? '');
+    final nationalIdController = TextEditingController(text: user.nationalId ?? '');
+    final weightController = TextEditingController(
+      text: user.weight != null ? user.weight!.toStringAsFixed(0) : '',
+    );
+    String selectedGender = user.gender ?? 'male';
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
 
@@ -299,7 +391,7 @@ class ProfileScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 16),
-                    // 3. Phone Field with proper LTR layout and prefix
+                    // 3. Phone Field
                     LifeLinkTextField(
                       controller: phoneController,
                       label: 'رقم الهاتف',
@@ -313,6 +405,141 @@ class ProfileScreen extends StatelessWidget {
                         }
                         return null;
                       },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 4. Gender Selection
+                    const Text(
+                      'النوع (الجندر)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setDialogState(() => selectedGender = 'male'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: selectedGender == 'male'
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : AppColors.surfaceVariant,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: selectedGender == 'male'
+                                      ? AppColors.primary
+                                      : AppColors.border,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.male_rounded,
+                                    size: 18,
+                                    color: selectedGender == 'male'
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'ذكر',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Cairo',
+                                      color: selectedGender == 'male'
+                                          ? AppColors.primary
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setDialogState(() => selectedGender = 'female'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: selectedGender == 'female'
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : AppColors.surfaceVariant,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: selectedGender == 'female'
+                                      ? AppColors.primary
+                                      : AppColors.border,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.female_rounded,
+                                    size: 18,
+                                    color: selectedGender == 'female'
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'أنثى',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Cairo',
+                                      color: selectedGender == 'female'
+                                          ? AppColors.primary
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 5. National ID Field
+                    LifeLinkTextField(
+                      controller: nationalIdController,
+                      label: 'الرقم القومي (14 رقماً)',
+                      hint: '29801010101234',
+                      keyboardType: TextInputType.number,
+                      prefixIcon: Icons.badge_outlined,
+                      validator: (val) {
+                        if (val != null && val.trim().isNotEmpty) {
+                          final clean = val.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                          if (clean.length != 14) {
+                            return 'الرقم القومي يتطلب 14 رقماً';
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 6. Weight Field
+                    LifeLinkTextField(
+                      controller: weightController,
+                      label: 'الوزن (كجم)',
+                      hint: 'مثال: 72',
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      prefixIcon: Icons.monitor_weight_outlined,
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -355,6 +582,11 @@ class ProfileScreen extends StatelessWidget {
                                 fullName: nameController.text.trim(),
                                 email: emailController.text.trim(),
                                 phone: phoneController.text.trim(),
+                                gender: selectedGender,
+                                nationalId: nationalIdController.text.trim().isEmpty
+                                    ? null
+                                    : nationalIdController.text.trim(),
+                                weight: double.tryParse(weightController.text.trim()),
                               );
                               if (!dialogContext.mounted) return;
                               if (result is AuthSuccess<UserModel>) {

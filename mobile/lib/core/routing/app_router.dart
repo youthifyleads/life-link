@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,6 +35,8 @@ import '../../features/donor/presentation/screens/donor_urgent_alerts_screen.dar
 import '../../features/donor/presentation/screens/donor_campaigns_screen.dart';
 import '../../features/donor/presentation/screens/hospital_location_screen.dart';
 import '../../features/donor/presentation/screens/donation_request_screen.dart';
+import '../../features/donor/presentation/screens/donation_guide_screen.dart';
+import '../../features/donor/presentation/screens/medical_screening_quiz_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/payments/presentation/screens/payment_screen.dart';
 import '../../features/payments/presentation/screens/payment_history_screen.dart';
@@ -42,11 +45,50 @@ import '../../features/payments/data/payment_repository.dart';
 import '../di/injection.dart';
 import '../widgets/unavailable_feature_screen.dart';
 
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+      (dynamic _) => notifyListeners(),
+    );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
 class AppRouter {
   AppRouter._();
 
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
+
+  static GoRouter? _routerInstance;
+  static AuthBloc? _boundAuthBloc;
+
+  /// Optimized single-instance router using [refreshListenable] to re-evaluate
+  /// redirects without discarding navigator state or tearing down screens.
+  static GoRouter getRouter(AuthBloc authBloc) {
+    if (_routerInstance != null && identical(_boundAuthBloc, authBloc)) {
+      return _routerInstance!;
+    }
+    _boundAuthBloc = authBloc;
+    _routerInstance = _buildRouter(authBloc);
+    return _routerInstance!;
+  }
+
+  /// Backward-compatible router accessor.
+  static GoRouter createRouter([dynamic auth]) {
+    if (auth is AuthBloc) {
+      return getRouter(auth);
+    }
+    return getRouter(getIt<AuthBloc>());
+  }
 
   static CustomTransitionPage<T> _buildSmoothPage<T>({
     required BuildContext context,
@@ -78,10 +120,11 @@ class AppRouter {
     );
   }
 
-  static GoRouter createRouter(AuthState authState) {
+  static GoRouter _buildRouter(AuthBloc authBloc) {
     return GoRouter(
       navigatorKey: navigatorKey,
       initialLocation: '/login',
+      refreshListenable: GoRouterRefreshStream(authBloc.stream),
       errorBuilder: (context, state) => Scaffold(
         backgroundColor: Colors.white,
         body: Center(
@@ -106,6 +149,7 @@ class AppRouter {
         ),
       ),
       redirect: (context, state) {
+        final authState = authBloc.state;
         final isAuthRoute = state.uri.path.startsWith('/login') ||
             state.uri.path.startsWith('/register') ||
             state.uri.path.startsWith('/forgot-password') ||
@@ -404,8 +448,9 @@ class AppRouter {
           pageBuilder: (context, state) {
             final requestId = state.uri.queryParameters['requestId'];
             Widget child;
-            if (authState is! AuthAuthenticated ||
-                !authState.user.role.isCaregiver ||
+            final currentAuth = authBloc.state;
+            if (currentAuth is! AuthAuthenticated ||
+                !currentAuth.user.role.isCaregiver ||
                 requestId == null ||
                 requestId.isEmpty) {
               child = const UnavailableFeatureScreen(
@@ -553,6 +598,28 @@ class AppRouter {
             state: state,
             child: const DonorVouchersScreen(),
           ),
+        ),
+        GoRoute(
+          path: '/donor/guide',
+          pageBuilder: (context, state) => _buildSmoothPage(
+            context: context,
+            state: state,
+            child: const DonationGuideScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/donor/medical-quiz',
+          pageBuilder: (context, state) {
+            final extra = state.extra;
+            final onEligible = extra is VoidCallback ? extra : null;
+            return _buildSmoothPage(
+              context: context,
+              state: state,
+              child: MedicalScreeningQuizScreen(
+                onEligibleProceed: onEligible,
+              ),
+            );
+          },
         ),
 
         // ── Payment ───────────────────────────────────────────────

@@ -12,6 +12,7 @@ class LifeLinkHomeHeader extends StatelessWidget {
   final VoidCallback? onAvatarTap;
   final VoidCallback? onNotificationTap;
   final VoidCallback? onScanTap;
+  final VoidCallback? onGuideTap;
 
   const LifeLinkHomeHeader({
     super.key,
@@ -21,6 +22,7 @@ class LifeLinkHomeHeader extends StatelessWidget {
     this.onAvatarTap,
     this.onNotificationTap,
     this.onScanTap,
+    this.onGuideTap,
   });
 
   @override
@@ -71,6 +73,24 @@ class LifeLinkHomeHeader extends StatelessWidget {
               ],
             ),
           ),
+
+          // Guide Button
+          if (onGuideTap != null) ...[
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: AppShadows.soft,
+                border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 20),
+                onPressed: onGuideTap,
+                tooltip: 'دليل التبرع بالدم',
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+          ],
 
           // Scan QR Button
           if (onScanTap != null) ...[

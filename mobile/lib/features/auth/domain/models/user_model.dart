@@ -110,6 +110,9 @@ class UserModel extends Equatable {
   final String? phone;
   final String? institutionId;
   final bool isActive;
+  final String? gender; // 'male' or 'female'
+  final String? nationalId; // 14-digit Egyptian National ID
+  final double? weight; // Weight in KG
 
   const UserModel({
     required this.id,
@@ -119,6 +122,9 @@ class UserModel extends Equatable {
     this.phone,
     this.institutionId,
     this.isActive = true,
+    this.gender,
+    this.nationalId,
+    this.weight,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -129,6 +135,11 @@ class UserModel extends Equatable {
         phone: json['phone'] as String?,
         institutionId: json['institution_id'] as String?,
         isActive: json['is_active'] as bool? ?? true,
+        gender: json['gender'] as String?,
+        nationalId: json['national_id'] as String?,
+        weight: (json['weight'] is num)
+            ? (json['weight'] as num).toDouble()
+            : (double.tryParse(json['weight']?.toString() ?? '')),
       );
 
   Map<String, dynamic> toJson() => {
@@ -139,9 +150,48 @@ class UserModel extends Equatable {
         'phone': phone,
         'institution_id': institutionId,
         'is_active': isActive,
+        'gender': gender,
+        'national_id': nationalId,
+        'weight': weight,
       };
 
+  UserModel copyWith({
+    String? id,
+    String? email,
+    String? fullName,
+    UserRole? role,
+    String? phone,
+    String? institutionId,
+    bool? isActive,
+    String? gender,
+    String? nationalId,
+    double? weight,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      fullName: fullName ?? this.fullName,
+      role: role ?? this.role,
+      phone: phone ?? this.phone,
+      institutionId: institutionId ?? this.institutionId,
+      isActive: isActive ?? this.isActive,
+      gender: gender ?? this.gender,
+      nationalId: nationalId ?? this.nationalId,
+      weight: weight ?? this.weight,
+    );
+  }
+
   @override
-  List<Object?> get props =>
-      [id, email, fullName, role, phone, institutionId, isActive];
+  List<Object?> get props => [
+        id,
+        email,
+        fullName,
+        role,
+        phone,
+        institutionId,
+        isActive,
+        gender,
+        nationalId,
+        weight,
+      ];
 }

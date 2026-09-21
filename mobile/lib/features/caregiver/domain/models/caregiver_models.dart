@@ -4,6 +4,15 @@ class PatientModel {
   final String bloodType;
   final String? hospitalId;
   final String? notes;
+  final int? age;
+  final String? gender;
+  final String? hospitalName;
+  final String? department;
+  final String? roomBed;
+  final String? attendingDoctor;
+  final String? diagnosis;
+  final String? currentHemoglobin;
+  final String? urgencyLevel;
 
   const PatientModel({
     required this.id,
@@ -11,6 +20,15 @@ class PatientModel {
     required this.bloodType,
     this.hospitalId,
     this.notes,
+    this.age,
+    this.gender,
+    this.hospitalName,
+    this.department,
+    this.roomBed,
+    this.attendingDoctor,
+    this.diagnosis,
+    this.currentHemoglobin,
+    this.urgencyLevel,
   });
 
   factory PatientModel.fromJson(Map<String, dynamic> json) => PatientModel(
@@ -19,6 +37,15 @@ class PatientModel {
         bloodType: json['blood_type'] as String? ?? '',
         hospitalId: json['hospital_id'] as String?,
         notes: json['notes'] as String?,
+        age: (json['age'] as num?)?.toInt(),
+        gender: json['gender'] as String?,
+        hospitalName: (json['hospital_name'] ?? json['hospital']) as String?,
+        department: (json['department'] ?? json['ward']) as String?,
+        roomBed: (json['room_bed'] ?? json['bed']) as String?,
+        attendingDoctor: (json['attending_doctor'] ?? json['doctor']) as String?,
+        diagnosis: (json['diagnosis'] ?? json['indication']) as String?,
+        currentHemoglobin: json['current_hemoglobin']?.toString(),
+        urgencyLevel: json['urgency_level'] as String?,
       );
 }
 

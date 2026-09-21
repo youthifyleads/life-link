@@ -1,28 +1,57 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-18T21:21:40Z",
+  "generatedAt": "2026-09-21T17:35:00Z",
   "title": "Design System: LifeLink Mobile",
   "extensions": {
     "colorMeta": {
-      "primary": { "role": "primary", "displayName": "LifeLink Crimson", "canonical": "#CC3D4A", "tonalRamp": ["#4D0A12", "#7A1624", "#9E2938", "#CC3D4A", "#DE5B67", "#EFA4AC", "#FBE9EB", "#FFF5F6"] },
-      "secondary": { "role": "secondary", "displayName": "Clinical Blue", "canonical": "#2F6F9F", "tonalRamp": ["#0E2A3F", "#1A496B", "#2F6F9F", "#4889BD", "#74A8D3", "#A8C9E6", "#EAF3F9", "#F5F9FD"] },
-      "navy": { "role": "neutral", "displayName": "Deep Navy Ink", "canonical": "#0E2438", "tonalRamp": ["#050F18", "#0E2438", "#1A3954", "#2B5072", "#487198", "#7A9CBF", "#C0D2E4", "#F0F5FA"] },
-      "background": { "role": "background", "displayName": "Clinical Off-White", "canonical": "#F7F9FB", "tonalRamp": ["#B0BAC3", "#C9D2DA", "#DEE4EB", "#EAF0F5", "#F0F4F7", "#F7F9FB", "#FAFCFD", "#FFFFFF"] },
-      "surface": { "role": "surface", "displayName": "Pure Clinical Surface", "canonical": "#FFFFFF", "tonalRamp": ["#CCCCCC", "#E0E0E0", "#EBEBEB", "#F5F5F5", "#FAFAFA", "#FCFCFC", "#FEFEFE", "#FFFFFF"] }
+      "primary": {
+        "role": "primary",
+        "displayName": "Medical Red",
+        "canonical": "#E53935",
+        "tonalRamp": ["#4A0C0B", "#7F1D1D", "#C62828", "#E53935", "#EF5350", "#E57373", "#FFCDD2", "#FFECEE"]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Clinical Blue",
+        "canonical": "#1E88E5",
+        "tonalRamp": ["#0D2F4F", "#1565C0", "#1E88E5", "#42A5F5", "#64B5F6", "#90CAF9", "#BBDEFB", "#E8F3FF"]
+      },
+      "navy": {
+        "role": "neutral",
+        "displayName": "Slate Navy Ink",
+        "canonical": "#1E293B",
+        "tonalRamp": ["#0A0F18", "#0F172A", "#1E293B", "#334155", "#475569", "#64748B", "#94A3B8", "#CBD5E1"]
+      },
+      "background": {
+        "role": "background",
+        "displayName": "Clinical Off-White",
+        "canonical": "#F8F9FA",
+        "tonalRamp": ["#B4BCC4", "#CBD2D9", "#DFE4EA", "#E9ECEF", "#F1F3F5", "#F8F9FA", "#FBFCFD", "#FFFFFF"]
+      },
+      "surface": {
+        "role": "surface",
+        "displayName": "Pure Clinical Surface",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#CCCCCC", "#E0E0E0", "#EBEBEB", "#F5F5F5", "#FAFAFA", "#FCFCFC", "#FEFEFE", "#FFFFFF"]
+      }
     },
     "typographyMeta": {
       "display": { "displayName": "Display Cairo", "purpose": "Hero headlines & large counters" },
       "headline": { "displayName": "Headline Cairo", "purpose": "Screen and section titles" },
       "title": { "displayName": "Title Cairo", "purpose": "Card titles and group headers" },
-      "body": { "displayName": "Body Cairo", "purpose": "Reassuring medical copy and instructions" },
-      "label": { "displayName": "Label Cairo", "purpose": "Action buttons and status chips" }
+      "body": { "displayName": "Body Cairo", "purpose": "Reassuring medical copy, instructions & notes" },
+      "label": { "displayName": "Label Cairo", "purpose": "Action buttons, pill tags & status chips" }
     },
     "shadows": [
-      { "name": "soft-ambient", "value": "0 4px 10px rgba(0, 0, 0, 0.06)", "purpose": "Subtle card depth over canvas" },
-      { "name": "elevated-hero", "value": "0 6px 16px rgba(204, 61, 74, 0.22)", "purpose": "Primary emergency action button glow" }
+      { "name": "soft-ambient", "value": "0 4px 16px rgba(0, 0, 0, 0.03)", "purpose": "Subtle card depth over canvas" },
+      { "name": "card-depth", "value": "0 6px 20px rgba(0, 0, 0, 0.05)", "purpose": "Prominent clinical cards & patient sheets" },
+      { "name": "elevated-hero", "value": "0 6px 16px rgba(229, 57, 53, 0.16)", "purpose": "Primary emergency action button glow" },
+      { "name": "bottom-nav", "value": "0 -4px 24px rgba(0, 0, 0, 0.05)", "purpose": "Persistent bottom navigation dock shadow" }
     ],
     "motion": [
-      { "name": "ease-out-standard", "value": "cubic-bezier(0.0, 0, 0.2, 1)", "purpose": "Smooth Android Material 3 standard exit/entry" }
+      { "name": "ease-out-cubic", "value": "cubic-bezier(0.215, 0.61, 0.355, 1.0)", "purpose": "Gentle 200ms entrance with 3px micro-offset" },
+      { "name": "heartbeat-cycle", "value": "3800ms periodic pulse with 80% rest", "purpose": "Biological emergency pulsing rhythm" },
+      { "name": "pressable-spring", "value": "cubic-bezier(0.0, 0, 0.2, 1)", "purpose": "0.99 tactile press feedback in 80ms" }
     ],
     "breakpoints": [
       { "name": "compact", "value": "412px" },
@@ -34,40 +63,44 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Primary action button with crimson fill and high contrast typography",
-      "html": "<button class=\"ds-btn-primary\">تسجيل الدخول</button>",
-      "css": ".ds-btn-primary { background: #CC3D4A; color: #FFFFFF; font-family: Cairo, sans-serif; font-weight: 700; font-size: 16px; border: none; border-radius: 12px; padding: 16px 24px; min-height: 52px; width: 100%; box-shadow: 0 4px 12px rgba(204, 61, 74, 0.22); cursor: pointer; transition: all 0.2s cubic-bezier(0,0,0.2,1); } .ds-btn-primary:hover { background: #9E2938; }"
+      "description": "Primary action button with medical red fill and high contrast typography",
+      "html": "<button class=\"ds-btn-primary\">طلب كيس دم عاجل</button>",
+      "css": ".ds-btn-primary { background: #E53935; color: #FFFFFF; font-family: Cairo, sans-serif; font-weight: 700; font-size: 15px; border: none; border-radius: 14px; padding: 14px 24px; min-height: 50px; width: 100%; box-shadow: 0 6px 16px rgba(229, 57, 53, 0.16); cursor: pointer; transition: all 0.2s cubic-bezier(0,0,0.2,1); } .ds-btn-primary:hover { background: #C62828; }"
     },
     {
-      "name": "Medical Card",
+      "name": "Clinical Status Card",
       "kind": "card",
       "refersTo": "card-clinical",
-      "description": "Clean white card with subtle border and soft ambient shadow",
-      "html": "<div class=\"ds-card-clinical\"><h4>بيانات المريض</h4><p>كود الطلب معتمد ومسجل</p></div>",
-      "css": ".ds-card-clinical { background: #FFFFFF; border: 1px solid #DCE4EA; border-radius: 16px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); font-family: Cairo, sans-serif; }"
+      "description": "Hospital staff requisition card with department, bed, and Hb indicator",
+      "html": "<div class=\"ds-card-clinical\"><div class=\"ds-badge-stat\">طوارئ عاجلة (STAT)</div><h4>رعاية الجراحة المركزة (SICU)</h4><p>الهيموجلوبين: 7.2 g/dL • سرير 4</p></div>",
+      "css": ".ds-card-clinical { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 18px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); font-family: Cairo, sans-serif; } .ds-badge-stat { display: inline-block; background: #FFECEE; color: #E53935; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-bottom: 8px; }"
     }
   ],
   "narrative": {
     "northStar": "The Clinical Vanguard (الطليعة الطبية الهادئة)",
-    "overview": "LifeLink is designed for Egyptian emergency rooms, blood bank logistics, and generous voluntary donors. Its visual atmosphere balances clinical authority with human reassurance. In a crisis, caregivers are stressed and cognitively overloaded; donors want seamless gratitude and clear impact.",
+    "overview": "LifeLink Mobile is an Egyptian clinical blood logistics and emergency donor platform connecting hospitals, certified cold-chain couriers, caregivers, and voluntary donors. Its visual atmosphere balances institutional medical authority with reassuring human clarity.",
     "keyCharacteristics": [
-      "Calm Authority: Clean white cards with whisper borders (#DCE4EA) and soft ambient shadows.",
-      "RTL-Native Ergonomics: Built specifically for Arabic Cairo typography, right-to-left layout flows, and 48dp minimum touch targets.",
-      "Strict Clinical Contrast: WCAG AA compliant text pairings ensuring high visibility under emergency room harsh lighting."
+      "Calm Clinical Authority: Crisp white surfaces framed with whisper borders (#E2E8F0) and diffused ambient shadows.",
+      "RTL-Native Ergonomics: Built specifically for Arabic Cairo typography, right-to-left layout flows, and 48x48 dp touch target compliance.",
+      "Strict Clinical Contrast: WCAG AA compliant text pairings ensuring high visibility under emergency room harsh lighting.",
+      "Evidence-Based Medical Logistics: Reflects authentic Egyptian Blood Bank standards (males 18-60, females 18-40) and official hospital requisition data."
     ],
     "rules": [
-      { "name": "The Rarity of Red Rule", "body": "Crimson red is never used for input focus outlines or decorative borders; input focus must use Clinical Blue to avoid falsely mimicking an error state.", "section": "colors" },
-      { "name": "The Native RTL Rule", "body": "All screen typography and icon orientations must respect Arabic text direction. Directional icons must point along the reading line.", "section": "typography" }
-    ],
-    "dos": [
-      "Do provide native RTL navigation arrows (Icons.arrow_back_rounded) that flip automatically.",
-      "Do maintain a minimum 48x48 dp touch target for all buttons and interactive chips.",
-      "Do use Clinical Blue for input focus indicators to avoid confusion with validation errors."
-    ],
-    "donts": [
-      "Don't hardcode Icons.arrow_back_ios_rounded which points the wrong way in Arabic RTL.",
-      "Don't use Crimson red for input focus borders or neutral outlines.",
-      "Don't allow caregivers to manually initiate blood bag requests or transport fragile blood products."
+      {
+        "name": "The Rarity of Red Rule",
+        "body": "Medical red is strictly reserved for actionable primary buttons, emergency shortage badges, and critical lab values. Input focus must use Clinical Blue to avoid mimicking an error state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Native RTL Rule",
+        "body": "All screen typography and icon orientations must respect Arabic text direction. Directional icons must point along the reading line.",
+        "section": "typography"
+      },
+      {
+        "name": "The Surface Integrity Rule",
+        "body": "Cards sit directly on the #F8F9FA background with a crisp 1px border (#E2E8F0) and soft ambient blur; dark heavy shadows are banned.",
+        "section": "elevation"
+      }
     ]
   }
 }

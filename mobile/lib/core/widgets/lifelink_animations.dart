@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 
 /// Calm, gentle entrance animation combining subtle vertical slide and opacity.
 /// Conforms to Impeccable Motion principles: quiet, dignified deceleration,
-/// micro-offset (6px) to avoid jumpiness, and zero layout thrash.
+/// micro-offset (3px) to avoid jumpiness, and zero layout thrash.
+///
+/// Performance optimizations:
+/// 1. Immediately returns [child] when system "Reduce Motion" or animation disabling is on.
+/// 2. Isolates active entrance frame painting inside a [RepaintBoundary].
+/// 3. Once animation completes ([delayedProgress] >= 1.0), sheds all [Opacity]
+///    and [Transform] layers to eliminate offscreen GPU compositing overhead.
 class LifeLinkFadeSlide extends StatelessWidget {
   final Widget child;
   final Duration delay;
@@ -21,11 +27,15 @@ class LifeLinkFadeSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      return child;
+    }
+
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
       duration: duration + delay,
       curve: curve,
-      builder: (context, progress, child) {
+      builder: (context, progress, childWidget) {
         // Compute effective progress after delay
         final delayedProgress = delay == Duration.zero
             ? progress
@@ -33,14 +43,21 @@ class LifeLinkFadeSlide extends StatelessWidget {
                     (duration.inMilliseconds / (duration + delay).inMilliseconds))
                 .clamp(0.0, 1.0);
 
+        // When completed, eliminate intermediate Opacity and Transform render layers
+        if (delayedProgress >= 1.0) {
+          return childWidget ?? child;
+        }
+
         final curvedVal = curve.transform(delayedProgress);
         final currentOffset = (1.0 - curvedVal) * verticalOffset;
 
-        return Opacity(
-          opacity: curvedVal,
-          child: Transform.translate(
-            offset: Offset(0, currentOffset),
-            child: child,
+        return RepaintBoundary(
+          child: Opacity(
+            opacity: curvedVal,
+            child: Transform.translate(
+              offset: Offset(0, currentOffset),
+              child: childWidget,
+            ),
           ),
         );
       },
@@ -51,6 +68,7 @@ class LifeLinkFadeSlide extends StatelessWidget {
 
 /// Tactile pressable micro-interaction wrapper.
 /// Scales down very subtly to 0.99 on press and smoothly springs back.
+/// Isolated in a [RepaintBoundary] to avoid dirtying siblings during press animation.
 class LifeLinkPressable extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -78,11 +96,13 @@ class _LifeLinkPressableState extends State<LifeLinkPressable> {
       onTapCancel: () => setState(() => _isPressed = false),
       onTap: widget.onTap,
       behavior: HitTestBehavior.opaque,
-      child: AnimatedScale(
-        scale: _isPressed ? widget.pressedScale : 1.0,
-        duration: const Duration(milliseconds: 80),
-        curve: Curves.easeOutCubic,
-        child: widget.child,
+      child: RepaintBoundary(
+        child: AnimatedScale(
+          scale: _isPressed ? widget.pressedScale : 1.0,
+          duration: const Duration(milliseconds: 80),
+          curve: Curves.easeOutCubic,
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -90,6 +110,7 @@ class _LifeLinkPressableState extends State<LifeLinkPressable> {
 
 /// Calm biological pulsing rhythm for clinical emergency indicators.
 /// Uses a barely perceptible scale delta (2%) and a relaxed 3.8-second cycle with 80% resting pause.
+/// Isolated in a [RepaintBoundary] to avoid repainting parent cards or trees on continuous loop.
 class LifeLinkHeartbeat extends StatefulWidget {
   final Widget child;
   final bool isPulsing;
@@ -164,14 +185,19 @@ class _LifeLinkHeartbeatState extends State<LifeLinkHeartbeat>
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.isPulsing) return widget.child;
-    return AnimatedBuilder(
-      animation: _scaleAnimation,
-      builder: (context, child) => Transform.scale(
-        scale: _scaleAnimation.value,
-        child: child,
+    if (!widget.isPulsing || (MediaQuery.maybeDisableAnimationsOf(context) ?? false)) {
+      return widget.child;
+    }
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) => Transform.scale(
+          scale: _scaleAnimation.value,
+          child: child,
+        ),
+        child: widget.child,
       ),
-      child: widget.child,
     );
   }
 }
+

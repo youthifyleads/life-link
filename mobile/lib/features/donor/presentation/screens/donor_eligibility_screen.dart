@@ -58,6 +58,55 @@ class DonorEligibilityScreen extends StatelessWidget {
                       // ── 6-Month Eligibility Status Card ──────────────
                       _buildEligibilityCard(context, profile),
 
+                      const SizedBox(height: 16),
+
+                      // ── Quick Actions: Quiz & Guide ──────────────
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => context.push('/donor/medical-quiz'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: const BorderSide(color: AppColors.primary, width: 1.5),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              icon: const Icon(Icons.fact_check_outlined, size: 18, color: AppColors.primary),
+                              label: const Text(
+                                'فحص الأهلية الطبي',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Cairo',
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => context.push('/donor/guide'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: const BorderSide(color: AppColors.border, width: 1.5),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              icon: const Icon(Icons.menu_book_rounded, size: 18, color: AppColors.textPrimary),
+                              label: const Text(
+                                'دليل التبرع المصري',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Cairo',
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
                       const SizedBox(height: 24),
 
                       // ── Stats Row ────────────────────────────────────

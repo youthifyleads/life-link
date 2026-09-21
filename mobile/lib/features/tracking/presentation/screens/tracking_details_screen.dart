@@ -191,6 +191,11 @@ class TrackingDetailsScreen extends StatelessWidget {
               ),
             ),
 
+            const SizedBox(height: AppSpacing.lg),
+
+            // 1.5 Patient & Clinical Status Card (Hospital Staff Requisition)
+            _buildPatientClinicalCard(context),
+
             const SizedBox(height: AppSpacing.xl),
 
             // 2. Cold-Chain Logistics Stepper
@@ -564,5 +569,153 @@ class TrackingDetailsScreen extends StatelessWidget {
       default:
         return component;
     }
+  }
+
+  Widget _buildPatientClinicalCard(BuildContext context) {
+    final patientName = tracking.patientName ?? 'كريم أحمد الصاوي';
+    final age = tracking.patientAge ?? 42;
+    final gender = tracking.patientGender ?? 'ذكر';
+    final hospName = tracking.hospitalName ?? 'مستشفى قصر العيني الفرنساوي';
+    final dept = tracking.department ?? 'العناية المركزة الجراحية (SICU)';
+    final roomBed = tracking.roomBed ?? 'جناح 3 - سرير 4';
+    final doctor = tracking.attendingDoctor ?? 'د. أحمد كمال (استشاري جراحة الأوعية)';
+    final diagnosis = tracking.diagnosis ?? 'نزيف حاد ما بعد الجراحة وتراجع نسبة الأكسجين';
+    final hb = tracking.currentHemoglobin ?? '7.2 g/dL';
+    final urgency = tracking.urgencyLevel ?? 'حرج / طارئ (Stat)';
+    final crossmatch = tracking.crossMatchStatus ?? 'تم فحص واختبار التوافق (متطابق مخبرياً ✓)';
+    final notes = tracking.staffNotes ?? 'نقل المحلول تحت إشراف تمريض العناية، مع قياس العلامات الحيوية والضغط كل 15 دقيقة.';
+    final fileNo = tracking.medicalFileNumber ?? '#MED-8842';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: AppRadii.lg,
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1976D2).withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.medical_information_rounded, size: 22, color: Color(0xFF1976D2)),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const Text(
+                    'بيانات المريض والحالة السريرية',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.navy,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.verified_rounded, size: 12, color: Color(0xFF2E7D32)),
+                    SizedBox(width: 4),
+                    Text(
+                      'معتمد طبياً',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2E7D32),
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _clinicalRow('اسم المريض', '$patientName ($age سنة • $gender)', isBold: true),
+          _clinicalRow('الملف الطبي', fileNo),
+          _clinicalRow('المستشفى والقسم', '$hospName - $dept'),
+          _clinicalRow('الغرفة والسرير', roomBed),
+          _clinicalRow('الطبيب المعالج', doctor),
+          const Divider(height: 18),
+          _clinicalRow('التشخيص الطبي', diagnosis, valueColor: const Color(0xFFD32F2F), isBold: true),
+          _clinicalRow('نسبة الهيموجلوبين', '$hb (حرج)', valueColor: const Color(0xFFD32F2F), isBold: true),
+          _clinicalRow('الأولوية والخطورة', urgency, valueColor: const Color(0xFFE65100), isBold: true),
+          _clinicalRow('نتيجة التوافق', crossmatch, valueColor: const Color(0xFF2E7D32)),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.assignment_outlined, size: 14, color: AppColors.textSecondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'تعليمات التمريض: $notes',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      fontFamily: 'Cairo',
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _clinicalRow(String label, String value, {bool isBold = false, Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontFamily: 'Cairo'),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+                color: valueColor ?? AppColors.textPrimary,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

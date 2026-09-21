@@ -400,11 +400,14 @@ class _HospitalLocationScreenState extends State<HospitalLocationScreen>
                       label: _isDonated ? 'تم تسجيل رغبتك بالتبرع ✓' : 'أريد التبرع الآن',
                       icon: _isDonated ? Icons.check_circle_rounded : Icons.volunteer_activism_rounded,
                       backgroundColor: _isDonated ? AppColors.success : AppColors.primary,
-                      onPressed: () {
+                      onPressed: () async {
                         if (_isDonated) {
                           _showCancelConfirmation(context);
                         } else {
-                          _showDonationConfirmation(context, title);
+                          final eligible = await context.push<bool>('/donor/medical-quiz');
+                          if (eligible == true && context.mounted) {
+                            _showDonationConfirmation(context, title);
+                          }
                         }
                       },
                     ),

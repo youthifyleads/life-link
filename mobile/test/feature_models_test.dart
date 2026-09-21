@@ -57,6 +57,33 @@ void main() {
     expect(tracking.component, 'whole_blood');
   });
 
+  test('maps patient clinical information from hospital staff requisition', () {
+    final tracking = TrackingPublic.fromJson(const {
+      'reference': 'REQ-8820-EG',
+      'status': 'in_transit',
+      'blood_type': 'O+',
+      'patient_age': 46,
+      'patient_gender': 'ذكر',
+      'hospital_name': 'مستشفى قصر العيني التعليمي الجديد (الفرنساوي)',
+      'department': 'رعاية الجراحة المركزة (SICU)',
+      'room_bed': 'غرفة 204 - سرير 3',
+      'attending_doctor': 'د. شريف البنداري',
+      'diagnosis': 'نزيف حاد بعد جراحة استكشاف بطن',
+      'current_hemoglobin': '7.4 g/dL',
+      'urgency_level': 'طوارئ عاجلة (STAT)',
+      'cross_match_status': 'متطابق كلياً (Compatible)',
+      'staff_notes': 'تسليم العهدة لتمريض الرعاية فوراً مع الحفاظ على التبريد 2-6 م',
+    });
+
+    expect(tracking.patientAge, 46);
+    expect(tracking.patientGender, 'ذكر');
+    expect(tracking.hospitalName, contains('الفرنساوي'));
+    expect(tracking.department, contains('SICU'));
+    expect(tracking.currentHemoglobin, '7.4 g/dL');
+    expect(tracking.crossMatchStatus, contains('Compatible'));
+    expect(tracking.attendingDoctor, 'د. شريف البنداري');
+  });
+
   test('maps backend payment statuses without claiming pending success', () {
     final pending = PaymentModel.fromJson({
       'id': 'pay-1',

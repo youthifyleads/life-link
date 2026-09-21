@@ -25,8 +25,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneCtrl = TextEditingController();
   final _dobCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _nationalIdCtrl = TextEditingController();
+  final _weightCtrl = TextEditingController();
 
   UserRole _selectedRole = UserRole.donor;
+  String _selectedGender = 'male'; // 'male' or 'female'
   String _selectedBloodType = 'O+';
   String _selectedGovernorate = 'القاهرة (Cairo)';
   bool _obscurePassword = true;
@@ -66,6 +69,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _phoneCtrl.dispose();
     _dobCtrl.dispose();
     _passwordCtrl.dispose();
+    _nationalIdCtrl.dispose();
+    _weightCtrl.dispose();
     super.dispose();
   }
 
@@ -94,6 +99,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             bloodType:
                 _selectedRole == UserRole.donor ? _selectedBloodType : null,
             governorate: _selectedGovernorate,
+            gender: _selectedGender,
+            nationalId: _nationalIdCtrl.text.trim().isEmpty ? null : _nationalIdCtrl.text.trim(),
+            weight: double.tryParse(_weightCtrl.text.trim()),
           ),
         );
   }
@@ -324,6 +332,141 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               prefixIcon: Icons.calendar_today_outlined,
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'يرجى تحديد تاريخ الميلاد' : null,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+
+                            // Gender selection
+                            const Text(
+                              'النوع (الجندر)',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _selectedGender = 'male'),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: _selectedGender == 'male'
+                                            ? AppColors.primary.withValues(alpha: 0.1)
+                                            : AppColors.surfaceVariant,
+                                        borderRadius: AppRadii.sm,
+                                        border: Border.all(
+                                          color: _selectedGender == 'male'
+                                              ? AppColors.primary
+                                              : AppColors.border,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.male_rounded,
+                                            size: 20,
+                                            color: _selectedGender == 'male'
+                                                ? AppColors.primary
+                                                : AppColors.textSecondary,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'ذكر',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              fontFamily: 'Cairo',
+                                              color: _selectedGender == 'male'
+                                                  ? AppColors.primary
+                                                  : AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _selectedGender = 'female'),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: _selectedGender == 'female'
+                                            ? AppColors.primary.withValues(alpha: 0.1)
+                                            : AppColors.surfaceVariant,
+                                        borderRadius: AppRadii.sm,
+                                        border: Border.all(
+                                          color: _selectedGender == 'female'
+                                              ? AppColors.primary
+                                              : AppColors.border,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.female_rounded,
+                                            size: 20,
+                                            color: _selectedGender == 'female'
+                                                ? AppColors.primary
+                                                : AppColors.textSecondary,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'أنثى',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              fontFamily: 'Cairo',
+                                              color: _selectedGender == 'female'
+                                                  ? AppColors.primary
+                                                  : AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+
+                            // National ID Field
+                            LifeLinkTextField(
+                              controller: _nationalIdCtrl,
+                              label: 'الرقم القومي المصري',
+                              hint: '14 رقماً مسجلاً بالبطاقة (إلزامي ببنك الدم)',
+                              keyboardType: TextInputType.number,
+                              prefixIcon: Icons.badge_outlined,
+                              validator: (v) {
+                                if (v != null && v.trim().isNotEmpty) {
+                                  final clean = v.trim().replaceAll(RegExp(r'[^0-9]'), '');
+                                  if (clean.length != 14) {
+                                    return 'الرقم القومي يجب أن يتكون من 14 رقماً';
+                                  }
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+
+                            // Weight Field
+                            LifeLinkTextField(
+                              controller: _weightCtrl,
+                              label: 'الوزن التقريبي (كجم)',
+                              hint: 'مثال: 70 (الحد الأدنى الموصى به للتبرع 60 كجم)',
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              prefixIcon: Icons.monitor_weight_outlined,
                             ),
                             const SizedBox(height: AppSpacing.md),
 

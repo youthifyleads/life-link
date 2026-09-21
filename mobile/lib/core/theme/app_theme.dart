@@ -6,7 +6,11 @@ import 'design_tokens.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData light() {
+  static final ThemeData _lightTheme = _buildLightTheme();
+
+  static ThemeData light() => _lightTheme;
+
+  static ThemeData _buildLightTheme() {
     return ThemeData(
       useMaterial3: true,
       colorScheme: const ColorScheme.light(

@@ -29,6 +29,9 @@ class AuthRegisterEvent extends AuthEvent {
   final UserRole role;
   final String? bloodType;
   final String governorate;
+  final String? gender;
+  final String? nationalId;
+  final double? weight;
 
   AuthRegisterEvent({
     required this.fullName,
@@ -39,10 +42,13 @@ class AuthRegisterEvent extends AuthEvent {
     required this.role,
     this.bloodType,
     required this.governorate,
+    this.gender,
+    this.nationalId,
+    this.weight,
   });
 
   @override
-  List<Object?> get props => [email, role];
+  List<Object?> get props => [email, role, gender, nationalId, weight];
 }
 
 class AuthVerifyOtpEvent extends AuthEvent {
@@ -224,6 +230,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       password: event.password,
       bloodType: event.bloodType,
       governorate: event.governorate,
+      gender: event.gender,
+      nationalId: event.nationalId,
+      weight: event.weight,
     );
 
     if (regResult is AuthFailure<RegistrationResult>) {
