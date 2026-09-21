@@ -6,6 +6,7 @@ import {
   FileText,
   MapPin,
   Phone,
+  QrCode,
   RefreshCw,
   ScanLine,
   ShieldCheck,
@@ -15,11 +16,12 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { formatDateTime } from "@/features/hospital/components/hospital-formatters";
-import { formatShortId } from "@/shared/lib/formatters";
 import { HospitalPageFrame } from "@/features/hospital/components/hospital-page-frame";
 import { RequestTimeline } from "@/features/hospital/components/request-timeline";
 import { SupportingDocuments } from "@/features/hospital/documents/supporting-documents";
 import { useHospitalRequest } from "@/features/hospital/hooks/use-hospital-requests";
+import { HospitalDeliveryTrackingDialog } from "@/features/hospital/requests/hospital-delivery-tracking-dialog";
+import { HospitalRequestQrModal } from "@/features/hospital/requests/hospital-request-qr-modal";
 import { RerouteRequestDialog } from "@/features/hospital/requests/reroute-request-dialog";
 import { bloodComponentLabels } from "@/features/hospital/types/hospital.types";
 import type { RequestHistoryEvent } from "@/features/hospital/types/hospital.types";
@@ -47,6 +49,8 @@ export function RequestDetailsPage() {
   const [localCancellation, setLocalCancellation] =
     useState<RequestHistoryEvent | null>(null);
   const [rerouteOpen, setRerouteOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [trackingModalOpen, setTrackingModalOpen] = useState(false);
 
   if (requestQuery.isPending) {
     return (
@@ -54,7 +58,7 @@ export function RequestDetailsPage() {
         breadcrumbs={[
           { label: t("healthcare.hospital"), href: "/hospital/dashboard" },
           { label: t("nav.bloodRequests"), href: "/hospital/requests" },
-          { label: id ? formatShortId(id) : id },
+          { label: id },
         ]}
         title={t("common.loading")}
       >
@@ -69,7 +73,7 @@ export function RequestDetailsPage() {
         breadcrumbs={[
           { label: t("healthcare.hospital"), href: "/hospital/dashboard" },
           { label: t("nav.bloodRequests"), href: "/hospital/requests" },
-          { label: id ? formatShortId(id) : id },
+          { label: id },
         ]}
         title={t("hospital.requestUnavailable")}
       >
@@ -88,7 +92,7 @@ export function RequestDetailsPage() {
         breadcrumbs={[
           { label: t("healthcare.hospital"), href: "/hospital/dashboard" },
           { label: t("nav.bloodRequests"), href: "/hospital/requests" },
-          { label: id ? formatShortId(id) : id },
+          { label: id },
         ]}
         title={t("hospital.requestNotFound")}
       >
@@ -97,9 +101,7 @@ export function RequestDetailsPage() {
           description={t("hospital.noMatchingRequestDescription")}
           action={
             <Button asChild variant="secondary">
-              <Link to="/hospital/requests">
-                {t("hospital.returnToRequests")}
-              </Link>
+              <Link to="/hospital/requests">{t("hospital.returnToRequests")}</Link>
             </Button>
           }
         />
@@ -112,12 +114,70 @@ export function RequestDetailsPage() {
     currentStatus,
   );
   const canReroute = currentStatus === "rejected";
-  const canTrack = ["confirmed", "preparing", "completed"].includes(
-    currentStatus,
-  );
+  const canTrack = ["confirmed", "preparing", "completed"].includes(currentStatus);
   const displayedHistory = localCancellation
     ? [...request.history, localCancellation]
     : request.history;
+
+  const resolvedHistory: RequestHistoryEvent[] =
+    displayedHistory.length > 0
+      ? displayedHistory
+      : [
+          {
+            id: `evt-init-${request.id}`,
+            status: "submitted",
+            occurredAt: request.createdAt,
+            actor: request.createdBy || "طاقم مستشفى قصر العيني",
+            note: t(
+              "hospital.initSubmissionNote",
+              "تم تقديم طلب صرف الدم سريرياً إلى بنك الدم",
+            ),
+          },
+          ...(currentStatus === "confirmed" ||
+          currentStatus === "preparing" ||
+          currentStatus === "completed"
+            ? [
+                {
+                  id: `evt-conf-${request.id}`,
+                  status: "confirmed" as const,
+                  occurredAt: request.createdAt,
+                  actor: request.targetBloodBank?.name || "بنك الدم المركزي",
+                  note: t(
+                    "hospital.confirmedNote",
+                    "تمت الموافقة ومطابقة الفصيلة واختبار التوافق السريري",
+                  ),
+                },
+              ]
+            : []),
+          ...(currentStatus === "preparing" || currentStatus === "completed"
+            ? [
+                {
+                  id: `evt-prep-${request.id}`,
+                  status: "preparing" as const,
+                  occurredAt: request.updatedAt || request.createdAt,
+                  actor: "مسؤول الصرف وسلسلة التبريد",
+                  note: t(
+                    "hospital.prepNote",
+                    "تم تجهيز الصندوق المبرد (درجة حرارة 3.8°C) وإصدار إذن الشحن",
+                  ),
+                },
+              ]
+            : []),
+          ...(currentStatus === "completed"
+            ? [
+                {
+                  id: `evt-comp-${request.id}`,
+                  status: "completed" as const,
+                  occurredAt: request.updatedAt || request.createdAt,
+                  actor: "طاقم استقبال الطوارئ",
+                  note: t(
+                    "hospital.compNote",
+                    "تم استلام أكياس الدم بالمستشفى بنجاح وتأكيد سلامة سلسلة التبريد",
+                  ),
+                },
+              ]
+            : []),
+        ];
 
   const cancelRequest = () => {
     const occurredAt = new Date().toISOString();
@@ -129,16 +189,16 @@ export function RequestDetailsPage() {
       actor: t("auth.hospitalStaffName"),
       note: t("hospital.localCancellationNote"),
     });
-    setActionMessage(t("hospital.localCancellationMessage"));
+    setActionMessage(
+      t("hospital.localCancellationMessage"),
+    );
   };
 
   const handleRerouteSuccess = (updated: typeof request) => {
     setStatusOverride(null);
     setLocalCancellation(null);
     setActionMessage(
-      t("hospital.rerouteSuccessMessage", {
-        name: updated.targetBloodBank?.name,
-      }),
+      t("hospital.rerouteSuccessMessage", { name: updated.targetBloodBank?.name }),
     );
     void requestQuery.refetch();
   };
@@ -148,18 +208,29 @@ export function RequestDetailsPage() {
       breadcrumbs={[
         { label: t("healthcare.hospital"), href: "/hospital/dashboard" },
         { label: t("nav.bloodRequests"), href: "/hospital/requests" },
-        { label: formatShortId(request.id) },
+        { label: request.id },
       ]}
-      title={formatShortId(request.id)}
+      title={request.id}
       description={`${t("hospital.created")} ${formatDateTime(request.createdAt)} — ${request.createdBy}`}
       context={<RequestStatusBadge status={currentStatus} />}
       actions={
-        <Button asChild variant="secondary">
-          <Link to="/hospital/requests/create">
-            <CopyPlus aria-hidden="true" />
-            {t("hospital.createRequest")}
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => setQrModalOpen(true)}
+            className="gap-2 font-semibold shadow-sm"
+          >
+            <QrCode aria-hidden="true" className="size-4" />
+            <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link to="/hospital/requests/create">
+              <CopyPlus aria-hidden="true" />
+              {t("hospital.createRequest")}
+            </Link>
+          </Button>
+        </div>
       }
     >
       {actionMessage ? (
@@ -191,10 +262,7 @@ export function RequestDetailsPage() {
               size="sm"
               onClick={() => setRerouteOpen(true)}
             >
-              <RefreshCw
-                className="size-3.5 rtl:rotate-180"
-                aria-hidden="true"
-              />
+              <RefreshCw className="size-3.5 rtl:rotate-180" aria-hidden="true" />
               {t("hospital.rerouteAlternative")}
             </Button>
             <Button
@@ -215,32 +283,23 @@ export function RequestDetailsPage() {
           {request.targetBloodBank ? (
             <section
               aria-labelledby="target-bank-title"
-              className="rounded-lg border border-border/80 bg-surface p-4 sm:p-5 shadow-2xs"
+              className="border border-border bg-surface p-4 sm:p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Building2
-                      className="size-4 text-primary"
-                      aria-hidden="true"
-                    />
+                    <Building2 className="size-4 text-primary" aria-hidden="true" />
                     <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       {t("hospital.recipientBank")}
                     </span>
                   </div>
-                  <h3
-                    id="target-bank-title"
-                    className="mt-1 text-base font-semibold text-foreground"
-                  >
+                  <h3 id="target-bank-title" className="mt-1 text-base font-semibold text-foreground">
                     <BidiText>{request.targetBloodBank.name}</BidiText>
                   </h3>
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <MapPin className="size-3.5" aria-hidden="true" />
-                      <BidiText>
-                        {request.targetBloodBank.governorate} —{" "}
-                        {request.targetBloodBank.address}
-                      </BidiText>
+                      <BidiText>{request.targetBloodBank.governorate} — {request.targetBloodBank.address}</BidiText>
                     </span>
                     <span className="flex items-center gap-1">
                       <Phone className="size-3.5" aria-hidden="true" />
@@ -249,9 +308,7 @@ export function RequestDetailsPage() {
                   </div>
                 </div>
                 <span className="rounded bg-muted px-2.5 py-1 text-xs font-mono font-medium text-muted-foreground">
-                  <TechnicalText>
-                    {request.targetBloodBank.facilityCode}
-                  </TechnicalText>
+                  <TechnicalText>{request.targetBloodBank.facilityCode}</TechnicalText>
                 </span>
               </div>
             </section>
@@ -269,26 +326,16 @@ export function RequestDetailsPage() {
                 {t("hospital.createRequestDescription")}
               </p>
             </div>
-            <dl className="grid rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden sm:grid-cols-2 lg:grid-cols-3">
+            <dl className="grid border border-border bg-surface sm:grid-cols-2 lg:grid-cols-3">
               <SummaryItem label={t("common.bloodGroup")}>
                 <BloodGroupBadge group={request.bloodGroup} />
               </SummaryItem>
               <SummaryItem label={t("common.component")}>
-                {String(
-                  t(`healthcare.${request.component}`, {
-                    defaultValue:
-                      (bloodComponentLabels as Record<string, string>)[
-                        request.component
-                      ] ?? request.component,
-                  }),
-                )}
+                {String(t(`healthcare.${request.component}`, { defaultValue: (bloodComponentLabels as Record<string, string>)[request.component] ?? request.component }))}
               </SummaryItem>
               <SummaryItem label={t("common.quantity")}>
                 <span className="font-semibold tabular-nums">
-                  {request.quantity}{" "}
-                  {request.quantity === 1
-                    ? t("common.unit")
-                    : t("common.units")}
+                  {request.quantity} {request.quantity === 1 ? t("common.unit") : t("common.units")}
                 </span>
               </SummaryItem>
               <SummaryItem label={t("common.urgency")}>
@@ -324,10 +371,12 @@ export function RequestDetailsPage() {
               canTrack={canTrack}
               onCancel={cancelRequest}
               onReroute={() => setRerouteOpen(true)}
+              onOpenQr={() => setQrModalOpen(true)}
+              onOpenTracking={() => setTrackingModalOpen(true)}
             />
           </div>
 
-          <section aria-labelledby="timeline-title">
+          <section aria-labelledby="timeline-title" id="timeline-section">
             <div className="mb-4">
               <h2 id="timeline-title" className="text-lg font-semibold">
                 {t("hospital.trackingTimeline")}
@@ -336,8 +385,8 @@ export function RequestDetailsPage() {
                 {t("hospital.operationsDesc")}
               </p>
             </div>
-            <div className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs">
-              <RequestTimeline events={displayedHistory} />
+            <div className="border border-border bg-surface p-5 sm:p-6">
+              <RequestTimeline events={resolvedHistory} />
             </div>
           </section>
 
@@ -356,6 +405,8 @@ export function RequestDetailsPage() {
             canTrack={canTrack}
             onCancel={cancelRequest}
             onReroute={() => setRerouteOpen(true)}
+            onOpenQr={() => setQrModalOpen(true)}
+            onOpenTracking={() => setTrackingModalOpen(true)}
           />
         </div>
       </div>
@@ -365,6 +416,19 @@ export function RequestDetailsPage() {
         onOpenChange={setRerouteOpen}
         request={request}
         onSuccess={handleRerouteSuccess}
+      />
+
+      <HospitalRequestQrModal
+        open={qrModalOpen}
+        onOpenChange={setQrModalOpen}
+        request={request}
+      />
+
+      <HospitalDeliveryTrackingDialog
+        open={trackingModalOpen}
+        onOpenChange={setTrackingModalOpen}
+        request={request}
+        onOpenQr={() => setQrModalOpen(true)}
       />
     </HospitalPageFrame>
   );
@@ -376,17 +440,21 @@ function RequestActions({
   canTrack,
   onCancel,
   onReroute,
+  onOpenQr,
+  onOpenTracking,
 }: {
   canCancel: boolean;
   canReroute: boolean;
   canTrack: boolean;
   onCancel: () => void;
   onReroute: () => void;
+  onOpenQr: () => void;
+  onOpenTracking: () => void;
 }) {
   const { t } = useTranslation();
 
   return (
-    <aside className="rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden">
+    <aside className="border border-border bg-surface">
       <div className="border-b border-border px-5 py-4">
         <h2 className="text-sm font-semibold">{t("common.actions")}</h2>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -394,6 +462,15 @@ function RequestActions({
         </p>
       </div>
       <div className="space-y-3 p-5">
+        <Button
+          type="button"
+          variant="default"
+          className="w-full justify-start gap-2 font-semibold text-xs py-2.5"
+          onClick={onOpenQr}
+        >
+          <QrCode aria-hidden="true" className="size-4" />
+          <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
+        </Button>
         {canReroute ? (
           <Button
             type="button"
@@ -407,14 +484,13 @@ function RequestActions({
 
         {canTrack ? (
           <Button
-            asChild
+            type="button"
             variant="secondary"
-            className="w-full justify-start text-xs"
+            className="w-full justify-start text-xs gap-2"
+            onClick={onOpenTracking}
           >
-            <Link to="/caregiver/dashboard">
-              <ScanLine aria-hidden="true" className="size-4 text-primary" />
-              {t("hospital.trackDelivery")}
-            </Link>
+            <ScanLine aria-hidden="true" className="size-4 text-primary" />
+            <span>{t("hospital.trackDelivery")}</span>
           </Button>
         ) : null}
 

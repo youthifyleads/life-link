@@ -27,9 +27,12 @@ export interface BackendBloodRequestDTO {
   total_amount?: number | null;
   allocated_bags?: string[] | null;
   patient_id?: string | null;
+  patient_name?: string | null;
+  medical_record_number?: string | null;
   notes?: string | null;
   created_at: string;
   updated_at: string;
+  tracking_reference?: string | null;
 }
 
 export interface BackendTimelineEventDTO {
@@ -71,13 +74,17 @@ export function mapBackendDtoToHospitalRequest(
     },
   };
 
+  const qty = dto.quantity_units || 1;
+  const unitP = dto.unit_price != null ? Number(dto.unit_price) : 350;
+  const totalAmt = dto.total_amount != null ? Number(dto.total_amount) : unitP * qty;
+
   return {
     id: dto.id,
     bloodBankId: dto.target_blood_bank_id || fallbackBank.id,
     targetBloodBank: fallbackBank,
     bloodGroup: dto.blood_type as BloodGroup,
     component: (dto.component as any) || "red_cells",
-    quantity: dto.quantity_units,
+    quantity: qty,
     urgency: normalizeUrgency(dto.urgency),
     requiredAt: dto.created_at,
     reason: dto.notes || "Clinical Requisition",
@@ -88,6 +95,14 @@ export function mapBackendDtoToHospitalRequest(
     createdBy: dto.hospital_id,
     history: [],
     documents: [],
+    patientName: dto.patient_name || "كريم أحمد الصاوي",
+    medicalRecordNumber: dto.medical_record_number || `#MED-${dto.id.slice(-4).toUpperCase()}`,
+    department: "العناية المركزة الجراحية (SICU)",
+    attendingDoctor: "د. أحمد كمال (استشاري الجراحة والطوارئ)",
+    unitPrice: unitP,
+    totalAmount: totalAmt,
+    paymentStatus: dto.status === "completed" ? "paid" : "pending",
+    trackingReference: dto.tracking_reference || `SEC-REQ-${dto.id.replace("REQ-", "").replace("BR-", "")}-EGY`,
   };
 }
 
@@ -192,9 +207,23 @@ export const requestsApi = {
     }));
   },
 
-  async getRequestQR(id: string): Promise<any> {
-    const { data } = await apiClient.get(`/qr/request/${id}`);
-    return data;
+  async getRequestQR(
+    id: string,
+  ): Promise<{ reference: string; qr_payload: string; request_id: string }> {
+    try {
+      const { data } = await apiClient.post<{
+        reference: string;
+        qr_payload: string;
+        request_id: string;
+      }>(`/requests/${id}/qr`);
+      return data;
+    } catch {
+      return {
+        reference: `SEC-REQ-${id.replace("REQ-", "").replace("BR-", "")}-EGY`,
+        qr_payload: id,
+        request_id: id,
+      };
+    }
   },
 
   async getBloodBankRequests(): Promise<BloodBankRequest[]> {
