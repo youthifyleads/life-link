@@ -401,26 +401,140 @@ class _HospitalLocationScreenState extends State<HospitalLocationScreen>
                       icon: _isDonated ? Icons.check_circle_rounded : Icons.volunteer_activism_rounded,
                       backgroundColor: _isDonated ? AppColors.success : AppColors.primary,
                       onPressed: () {
-                        setState(() {
-                          _isDonated = !_isDonated;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              _isDonated
-                                  ? 'شكراً لك! تم إرسال إشعار للمستشفى بقدومك.'
-                                  : 'تم إلغاء الموعد.',
-                            ),
-                            backgroundColor: _isDonated ? AppColors.success : AppColors.navy,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        if (_isDonated) {
+                          _showCancelConfirmation(context);
+                        } else {
+                          _showDonationConfirmation(context, title);
+                        }
                       },
                     ),
                   ],
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDonationConfirmation(BuildContext context, String hospitalName) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.volunteer_activism_rounded,
+                color: AppColors.primary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'تأكيد الرغبة في التبرع',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'هل تود تأكيد رغبتك في التوجه للتبرع بالدم في $hospitalName الآن؟\nسيتم إشعار بنك الدم بالمستشفى لاستقبالك وتجهيز الفحوصات.',
+          style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text(
+              'تراجع',
+              style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              setState(() {
+                _isDonated = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('شكراً لك! تم إرسال إشعار للمستشفى بقدومك.'),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: const Text(
+              'نعم، تأكيد التبرع',
+              style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFD32F2F), size: 22),
+            SizedBox(width: 8),
+            Text(
+              'إلغاء التبرع',
+              style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: const Text(
+          'هل أنت متأكد من إلغاء رغبتك في التبرع؟ سيتم إشعار المستشفى بإلغاء التوجه.',
+          style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('تراجع', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD32F2F),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              setState(() {
+                _isDonated = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('تم إلغاء الموعد وإشعار المستشفى.'),
+                  backgroundColor: AppColors.navy,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: const Text('نعم، إلغاء', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
           ),
         ],
       ),

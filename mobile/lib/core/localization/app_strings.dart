@@ -53,6 +53,7 @@ class AppStrings {
       // Navigation & Roles
       'nav_home': 'Home',
       'nav_donate': 'Donate',
+      'nav_patients': 'Patients',
       'nav_tracking': 'Tracking',
       'nav_profile': 'Profile',
       'role_donor': 'I am a Donor',
@@ -156,6 +157,7 @@ class AppStrings {
       // Navigation & Roles
       'nav_home': 'الرئيسية',
       'nav_donate': 'التبرع',
+      'nav_patients': 'سجل المرضى',
       'nav_tracking': 'المتابعة',
       'nav_profile': 'حسابي',
       'role_donor': 'أنا متبرع بالدم',

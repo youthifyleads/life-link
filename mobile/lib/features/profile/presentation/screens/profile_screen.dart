@@ -11,6 +11,7 @@ import '../../../../core/widgets/lifelink_text_field.dart';
 import '../../../../core/localization/locale_cubit.dart';
 import '../../../../core/di/injection.dart';
 import '../../../auth/data/auth_remote_datasource.dart';
+import '../../../donor/presentation/utils/donor_hero_slogan_session.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -195,6 +196,7 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.logout_rounded,
                   isOutlined: true,
                   onPressed: () {
+                    DonorHeroSloganSession.resetForNewLogin();
                     context.read<AuthBloc>().add(AuthLogoutEvent());
                     context.go('/login');
                   },

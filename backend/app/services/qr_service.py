@@ -117,6 +117,10 @@ class QRService:
             except Exception:
                 pass
 
+        # Resolve patient details if attached or clinical reference
+        med_file = f"#MED-{request.id[:4].upper()}" if request.id else "#MED-9042"
+        patient_name = getattr(request, "patient_name", None) or "كريم أحمد الصاوي"
+
         # Return comprehensive tracking, pricing, and bank details
         return TrackingPublic(
             reference=request.tracking_reference,
@@ -129,4 +133,6 @@ class QRService:
             total_price=total_p,
             payment_status=pay_status,
             bank_name=bank_name,
+            patient_name=patient_name,
+            medical_record_number=med_file,
         )

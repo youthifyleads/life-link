@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
@@ -12,6 +14,7 @@ import '../../../../core/widgets/lifelink_card.dart';
 import '../../../../core/widgets/lifelink_animations.dart';
 import '../../../../core/localization/localization_extension.dart';
 import '../bloc/donor_bloc.dart';
+import '../utils/donor_hero_slogan_session.dart';
 import '../../domain/models/donor_profile_model.dart';
 
 class DonorHomeScreen extends StatefulWidget {
@@ -345,18 +348,119 @@ class _ModernRoleToggle extends StatelessWidget {
 }
 
 // ── 2. Hero Carousel Banner ───────────────────────────────────
-class _HeroDonationBanner extends StatelessWidget {
+class _SloganItem {
+  final String titleAr;
+  final String titleEn;
+  final String subtitleAr;
+  final String subtitleEn;
+
+  const _SloganItem({
+    required this.titleAr,
+    required this.titleEn,
+    required this.subtitleAr,
+    required this.subtitleEn,
+  });
+}
+
+const List<_SloganItem> _heroSlogans = [
+  _SloganItem(
+    titleAr: 'أنت الأمل في اللحظة الحرجة',
+    titleEn: 'Hope in Critical Moments',
+    subtitleAr: 'دقائق من وقتك قد تعيد أباً، أماً أو طفلاً إلى عائلته.',
+    subtitleEn: 'A few minutes of your time can bring a loved one home.',
+  ),
+  _SloganItem(
+    titleAr: 'نبضك حياة لغيرك',
+    titleEn: 'Your Pulse, Their Life',
+    subtitleAr: 'عطاءٌ بسيط منك، يمنح مريضاً فرصة ثانية للحياة.',
+    subtitleEn: 'A simple gift from you grants someone a second chance.',
+  ),
+  _SloganItem(
+    titleAr: 'كن شريان النجاة',
+    titleEn: 'Be Their Lifeline',
+    subtitleAr: 'في غرف الطوارئ، خطوتك اليوم تصنع الفارق بين الخطر والشفاء.',
+    subtitleEn: 'In emergency rooms, your action is the difference between danger and recovery.',
+  ),
+];
+
+class _HeroDonationBanner extends StatefulWidget {
   final VoidCallback onTap;
 
   const _HeroDonationBanner({required this.onTap});
 
   @override
+  State<_HeroDonationBanner> createState() => _HeroDonationBannerState();
+}
+
+class _HeroDonationBannerState extends State<_HeroDonationBanner> {
+  int _currentIndex = 0;
+  Timer? _autoCycleTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = DonorHeroSloganSession.currentIndex;
+    _rotateSloganOnSession();
+
+    // Subtle auto-advance every 6.5 seconds
+    _autoCycleTimer = Timer.periodic(const Duration(milliseconds: 6500), (_) {
+      if (mounted) {
+        setState(() {
+          _currentIndex = (_currentIndex + 1) % _heroSlogans.length;
+          DonorHeroSloganSession.currentIndex = _currentIndex;
+        });
+      }
+    });
+  }
+
+  Future<void> _rotateSloganOnSession() async {
+    try {
+      final storage = getIt<FlutterSecureStorage>();
+      final val = await storage.read(key: 'donor_hero_slogan_index');
+      final currentStored = int.tryParse(val ?? '0') ?? 0;
+
+      if (!DonorHeroSloganSession.hasPickedForCurrentSession) {
+        DonorHeroSloganSession.hasPickedForCurrentSession = true;
+        final nextIdx = (currentStored + 1) % _heroSlogans.length;
+        await storage.write(key: 'donor_hero_slogan_index', value: nextIdx.toString());
+        DonorHeroSloganSession.currentIndex = nextIdx;
+      }
+
+      if (mounted) {
+        setState(() {
+          _currentIndex = DonorHeroSloganSession.currentIndex;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _currentIndex = DonorHeroSloganSession.currentIndex;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoCycleTimer?.cancel();
+    super.dispose();
+  }
+
+  void _selectIndex(int index) {
+    setState(() {
+      _currentIndex = index;
+      DonorHeroSloganSession.currentIndex = index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isAr = context.isArabic;
+    final slogan = _heroSlogans[_currentIndex];
 
     return LifeLinkCard(
       padding: const EdgeInsets.all(AppSpacing.md),
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Column(
         children: [
           Row(
@@ -376,35 +480,59 @@ class _HeroDonationBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isAr ? 'SAVE A LIFE' : 'SAVE A LIFE',
+                      isAr ? 'لايـــف ليـــنــك • LIFELINK' : 'LIFELINK • CONNECTING HEARTS',
                       style: const TextStyle(
-                        fontSize: 12,
-                        letterSpacing: 1.2,
+                        fontSize: 11.5,
+                        letterSpacing: 1.1,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textSecondary,
                         fontFamily: 'Cairo',
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      isAr ? 'تبرع بالدم' : 'Give Blood',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
-                        fontFamily: 'Cairo',
-                        height: 1.2,
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 350),
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.0, 0.12),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isAr
-                          ? 'قطرة دم واحدة تنقذ حتى 3 أرواح'
-                          : 'A single donation can save up to 3 lives',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        fontFamily: 'Cairo',
+                      child: Column(
+                        key: ValueKey<int>(_currentIndex),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
+                            child: Text(
+                              isAr ? slogan.titleAr : slogan.titleEn,
+                              style: const TextStyle(
+                                fontSize: 21,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primary,
+                                fontFamily: 'Cairo',
+                                height: 1.2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isAr ? slogan.subtitleAr : slogan.subtitleEn,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                              fontFamily: 'Cairo',
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -414,37 +542,25 @@ class _HeroDonationBanner extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
 
-          // Carousel dots (active dot is red)
+          // Interactive Animated Carousel dots
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 16,
-                height: 4,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: AppRadii.full,
+            children: List.generate(_heroSlogans.length, (index) {
+              final isActive = index == _currentIndex;
+              return GestureDetector(
+                onTap: () => _selectIndex(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                  width: isActive ? 18 : 6,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColors.primary : AppColors.border,
+                    borderRadius: AppRadii.full,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Container(
-                width: 6,
-                height: 4,
-                decoration: const BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: AppRadii.full,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Container(
-                width: 6,
-                height: 4,
-                decoration: const BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: AppRadii.full,
-                ),
-              ),
-            ],
+              );
+            }),
           ),
         ],
       ),

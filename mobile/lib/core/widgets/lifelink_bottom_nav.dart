@@ -8,11 +8,13 @@ import '../localization/app_strings.dart';
 class LifeLinkBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final bool isCaregiver;
 
   const LifeLinkBottomNav({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    this.isCaregiver = false,
   });
 
   @override
@@ -44,9 +46,11 @@ class LifeLinkBottomNav extends StatelessWidget {
                     onTap: () => onTap(0),
                   ),
                   _NavItem(
-                    icon: Icons.water_drop_outlined,
-                    activeIcon: Icons.water_drop_rounded,
-                    label: AppStrings.get('nav_donate', locale: lang),
+                    icon: isCaregiver ? Icons.people_alt_outlined : Icons.water_drop_outlined,
+                    activeIcon: isCaregiver ? Icons.people_alt_rounded : Icons.water_drop_rounded,
+                    label: isCaregiver
+                        ? AppStrings.get('nav_patients', locale: lang)
+                        : AppStrings.get('nav_donate', locale: lang),
                     isSelected: currentIndex == 1,
                     onTap: () => onTap(1),
                   ),

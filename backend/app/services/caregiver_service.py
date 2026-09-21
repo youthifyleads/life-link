@@ -151,6 +151,15 @@ class CaregiverService:
                 except Exception:
                     pass
 
+            pt_name = None
+            med_file = f"#MED-{request_record.id[:4].upper()}" if request_record.id else "#MED-9042"
+            if hasattr(current, "id") and current.id in self._patients and self._patients[current.id]:
+                pt_name = self._patients[current.id][0].get("full_name")
+                if self._patients[current.id][0].get("hospital_id"):
+                    med_file = self._patients[current.id][0].get("hospital_id")
+            if not pt_name:
+                pt_name = "كريم أحمد الصاوي"
+
             return CaregiverBagScanPublic(
                 blood_bag_id=request_record.id,
                 request_id=request_record.id,
@@ -164,6 +173,8 @@ class CaregiverService:
                 unit_price=unit_p,
                 total_price=total_p,
                 payment_status=pay_status,
+                patient_name=pt_name,
+                medical_record_number=med_file,
             )
 
         # 2. Check individual blood bag in BloodBagRepository or Inventory

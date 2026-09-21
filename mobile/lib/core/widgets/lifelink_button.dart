@@ -66,39 +66,34 @@ class _LifeLinkButtonState extends State<LifeLinkButton> {
         : Colors.white;
     final contentColor = widget.textColor ?? defaultTextColor;
 
-    return AnimatedScale(
-      scale: _isPressed && isEnabled ? 0.985 : 1.0,
-      duration: const Duration(milliseconds: 100),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
       curve: Curves.easeOutCubic,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOutCubic,
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: activeBgColor,
+      height: widget.height,
+      decoration: BoxDecoration(
+        color: activeBgColor,
+        borderRadius: AppRadii.md,
+        border: widget.isOutlined
+            ? Border.all(color: widget.backgroundColor ?? AppColors.primary, width: 1.5)
+            : null,
+        boxShadow: isEnabled && !widget.isOutlined && !widget.isSecondary && !_isPressed
+            ? AppShadows.elevated
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           borderRadius: AppRadii.md,
-          border: widget.isOutlined
-              ? Border.all(color: widget.backgroundColor ?? AppColors.primary, width: 1.5)
-              : null,
-          boxShadow: isEnabled && !widget.isOutlined && !widget.isSecondary && !_isPressed
-              ? AppShadows.elevated
-              : null,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: AppRadii.md,
-            splashColor: Colors.white.withValues(alpha: 0.2),
-            highlightColor: Colors.transparent,
-            onTapDown: isEnabled ? (_) => setState(() => _isPressed = true) : null,
-            onTapUp: isEnabled ? (_) => setState(() => _isPressed = false) : null,
-            onTapCancel: isEnabled ? () => setState(() => _isPressed = false) : null,
-            onTap: isEnabled ? widget.onPressed : null,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: _buildContent(contentColor),
-              ),
+          splashColor: Colors.white.withValues(alpha: 0.2),
+          highlightColor: Colors.transparent,
+          onTapDown: isEnabled ? (_) => setState(() => _isPressed = true) : null,
+          onTapUp: isEnabled ? (_) => setState(() => _isPressed = false) : null,
+          onTapCancel: isEnabled ? () => setState(() => _isPressed = false) : null,
+          onTap: isEnabled ? widget.onPressed : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: _buildContent(contentColor),
             ),
           ),
         ),

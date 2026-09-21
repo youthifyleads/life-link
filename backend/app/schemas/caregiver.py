@@ -36,6 +36,8 @@ class CaregiverBagScanPublic(BaseModel):
     total_price: float | None = None
     payment_status: str = "unpaid"
     payment_url: str | None = None
+    patient_name: str | None = None
+    medical_record_number: str | None = None
 
 
 class CaregiverRequestScanRequest(BaseModel):
@@ -55,6 +57,8 @@ class CaregiverRequestScanPublic(BaseModel):
     total_price: float | None = None
     payment_status: str = "unpaid"
     payment_url: str | None = None
+    patient_name: str | None = None
+    medical_record_number: str | None = None
 
 
 class PatientCreate(BaseModel):

@@ -14,6 +14,8 @@ class TrackingPublic extends Equatable {
   final String? bankLocation;
   final int quantity;
   final String? paymentUrl;
+  final String? patientName;
+  final String? medicalFileNumber;
 
   const TrackingPublic({
     required this.reference,
@@ -29,6 +31,8 @@ class TrackingPublic extends Equatable {
     this.bankLocation,
     this.quantity = 1,
     this.paymentUrl,
+    this.patientName,
+    this.medicalFileNumber,
   });
 
   factory TrackingPublic.fromJson(Map<String, dynamic> json) {
@@ -53,6 +57,8 @@ class TrackingPublic extends Equatable {
       bankLocation: json['bank_location'] as String?,
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
       paymentUrl: json['payment_url'] as String?,
+      patientName: (json['patient_name'] ?? json['patient_full_name']) as String?,
+      medicalFileNumber: (json['medical_record_number'] ?? json['medical_file_number'] ?? json['patient_file']) as String?,
     );
   }
 
@@ -72,5 +78,7 @@ class TrackingPublic extends Equatable {
         bankName,
         bankLocation,
         quantity,
+        patientName,
+        medicalFileNumber,
       ];
 }

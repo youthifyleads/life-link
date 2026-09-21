@@ -412,33 +412,43 @@ class _DonationRequestScreenState extends State<DonationRequestScreen> {
             const SizedBox(height: AppSpacing.xl),
 
             // 5. Interactive Action Button: "Confirm" (Red) -> "Confirmed ✓" (Green)
-            // (Matching the two phone states side-by-side in reference Image 2)
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              child: LifeLinkButton(
-                label: _isConfirmed
-                    ? (isAr ? 'تم تأكيد حضورك بنجاح ✓' : 'Appointment Confirmed ✓')
-                    : (isAr ? 'تأكيد الموعد والتبرع' : 'Confirm Appointment & Donate'),
-                icon: _isConfirmed ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
-                backgroundColor: _isConfirmed ? const Color(0xFF2E7D32) : AppColors.primary,
-                onPressed: () {
-                  setState(() {
-                    _isConfirmed = !_isConfirmed;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        _isConfirmed
-                          ? (isAr
-                              ? 'تم تأكيد موعدك بنجاح! شكراً لمساهمتك في إنقاذ الأرواح.'
-                              : 'Donation appointment confirmed! Thank you for saving lives.')
-                          : (isAr ? 'تم إلغاء تأكيد الموعد.' : 'Donation appointment cancelled.'),
+              child: Column(
+                children: [
+                  LifeLinkButton(
+                    label: _isConfirmed
+                        ? (isAr ? 'تم تأكيد حضورك بنجاح ✓' : 'Appointment Confirmed ✓')
+                        : (isAr ? 'تأكيد الموعد والتبرع' : 'Confirm Appointment & Donate'),
+                    icon: _isConfirmed ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
+                    backgroundColor: _isConfirmed ? const Color(0xFF2E7D32) : AppColors.primary,
+                    onPressed: _isConfirmed
+                        ? null // Locked once confirmed; cancellation requires explicit confirmation
+                        : () => _showConfirmAppointmentDialog(
+                              context,
+                              isAr,
+                              hospital: hospital,
+                              date: date,
+                              time: time,
+                            ),
+                  ),
+                  if (_isConfirmed) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    TextButton.icon(
+                      onPressed: () => _showCancelAppointmentDialog(context, isAr),
+                      icon: const Icon(Icons.cancel_outlined, size: 16, color: Color(0xFFD32F2F)),
+                      label: Text(
+                        isAr ? 'إلغاء تأكيد الموعد' : 'Cancel Appointment Confirmation',
+                        style: const TextStyle(
+                          color: Color(0xFFD32F2F),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Cairo',
+                        ),
                       ),
-                      backgroundColor: _isConfirmed ? const Color(0xFF2E7D32) : AppColors.navy,
-                      behavior: SnackBarBehavior.floating,
                     ),
-                  );
-                },
+                  ],
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -446,6 +456,194 @@ class _DonationRequestScreenState extends State<DonationRequestScreen> {
         ),
       ),
     ),
+    );
+  }
+
+  void _showConfirmAppointmentDialog(
+    BuildContext context,
+    bool isAr, {
+    required String hospital,
+    required String date,
+    required String time,
+  }) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.event_available_rounded,
+                color: AppColors.primary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isAr ? 'تأكيد موعد التبرع' : 'Confirm Donation Appointment',
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isAr
+                  ? 'هل ترغب في تأكيد حجز موعدك للتبرع بالدم في $hospital؟'
+                  : 'Do you want to confirm your blood donation appointment at $hospital?',
+              style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.access_time_rounded, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '$date • $time',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.navy,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isAr
+                  ? 'سيتم حجز المقعد الطبي وإشعار طاقم بنك الدم لاستقبالك.'
+                  : 'A medical bed will be reserved and the blood bank notified for your arrival.',
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(
+              isAr ? 'تراجع' : 'Cancel',
+              style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              setState(() {
+                _isConfirmed = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isAr
+                        ? 'تم تأكيد موعدك بنجاح! شكراً لمساهمتك في إنقاذ الأرواح.'
+                        : 'Donation appointment confirmed! Thank you for saving lives.',
+                  ),
+                  backgroundColor: const Color(0xFF2E7D32),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: Text(
+              isAr ? 'نعم، تأكيد الموعد' : 'Yes, Confirm',
+              style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelAppointmentDialog(BuildContext context, bool isAr) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFD32F2F), size: 24),
+            const SizedBox(width: 8),
+            Text(
+              isAr ? 'إلغاء الموعد' : 'Cancel Appointment',
+              style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: Text(
+          isAr
+              ? 'هل أنت متأكد من رغبتك في إلغاء تأكيد موعد التبرع؟ سيتم إتاحة الموعد لمتبرع آخر حرصاً على إنقاذ الحالات الحرجة.'
+              : 'Are you sure you want to cancel your confirmed donation appointment? The slot will be offered to another donor.',
+          style: const TextStyle(fontFamily: 'Cairo', fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(
+              isAr ? 'تراجع' : 'Keep Appointment',
+              style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD32F2F),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              setState(() {
+                _isConfirmed = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isAr ? 'تم إلغاء تأكيد الموعد بنجاح.' : 'Donation appointment cancelled.',
+                  ),
+                  backgroundColor: AppColors.navy,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: Text(
+              isAr ? 'تأكيد الإلغاء' : 'Confirm Cancellation',
+              style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -31,3 +31,5 @@ class TrackingPublic(BaseModel):
     total_price: float | None = None
     payment_status: str | None = "unpaid"
     bank_name: str | None = None
+    patient_name: str | None = None
+    medical_record_number: str | None = None

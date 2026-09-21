@@ -101,8 +101,10 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         listener: (context, state) {
           debugPrint('QR_SCAN_STATE: $state');
           if (state is TrackingLoaded) {
-            // Direct route to Paymob Payment Screen when request is unpaid!
-            if (!state.tracking.isPaid && state.tracking.totalPrice != null && state.tracking.totalPrice! > 0) {
+            // If opened from Caregiver Home or other screen, return tracking result to update home screen
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop(state.tracking);
+            } else if (!state.tracking.isPaid && state.tracking.totalPrice != null && state.tracking.totalPrice! > 0) {
               context.pushReplacement('/caregiver/payment', extra: state.tracking);
             } else {
               context.pushReplacement('/tracking/details', extra: state.tracking);
@@ -163,30 +165,49 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (modalContext) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(modalContext).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (modalContext) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => Navigator.pop(modalContext),
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(modalContext).viewInsets.bottom,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: GestureDetector(
+              onTap: () {},
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
                 child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
+                  padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                   ),
-                ),
-              ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const SizedBox(width: 24),
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF94A3B8)),
+                            onPressed: () => Navigator.pop(modalContext),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
               const SizedBox(height: 16),
               const Text(
                 'إدخال كود الطلب يدوياً',
@@ -278,7 +299,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
-            ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

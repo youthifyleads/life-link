@@ -9,6 +9,8 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/lifelink_button.dart';
 import '../../../../core/widgets/lifelink_card.dart';
 import '../../../../core/widgets/lifelink_text_field.dart';
+import '../../../../core/localization/localization_extension.dart';
+import '../../../donor/presentation/utils/donor_hero_slogan_session.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,6 +41,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.isArabic;
+
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthOtpRequiredState) {
@@ -50,6 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
           });
         }
         if (state is AuthAuthenticated) {
+          DonorHeroSloganSession.resetForNewLogin();
           final role = state.user.role;
           if (role.isCaregiver) {
             context.go('/caregiver/home');
@@ -95,8 +100,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Brand Logo (Frameless, simplified, prominent)
                       Image.asset(
                         'assets/images/logo.webp',
-                        height: 120,
+                        height: 100,
                         fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        isAr ? 'لايـــف ليـــنــك' : 'LifeLink',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textPrimary,
+                          fontFamily: 'Cairo',
+                          letterSpacing: 0.8,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
 

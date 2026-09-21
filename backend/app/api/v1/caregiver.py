@@ -62,6 +62,8 @@ async def scan_request(data: CaregiverRequestScanRequest, current: CurrentUser, 
         total_price=res.total_price,
         payment_status=res.payment_status,
         payment_url=res.payment_url,
+        patient_name=res.patient_name,
+        medical_record_number=res.medical_record_number,
     )
 
 

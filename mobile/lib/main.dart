@@ -6,15 +6,18 @@ import 'core/di/injection.dart';
 import 'core/notifications/fcm_service.dart';
 import 'app.dart';
 
+import 'firebase_options.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase init (safe fallback if google-services.json is not yet supplied in dev)
+  // Firebase init with platform options (supports Web, Android, and iOS safely)
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
-    debugPrint(
-        'Firebase not initialized (missing google-services.json in dev): $e');
+    debugPrint('Firebase init fallback: $e');
   }
 
   // Dependency Injection setup
