@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from app.api.deps import load_user_record
 from app.core.domain import Role
 from app.core.security import CurrentUser, require_roles
 from app.schemas.caregiver import (
@@ -15,15 +16,10 @@ from app.schemas.caregiver import (
 )
 from app.schemas.payments import PaymentInitiateRequest, PaymentInitiateResponse, PaymentPublic
 from app.services.caregiver_service import CaregiverService
-from app.repositories.interfaces.user_repository import UserRepository
-from app.services.dependencies import get_caregiver_service, get_payment_service, get_user_repository
+from app.services.dependencies import get_caregiver_service, get_payment_service
 from app.services.payment_service import PaymentService
 
 router = APIRouter(prefix="/caregiver", tags=["Caregiver"])
-
-
-async def _load_user_record(current_user: CurrentUser, user_repo: UserRepository = Depends(get_user_repository)):
-    return await user_repo.get_by_id(current_user.id)
 
 
 @router.post("/assignments", response_model=CaregiverAssignmentPublic, status_code=201, dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.BLOOD_BANK_OPERATOR, Role.ADMIN, Role.MEDICAL_LEAD))])

@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     AZURE_EMAIL_SENDER_ADDRESS: str = ""
 
     # CORS
-    CORS_ORIGINS: list[str] = ["*"]
+    CORS_ORIGINS: list[str] = ["http://localhost:5173"]
 
     # Paymob Gateway (Set via .env locally or Azure App Service Application Settings in Production)
     PAYMOB_API_KEY: str = ""

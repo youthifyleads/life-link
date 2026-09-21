@@ -158,7 +158,7 @@ class PaymentService:
             except Exception as e:
                 logger.error("Paymob payment intention creation failed: %s", e)
                 raise ServiceUnavailableError(
-                    f"Failed to initiate payment gateway session: {e}",
+                    "Failed to initiate payment gateway session. Please try again later.",
                     code="PAYMENT_GATEWAY_ERROR",
                 ) from e
 

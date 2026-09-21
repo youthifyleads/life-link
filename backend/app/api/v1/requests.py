@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+from app.api.deps import load_user_record
 from app.core.security import CurrentUser
 from app.repositories.interfaces.user_repository import UserRepository
 from app.schemas.donors import (
@@ -34,12 +35,6 @@ from app.services.request_service import RequestService
 router = APIRouter(prefix="/requests", tags=["Blood Requests"])
 
 
-async def _load_user_record(current_user: CurrentUser, user_repo: UserRepository = Depends(get_user_repository)):
-    # Services operate on the internal UserRecord (has hashed_password etc
-    # trimmed by callers); we only need identity/role/institution here.
-    return await user_repo.get_by_id(current_user.id)
-
-
 @router.post(
     "",
     response_model=BloodRequestPublic,
@@ -52,7 +47,7 @@ async def create_request(
     payload: BloodRequestCreate,
     current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     created = await request_service.create_request(payload, user_record)
     return BloodRequestPublic.model_validate(created)
@@ -67,7 +62,7 @@ async def create_request(
 async def list_requests(
     current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> list[BloodRequestPublic]:
     requests = await request_service.list_requests(user_record)
     return [BloodRequestPublic.model_validate(r) for r in requests]
@@ -83,7 +78,7 @@ async def get_request(
     request_id: str,
     current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     request = await request_service.get_request(request_id, user_record)
     return BloodRequestPublic.model_validate(request)
@@ -101,7 +96,7 @@ async def acknowledge_request(
     current_user: CurrentUser,
     payload: RequestAcknowledgePayload | None = None,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     unit_price = payload.unit_price if payload else None
     notes = (payload.notes or payload.reason) if payload else None
@@ -121,7 +116,7 @@ async def set_request_price(
     payload: RequestSetPricePayload,
     current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     updated = await request_service.set_price(request_id, payload.unit_price, user_record)
     return BloodRequestPublic.model_validate(updated)
@@ -138,7 +133,7 @@ async def confirm_request(
     request_id: str,
     current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     updated = await request_service.confirm(request_id, user_record)
     return BloodRequestPublic.model_validate(updated)
@@ -155,7 +150,7 @@ async def prepare_request(
     request_id: str,
     current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     updated = await request_service.prepare(request_id, user_record)
     return BloodRequestPublic.model_validate(updated)
@@ -172,7 +167,7 @@ async def complete_request(
     request_id: str,
     current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     updated = await request_service.complete(request_id, user_record)
     return BloodRequestPublic.model_validate(updated)
@@ -187,10 +182,10 @@ async def complete_request(
 )
 async def cancel_request(
     request_id: str,
+    current_user: CurrentUser,
     payload: RequestCancelPayload | None = None,
-    current_user: CurrentUser = None,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     reason = payload.reason if payload else None
     updated = await request_service.cancel(request_id, user_record, reason=reason)
@@ -206,10 +201,10 @@ async def cancel_request(
 )
 async def reject_request(
     request_id: str,
+    current_user: CurrentUser,
     payload: RequestCancelPayload | None = None,
-    current_user: CurrentUser = None,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     reason = payload.reason if payload else "Request rejected by blood bank"
     updated = await request_service.cancel(request_id, user_record, reason=reason)
@@ -225,10 +220,10 @@ async def reject_request(
 )
 async def accept_request(
     request_id: str,
+    current_user: CurrentUser,
     payload: RequestAcknowledgePayload | None = None,
-    current_user: CurrentUser = None,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     unit_price = payload.unit_price if payload else None
     notes = (payload.notes or payload.reason) if payload else None
@@ -297,7 +292,7 @@ async def allocate_bag_to_request(
     payload: RequestAllocateBagPayload,
     current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> RequestAllocateBagResponse:
     res = await request_service.allocate_bag(request_id, payload.barcode, user_record)
     return RequestAllocateBagResponse.model_validate(res)
@@ -312,9 +307,9 @@ async def allocate_bag_to_request(
 async def deallocate_bag_from_request(
     request_id: str,
     payload: RequestDeallocateBagPayload,
-    current_user: CurrentUser = None,
+    current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> RequestDeallocateBagResponse:
     res = await request_service.deallocate_bag(request_id, payload.barcode, user_record, reason=payload.reason)
     return RequestDeallocateBagResponse.model_validate(res)
@@ -331,7 +326,7 @@ async def get_allocated_bags(
     request_id: str,
     current_user: CurrentUser,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> list[BloodBagPublic]:
     bags = await request_service.list_allocated_bags(request_id, user_record)
     return [BloodBagPublic.model_validate(b) for b in bags]
@@ -345,10 +340,10 @@ async def get_allocated_bags(
 )
 async def dispatch_blood_request(
     request_id: str,
+    current_user: CurrentUser,
     payload: RequestDispatchPayload | None = None,
-    current_user: CurrentUser = None,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     notes = payload.notes if payload else None
     updated = await request_service.dispatch_request(request_id, user_record, notes=notes)
@@ -363,10 +358,10 @@ async def dispatch_blood_request(
 )
 async def receive_blood_request(
     request_id: str,
+    current_user: CurrentUser,
     payload: RequestReceivePayload | None = None,
-    current_user: CurrentUser = None,
     request_service: RequestService = Depends(get_request_service),
-    user_record=Depends(_load_user_record),
+    user_record=Depends(load_user_record),
 ) -> BloodRequestPublic:
     notes = payload.notes if payload else None
     updated = await request_service.receive_request(request_id, user_record, notes=notes)

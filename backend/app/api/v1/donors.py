@@ -1,7 +1,19 @@
 from fastapi import APIRouter, Depends
 from app.core.domain import Role
 from app.core.security import CurrentUser, require_roles
-from app.schemas.donors import *
+from app.schemas.donors import (
+    ConsentCreate,
+    ConsentPublic,
+    DonationCreate,
+    DonationPublic,
+    DonationResponseCreate,
+    DonationResponsePublic,
+    DonorCreate,
+    DonorPublic,
+    DonorUpdate,
+    MatchingDonorPublic,
+    NearbyBloodRequestPublic,
+)
 from app.schemas.vouchers import VoucherPublic
 from app.services.dependencies import get_donor_service, get_matching_service, get_voucher_service
 from app.services.donor_service import DonorService

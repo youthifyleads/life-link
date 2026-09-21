@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.schemas.otp import *
+from app.schemas.otp import OTPRequest, OTPResponse, OTPVerify
 from app.services.dependencies import get_otp_service
 from app.services.otp_service import OTPService
 from app.schemas.auth import TokenResponse
