@@ -138,7 +138,7 @@ export function HospitalRequestQrModal({
           <style>
             @page {
               size: A4 portrait;
-              margin: 8mm 10mm;
+              margin: 6mm 8mm;
             }
             * {
               box-sizing: border-box !important;
@@ -152,8 +152,10 @@ export function HospitalRequestQrModal({
               color: #000000 !important;
               direction: rtl !important;
               font-family: Arial, "Segoe UI", Tahoma, sans-serif !important;
-              font-size: 12px;
-              line-height: 1.35;
+              font-size: 11px !important;
+              line-height: 1.25 !important;
+              height: auto !important;
+              overflow: hidden !important;
             }
             #hospital-official-print-voucher {
               display: block !important;
@@ -164,15 +166,22 @@ export function HospitalRequestQrModal({
               padding: 0 !important;
               background: #ffffff !important;
               color: #000000 !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              page-break-after: avoid !important;
+              break-after: avoid !important;
             }
             table {
               width: 100% !important;
               border-collapse: collapse !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
             }
             th, td {
               border: 1.5px solid #000000 !important;
-              padding: 5px 8px !important;
+              padding: 3px 6px !important;
               color: #000000 !important;
+              font-size: 10.5px !important;
             }
             th {
               background-color: #f2f2f2 !important;
@@ -532,80 +541,80 @@ export function HospitalRequestQrModal({
           dir="rtl"
         >
           {/* Header Bar */}
-          <div className="border-b-2 border-black pb-2.5 mb-3 flex justify-between items-start">
+          <div className="border-b-2 border-black pb-1.5 mb-2 flex justify-between items-start">
             <div>
-              <p className="text-xs font-bold text-black">جمهورية مصر العربية — وزارة الصحة والسكان</p>
-              <p className="text-xs text-black">الهيئة العامة للمستشفيات والمعاهد التعليمية — مستشفى قصر العيني</p>
-              <h1 className="text-base font-black mt-1 text-black">إذن صرف دم ونقل سريري مميكن</h1>
-              <p className="text-[11px] font-mono mt-0.5 text-black">HOSPITAL BLOOD REQUISITION & DISPATCH VOUCHER</p>
+              <p className="text-[10.5px] font-bold text-black">جمهورية مصر العربية — وزارة الصحة والسكان</p>
+              <p className="text-[10px] text-black">الهيئة العامة للمستشفيات والمعاهد التعليمية — مستشفى قصر العيني</p>
+              <h1 className="text-sm font-black mt-0.5 text-black">إذن صرف دم ونقل سريري مميكن</h1>
+              <p className="text-[9.5px] font-mono mt-0.5 text-black">HOSPITAL BLOOD REQUISITION & DISPATCH VOUCHER</p>
             </div>
-            <div className="text-left font-mono text-xs space-y-1 text-black">
+            <div className="text-left font-mono text-[10px] space-y-0.5 text-black">
               <p className="font-bold">رقم الطلب: {displayReference}</p>
               <p>كود الموبايل: <strong>{manualEntryCode}</strong></p>
               <p>التاريخ: {formatDateTime(request.createdAt)}</p>
-              <p className="font-bold border border-black px-1.5 py-0.5 inline-block mt-1">
+              <p className="font-bold border border-black px-1 py-0.2 inline-block mt-0.5">
                 درجة الأولوية: {request.urgency === "emergency" ? "طارئ جداً (STAT)" : "عاجل"}
               </p>
             </div>
           </div>
 
           {/* Two-Column Grid: Left QR & Barcode, Right Medical Data */}
-          <div className="grid grid-cols-[150px_1fr] gap-3 border-2 border-black p-2.5 mb-3">
+          <div className="grid grid-cols-[130px_1fr] gap-2 border-2 border-black p-2 mb-2">
             {/* Left QR & Manual Box */}
-            <div className="border-e-2 border-black pe-2.5 text-center flex flex-col items-center justify-between">
+            <div className="border-e-2 border-black pe-2 text-center flex flex-col items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold mb-1 text-black">رمز التحقق والسداد</p>
+                <p className="text-[9.5px] font-bold mb-1 text-black">رمز التحقق والسداد</p>
                 <img
                   src={qrImageUrl}
                   alt={`QR ${request.id}`}
-                  className="size-28 object-contain border border-black mx-auto"
+                  className="size-24 object-contain border border-black mx-auto"
                 />
               </div>
-              <div className="w-full border-t border-black pt-1.5 mt-1.5 text-black">
-                <p className="text-[9px] font-bold">كود الإدخال اليدوي:</p>
-                <p className="font-mono text-sm font-black tracking-wider">{manualEntryCode}</p>
-                <p className="text-[8px] mt-0.5">لسداد Paymob وتتبع المسار</p>
+              <div className="w-full border-t border-black pt-1 mt-1 text-black">
+                <p className="text-[8.5px] font-bold">كود الإدخال اليدوي:</p>
+                <p className="font-mono text-xs font-black tracking-wider">{manualEntryCode}</p>
+                <p className="text-[7.5px] mt-0.5">لسداد Paymob وتتبع المسار</p>
               </div>
             </div>
 
             {/* Right Clinical Specifications */}
-            <div className="space-y-2 text-xs text-black">
-              <div className="grid grid-cols-2 gap-2 border-b border-black pb-1.5">
+            <div className="space-y-1.5 text-[10.5px] text-black">
+              <div className="grid grid-cols-2 gap-1.5 border-b border-black pb-1">
                 <div>
-                  <span className="font-bold block text-[10.5px]">اسم المريض:</span>
-                  <span className="text-sm font-black">{patientName}</span>
+                  <span className="font-bold block text-[10px]">اسم المريض:</span>
+                  <span className="text-xs font-black">{patientName}</span>
                 </div>
                 <div>
-                  <span className="font-bold block text-[10.5px]">رقم الملف الطبي (MRN):</span>
+                  <span className="font-bold block text-[10px]">رقم الملف الطبي (MRN):</span>
                   <span className="font-mono text-xs font-bold">{medicalRecordNumber}</span>
                 </div>
                 <div>
-                  <span className="font-bold block text-[10.5px]">القسم السريري:</span>
+                  <span className="font-bold block text-[10px]">القسم السريري:</span>
                   <span className="font-medium">{department}</span>
                 </div>
                 <div>
-                  <span className="font-bold block text-[10.5px]">الطبيب المعالج:</span>
+                  <span className="font-bold block text-[10px]">الطبيب المعالج:</span>
                   <span className="font-medium">{attendingDoctor}</span>
                 </div>
               </div>
 
               {/* Diagnosis */}
-              <div className="border-b border-black pb-1.5">
-                <span className="font-bold block text-[10.5px]">التشخيص الطبي ودواعي الصرف:</span>
-                <p className="font-medium text-xs mt-0.5">{request.reason || "طلب نقل دم سريري معتمد ومطابق معملياً"}</p>
+              <div className="border-b border-black pb-1">
+                <span className="font-bold block text-[10px]">التشخيص الطبي ودواعي الصرف:</span>
+                <p className="font-medium text-[10.5px] mt-0.5">{request.reason || "طلب نقل دم سريري معتمد ومطابق معملياً"}</p>
               </div>
 
               {/* Blood & Supply */}
-              <div className="grid grid-cols-3 gap-2 pt-0.5">
+              <div className="grid grid-cols-3 gap-1.5 pt-0.5">
                 <div>
-                  <span className="font-bold block text-[10.5px]">فصيلة الدم المطلوبة:</span>
-                  <span className="text-sm font-black border border-black px-2 py-0.5 inline-block mt-0.5">
+                  <span className="font-bold block text-[10px]">فصيلة الدم المطلوبة:</span>
+                  <span className="text-xs font-black border border-black px-1.5 py-0.5 inline-block mt-0.5">
                     {request.bloodGroup}
                   </span>
                 </div>
                 <div>
-                  <span className="font-bold block text-[10.5px]">المكون الدموي:</span>
-                  <span className="font-bold text-xs mt-0.5 block">
+                  <span className="font-bold block text-[10px]">المكون الدموي:</span>
+                  <span className="font-bold text-[10.5px] mt-0.5 block">
                     {String(
                       (bloodComponentLabels as Record<string, string>)[request.component] ??
                         request.component,
@@ -613,29 +622,29 @@ export function HospitalRequestQrModal({
                   </span>
                 </div>
                 <div>
-                  <span className="font-bold block text-[10.5px]">الكمية المصرح بها:</span>
-                  <span className="text-sm font-black mt-0.5 block">{request.quantity} وحدة</span>
+                  <span className="font-bold block text-[10px]">الكمية المصرح بها:</span>
+                  <span className="text-xs font-black mt-0.5 block">{request.quantity} وحدة</span>
                 </div>
               </div>
 
               {/* Blood Bank & Transit */}
-              <div className="grid grid-cols-2 gap-2 border-t border-black pt-1.5">
+              <div className="grid grid-cols-2 gap-1.5 border-t border-black pt-1">
                 <div>
-                  <span className="font-bold block text-[10px]">بنك الدم المصدر:</span>
-                  <span className="font-medium text-xs">
+                  <span className="font-bold block text-[9.5px]">بنك الدم المصدر:</span>
+                  <span className="font-medium text-[10.5px]">
                     {request.targetBloodBank?.name || "Central Blood Bank Facility"}
                   </span>
                 </div>
                 <div>
-                  <span className="font-bold block text-[10px]">شروط الحفظ والنقل:</span>
-                  <span className="font-medium text-xs">2°C إلى 6°C (صندوق نقل مبرد معتمد)</span>
+                  <span className="font-bold block text-[9.5px]">شروط الحفظ والنقل:</span>
+                  <span className="font-medium text-[10.5px]">2°C إلى 6°C (صندوق نقل مبرد معتمد)</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Pricing & Paymob Clearance Table */}
-          <table className="w-full border-2 border-black text-xs text-center border-collapse mb-3 text-black">
+          <table className="w-full border-2 border-black text-[10.5px] text-center border-collapse mb-2 text-black">
             <thead>
               <tr className="border-b border-black bg-gray-100">
                 <th className="border-e border-black p-1 font-bold">بند الصرف</th>
@@ -647,13 +656,13 @@ export function HospitalRequestQrModal({
             </thead>
             <tbody>
               <tr>
-                <td className="border-e border-black p-1.5">
+                <td className="border-e border-black p-1">
                   أكياس دم مفحوصة ومطابقة معملياً ({request.bloodGroup})
                 </td>
-                <td className="border-e border-black p-1.5 font-mono">{request.quantity}</td>
-                <td className="border-e border-black p-1.5 font-mono">{unitPrice.toFixed(2)} ج.م</td>
-                <td className="border-e border-black p-1.5 font-mono font-bold">{totalAmount.toFixed(2)} ج.م</td>
-                <td className="p-1.5 font-bold">
+                <td className="border-e border-black p-1 font-mono">{request.quantity}</td>
+                <td className="border-e border-black p-1 font-mono">{unitPrice.toFixed(2)} ج.م</td>
+                <td className="border-e border-black p-1 font-mono font-bold">{totalAmount.toFixed(2)} ج.م</td>
+                <td className="p-1 font-bold">
                   {request.status === "completed" ? "مسدد إلكترونياً (PAID)" : "بانتظار التحصيل عبر Paymob"}
                 </td>
               </tr>
@@ -661,22 +670,22 @@ export function HospitalRequestQrModal({
           </table>
 
           {/* Official Endorsements & Signatures */}
-          <div className="grid grid-cols-3 gap-3 border-2 border-black p-2.5 text-xs text-black">
-            <div className="border-e border-black pe-2 space-y-6">
+          <div className="grid grid-cols-3 gap-2 border-2 border-black p-2 text-[10px] text-black">
+            <div className="border-e border-black pe-1.5 space-y-3">
               <p className="font-bold">توقيع الطبيب المعالج:</p>
               <div className="border-b border-dotted border-black w-4/5"></div>
             </div>
-            <div className="border-e border-black pe-2 space-y-6">
+            <div className="border-e border-black pe-1.5 space-y-2 text-center">
               <p className="font-bold">ختم بنك الدم المصدر:</p>
-              <div className="border border-dashed border-black/60 size-12 mx-auto rounded-sm"></div>
+              <div className="border border-dashed border-black/60 size-10 mx-auto rounded-sm"></div>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-3">
               <p className="font-bold">توقيع تمريض الاستلام:</p>
               <div className="border-b border-dotted border-black w-4/5"></div>
             </div>
           </div>
 
-          <div className="text-[8.5px] text-center mt-2 text-black/70">
+          <div className="text-[8px] text-center mt-1 text-black/70 leading-tight">
             تنبيه: هذا الإذن وثيقة سريرية رسمية مميكنة ومحمية بتشفير رقمي. يُحظر استخدامها لغير المريض المدونة بياناته، وتُحفظ أصولها بالسجل الطبي.
           </div>
         </div>

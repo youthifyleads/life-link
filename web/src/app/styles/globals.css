@@ -295,46 +295,12 @@
     overflow: visible !important;
   }
 
-  /* Ensure printable elements break cleanly on standard paper / label stock */
+  /* Ensure printable clinical elements break cleanly on standard paper / label stock */
   .printable-unit-label {
     display: block !important;
-    page-break-inside: avoid;
-  }
-
-  /* Strict Isolation for Blood Bag Label Printing */
-  body.print-label-mode {
-    background: #ffffff !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  body.print-label-mode * {
-    visibility: hidden !important;
-  }
-
-  body.print-label-mode #blood-unit-printable-label,
-  body.print-label-mode #blood-unit-printable-label * {
-    visibility: visible !important;
-  }
-
-  body.print-label-mode #blood-unit-printable-label {
-    position: absolute !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: 0 !important;
-    margin: 0 auto !important;
-    display: block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
     box-shadow: none !important;
-  }
-
-  body.print-label-mode.print-thermal-mode #blood-unit-printable-label {
-    max-width: 100mm !important;
-    width: 100mm !important;
-  }
-
-  body.print-label-mode:not(.print-thermal-mode) #blood-unit-printable-label {
-    max-width: 130mm !important;
-    margin-top: 10mm !important;
   }
 }
 

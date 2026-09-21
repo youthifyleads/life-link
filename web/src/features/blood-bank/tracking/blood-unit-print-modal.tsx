@@ -32,28 +32,103 @@ export function BloodUnitPrintModal({
   const [hasPrinted, setHasPrinted] = useState(false);
 
   const handlePrint = () => {
-    setIsPrinting(true);
-    document.body.classList.add("print-label-mode");
+    const printContent =
+      document.getElementById("modal-blood-unit-label") ||
+      document.getElementById("blood-unit-printable-label");
+    if (!printContent) return;
 
-    // Apply thermal sizing class to body if chosen
-    if (printFormat === "thermal") {
-      document.body.classList.add("print-thermal-mode");
-    } else {
-      document.body.classList.remove("print-thermal-mode");
+    // Remove any previously created print iframe
+    const oldIframe = document.getElementById("blood-unit-print-iframe");
+    if (oldIframe) {
+      oldIframe.remove();
     }
 
-    // Give browser brief time to layout before opening OS print dialog
-    window.setTimeout(() => {
+    const iframe = document.createElement("iframe");
+    iframe.id = "blood-unit-print-iframe";
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.style.visibility = "hidden";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+
+    // Collect all stylesheets from main document (Tailwind, fonts)
+    const styleTags = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"], style'),
+    )
+      .map((tag) => tag.outerHTML)
+      .join("\n");
+
+    const isThermal = printFormat === "thermal";
+    const pageRules = isThermal
+      ? `@page { size: 100mm 100mm; margin: 0; }`
+      : `@page { size: A4 portrait; margin: 10mm; }`;
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html dir="ltr" lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <title>ISBT 128 Blood Label - ${unit.id}</title>
+          ${styleTags}
+          <style>
+            ${pageRules}
+            * {
+              box-sizing: border-box !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              background: #ffffff !important;
+              display: flex !important;
+              justify-content: center !important;
+              align-items: flex-start !important;
+              width: 100% !important;
+              height: auto !important;
+              overflow: hidden !important;
+            }
+            .printable-unit-label {
+              margin: ${isThermal ? "0" : "5mm auto"} !important;
+              width: ${isThermal ? "100mm" : "120mm"} !important;
+              max-width: ${isThermal ? "100mm" : "120mm"} !important;
+              border: 2px solid #000 !important;
+              background: #fff !important;
+              box-shadow: none !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              page-break-after: avoid !important;
+              break-after: avoid !important;
+            }
+          </style>
+        </head>
+        <body>
+          ${printContent.innerHTML}
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    setIsPrinting(true);
+    setTimeout(() => {
       try {
-        window.print();
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
         setHasPrinted(true);
+      } catch (err) {
+        console.error("Print error:", err);
       } finally {
         setIsPrinting(false);
-        document.body.classList.remove("print-label-mode");
-        document.body.classList.remove("print-thermal-mode");
-        window.setTimeout(() => setHasPrinted(false), 3000);
+        setTimeout(() => setHasPrinted(false), 3000);
       }
-    }, 150);
+    }, 250);
   };
 
   return (
@@ -124,7 +199,10 @@ export function BloodUnitPrintModal({
 
           {/* Label Visual Stage */}
           <div className="flex flex-col items-center justify-center p-6 bg-muted/40 rounded-xl border border-dashed border-border/80">
-            <div className="shadow-lg rounded-sm overflow-hidden transition-transform duration-200 hover:scale-[1.01]">
+            <div
+              id="modal-blood-unit-label"
+              className="shadow-lg rounded-sm overflow-hidden transition-transform duration-200 hover:scale-[1.01]"
+            >
               <BloodUnitLabel unit={unit} showQr={showQr} />
             </div>
             <p className="mt-3 text-[11px] text-muted-foreground text-center">
