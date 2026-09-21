@@ -2,9 +2,9 @@ import { LockKeyhole } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import { env } from "@/app/config/env";
 import { navigationByRole } from "@/app/config/navigation";
 import type { AuthenticatedUser } from "@/features/authentication/model/auth.types";
+import { BrandWordmark } from "@/shared/components/branding/brand-wordmark";
 import { OrganizationContext } from "@/shared/components/navigation/organization-context";
 import { cn } from "@/shared/lib/utils";
 
@@ -70,26 +70,28 @@ export function AppSidebar({
     >
       <div
         className={cn(
-          "flex min-h-16 items-center overflow-hidden border-b border-sidebar-border",
+          "flex h-16 shrink-0 items-center overflow-hidden border-b border-sidebar-border",
           collapsible
             ? "justify-center gap-0 px-2 group-hover/sidebar:justify-start group-hover/sidebar:gap-3 group-hover/sidebar:px-3.5"
             : "gap-3 px-3.5",
         )}
       >
-        <img
-          src="/logo.png"
-          alt="Life Link Logo"
-          className="h-11 w-auto shrink-0 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] transition-transform duration-150"
-        />
-        <span
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-transform duration-150 group-hover/sidebar:scale-105">
+          <img
+            src="/logo.svg"
+            alt="Life Link Logo"
+            className="h-full w-auto object-contain"
+          />
+        </div>
+        <div
           className={cn(
-            "whitespace-nowrap text-base font-semibold tracking-[-0.015em] text-white transition-[max-width,opacity] duration-150",
+            "overflow-hidden transition-[max-width,opacity] duration-150",
             collapsible &&
-              "max-w-0 overflow-hidden opacity-0 group-hover/sidebar:max-w-48 group-hover/sidebar:opacity-100",
+              "max-w-0 opacity-0 group-hover/sidebar:max-w-48 group-hover/sidebar:opacity-100",
           )}
         >
-          {t("common.appName", env.appName)}
-        </span>
+          <BrandWordmark size="sm" variant="on-dark" showSubtitle={false} />
+        </div>
       </div>
 
       <OrganizationContext
@@ -188,8 +190,8 @@ export function AppSidebar({
                               ? "justify-center gap-0 px-0 group-hover/sidebar:justify-start group-hover/sidebar:gap-2.5 group-hover/sidebar:px-2.5"
                               : "gap-2.5 px-2.5",
                             active
-                              ? "bg-black/18 text-white font-semibold shadow-2xs hover:bg-black/24"
-                              : "text-white/90 hover:bg-white/12 hover:text-white",
+                              ? "bg-primary/20 text-white font-semibold shadow-2xs border-s-2 border-primary hover:bg-primary/25"
+                              : "text-white/80 hover:bg-white/[0.08] hover:text-white",
                           );
                         }}
                       >

@@ -15,7 +15,6 @@ import {
   bloodGroups,
   urgencyLevels,
 } from "@/shared/components/clinical/clinical.types";
-import { getRequestStatusIndicator } from "@/shared/components/clinical/request-status-badge";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 
@@ -131,11 +130,6 @@ export function RequestQueueFilters({
               <option value="all">{t("hospital.allUrgencies")}</option>
               {urgencyLevels.map((urgency) => (
                 <option key={urgency} value={urgency}>
-                  {urgency === "emergency"
-                    ? "🚨 "
-                    : urgency === "urgent"
-                      ? "⚠️ "
-                      : ""}
                   {t(`urgency.${urgency}`)}
                 </option>
               ))}
@@ -199,7 +193,6 @@ export function RequestQueueFilters({
               <option value="all">{t("hospital.allStatuses")}</option>
               {bloodBankQueueStatuses.map((status) => (
                 <option key={status} value={status}>
-                  {getRequestStatusIndicator(status)}{" "}
                   {formatBloodBankStatus(status)}
                 </option>
               ))}

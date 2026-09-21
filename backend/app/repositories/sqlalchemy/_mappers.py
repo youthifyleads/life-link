@@ -100,9 +100,12 @@ def request_to_record(m: BloodRequestModel) -> BloodRequestRecord:
 
 
 def inventory_to_record(m: BloodBagModel) -> InventoryItemRecord:
+    comp = getattr(m, "component", None)
+    if not comp or comp == "blood_bag":
+        comp = "whole_blood"
     return InventoryItemRecord(
         id=m.blood_bag_id, blood_bank_id=m.current_blood_bank_id, blood_type=m.blood_type,
-        component="blood_bag", quantity_units=m.quantity,
+        component=comp, quantity_units=m.quantity,
         is_available=(m.status or "").lower() in {"available", "reserved"},
         expiry_date=m.expiry_date, last_updated=m.created_at,
         qr_code=m.qr_code, status=m.status or "available",

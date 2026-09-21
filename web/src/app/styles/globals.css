@@ -53,12 +53,12 @@
   --clinical-navy: #0e2430;
   --clinical-canvas: #f7f9fa;
 
-  /* Sidebar: Light Medical Red (#E53935) */
-  --sidebar: #E53935;
+  /* Sidebar: Refined Clinical Midnight Navy */
+  --sidebar: #0e2430;
   --sidebar-foreground: #ffffff;
-  --sidebar-muted: rgba(255, 255, 255, 0.78);
-  --sidebar-accent: #c62828;
-  --sidebar-border: rgba(0, 0, 0, 0.12);
+  --sidebar-muted: #9bb1bd;
+  --sidebar-accent: #163647;
+  --sidebar-border: #1d3e50;
 
   /* Header: Dark Navy Blue */
   --header: #0e2430;
@@ -72,8 +72,11 @@
 
 @theme inline {
   --font-sans:
-    "IBM Plex Sans Variable", "Noto Sans Arabic Variable", ui-sans-serif,
-    system-ui, sans-serif;
+    "Plus Jakarta Sans", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-heading:
+    "Cairo", "Plus Jakarta Sans", "IBM Plex Sans Arabic", sans-serif;
+  --font-brand:
+    "Cairo", "Plus Jakarta Sans", sans-serif;
   --font-mono:
     ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 
@@ -129,14 +132,20 @@
 
   html {
     min-width: 320px;
+    height: 100%;
     background: var(--background);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
   }
 
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
   body {
     min-width: 320px;
-    min-height: 100vh;
+    height: 100%;
     margin: 0;
     background: var(--background);
     color: var(--foreground);
@@ -145,10 +154,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  #root {
+    height: 100%;
+  }
+
   html[dir="rtl"] body {
-    font-family:
-      "Noto Sans Arabic Variable", "IBM Plex Sans Variable", ui-sans-serif,
-      system-ui, sans-serif;
+    font-family: "IBM Plex Sans Arabic", var(--font-sans);
     line-height: 1.65;
   }
 
@@ -289,4 +300,81 @@
     display: block !important;
     page-break-inside: avoid;
   }
+
+  /* Strict Isolation for Blood Bag Label Printing */
+  body.print-label-mode {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.print-label-mode * {
+    visibility: hidden !important;
+  }
+
+  body.print-label-mode #blood-unit-printable-label,
+  body.print-label-mode #blood-unit-printable-label * {
+    visibility: visible !important;
+  }
+
+  body.print-label-mode #blood-unit-printable-label {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    margin: 0 auto !important;
+    display: block !important;
+    box-shadow: none !important;
+  }
+
+  body.print-label-mode.print-thermal-mode #blood-unit-printable-label {
+    max-width: 100mm !important;
+    width: 100mm !important;
+  }
+
+  body.print-label-mode:not(.print-thermal-mode) #blood-unit-printable-label {
+    max-width: 130mm !important;
+    margin-top: 10mm !important;
+  }
 }
+
+/* Typography Hierarchy & Arabic Polish */
+html {
+  font-family: var(--font-sans);
+}
+
+[dir="rtl"],
+:lang(ar) {
+  font-family: "IBM Plex Sans Arabic", var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
+[dir="rtl"] h6,
+:lang(ar) h1,
+:lang(ar) h2,
+:lang(ar) h3,
+:lang(ar) h4,
+:lang(ar) h5,
+:lang(ar) h6 {
+  font-family: "Cairo", sans-serif;
+  letter-spacing: -0.015em;
+}
+
+.font-brand {
+  font-family: "Cairo", "Plus Jakarta Sans", sans-serif;
+}
+

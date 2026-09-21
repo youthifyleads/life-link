@@ -119,10 +119,10 @@ export function DonorRequestsPage() {
                   {t("hospital.allUrgencies", "All Urgencies")}
                 </option>
                 <option value="emergency">
-                  🚨 {t("urgency.emergency", "Emergency")}
+                  {t("urgency.emergency", "Emergency")}
                 </option>
                 <option value="urgent">
-                  ⚠️ {t("urgency.urgent", "Urgent")}
+                  {t("urgency.urgent", "Urgent")}
                 </option>
                 <option value="routine">
                   {t("urgency.routine", "Routine")}
@@ -144,13 +144,13 @@ export function DonorRequestsPage() {
                   {t("common.allStatuses", "All Statuses")}
                 </option>
                 <option value="pending">
-                  ⏳ {t("status.pending", "Pending")}
+                  {t("status.pending", "Pending")}
                 </option>
                 <option value="interested">
-                  ✅ {t("status.confirmed", "Interested")}
+                  {t("status.confirmed", "Interested")}
                 </option>
                 <option value="declined">
-                  ❌ {t("status.rejected", "Declined")}
+                  {t("status.rejected", "Declined")}
                 </option>
               </select>
             </div>

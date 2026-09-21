@@ -135,13 +135,6 @@ export function BloodBanksTable({
                             : "danger"
                       }
                       className="uppercase"
-                      indicator={
-                        bloodBank.inventorySummary.posture === "optimal"
-                          ? "✅"
-                          : bloodBank.inventorySummary.posture === "warning"
-                            ? "⚠️"
-                            : "🚨"
-                      }
                     >
                       {bloodBank.inventorySummary.posture}
                     </StatusIndicator>

@@ -1,6 +1,8 @@
 import {
   AlertOctagon,
+  Check,
   ClockAlert,
+  Copy,
   History,
   ScanLine,
   ShieldAlert,
@@ -11,9 +13,13 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import {
-  bloodBankComponentLabels,
-  type BloodUnit,
-  type BloodUnitStatus,
+  formatBloodBankComponent,
+  formatShortId,
+  formatStorageLocation,
+} from "@/features/blood-bank/components/blood-bank-formatters";
+import type {
+  BloodUnit,
+  BloodUnitStatus,
 } from "@/features/blood-bank/types/blood-bank.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
 import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
@@ -32,6 +38,19 @@ export function InventoryTable({
 }: InventoryTableProps) {
   const { t } = useTranslation();
   const [now] = useState(() => Date.now());
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyId = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1800);
+    } catch {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1800);
+    }
+  };
 
   const getExpiryDisplay = (expiryDateStr: string, status: BloodUnitStatus) => {
     const expTime = new Date(expiryDateStr).getTime();
@@ -72,9 +91,9 @@ export function InventoryTable({
     switch (status) {
       case "available":
         return (
-          <StatusIndicator tone="success">
+          <span className="text-xs text-muted-foreground font-medium">
             {t("status.available", "Available")}
-          </StatusIndicator>
+          </span>
         );
       case "reserved":
         return (
@@ -84,7 +103,7 @@ export function InventoryTable({
         );
       case "allocated":
         return (
-          <StatusIndicator tone="success">
+          <StatusIndicator tone="pending">
             {t("status.allocated", "Allocated")}
           </StatusIndicator>
         );
@@ -143,34 +162,31 @@ export function InventoryTable({
             )}
             className="overflow-x-auto rounded-lg border border-border/80 bg-surface shadow-2xs"
           >
-            <table className="clinical-table min-w-[62rem] table-fixed border-collapse">
+            <table className="clinical-table min-w-[58rem] table-fixed border-collapse">
               <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
                 <tr>
-                  <th scope="col" className="w-[18%] px-3.5 py-2.5 text-start">
+                  <th scope="col" className="w-[20%] px-3.5 py-2.5 text-start">
                     {t("bloodBank.unitId", "Unit ID")}
                   </th>
                   <th scope="col" className="w-[10%] px-3 py-2.5 text-start">
                     {t("common.bloodGroup", "Group")}
                   </th>
-                  <th scope="col" className="w-[15%] px-3 py-2.5 text-start">
+                  <th scope="col" className="w-[18%] px-3 py-2.5 text-start">
                     {t("common.component", "Component")}
                   </th>
-                  <th scope="col" className="w-[11%] px-3 py-2.5 text-start">
+                  <th scope="col" className="w-[12%] px-3 py-2.5 text-start">
                     {t("bloodBank.collection", "Collection")}
                   </th>
-                  <th scope="col" className="w-[13%] px-3 py-2.5 text-start">
+                  <th scope="col" className="w-[14%] px-3 py-2.5 text-start">
                     {t("bloodBank.expiry", "Expiry Date")}
                   </th>
                   <th scope="col" className="w-[11%] px-3 py-2.5 text-start">
                     {t("common.status", "Status")}
                   </th>
-                  <th scope="col" className="w-[16%] px-3 py-2.5 text-start">
+                  <th scope="col" className="w-[15%] px-3 py-2.5 text-start">
                     {t("bloodBank.storageLocation", "Storage Location")}
                   </th>
-                  <th scope="col" className="w-[13%] px-3 py-2.5 text-start">
-                    {t("hospital.requestId", "Assigned Request")}
-                  </th>
-                  <th scope="col" className="w-[13%] px-3.5 py-2.5 text-end">
+                  <th scope="col" className="w-[10%] px-3.5 py-2.5 text-end">
                     {t("common.actions", "Actions")}
                   </th>
                 </tr>
@@ -187,20 +203,42 @@ export function InventoryTable({
                       key={unit.id}
                       className="hover:bg-surface-subtle/70 transition-colors"
                     >
-                      {/* Unit ID */}
+                      {/* Unit ID & Optional Sub-line for Assigned Request */}
                       <td className="px-3.5 py-2.5 text-start">
                         <div className="flex items-center gap-1.5 font-mono font-bold text-foreground">
                           <Link
                             to={`/blood-bank/tracking?id=${unit.id}`}
-                            className="hover:text-primary hover:underline"
-                            title={t(
-                              "healthcare.tracking",
-                              "Track unit in QR Tracking",
-                            )}
+                            className="hover:text-primary hover:underline truncate max-w-[130px]"
+                            title={unit.id}
                           >
-                            <bdi dir="ltr">{unit.id}</bdi>
+                            <bdi dir="ltr">{formatShortId(unit.id)}</bdi>
                           </Link>
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyId(unit.id, e)}
+                            className="inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-surface-subtle transition-colors cursor-pointer"
+                            title={copiedId === unit.id ? t("common.copied", "Copied!") : t("common.copyId", "Copy full ID")}
+                            aria-label={`${t("common.copyId", "Copy full ID")} ${unit.id}`}
+                          >
+                            {copiedId === unit.id ? (
+                              <Check className="size-3 text-success" />
+                            ) : (
+                              <Copy className="size-3" />
+                            )}
+                          </button>
                         </div>
+                        {unit.allocatedRequestId ? (
+                          <div className="mt-0.5 text-[11px] text-muted-foreground">
+                            <span>{t("hospital.requestId", "Req")}: </span>
+                            <Link
+                              to={`/blood-bank/requests/${unit.allocatedRequestId}`}
+                              className="font-mono font-semibold text-primary hover:underline"
+                              title={unit.allocatedRequestId}
+                            >
+                              <bdi dir="ltr">#{formatShortId(unit.allocatedRequestId)}</bdi>
+                            </Link>
+                          </div>
+                        ) : null}
                       </td>
 
                       {/* Group */}
@@ -210,7 +248,7 @@ export function InventoryTable({
 
                       {/* Component */}
                       <td className="px-3 py-2.5 text-start font-medium text-foreground">
-                        {bloodBankComponentLabels[unit.component]}
+                        {formatBloodBankComponent(unit.component)}
                       </td>
 
                       {/* Collection Date */}
@@ -256,23 +294,9 @@ export function InventoryTable({
 
                       {/* Storage Location */}
                       <td className="px-3 py-2.5 text-start">
-                        <span className="block truncate text-muted-foreground">
-                          {unit.storageLocation}
+                        <span className="block truncate text-muted-foreground" title={unit.storageLocation}>
+                          {formatStorageLocation(unit.storageLocation)}
                         </span>
-                      </td>
-
-                      {/* Assigned Request */}
-                      <td className="px-3 py-2.5 text-start">
-                        {unit.allocatedRequestId ? (
-                          <Link
-                            to={`/blood-bank/requests/${unit.allocatedRequestId}`}
-                            className="font-mono font-semibold text-primary hover:underline"
-                          >
-                            <bdi dir="ltr">{unit.allocatedRequestId}</bdi>
-                          </Link>
-                        ) : (
-                          <span className="text-muted-foreground/60">—</span>
-                        )}
                       </td>
 
                       {/* Actions */}
@@ -358,9 +382,21 @@ export function InventoryTable({
                   className="p-3.5 sm:p-4 text-xs space-y-2.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono font-bold text-foreground text-sm">
-                      <bdi dir="ltr">{unit.id}</bdi>
-                    </span>
+                    <div className="flex items-center gap-1.5 font-mono font-bold text-foreground text-sm">
+                      <bdi dir="ltr">{formatShortId(unit.id)}</bdi>
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopyId(unit.id, e)}
+                        className="inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                        title={copiedId === unit.id ? t("common.copied", "Copied!") : t("common.copyId", "Copy full ID")}
+                      >
+                        {copiedId === unit.id ? (
+                          <Check className="size-3 text-success" />
+                        ) : (
+                          <Copy className="size-3" />
+                        )}
+                      </button>
+                    </div>
                     {getStatusBadge(unit.status)}
                   </div>
 
@@ -373,7 +409,7 @@ export function InventoryTable({
                       <div className="mt-1 flex items-center gap-1.5">
                         <BloodGroupBadge group={unit.bloodGroup} />
                         <span className="font-medium text-foreground">
-                          {bloodBankComponentLabels[unit.component]}
+                          {formatBloodBankComponent(unit.component)}
                         </span>
                       </div>
                     </div>
@@ -399,27 +435,23 @@ export function InventoryTable({
                         {t("bloodBank.storageLocation", "Storage Location")}
                       </span>
                       <span className="mt-1 block text-foreground font-medium">
-                        {unit.storageLocation}
+                        {formatStorageLocation(unit.storageLocation)}
                       </span>
                     </div>
 
-                    <div>
-                      <span className="block text-[10px] uppercase tracking-wider">
-                        {t("hospital.requestId", "Assigned Request")}
-                      </span>
-                      {unit.allocatedRequestId ? (
+                    {unit.allocatedRequestId ? (
+                      <div>
+                        <span className="block text-[10px] uppercase tracking-wider">
+                          {t("hospital.requestId", "Assigned Request")}
+                        </span>
                         <Link
                           to={`/blood-bank/requests/${unit.allocatedRequestId}`}
-                          className="mt-1 font-mono font-semibold text-primary hover:underline"
+                          className="mt-1 block font-mono font-semibold text-primary hover:underline"
                         >
-                          <bdi dir="ltr">{unit.allocatedRequestId}</bdi>
+                          <bdi dir="ltr">#{formatShortId(unit.allocatedRequestId)}</bdi>
                         </Link>
-                      ) : (
-                        <span className="mt-1 block text-muted-foreground/60">
-                          —
-                        </span>
-                      )}
-                    </div>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-2">

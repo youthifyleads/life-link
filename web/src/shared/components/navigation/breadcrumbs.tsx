@@ -14,8 +14,8 @@ interface BreadcrumbsProps {
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
   const { t } = useTranslation();
   return (
-    <nav aria-label={t("nav.breadcrumb")} className="overflow-x-auto" tabIndex={0}>
-      <ol className="flex min-w-max items-center gap-1 text-sm text-muted-foreground">
+    <nav aria-label={t("nav.breadcrumb")} className="w-full">
+      <ol className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground">
         {items.map((item, index) => {
           const current = index === items.length - 1;
 

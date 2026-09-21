@@ -1,5 +1,4 @@
 import type {
-  BloodBankComponent,
   BloodStockMatrixCell,
   BloodUnit,
   BloodUnitIntakePayload,
@@ -19,24 +18,12 @@ function waitForMock<T>(value: T): Promise<T> {
   });
 }
 
-export const ALL_BLOOD_GROUPS: BloodGroup[] = [
-  "A+",
-  "A−",
-  "B+",
-  "B−",
-  "AB+",
-  "AB−",
-  "O+",
-  "O−",
-];
+import {
+  ALL_BLOOD_GROUPS,
+  ALL_COMPONENTS,
+} from "@/features/blood-bank/constants/blood-bank.constants";
 
-export const ALL_COMPONENTS: BloodBankComponent[] = [
-  "red_cells",
-  "platelets",
-  "fresh_frozen_plasma",
-  "whole_blood",
-  "cryoprecipitate",
-];
+export { ALL_BLOOD_GROUPS, ALL_COMPONENTS };
 
 // Baseline seed blood units
 const initialUnits: BloodUnit[] = [

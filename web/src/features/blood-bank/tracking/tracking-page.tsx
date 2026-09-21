@@ -89,23 +89,6 @@ export function BloodBankTrackingPage() {
             <p className="text-muted-foreground">
               {t("bloodBank.unitNotFoundDesc")}
             </p>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="text-[11px] font-medium text-muted-foreground">
-                {t("bloodBank.quickSelectPrompt", "Try unit:")}
-              </span>
-              {["UNT-O-NEG-0142", "UNT-B-POS-0331", "UNT-AB-POS-0451", "UNT-A-POS-0211"].map(
-                (unitId) => (
-                  <button
-                    key={unitId}
-                    type="button"
-                    onClick={() => handleSearch(unitId)}
-                    className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1 font-mono text-xs font-semibold text-foreground hover:border-primary hover:text-primary transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <bdi dir="ltr">{unitId}</bdi>
-                  </button>
-                ),
-              )}
-            </div>
           </div>
         ) : (
           /* Found Unit Display */

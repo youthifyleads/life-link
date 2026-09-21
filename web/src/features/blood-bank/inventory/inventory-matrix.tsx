@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 
-import { ALL_BLOOD_GROUPS } from "@/features/blood-bank/inventory/inventory.mock";
-import { bloodBankComponentLabels } from "@/features/blood-bank/types/blood-bank.types";
+import { formatBloodBankComponent } from "@/features/blood-bank/components/blood-bank-formatters";
+import { ALL_BLOOD_GROUPS } from "@/features/blood-bank/constants/blood-bank.constants";
 import type {
   BloodBankComponent,
   BloodStockMatrixCell,
@@ -76,9 +76,9 @@ export function InventoryMatrix({
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-xs">
-          <StatusIndicator tone="success">
+          <span className="text-xs text-muted-foreground font-medium">
             {t("common.approved", "Optimal")}
-          </StatusIndicator>
+          </span>
           <StatusIndicator tone="warning">
             {t("bloodBank.criticalGroups", "Low Stock")}
           </StatusIndicator>
@@ -118,7 +118,7 @@ export function InventoryMatrix({
                   scope="col"
                   className="px-3.5 py-2.5 text-center"
                 >
-                  {bloodBankComponentLabels[comp]}
+                  {formatBloodBankComponent(comp)}
                 </th>
               ))}
               <th scope="col" className="px-3.5 py-2.5 text-center font-bold">
@@ -146,11 +146,11 @@ export function InventoryMatrix({
                   <td className="px-3.5 py-2.5 text-start font-medium">
                     <div className="flex items-center gap-2">
                       <BloodGroupBadge group={group} />
-                      <span className="text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         {group === "O−"
-                          ? "(Universal)"
+                          ? `(${t("bloodBank.universalDonor", "فصيلة عامة")})`
                           : group === "AB+"
-                            ? "(Universal Plt)"
+                            ? `(${t("bloodBank.universalPlasma", "صفائح عامة")})`
                             : ""}
                       </span>
                     </div>
@@ -231,9 +231,9 @@ export function InventoryMatrix({
                         {t("bloodBank.criticalGroups", "Low Stock")}
                       </StatusIndicator>
                     ) : (
-                      <StatusIndicator tone="success">
+                      <span className="text-xs text-muted-foreground font-medium">
                         {t("common.approved", "Optimal")}
-                      </StatusIndicator>
+                      </span>
                     )}
                   </td>
                 </tr>

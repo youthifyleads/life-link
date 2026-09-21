@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { BloodBankPageFrame } from "@/features/blood-bank/components/blood-bank-page-frame";
+import { formatShortId } from "@/shared/lib/formatters";
 import { BloodBagCustodyHistoryDrawer } from "@/features/blood-bank/custody/blood-bag-custody-history-drawer";
 import {
   useAllocateUnits,
@@ -82,7 +83,7 @@ export function BloodBankRequestDetailsPage() {
             label: t("nav.requestQueue", "Request queue"),
             href: "/blood-bank/requests",
           },
-          { label: id || t("common.loading", "Loading") },
+          { label: id ? formatShortId(id) : t("common.loading", "Loading") },
         ]}
         title={t("common.loadingRecords", "Loading clinical records…")}
         description={t("common.loading", "Loading your workspace…")}
@@ -104,7 +105,7 @@ export function BloodBankRequestDetailsPage() {
             label: t("nav.requestQueue", "Request queue"),
             href: "/blood-bank/requests",
           },
-          { label: id },
+          { label: id ? formatShortId(id) : id },
         ]}
         title={t("common.error", "Error")}
         description={t(
@@ -139,7 +140,7 @@ export function BloodBankRequestDetailsPage() {
             label: t("nav.requestQueue", "Request queue"),
             href: "/blood-bank/requests",
           },
-          { label: id },
+          { label: id ? formatShortId(id) : id },
         ]}
         title={t("common.noRecordsTitle", "No records found")}
         description={t(
@@ -313,9 +314,9 @@ export function BloodBankRequestDetailsPage() {
           label: t("nav.requestQueue", "Request queue"),
           href: "/blood-bank/requests",
         },
-        { label: request.id },
+        { label: formatShortId(request.id) },
       ]}
-      title={`${request.id} — ${t("bloodBank.requisitionReview", "Requisition Review")}`}
+      title={`${formatShortId(request.id)} — ${t("bloodBank.requisitionReview", "Requisition Review")}`}
       description={t("bloodBank.requisitionReviewDesc", {
         hospital: request.hospital.name,
         defaultValue: `Assess clinical requirements for ${request.hospital.name}, allocate matching inventory units, and progress dispatch checkpoints.`,

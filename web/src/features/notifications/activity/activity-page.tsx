@@ -166,13 +166,13 @@ export function ActivityPage() {
               {t("activity.allResults", "All Results")}
             </option>
             <option value="success">
-              ✅ {t("activity.resultSuccess", "Success")}
+              {t("activity.resultSuccess", "Success")}
             </option>
             <option value="warning">
-              ⚠️ {t("activity.resultWarning", "Warning")}
+              {t("activity.resultWarning", "Warning")}
             </option>
             <option value="failure">
-              ❌ {t("activity.resultFailure", "Failure")}
+              {t("activity.resultFailure", "Failure")}
             </option>
           </select>
         </div>

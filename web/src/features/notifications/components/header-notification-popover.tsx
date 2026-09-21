@@ -37,9 +37,10 @@ export function HeaderNotificationPopover({
   useEventBusListener();
 
   const unreadCountQuery = useUnreadNotificationCount(user.primary_role);
-  const notificationsQuery = useNotifications({
-    roleView: user.primary_role,
-  });
+  const notificationsQuery = useNotifications(
+    { roleView: user.primary_role },
+    { enabled: open },
+  );
 
   const markReadMutation = useMarkNotificationRead();
   const markAllMutation = useMarkAllNotificationsRead();

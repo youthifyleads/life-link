@@ -21,6 +21,11 @@ import {
   LoadingState,
 } from "@/shared/components/feedback/system-states";
 import { Button } from "@/shared/components/ui/button";
+import {
+  formatDateTime,
+  formatHospitalName,
+  formatStorageLocation,
+} from "@/shared/lib/formatters";
 
 export function CaregiverTrackingPage() {
   const { t } = useTranslation();
@@ -232,9 +237,9 @@ export function CaregiverTrackingPage() {
                     <span className="text-xs font-bold text-foreground">
                       {milestone.title}
                     </span>
-                    <time className="font-mono text-[10px] text-muted-foreground">
-                      <bdi dir="ltr">
-                        {milestone.timestamp.replace("T", " ").split(".")[0]}
+                    <time className="text-[11px] text-muted-foreground font-medium">
+                      <bdi dir="auto">
+                        {formatDateTime(milestone.timestamp)}
                       </bdi>
                     </time>
                   </div>
@@ -243,7 +248,7 @@ export function CaregiverTrackingPage() {
                   </p>
                   <p className="text-[11px] font-medium text-muted-foreground">
                     {t("common.address", "Location")}:{" "}
-                    <bdi dir="auto">{milestone.location}</bdi>
+                    <bdi dir="auto">{formatStorageLocation(milestone.location)}</bdi>
                   </p>
                 </div>
               </li>
@@ -260,7 +265,7 @@ export function CaregiverTrackingPage() {
                 "bloodBank.traceabilityNotice",
                 "This unit is verified under the National Blood Safety Protocol. If you have questions about the scheduled transfusion time, please consult the charge nurse at",
               )}{" "}
-              {unit.destinationHospital}.
+              {formatHospitalName(unit.destinationHospital)}.
             </p>
           </div>
         </div>

@@ -15,6 +15,7 @@ import { env } from "@/app/config/env";
 import { useAuth } from "@/features/authentication/model/use-auth";
 import type { UserRole } from "@/features/authentication/model/auth.types";
 import { normalizeApiError } from "@/shared/api/api-error";
+import { BrandWordmark } from "@/shared/components/branding/brand-wordmark";
 import { LanguageSwitcher } from "@/shared/components/navigation/language-switcher";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -135,22 +136,15 @@ export function LoginPage() {
         <div>
           <div className="flex items-center gap-5">
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Life Link Logo"
               className="h-20 w-auto shrink-0 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] sm:h-24"
             />
-            <div>
-              <span className="text-2xl font-bold tracking-[-0.025em] text-white sm:text-3xl">
-                {t("common.appName", env.appName)}
-              </span>
-              <p className="mt-1 text-xs font-medium text-[#adc1c9] sm:text-sm">
-                Clinical Blood Coordination Platform
-              </p>
-            </div>
+            <BrandWordmark size="lg" variant="on-dark" showSubtitle />
           </div>
 
           <div className="mt-10 max-w-md lg:mt-16">
-            <h1 className="max-w-[15ch] text-3xl font-semibold leading-tight tracking-[-0.025em] sm:text-4xl">
+            <h1 className="max-w-[16ch] text-3xl font-black leading-[1.25] tracking-tight sm:text-4xl lg:text-[2.65rem] font-heading text-white">
               {t("auth.brandHeadline")}
             </h1>
             <p className="mt-4 max-w-[52ch] text-base leading-7 text-[#d3e4ec]">
@@ -184,7 +178,7 @@ export function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold tracking-[-0.02em] text-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
               {t("auth.title")}
             </h2>
             <p className="mt-3 max-w-[52ch] text-sm leading-6 text-muted-foreground">

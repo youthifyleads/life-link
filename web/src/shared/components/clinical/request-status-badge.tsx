@@ -1,4 +1,14 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  Clock,
+  FileEdit,
+  Package,
+  XCircle,
+} from "lucide-react";
 
 import type { RequestStatus } from "@/shared/components/clinical/clinical.types";
 import {
@@ -20,26 +30,60 @@ const statusDefinitions: Record<RequestStatus, StatusDefinition> = {
   confirmed: { label: "Confirmed", tone: "success" },
   preparing: { label: "Preparing", tone: "pending" },
   ready: { label: "Ready", tone: "success" },
-  completed: { label: "Completed", tone: "success" },
+  completed: { label: "Completed", tone: "neutral" },
   rejected: { label: "Rejected", tone: "danger" },
-  cancelled: { label: "Cancelled", tone: "danger" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
 };
 
-const requestStatusIndicators: Record<RequestStatus, string> = {
-  draft: "📝",
-  submitted: "🕒",
-  acknowledged: "✅",
-  needs_information: "⚠️",
-  confirmed: "✅",
-  preparing: "⚙️",
-  ready: "✅",
-  completed: "✔️",
-  rejected: "❌",
-  cancelled: "❌",
-};
+export function getRequestStatusIcon(status: RequestStatus): ReactNode {
+  switch (status) {
+    case "draft":
+      return (
+        <FileEdit aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+    case "submitted":
+      return (
+        <Clock aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+    case "acknowledged":
+      return (
+        <Check aria-hidden="true" className="size-3.5 shrink-0 text-success" />
+      );
+    case "needs_information":
+      return (
+        <AlertTriangle aria-hidden="true" className="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+      );
+    case "confirmed":
+      return (
+        <CheckCircle2 aria-hidden="true" className="size-3.5 shrink-0 text-success" />
+      );
+    case "preparing":
+      return (
+        <Package aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
+      );
+    case "ready":
+      return (
+        <CheckCircle2 aria-hidden="true" className="size-3.5 shrink-0 text-emerald-600" />
+      );
+    case "completed":
+      return (
+        <CheckCircle2 aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+    case "rejected":
+      return (
+        <XCircle aria-hidden="true" className="size-3.5 shrink-0 text-destructive" />
+      );
+    case "cancelled":
+      return (
+        <XCircle aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+    default:
+      return null;
+  }
+}
 
-export function getRequestStatusIndicator(status: RequestStatus) {
-  return requestStatusIndicators[status];
+export function getRequestStatusIndicator(status: RequestStatus): ReactNode {
+  return getRequestStatusIcon(status);
 }
 
 interface RequestStatusBadgeProps {
@@ -52,12 +96,12 @@ export function RequestStatusBadge({
   className,
 }: RequestStatusBadgeProps) {
   const { t } = useTranslation();
-  const definition = statusDefinitions[status];
+  const definition = statusDefinitions[status] ?? statusDefinitions.draft;
 
   return (
     <StatusIndicator
       tone={definition.tone}
-      indicator={getRequestStatusIndicator(status)}
+      indicator={getRequestStatusIcon(status)}
       className={className}
     >
       {t(`status.${status}`, definition.label)}

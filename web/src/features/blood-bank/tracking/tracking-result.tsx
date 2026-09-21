@@ -15,9 +15,16 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import {
-  bloodBankComponentLabels,
-  type BloodUnit,
-  type BloodUnitStatus,
+  formatBloodBankComponent,
+  formatBloodBankDateTime,
+  formatShortId,
+  formatStorageLocation,
+} from "@/features/blood-bank/components/blood-bank-formatters";
+import { BloodUnitLabel } from "@/features/blood-bank/tracking/blood-unit-label";
+import { BloodUnitPrintModal } from "@/features/blood-bank/tracking/blood-unit-print-modal";
+import type {
+  BloodUnit,
+  BloodUnitStatus,
 } from "@/features/blood-bank/types/blood-bank.types";
 import { Button } from "@/shared/components/ui/button";
 
@@ -28,7 +35,7 @@ interface TrackingResultProps {
 export function TrackingResult({ unit }: TrackingResultProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
-  const [printState, setPrintState] = useState<"idle" | "printing" | "printed">("idle");
+  const [printModalOpen, setPrintModalOpen] = useState(false);
 
   const handleCopy = async () => {
     try {
@@ -41,24 +48,12 @@ export function TrackingResult({ unit }: TrackingResultProps) {
     }
   };
 
-  const handlePrint = () => {
-    setPrintState("printing");
-    window.setTimeout(() => {
-      try {
-        window.print();
-      } finally {
-        setPrintState("printed");
-        window.setTimeout(() => setPrintState("idle"), 2500);
-      }
-    }, 100);
-  };
-
   const getStatusIndicator = (status: BloodUnitStatus) => {
     switch (status) {
       case "available":
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-            <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium text-muted-foreground border border-border/70 rounded-full bg-surface-subtle">
+            <span className="size-1.5 rounded-full bg-muted-foreground shrink-0" />
             <span>{t("status.available", "Available in stock")}</span>
           </span>
         );
@@ -105,71 +100,8 @@ export function TrackingResult({ unit }: TrackingResultProps) {
   return (
     <div className="border border-border/80 bg-surface shadow-2xs rounded-lg p-4 sm:p-5 space-y-5">
       {/* Printable Thermal Label (Visible only on print) */}
-      <div className="hidden print:block printable-unit-label border-2 border-black p-5 text-black bg-white mb-6">
-        <div className="flex items-center justify-between border-b-2 border-black pb-3">
-          <div>
-            <p className="text-xs font-mono uppercase font-bold tracking-widest text-gray-700">
-              {t("healthcare.bloodBank", "Central Blood Bank")} · ISBT 128
-            </p>
-            <h1 className="text-base font-black tracking-tight">
-              {t("bloodBank.officialDispatchLabel", "ISBT 128 Compliant Blood Product Custody Label")}
-            </h1>
-          </div>
-          <div className="border-2 border-black px-3 py-1 text-center bg-gray-100">
-            <span className="block text-[9px] uppercase font-bold text-gray-600">
-              {t("bloodBank.aboRhGroup", "ABO / Rh")}
-            </span>
-            <span className="text-lg font-black font-mono">{unit.bloodGroup}</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 py-3 border-b-2 border-black text-xs font-mono">
-          <div>
-            <span className="block text-[10px] uppercase font-bold text-gray-700">
-              {t("bloodBank.productIdentifier", "Unit DIN")}
-            </span>
-            <span className="text-base font-black tracking-wide">{unit.id}</span>
-          </div>
-          <div>
-            <span className="block text-[10px] uppercase font-bold text-gray-700">
-              {t("common.component", "Component")}
-            </span>
-            <span className="text-sm font-bold">
-              {bloodBankComponentLabels[unit.component]}
-            </span>
-          </div>
-          <div>
-            <span className="block text-[10px] uppercase font-bold text-gray-700">
-              {t("bloodBank.collection", "Collection Date")}
-            </span>
-            <span>{unit.collectionDate}</span>
-          </div>
-          <div>
-            <span className="block text-[10px] uppercase font-bold text-gray-700">
-              {t("bloodBank.expiry", "Expiry Date")}
-            </span>
-            <span className="font-bold underline">{unit.expiryDate.split("T")[0]}</span>
-          </div>
-          <div>
-            <span className="block text-[10px] uppercase font-bold text-gray-700">
-              {t("bloodBank.storageLocation", "Storage Location")}
-            </span>
-            <span>{unit.storageLocation}</span>
-          </div>
-          <div>
-            <span className="block text-[10px] uppercase font-bold text-gray-700">
-              {t("bloodBank.assignedRequest", "Requisition Reference")}
-            </span>
-            <span>{unit.allocatedRequestId ?? "UNASSIGNED / IN STOCK"}</span>
-          </div>
-        </div>
-
-        <div className="pt-2 text-[10px] text-gray-600 flex justify-between items-center">
-          <span>{t("bloodBank.traceabilityNotice")}</span>
-          <span className="font-mono">
-            {t("bloodBank.registeredAt")}: {unit.registeredAt?.split("T")[0] ?? "—"}
-          </span>
-        </div>
+      <div className="hidden print:block printable-unit-label mb-6">
+        <BloodUnitLabel unit={unit} />
       </div>
 
       {/* Hero Unit Identification Header */}
@@ -231,27 +163,12 @@ export function TrackingResult({ unit }: TrackingResultProps) {
             type="button"
             variant="secondary"
             size="sm"
-            onClick={handlePrint}
-            disabled={printState === "printing"}
+            onClick={() => setPrintModalOpen(true)}
             className="h-8 gap-1.5 text-xs font-medium no-print"
             title={t("bloodBank.printLabelTooltip")}
           >
-            {printState === "printed" ? (
-              <>
-                <Check aria-hidden="true" className="size-3.5 text-success" />
-                <span>{t("bloodBank.labelPrinted")}</span>
-              </>
-            ) : printState === "printing" ? (
-              <>
-                <Printer aria-hidden="true" className="size-3.5 animate-pulse text-primary" />
-                <span>{t("bloodBank.printingLabel")}</span>
-              </>
-            ) : (
-              <>
-                <Printer aria-hidden="true" className="size-3.5" />
-                <span>{t("bloodBank.printLabelAction")}</span>
-              </>
-            )}
+            <Printer aria-hidden="true" className="size-3.5" />
+            <span>{t("bloodBank.printLabelAction")}</span>
           </Button>
         </div>
       </div>
@@ -284,7 +201,7 @@ export function TrackingResult({ unit }: TrackingResultProps) {
             {t("common.component", "Component")}
           </span>
           <p className="text-sm font-bold text-foreground truncate">
-            {bloodBankComponentLabels[unit.component]}
+            {formatBloodBankComponent(unit.component)}
           </p>
           <p className="text-[11px] text-muted-foreground flex items-center gap-1">
             <Thermometer aria-hidden="true" className="size-3 text-primary shrink-0" />
@@ -315,9 +232,10 @@ export function TrackingResult({ unit }: TrackingResultProps) {
               <Link
                 to={`/blood-bank/requests/${unit.allocatedRequestId}`}
                 className="inline-flex items-center gap-1 font-mono text-sm font-bold text-primary hover:underline"
+                title={unit.allocatedRequestId}
               >
                 <span>
-                  <bdi dir="ltr">{unit.allocatedRequestId}</bdi>
+                  <bdi dir="ltr">#{formatShortId(unit.allocatedRequestId)}</bdi>
                 </span>
                 <ExternalLink aria-hidden="true" className="size-3 shrink-0" />
               </Link>
@@ -329,7 +247,7 @@ export function TrackingResult({ unit }: TrackingResultProps) {
           </div>
           <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
             <MapPin aria-hidden="true" className="size-3 text-muted-foreground shrink-0" />
-            <span className="truncate">{unit.storageLocation}</span>
+            <span className="truncate">{formatStorageLocation(unit.storageLocation)}</span>
           </p>
         </div>
       </div>
@@ -341,23 +259,23 @@ export function TrackingResult({ unit }: TrackingResultProps) {
             {t("bloodBank.storageLocation", "Location")}
           </span>
           <span className="font-semibold text-foreground truncate block mt-0.5">
-            {unit.storageLocation}
+            {formatStorageLocation(unit.storageLocation)}
           </span>
         </div>
         <div>
           <span className="text-[11px] text-muted-foreground block font-medium">
             {t("bloodBank.registeredAt", "Registration")}
           </span>
-          <span className="font-mono text-foreground tabular-nums block mt-0.5">
-            <bdi dir="ltr">{unit.registeredAt?.split("T")[0] ?? "—"}</bdi>
+          <span className="text-foreground tabular-nums block mt-0.5 text-xs">
+            <bdi dir="auto">{unit.registeredAt ? formatBloodBankDateTime(unit.registeredAt) : "—"}</bdi>
           </span>
         </div>
         <div>
           <span className="text-[11px] text-muted-foreground block font-medium">
             {t("bloodBank.lastUpdated", "Last Sync")}
           </span>
-          <span className="font-mono text-foreground tabular-nums block mt-0.5">
-            <bdi dir="ltr">{unit.updatedAt?.replace("T", " ").split(".")[0] ?? "—"}</bdi>
+          <span className="text-foreground tabular-nums block mt-0.5 text-xs">
+            <bdi dir="auto">{unit.updatedAt ? formatBloodBankDateTime(unit.updatedAt) : "—"}</bdi>
           </span>
         </div>
         <div>
@@ -383,6 +301,13 @@ export function TrackingResult({ unit }: TrackingResultProps) {
           </div>
         </div>
       ) : null}
+
+      {/* Blood Unit Clinical Thermal Label Print Modal */}
+      <BloodUnitPrintModal
+        open={printModalOpen}
+        onOpenChange={setPrintModalOpen}
+        unit={unit}
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { KeyRound, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-import { env } from "@/app/config/env";
+import { BrandWordmark } from "@/shared/components/branding/brand-wordmark";
 import { LanguageSwitcher } from "@/shared/components/navigation/language-switcher";
 
 interface PasswordResetShellProps {
@@ -24,22 +24,15 @@ export function PasswordResetShell({
         <div>
           <div className="flex items-center gap-5">
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Life Link Logo"
               className="h-16 w-auto shrink-0 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] sm:h-20"
             />
-            <div>
-              <span className="text-2xl font-bold tracking-[-0.025em] text-white">
-                {t("common.appName", env.appName)}
-              </span>
-              <p className="mt-1 text-xs font-medium text-[#adc1c9]">
-                Clinical Blood Coordination Platform
-              </p>
-            </div>
+            <BrandWordmark size="md" variant="on-dark" showSubtitle />
           </div>
 
           <div className="mt-12 max-w-md lg:mt-24">
-            <h1 className="max-w-[16ch] text-3xl font-semibold leading-tight tracking-[-0.025em] sm:text-4xl">
+            <h1 className="max-w-[16ch] text-3xl font-black leading-tight tracking-tight sm:text-4xl font-heading text-white">
               {t("auth.passwordRecoveryBrandTitle")}
             </h1>
             <p className="mt-5 max-w-[52ch] text-base leading-7 text-[#d3e4ec]">
@@ -73,7 +66,7 @@ export function PasswordResetShell({
           </div>
 
           <header className="mb-8">
-            <h2 className="text-2xl font-semibold tracking-[-0.02em] text-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
               {title}
             </h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">

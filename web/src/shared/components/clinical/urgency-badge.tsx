@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { AlertOctagon, AlertTriangle } from "lucide-react";
 
 import type { UrgencyLevel } from "@/shared/components/clinical/clinical.types";
 import {
@@ -6,23 +7,33 @@ import {
   type StatusTone,
 } from "@/shared/components/clinical/status-indicator";
 
-const urgencyDefinitions = {
+interface UrgencyDefinition {
+  label: string;
+  tone: StatusTone;
+  indicator?: React.ReactNode;
+}
+
+const urgencyDefinitions: Record<UrgencyLevel, UrgencyDefinition> = {
   routine: {
     label: "Routine",
-    tone: "neutral" as StatusTone,
+    tone: "neutral",
     indicator: undefined,
   },
   urgent: {
     label: "Urgent",
-    tone: "warning" as StatusTone,
-    indicator: "⚠️",
+    tone: "warning",
+    indicator: (
+      <AlertTriangle aria-hidden="true" className="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+    ),
   },
   emergency: {
     label: "Emergency",
-    tone: "danger" as StatusTone,
-    indicator: "🚨",
+    tone: "danger",
+    indicator: (
+      <AlertOctagon aria-hidden="true" className="size-3.5 shrink-0 text-destructive" />
+    ),
   },
-} as const;
+};
 
 interface UrgencyBadgeProps {
   urgency: UrgencyLevel;

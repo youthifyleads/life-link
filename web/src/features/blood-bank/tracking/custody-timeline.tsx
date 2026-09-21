@@ -17,6 +17,12 @@ import {
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
+import {
+  formatBloodBankDateTime,
+  formatShortId,
+  formatStorageLocation,
+  formatUserName,
+} from "@/features/blood-bank/components/blood-bank-formatters";
 import type {
   CustodyEvent,
   CustodyEventType,
@@ -128,9 +134,9 @@ export function CustodyTimeline({ events = [] }: CustodyTimelineProps) {
                   <span className="text-xs font-bold text-foreground">
                     {evt.title}
                   </span>
-                  <time className="font-mono text-[11px] text-muted-foreground">
-                    <bdi dir="ltr">
-                      {evt.timestamp.replace("T", " ").split(".")[0]}
+                  <time className="text-xs text-muted-foreground font-medium">
+                    <bdi dir="auto">
+                      {formatBloodBankDateTime(evt.timestamp)}
                     </bdi>
                   </time>
                 </div>
@@ -143,7 +149,7 @@ export function CustodyTimeline({ events = [] }: CustodyTimelineProps) {
                       className="size-3 text-primary shrink-0"
                     />
                     <span>
-                      {evt.actor} ({evt.role})
+                      {formatUserName(evt.actor)} ({evt.role})
                     </span>
                   </span>
 
@@ -152,7 +158,7 @@ export function CustodyTimeline({ events = [] }: CustodyTimelineProps) {
                       aria-hidden="true"
                       className="size-3 text-primary shrink-0"
                     />
-                    <span>{evt.location}</span>
+                    <span>{formatStorageLocation(evt.location)}</span>
                   </span>
 
                   {evt.relatedRequestId ? (
@@ -164,8 +170,9 @@ export function CustodyTimeline({ events = [] }: CustodyTimelineProps) {
                       <Link
                         to={`/blood-bank/requests/${evt.relatedRequestId}`}
                         className="inline-flex items-center gap-1 hover:underline"
+                        title={evt.relatedRequestId}
                       >
-                        <bdi dir="ltr">{evt.relatedRequestId}</bdi>
+                        <bdi dir="ltr">#{formatShortId(evt.relatedRequestId)}</bdi>
                         <ExternalLink aria-hidden="true" className="size-3" />
                       </Link>
                     </span>

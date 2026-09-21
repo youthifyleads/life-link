@@ -1,4 +1,4 @@
-import { Clock, Eye } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Eye, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { formatDateTime } from "@/features/admin/components/admin-formatters";
@@ -114,18 +114,18 @@ export function AuditTable({ logs, onInspect }: AuditTableProps) {
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   {log.result === "success" ? (
-                    <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
-                      <span aria-hidden="true">✅</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 className="size-3.5 shrink-0" aria-hidden="true" />
                       <span>{t("common.success", "Success")}</span>
                     </span>
                   ) : log.result === "warning" ? (
-                    <span className="inline-flex items-center gap-1 font-medium text-amber-700">
-                      <span aria-hidden="true">⚠️</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-amber-700 dark:text-amber-400">
+                      <AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
                       <span>{t("common.warning", "Warning")}</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 font-medium text-rose-700">
-                      <span aria-hidden="true">❌</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-rose-700 dark:text-rose-400">
+                      <XCircle className="size-3.5 shrink-0" aria-hidden="true" />
                       <span>{t("common.error", "Failure")}</span>
                     </span>
                   )}

@@ -15,7 +15,7 @@ import { z } from "zod";
 import {
   ALL_BLOOD_GROUPS,
   ALL_COMPONENTS,
-} from "@/features/blood-bank/inventory/inventory.mock";
+} from "@/features/blood-bank/constants/blood-bank.constants";
 import {
   bloodBankComponentLabels,
   type BloodBankComponent,

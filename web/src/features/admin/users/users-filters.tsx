@@ -135,10 +135,10 @@ export function UsersFilters({
               {t("common.allStatuses", "All Statuses")}
             </option>
             <option value="active">
-              ✅ {t("common.active", "Active Accounts")}
+              {t("common.active", "Active Accounts")}
             </option>
             <option value="inactive">
-              ❌ {t("common.inactive", "Inactive Accounts")}
+              {t("common.inactive", "Inactive Accounts")}
             </option>
           </select>
         </div>

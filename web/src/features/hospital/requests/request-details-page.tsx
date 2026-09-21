@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { formatDateTime } from "@/features/hospital/components/hospital-formatters";
+import { formatShortId } from "@/shared/lib/formatters";
 import { HospitalPageFrame } from "@/features/hospital/components/hospital-page-frame";
 import { RequestTimeline } from "@/features/hospital/components/request-timeline";
 import { SupportingDocuments } from "@/features/hospital/documents/supporting-documents";
@@ -53,7 +54,7 @@ export function RequestDetailsPage() {
         breadcrumbs={[
           { label: t("healthcare.hospital"), href: "/hospital/dashboard" },
           { label: t("nav.bloodRequests"), href: "/hospital/requests" },
-          { label: id },
+          { label: id ? formatShortId(id) : id },
         ]}
         title={t("common.loading")}
       >
@@ -68,7 +69,7 @@ export function RequestDetailsPage() {
         breadcrumbs={[
           { label: t("healthcare.hospital"), href: "/hospital/dashboard" },
           { label: t("nav.bloodRequests"), href: "/hospital/requests" },
-          { label: id },
+          { label: id ? formatShortId(id) : id },
         ]}
         title={t("hospital.requestUnavailable")}
       >
@@ -87,7 +88,7 @@ export function RequestDetailsPage() {
         breadcrumbs={[
           { label: t("healthcare.hospital"), href: "/hospital/dashboard" },
           { label: t("nav.bloodRequests"), href: "/hospital/requests" },
-          { label: id },
+          { label: id ? formatShortId(id) : id },
         ]}
         title={t("hospital.requestNotFound")}
       >
@@ -147,9 +148,9 @@ export function RequestDetailsPage() {
       breadcrumbs={[
         { label: t("healthcare.hospital"), href: "/hospital/dashboard" },
         { label: t("nav.bloodRequests"), href: "/hospital/requests" },
-        { label: request.id },
+        { label: formatShortId(request.id) },
       ]}
-      title={request.id}
+      title={formatShortId(request.id)}
       description={`${t("hospital.created")} ${formatDateTime(request.createdAt)} — ${request.createdBy}`}
       context={<RequestStatusBadge status={currentStatus} />}
       actions={

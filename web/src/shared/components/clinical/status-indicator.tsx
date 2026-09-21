@@ -1,4 +1,10 @@
 import type { ReactNode } from "react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  XCircle,
+} from "lucide-react";
 
 import { cn } from "@/shared/lib/utils";
 
@@ -16,15 +22,8 @@ const statusStyles: Record<StatusTone, string> = {
   neutral: "text-muted-foreground",
   pending: "text-foreground",
   success: "text-success",
-  warning: "text-[#6f4a00] dark:text-warning",
+  warning: "text-amber-700 dark:text-amber-400",
   danger: "text-destructive",
-};
-
-const statusIndicators: Partial<Record<StatusTone, string>> = {
-  pending: "⏳",
-  success: "✅",
-  warning: "⚠️",
-  danger: "❌",
 };
 
 export function StatusIndicator({
@@ -33,18 +32,44 @@ export function StatusIndicator({
   className,
   indicator,
 }: StatusIndicatorProps) {
-  const visibleIndicator = indicator ?? statusIndicators[tone];
+  const renderDefaultIndicator = () => {
+    switch (tone) {
+      case "pending":
+        return (
+          <Clock aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+        );
+      case "success":
+        return (
+          <CheckCircle2 aria-hidden="true" className="size-3.5 shrink-0 text-success" />
+        );
+      case "warning":
+        return (
+          <AlertTriangle aria-hidden="true" className="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+        );
+      case "danger":
+        return (
+          <XCircle aria-hidden="true" className="size-3.5 shrink-0 text-destructive" />
+        );
+      case "neutral":
+      default:
+        return (
+          <span aria-hidden="true" className="size-1.5 rounded-full bg-muted-foreground/60 shrink-0" />
+        );
+    }
+  };
+
+  const visibleIndicator = indicator !== undefined ? indicator : renderDefaultIndicator();
 
   return (
     <span
       className={cn(
-        "inline-flex min-h-6 items-center gap-1 text-xs font-medium leading-4",
+        "inline-flex min-h-6 items-center gap-1.5 text-xs font-medium leading-4",
         statusStyles[tone],
         className,
       )}
     >
       {visibleIndicator ? (
-        <span aria-hidden="true" dir="ltr" className="shrink-0 leading-none">
+        <span aria-hidden="true" className="shrink-0 flex items-center justify-center">
           {visibleIndicator}
         </span>
       ) : null}

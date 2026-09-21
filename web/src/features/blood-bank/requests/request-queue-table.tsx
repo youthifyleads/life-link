@@ -1,4 +1,5 @@
-import { Eye, PackagePlus } from "lucide-react";
+import { Check, Copy, Eye } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
@@ -6,6 +7,7 @@ import {
   formatBloodBankComponent,
   formatBloodBankDateTime,
   formatHospitalName,
+  formatShortId,
 } from "@/features/blood-bank/components/blood-bank-formatters";
 import { RequestActionPanel } from "@/features/blood-bank/components/request-action-panel";
 import type {
@@ -34,7 +36,20 @@ export function RequestQueueTable({
   onAction,
 }: RequestQueueTableProps) {
   const { t } = useTranslation();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const showActions = Boolean(onAction) && !compact;
+
+  const handleCopyId = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1800);
+    } catch {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1800);
+    }
+  };
 
   return (
     <div className="rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden">
@@ -94,14 +109,30 @@ export function RequestQueueTable({
                 <tr key={request.id} className={rowTone}>
                   <td className="px-3.5 py-3 align-top">
                     <div className="flex flex-col items-start gap-1.5">
-                      <Link
-                        to={`/blood-bank/requests/${request.id}`}
-                        className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <bdi dir="ltr" className="tabular-nums">
-                          {request.id}
-                        </bdi>
-                      </Link>
+                      <div className="flex items-center gap-1.5">
+                        <Link
+                          to={`/blood-bank/requests/${request.id}`}
+                          className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring truncate max-w-[130px]"
+                          title={request.id}
+                        >
+                          <bdi dir="ltr" className="tabular-nums">
+                            {formatShortId(request.id)}
+                          </bdi>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyId(request.id, e)}
+                          className="inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                          title={copiedId === request.id ? t("common.copied", "Copied!") : t("common.copyId", "Copy full ID")}
+                          aria-label={`${t("common.copyId", "Copy full ID")} ${request.id}`}
+                        >
+                          {copiedId === request.id ? (
+                            <Check className="size-3 text-success" />
+                          ) : (
+                            <Copy className="size-3" />
+                          )}
+                        </button>
+                      </div>
                       <UrgencyBadge urgency={request.urgency} />
                     </div>
                   </td>
@@ -184,29 +215,7 @@ export function RequestQueueTable({
 
                   <td className="px-3.5 py-3 align-top">
                     {showActions && onAction ? (
-                      <div className="ms-auto flex items-center justify-end gap-1">
-                        {!isFulfilled &&
-                        request.status !== "completed" &&
-                        request.status !== "cancelled" &&
-                        request.status !== "rejected" ? (
-                          <Button
-                            asChild
-                            size="icon"
-                            variant="ghost"
-                            className="size-8"
-                          >
-                            <Link
-                              to={`/blood-bank/requests/${request.id}`}
-                              title={t("bloodBank.allocateUnits")}
-                              aria-label={`${t("bloodBank.allocateUnits")} ${request.id}`}
-                            >
-                              <PackagePlus
-                                aria-hidden="true"
-                                className="size-3.5"
-                              />
-                            </Link>
-                          </Button>
-                        ) : null}
+                      <div className="ms-auto flex items-center justify-end">
                         <RequestActionPanel
                           request={request}
                           isPending={activeRequestId === request.id}
@@ -265,14 +274,29 @@ export function RequestQueueTable({
             <article key={request.id} className={`p-3.5 sm:p-4 ${cardTone}`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link
-                    to={`/blood-bank/requests/${request.id}`}
-                    className="font-semibold text-primary underline-offset-4 hover:underline"
-                  >
-                    <bdi dir="ltr" className="tabular-nums">
-                      {request.id}
-                    </bdi>
-                  </Link>
+                  <div className="flex items-center gap-1.5 font-semibold text-primary">
+                    <Link
+                      to={`/blood-bank/requests/${request.id}`}
+                      className="underline-offset-4 hover:underline"
+                    >
+                      <bdi dir="ltr" className="tabular-nums">
+                        {formatShortId(request.id)}
+                      </bdi>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={(e) => handleCopyId(request.id, e)}
+                      className="inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                      title={copiedId === request.id ? t("common.copied", "Copied!") : t("common.copyId", "Copy full ID")}
+                      aria-label={`${t("common.copyId", "Copy full ID")} ${request.id}`}
+                    >
+                      {copiedId === request.id ? (
+                        <Check className="size-3 text-success" />
+                      ) : (
+                        <Copy className="size-3" />
+                      )}
+                    </button>
+                  </div>
                   <UrgencyBadge urgency={request.urgency} />
                 </div>
                 <RequestStatusBadge status={request.status} />
@@ -359,26 +383,7 @@ export function RequestQueueTable({
               </dl>
 
               {showActions && onAction ? (
-                <div className="mt-3 flex items-center justify-end gap-1 border-t border-border pt-3">
-                  {!isFulfilled &&
-                  request.status !== "completed" &&
-                  request.status !== "cancelled" &&
-                  request.status !== "rejected" ? (
-                    <Button
-                      asChild
-                      size="icon"
-                      variant="secondary"
-                      className="size-8"
-                    >
-                      <Link
-                        to={`/blood-bank/requests/${request.id}`}
-                        title={t("bloodBank.allocateUnits")}
-                        aria-label={`${t("bloodBank.allocateUnits")} ${request.id}`}
-                      >
-                        <PackagePlus aria-hidden="true" className="size-3.5" />
-                      </Link>
-                    </Button>
-                  ) : null}
+                <div className="mt-3 flex items-center justify-end border-t border-border pt-3">
                   <RequestActionPanel
                     request={request}
                     isPending={activeRequestId === request.id}

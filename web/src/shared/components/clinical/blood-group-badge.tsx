@@ -19,7 +19,7 @@ export function BloodGroupBadge({
     <span
       aria-label={t("healthcare.bloodGroupValue", { group })}
       className={cn(
-        "inline-flex items-center font-bold text-emergency tabular-nums",
+        "inline-flex items-center font-bold font-mono tracking-tight tabular-nums text-emergency dark:text-rose-400",
         size === "default" ? "text-sm" : "text-xs",
         className,
       )}

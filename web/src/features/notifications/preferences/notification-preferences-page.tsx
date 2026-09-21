@@ -73,10 +73,10 @@ export function NotificationPreferencesPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8 text-start">
+    <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 text-start">
       {/* Header & Breadcrumbs */}
-      <div className="border-b border-border pb-6">
-        <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+      <div className="border-b border-border pb-5">
+        <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
           <Link to="/" className="hover:underline">
             {t("nav.workspace", "Workspace")}
           </Link>
@@ -90,15 +90,15 @@ export function NotificationPreferencesPage() {
           </span>
         </nav>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
             {t("notifications.preferencesTitle", "Notification Preferences")}
           </h1>
-          <span className="text-xs text-muted-foreground rounded bg-muted px-2 py-0.5">
+          <span className="text-xs font-medium text-muted-foreground rounded-md bg-muted px-2.5 py-0.5">
             {t("notifications.rolePrefix", "Role")}:{" "}
             {getLocalizedRoleName(user?.primary_role ?? "")}
           </span>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">
           {t(
             "notifications.preferencesDesc",
             "Control which operational alerts, lifecycle updates, and clinical dispatch notifications you receive.",
@@ -132,7 +132,7 @@ export function NotificationPreferencesPage() {
       ) : (
         <form onSubmit={handleSave} className="mt-6 space-y-6">
           {saveSuccess ? (
-            <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs font-medium text-emerald-800 dark:text-emerald-300">
+            <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs font-medium text-emerald-800 dark:text-emerald-300">
               <CheckCircle2
                 className="size-4 shrink-0 text-emerald-600"
                 aria-hidden="true"
@@ -147,42 +147,33 @@ export function NotificationPreferencesPage() {
           ) : null}
 
           {/* Section 1: In-App Operational Channels */}
-          <div className="rounded-lg border border-border/80 bg-card p-5 sm:p-6 shadow-2xs space-y-4">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Bell className="size-4 text-primary shrink-0" />
-                <span>
+          <div className="rounded-xl border border-border/80 bg-card p-5 shadow-xs space-y-4">
+            <div className="flex items-start gap-3 border-b border-border/60 pb-3">
+              <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                <Bell className="size-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-foreground">
                   {t(
                     "notifications.inAppSectionTitle",
                     "In-App Operational Channels",
                   )}
-                </span>
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {t(
-                  "notifications.inAppSectionDesc",
-                  "Configure popovers and ledger updates within the web application.",
-                )}
-              </p>
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t(
+                    "notifications.inAppSectionDesc",
+                    "Configure popovers and ledger updates within the web application.",
+                  )}
+                </p>
+              </div>
             </div>
 
-            <div className="divide-y divide-border pt-1">
-              <div className="flex items-center justify-between py-3.5 gap-4">
-                <div className="pe-4 flex-1">
-                  <p className="text-xs font-semibold text-foreground">
-                    {t(
-                      "notifications.prefInAppFeedTitle",
-                      "In-App Notification Feed",
-                    )}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t(
-                      "notifications.prefInAppFeedDesc",
-                      "Show badge indicators on the header bell and record items in the Notification Center.",
-                    )}
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+            <div className="space-y-1 pt-1">
+              <label
+                htmlFor="pref-in-app"
+                className="flex items-start gap-3.5 p-3 rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
+              >
+                <div className="relative inline-flex items-center shrink-0 mt-0.5">
                   <input
                     type="checkbox"
                     checked={effectivePreferences.inAppNotifications}
@@ -195,25 +186,28 @@ export function NotificationPreferencesPage() {
                     )}
                   />
                   <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between py-3.5 gap-4">
-                <div className="pe-4 flex-1">
-                  <p className="text-xs font-semibold text-foreground">
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-foreground leading-snug">
                     {t(
-                      "notifications.prefUrgentAlertsTitle",
-                      "Urgent & Emergency Shortage Alerts",
+                      "notifications.prefInAppFeedTitle",
+                      "In-App Notification Feed",
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {t(
-                      "notifications.prefUrgentAlertsDesc",
-                      "Receive high-priority alerts for code-red transfusions, low blood stock, and immediate appeals.",
+                      "notifications.prefInAppFeedDesc",
+                      "Show badge indicators on the header bell and record items in the Notification Center.",
                     )}
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              </label>
+
+              <label
+                htmlFor="pref-urgent-alerts"
+                className="flex items-start gap-3.5 p-3 rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
+              >
+                <div className="relative inline-flex items-center shrink-0 mt-0.5">
                   <input
                     type="checkbox"
                     checked={effectivePreferences.urgentAlerts}
@@ -226,25 +220,28 @@ export function NotificationPreferencesPage() {
                     )}
                   />
                   <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between py-3.5 gap-4">
-                <div className="pe-4 flex-1">
-                  <p className="text-xs font-semibold text-foreground">
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-foreground leading-snug">
                     {t(
-                      "notifications.prefWorkflowUpdatesTitle",
-                      "Workflow Status & Allocation Updates",
+                      "notifications.prefUrgentAlertsTitle",
+                      "Urgent & Emergency Shortage Alerts",
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {t(
-                      "notifications.prefWorkflowUpdatesDesc",
-                      "Notifies when requisitions are confirmed, units allocated, or couriers arrive at destination.",
+                      "notifications.prefUrgentAlertsDesc",
+                      "Receive high-priority alerts for code-red transfusions, low blood stock, and immediate appeals.",
                     )}
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              </label>
+
+              <label
+                htmlFor="pref-workflow-updates"
+                className="flex items-start gap-3.5 p-3 rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
+              >
+                <div className="relative inline-flex items-center shrink-0 mt-0.5">
                   <input
                     type="checkbox"
                     checked={effectivePreferences.workflowUpdates}
@@ -257,25 +254,28 @@ export function NotificationPreferencesPage() {
                     )}
                   />
                   <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between py-3.5 gap-4">
-                <div className="pe-4 flex-1">
-                  <p className="text-xs font-semibold text-foreground">
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-foreground leading-snug">
                     {t(
-                      "notifications.prefSystemNoticesTitle",
-                      "Platform Governance & System Notices",
+                      "notifications.prefWorkflowUpdatesTitle",
+                      "Workflow Status & Allocation Updates",
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {t(
-                      "notifications.prefSystemNoticesDesc",
-                      "Announcements about scheduled maintenance windows, policy changes, and security updates.",
+                      "notifications.prefWorkflowUpdatesDesc",
+                      "Notifies when requisitions are confirmed, units allocated, or couriers arrive at destination.",
                     )}
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              </label>
+
+              <label
+                htmlFor="pref-system-announcements"
+                className="flex items-start gap-3.5 p-3 rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
+              >
+                <div className="relative inline-flex items-center shrink-0 mt-0.5">
                   <input
                     type="checkbox"
                     checked={effectivePreferences.systemAnnouncements}
@@ -288,51 +288,53 @@ export function NotificationPreferencesPage() {
                     )}
                   />
                   <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-foreground leading-snug">
+                    {t(
+                      "notifications.prefSystemNoticesTitle",
+                      "Platform Governance & System Notices",
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    {t(
+                      "notifications.prefSystemNoticesDesc",
+                      "Announcements about scheduled maintenance windows, policy changes, and security updates.",
+                    )}
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
 
           {/* Section 2: Audio & Secondary Dispatch Channels */}
-          <div className="rounded-lg border border-border/80 bg-card p-5 sm:p-6 shadow-2xs space-y-4">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Radio className="size-4 text-primary shrink-0" />
-                <span>
+          <div className="rounded-xl border border-border/80 bg-card p-5 shadow-xs space-y-4">
+            <div className="flex items-start gap-3 border-b border-border/60 pb-3">
+              <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                <Radio className="size-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-foreground">
                   {t(
                     "notifications.dispatchSectionTitle",
                     "Dispatch & Auxiliary Channels",
                   )}
-                </span>
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {t(
-                  "notifications.dispatchSectionDesc",
-                  "Secondary channels for urgent off-screen alerts.",
-                )}
-              </p>
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t(
+                    "notifications.dispatchSectionDesc",
+                    "Secondary channels for urgent off-screen alerts.",
+                  )}
+                </p>
+              </div>
             </div>
 
-            <div className="divide-y divide-border pt-1">
-              <div className="flex items-center justify-between py-3.5 gap-4">
-                <div className="pe-4 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <Volume2 className="size-3.5 text-muted-foreground shrink-0" />
-                    <p className="text-xs font-semibold text-foreground">
-                      {t(
-                        "notifications.prefSoundTitle",
-                        "Auditory Chime on Urgent Alerts",
-                      )}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t(
-                      "notifications.prefSoundDesc",
-                      "Play a clinical alert sound when emergency blood requisitions or temperature breaches are recorded.",
-                    )}
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+            <div className="space-y-1 pt-1">
+              <label
+                htmlFor="pref-sound"
+                className="flex items-start gap-3.5 p-3 rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
+              >
+                <div className="relative inline-flex items-center shrink-0 mt-0.5">
                   <input
                     type="checkbox"
                     checked={effectivePreferences.soundEnabled}
@@ -345,25 +347,31 @@ export function NotificationPreferencesPage() {
                     )}
                   />
                   <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between py-3.5 gap-4">
-                <div className="pe-4 flex-1">
+                </div>
+                <div className="flex-1">
                   <div className="flex items-center gap-1.5">
-                    <MessageSquare className="size-3.5 text-muted-foreground shrink-0" />
-                    <p className="text-xs font-semibold text-foreground">
-                      {t("notifications.prefSmsTitle", "SMS Emergency Alerts")}
+                    <Volume2 className="size-3.5 text-muted-foreground shrink-0" />
+                    <p className="text-xs font-semibold text-foreground leading-snug">
+                      {t(
+                        "notifications.prefSoundTitle",
+                        "Auditory Chime on Urgent Alerts",
+                      )}
                     </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {t(
-                      "notifications.prefSmsDesc",
-                      "Send immediate cellular SMS notifications for urgent donor shortage appeals or courier handover.",
+                      "notifications.prefSoundDesc",
+                      "Play a clinical alert sound when emergency blood requisitions or temperature breaches are recorded.",
                     )}
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              </label>
+
+              <label
+                htmlFor="pref-sms"
+                className="flex items-start gap-3.5 p-3 rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
+              >
+                <div className="relative inline-flex items-center shrink-0 mt-0.5">
                   <input
                     type="checkbox"
                     checked={effectivePreferences.smsEmergencyAlerts}
@@ -376,28 +384,28 @@ export function NotificationPreferencesPage() {
                     )}
                   />
                   <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between py-3.5 gap-4">
-                <div className="pe-4 flex-1">
+                </div>
+                <div className="flex-1">
                   <div className="flex items-center gap-1.5">
-                    <Mail className="size-3.5 text-muted-foreground shrink-0" />
-                    <p className="text-xs font-semibold text-foreground">
-                      {t(
-                        "notifications.prefEmailTitle",
-                        "Daily Summary Email Digest",
-                      )}
+                    <MessageSquare className="size-3.5 text-muted-foreground shrink-0" />
+                    <p className="text-xs font-semibold text-foreground leading-snug">
+                      {t("notifications.prefSmsTitle", "SMS Emergency Alerts")}
                     </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {t(
-                      "notifications.prefEmailDesc",
-                      "Receive a consolidated summary of the day's activity, issued vouchers, and inventory levels.",
+                      "notifications.prefSmsDesc",
+                      "Send immediate cellular SMS notifications for urgent donor shortage appeals or courier handover.",
                     )}
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              </label>
+
+              <label
+                htmlFor="pref-email-digest"
+                className="flex items-start gap-3.5 p-3 rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
+              >
+                <div className="relative inline-flex items-center shrink-0 mt-0.5">
                   <input
                     type="checkbox"
                     checked={effectivePreferences.emailDigest}
@@ -410,8 +418,25 @@ export function NotificationPreferencesPage() {
                     )}
                   />
                   <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <Mail className="size-3.5 text-muted-foreground shrink-0" />
+                    <p className="text-xs font-semibold text-foreground leading-snug">
+                      {t(
+                        "notifications.prefEmailTitle",
+                        "Daily Summary Email Digest",
+                      )}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    {t(
+                      "notifications.prefEmailDesc",
+                      "Receive a consolidated summary of the day's activity, issued vouchers, and inventory levels.",
+                    )}
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
 

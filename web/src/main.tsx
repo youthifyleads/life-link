@@ -1,5 +1,3 @@
-import "@fontsource-variable/ibm-plex-sans";
-import "@fontsource-variable/noto-sans-arabic";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 

@@ -15,7 +15,6 @@ export function AdminStatusBadge({ status, className }: AdminStatusBadgeProps) {
   return (
     <StatusIndicator
       tone={isActive ? "success" : "neutral"}
-      indicator={isActive ? "✅" : "❌"}
       className={cn(className)}
     >
       {isActive ? t("common.active") : t("common.inactive")}

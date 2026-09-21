@@ -1,5 +1,8 @@
 import {
+  AlertOctagon,
+  AlertTriangle,
   Boxes,
+  CheckCircle2,
   Clock,
   HeartHandshake,
   Layers,
@@ -7,6 +10,7 @@ import {
   Radio,
   ScanLine,
   ShieldAlert,
+  XCircle,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -31,7 +35,7 @@ export function NotificationPriorityBadge({
           variant="destructive"
           className="gap-1 font-semibold text-[10px]"
         >
-          <span aria-hidden="true">🚨</span>
+          <AlertOctagon className="size-3 shrink-0" aria-hidden="true" />
           {t("notifications.priorityUrgent", "Urgent")}
         </Badge>
       );
@@ -41,7 +45,7 @@ export function NotificationPriorityBadge({
           variant="secondary"
           className="gap-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold text-[10px]"
         >
-          <span aria-hidden="true">⚠️</span>
+          <AlertTriangle className="size-3 shrink-0" aria-hidden="true" />
           {t("notifications.priorityHigh", "High")}
         </Badge>
       );
@@ -124,21 +128,21 @@ export function ActivityResultBadge({ result }: { result: ActivityResult }) {
     case "success":
       return (
         <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-          <span aria-hidden="true">✅</span>
+          <CheckCircle2 className="size-3.5 shrink-0" aria-hidden="true" />
           {t("common.success", "Success")}
         </span>
       );
     case "warning":
       return (
         <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
-          <span aria-hidden="true">⚠️</span>
+          <AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
           {t("common.warning", "Warning")}
         </span>
       );
     case "failure":
       return (
         <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
-          <span aria-hidden="true">❌</span>
+          <XCircle className="size-3.5 shrink-0" aria-hidden="true" />
           {t("common.error", "Failure")}
         </span>
       );

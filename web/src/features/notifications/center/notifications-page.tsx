@@ -327,10 +327,10 @@ export function NotificationsPage() {
               {t("notifications.allPriorities", "All Priorities")}
             </option>
             <option value="urgent">
-              🚨 {t("notifications.priorityUrgent", "Urgent")}
+              {t("notifications.priorityUrgent", "Urgent")}
             </option>
             <option value="high">
-              ⚠️ {t("notifications.priorityHigh", "High")}
+              {t("notifications.priorityHigh", "High")}
             </option>
             <option value="normal">
               {t("notifications.priorityNormal", "Normal")}

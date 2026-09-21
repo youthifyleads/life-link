@@ -1,16 +1,16 @@
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { formatBloodBankComponent } from "@/features/blood-bank/components/blood-bank-formatters";
 import {
   ALL_BLOOD_GROUPS,
   ALL_COMPONENTS,
-} from "@/features/blood-bank/inventory/inventory.mock";
-import {
-  bloodBankComponentLabels,
-  type BloodBankComponent,
-  type BloodUnitStatus,
-  type ExpiryWindowFilter,
-  type InventoryLedgerFilters,
+} from "@/features/blood-bank/constants/blood-bank.constants";
+import type {
+  BloodBankComponent,
+  BloodUnitStatus,
+  ExpiryWindowFilter,
+  InventoryLedgerFilters,
 } from "@/features/blood-bank/types/blood-bank.types";
 import type { BloodGroup } from "@/shared/components/clinical/clinical.types";
 import { Button } from "@/shared/components/ui/button";
@@ -31,14 +31,14 @@ export function InventoryFilters({
 
   const statusOptions: { value: BloodUnitStatus | "all"; label: string }[] = [
     { value: "all", label: t("hospital.allStatuses", "All statuses") },
-    { value: "available", label: `✅ ${t("status.available", "Available")}` },
-    { value: "reserved", label: `🕒 ${t("status.reserved", "Reserved")}` },
-    { value: "allocated", label: `🕒 ${t("status.allocated", "Allocated")}` },
+    { value: "available", label: t("status.available", "Available") },
+    { value: "reserved", label: t("status.reserved", "Reserved") },
+    { value: "allocated", label: t("status.allocated", "Allocated") },
     {
       value: "quarantined",
-      label: `⚠️ ${t("status.quarantined", "Quarantined")}`,
+      label: t("status.quarantined", "Quarantined"),
     },
-    { value: "expired", label: `❌ ${t("status.expired", "Expired")}` },
+    { value: "expired", label: t("status.expired", "Expired") },
   ];
 
   const expiryOptions: { value: ExpiryWindowFilter; label: string }[] = [
@@ -146,7 +146,7 @@ export function InventoryFilters({
             </option>
             {ALL_COMPONENTS.map((c) => (
               <option key={c} value={c}>
-                {bloodBankComponentLabels[c]}
+                {formatBloodBankComponent(c)}
               </option>
             ))}
           </select>

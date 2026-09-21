@@ -127,10 +127,10 @@ export function BloodBanksPage() {
                   {t("common.allStatuses", "All Statuses")}
                 </option>
                 <option value="active">
-                  ✅ {t("common.active", "Active Facilities")}
+                  {t("common.active", "Active Facilities")}
                 </option>
                 <option value="inactive">
-                  ❌ {t("common.inactive", "Inactive Facilities")}
+                  {t("common.inactive", "Inactive Facilities")}
                 </option>
               </select>
             </div>

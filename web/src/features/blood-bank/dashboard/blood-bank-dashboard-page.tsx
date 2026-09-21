@@ -102,13 +102,16 @@ export function BloodBankDashboardPage() {
                 {t("bloodBank.queueOverviewDesc")}
               </p>
             </div>
-            <dl className="grid grid-cols-2 gap-px rounded-lg border border-border/80 bg-border shadow-2xs overflow-hidden md:grid-cols-3 xl:grid-cols-6">
+            <dl className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
               {overviewStatuses.map((status) => (
-                <div key={status} className="bg-surface px-4 py-4">
+                <div
+                  key={status}
+                  className="rounded-xl border border-border/80 bg-surface px-4 py-3.5 shadow-2xs transition-all hover:border-border hover:shadow-xs"
+                >
                   <dt className="text-xs font-medium text-muted-foreground">
                     {formatBloodBankStatus(status)}
                   </dt>
-                  <dd className="mt-2 text-2xl font-semibold tabular-nums">
+                  <dd className="mt-1.5 text-2xl font-bold tabular-nums text-foreground">
                     {
                       requests.filter((request) => request.status === status)
                         .length

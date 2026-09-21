@@ -26,10 +26,14 @@ import type {
   WorkflowEventPayload,
 } from "@/features/notifications/types/notifications.types";
 
-export function useNotifications(filters?: NotificationFilters) {
+export function useNotifications(
+  filters?: NotificationFilters,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: ["notifications", filters],
     queryFn: () => getNotifications(filters),
+    enabled: options?.enabled ?? true,
   });
 }
 

@@ -52,7 +52,7 @@ export function AppHeader({ user, onSignOut }: AppHeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-header-border bg-header text-header-foreground">
-      <div className="flex min-h-14 items-center gap-3 px-4 sm:px-5">
+      <div className="flex h-16 shrink-0 items-center gap-3 px-4 sm:px-5">
         <SheetTrigger asChild>
           <Button
             type="button"

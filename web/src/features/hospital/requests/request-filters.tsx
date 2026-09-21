@@ -91,7 +91,6 @@ export function RequestFilters({
               <option value="all">{t("hospital.allStatuses")}</option>
               {requestStatuses.map((status) => (
                 <option key={status} value={status}>
-                  {getRequestStatusIndicator(status)}{" "}
                   {formatStatusLabel(status)}
                 </option>
               ))}
