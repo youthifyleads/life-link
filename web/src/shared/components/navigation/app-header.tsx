@@ -3,20 +3,19 @@ import { Link } from "react-router-dom";
 import {
   Activity,
   Bell,
-  ChevronDown,
+  Globe2,
   LogOut,
   Menu,
-  ShieldCheck,
+  Settings2,
   SlidersHorizontal,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { AuthenticatedUser } from "@/features/authentication/model/auth.types";
 import { HeaderNotificationPopover } from "@/features/notifications/components/header-notification-popover";
-import { LanguageSwitcher } from "@/shared/components/navigation/language-switcher";
-import { OrganizationContext } from "@/shared/components/navigation/organization-context";
 import { BidiText, TechnicalText } from "@/shared/components/i18n/bidi-text";
-import { formatOrganizationName, formatUserName } from "@/shared/lib/formatters";
+import { LanguageOptions } from "@/shared/components/navigation/language-switcher";
+import { OrganizationContext } from "@/shared/components/navigation/organization-context";
 import { Button } from "@/shared/components/ui/button";
 import {
   Popover,
@@ -24,6 +23,10 @@ import {
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { SheetTrigger } from "@/shared/components/ui/sheet";
+import {
+  formatOrganizationName,
+  formatUserName,
+} from "@/shared/lib/formatters";
 
 interface AppHeaderProps {
   user: AuthenticatedUser;
@@ -31,22 +34,14 @@ interface AppHeaderProps {
   onSignOut?: () => void | Promise<void>;
 }
 
-function getInitials(name: string) {
-  const cleaned = name.replace(/[^\p{L}\s]/gu, "").trim();
-  const parts = cleaned.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "U";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
-export function AppHeader({
-  user,
-  onSignOut,
-}: AppHeaderProps) {
+export function AppHeader({ user, onSignOut }: AppHeaderProps) {
   const { t } = useTranslation();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const roleLabel = t(`roles.${user.primary_role}`, user.primary_role.replaceAll("_", " "));
+  const roleLabel = t(
+    `roles.${user.primary_role}`,
+    user.primary_role.replaceAll("_", " "),
+  );
   const activeOrgName = user.organizations.find(
     (organization) => organization.id === user.active_organization_id,
   )?.name;
@@ -56,14 +51,14 @@ export function AppHeader({
   const userDisplayName = formatUserName(user.display_name);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface">
-      <div className="flex min-h-16 items-center gap-3 px-4 sm:px-6">
+    <header className="sticky top-0 z-30 border-b border-header-border bg-header text-header-foreground">
+      <div className="flex h-16 shrink-0 items-center gap-3 px-4 sm:px-5">
         <SheetTrigger asChild>
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden text-header-muted hover:bg-white/[0.06] hover:text-white"
             aria-label={t("nav.openNavigation", "Open navigation")}
           >
             <Menu aria-hidden="true" />
@@ -79,114 +74,119 @@ export function AppHeader({
         </div>
 
         <div className="hidden min-w-0 flex-1 lg:block">
-          <p className="truncate text-xs font-medium text-muted-foreground">
+          <p className="truncate text-[11px] font-medium text-header-muted">
             {t("nav.activeOrganization", "Active organization")}
           </p>
-          <p className="truncate text-sm font-semibold text-foreground">
+          <p className="truncate text-sm font-semibold text-white">
             <BidiText>{localizedOrgName}</BidiText>
           </p>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* Language Switcher (EN / العربية) */}
-          <LanguageSwitcher />
-
-          {/* Real-time Notification Popover */}
+        <div className="flex items-center gap-1">
           <HeaderNotificationPopover user={user} />
 
-          {/* User Account Menu */}
-          <Popover open={userMenuOpen} onOpenChange={setUserMenuOpen}>
+          <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
             <PopoverTrigger asChild>
               <Button
                 type="button"
                 variant="ghost"
-                className="h-12 min-h-12 gap-2 px-2 sm:px-3"
-                aria-label={t("nav.openUserMenu", { name: userDisplayName })}
-                id="header-user-menu-trigger"
+                size="icon"
+                className="text-header-muted hover:bg-white/[0.06] hover:text-white"
+                aria-label={t("nav.settings", "Settings")}
+                id="header-settings-trigger"
               >
-                <span className="flex size-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">
-                  {getInitials(userDisplayName)}
-                </span>
-                <span className="hidden min-w-0 text-start md:block">
-                  <span className="block max-w-40 truncate text-sm font-semibold">
-                    <BidiText>{userDisplayName}</BidiText>
-                  </span>
-                  <span className="block text-xs font-normal capitalize text-muted-foreground">
-                    {roleLabel}
-                  </span>
-                </span>
-                <ChevronDown
-                  aria-hidden="true"
-                  className="hidden size-4 text-muted-foreground md:block"
-                />
+                <Settings2 aria-hidden="true" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-72 p-0 shadow-lg" align="end">
-              <div className="border-b border-border px-4 py-4">
-                <p className="truncate text-sm font-semibold">
+            <PopoverContent
+              className="w-80 max-w-[calc(100vw-2rem)] p-0"
+              align="end"
+            >
+              <div className="border-b border-border px-4 py-3">
+                <p className="text-sm font-semibold text-foreground">
+                  {t("nav.settings", "Settings")}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                   <BidiText>{userDisplayName}</BidiText>
+                  <span aria-hidden="true"> · </span>
+                  <span className="capitalize">{roleLabel}</span>
                 </p>
-                <p className="mt-1 truncate text-xs text-muted-foreground">
-                  <TechnicalText>{user.email}</TechnicalText>
-                </p>
-              </div>
-              <div className="flex items-start gap-3 border-b border-border px-4 py-3">
-                <ShieldCheck
-                  aria-hidden="true"
-                  className="mt-0.5 size-4 shrink-0 text-primary"
-                />
-                <div>
-                  <p className="text-sm font-medium capitalize">
-                    {roleLabel}
-                  </p>
-                  <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                    {t("auth.secureNotice", "Access is limited by your assigned role and organization.")}
-                  </p>
-                </div>
               </div>
 
-              <div className="p-2 border-b border-border text-xs space-y-1">
+              <div className="border-b border-border p-2">
+                <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                  <Globe2 aria-hidden="true" className="size-3.5" />
+                  <span>{t("common.selectLanguage")}</span>
+                </div>
+                <LanguageOptions />
+              </div>
+
+              <div className="space-y-0.5 border-b border-border p-2 text-sm">
                 <Link
                   to="/notifications"
-                  onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-foreground hover:bg-muted transition-colors"
+                  onClick={() => setSettingsOpen(false)}
+                  className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-foreground transition-colors hover:bg-muted"
                 >
-                  <Bell className="size-3.5 text-muted-foreground" />
-                  <span>{t("nav.notificationCenter", "Notification Center")}</span>
+                  <Bell
+                    aria-hidden="true"
+                    className="size-4 text-muted-foreground"
+                  />
+                  <span>
+                    {t("nav.notificationCenter", "Notification Center")}
+                  </span>
                 </Link>
-                {user.primary_role === "admin" && (
+                {user.primary_role === "admin" ? (
                   <Link
                     to="/activity"
-                    onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-foreground hover:bg-muted transition-colors"
+                    onClick={() => setSettingsOpen(false)}
+                    className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-foreground transition-colors hover:bg-muted"
                   >
-                    <Activity className="size-3.5 text-muted-foreground" />
-                    <span>{t("nav.systemActivity", "System Activity Ledger")}</span>
+                    <Activity
+                      aria-hidden="true"
+                      className="size-4 text-muted-foreground"
+                    />
+                    <span>
+                      {t("nav.systemActivity", "System Activity Ledger")}
+                    </span>
                   </Link>
-                )}
+                ) : null}
                 <Link
                   to="/settings/notifications"
-                  onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-foreground hover:bg-muted transition-colors"
+                  onClick={() => setSettingsOpen(false)}
+                  className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-foreground transition-colors hover:bg-muted"
                 >
-                  <SlidersHorizontal className="size-3.5 text-muted-foreground" />
-                  <span>{t("nav.notificationPreferences", "Notification Preferences")}</span>
+                  <SlidersHorizontal
+                    aria-hidden="true"
+                    className="size-4 text-muted-foreground"
+                  />
+                  <span>
+                    {t(
+                      "nav.notificationPreferences",
+                      "Notification Preferences",
+                    )}
+                  </span>
                 </Link>
               </div>
 
               <div className="p-2">
+                <div className="px-2.5 pb-2 pt-1">
+                  <p className="truncate text-xs text-muted-foreground">
+                    <TechnicalText>{user.email}</TechnicalText>
+                  </p>
+                </div>
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full justify-start text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                  size="sm"
+                  className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
                   disabled={!onSignOut}
                   onClick={() => {
-                    setUserMenuOpen(false);
+                    setSettingsOpen(false);
                     void onSignOut?.();
                   }}
                   id="header-signout-btn"
                 >
-                  <LogOut aria-hidden="true" className="size-3.5" />
+                  <LogOut aria-hidden="true" />
                   {t("auth.signOut", "Sign out")}
                 </Button>
               </div>

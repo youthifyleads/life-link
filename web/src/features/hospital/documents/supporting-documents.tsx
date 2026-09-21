@@ -63,9 +63,11 @@ export function SupportingDocuments({
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)]">
-        <div className="border border-border bg-surface">
+        <div className="rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden">
           <div className="border-b border-border px-5 py-4">
-            <h3 className="text-sm font-semibold">{t("hospital.documentRegister")}</h3>
+            <h3 className="text-sm font-semibold">
+              {t("hospital.documentRegister")}
+            </h3>
           </div>
           {documents.length === 0 ? (
             <div className="px-5 py-8 text-sm text-muted-foreground">
@@ -91,7 +93,9 @@ export function SupportingDocuments({
                           {formatFileSize(document.sizeBytes)} ·{" "}
                           {document.source === "local_preview"
                             ? t("hospital.localPreviewOnly")
-                            : t("hospital.uploadedAt", { date: formatDateTime(document.uploadedAt) })}
+                            : t("hospital.uploadedAt", {
+                                date: formatDateTime(document.uploadedAt),
+                              })}
                         </p>
                         <span
                           className={`mt-3 inline-flex min-h-7 items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold ${review.className}`}
@@ -110,7 +114,7 @@ export function SupportingDocuments({
           )}
         </div>
 
-        <div className="border border-border bg-surface p-5">
+        <div className="rounded-lg border border-border/80 bg-surface p-5 shadow-2xs">
           <h3 className="text-sm font-semibold">{t("hospital.addDocument")}</h3>
           <p className="mt-1 mb-4 text-xs leading-5 text-muted-foreground">
             {t("hospital.removePatientIdentifiers")}
@@ -122,7 +126,7 @@ export function SupportingDocuments({
               }
             />
           ) : (
-            <p className="border-y border-border py-5 text-sm text-muted-foreground">
+            <p className="rounded-lg border border-border/80 bg-surface-subtle p-4 text-sm text-muted-foreground">
               {t("hospital.uploadUnavailable")}
             </p>
           )}

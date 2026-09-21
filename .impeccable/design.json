@@ -1,106 +1,283 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-21T17:35:00Z",
-  "title": "Design System: LifeLink Mobile",
+  "generatedAt": "2026-09-21T09:48:30.000Z",
+  "title": "Design System: Life-Link Blood Bank Portal",
   "extensions": {
     "colorMeta": {
       "primary": {
         "role": "primary",
-        "displayName": "Medical Red",
-        "canonical": "#E53935",
-        "tonalRamp": ["#4A0C0B", "#7F1D1D", "#C62828", "#E53935", "#EF5350", "#E57373", "#FFCDD2", "#FFECEE"]
+        "displayName": "Medical Crimson",
+        "canonical": "#c92a2a",
+        "tonalRamp": [
+          "#3b0808",
+          "#631010",
+          "#8e1b1b",
+          "#b02222",
+          "#c92a2a",
+          "#e05353",
+          "#f87171",
+          "#fef2f2"
+        ]
       },
       "secondary": {
         "role": "secondary",
-        "displayName": "Clinical Blue",
-        "canonical": "#1E88E5",
-        "tonalRamp": ["#0D2F4F", "#1565C0", "#1E88E5", "#42A5F5", "#64B5F6", "#90CAF9", "#BBDEFB", "#E8F3FF"]
-      },
-      "navy": {
-        "role": "neutral",
-        "displayName": "Slate Navy Ink",
-        "canonical": "#1E293B",
-        "tonalRamp": ["#0A0F18", "#0F172A", "#1E293B", "#334155", "#475569", "#64748B", "#94A3B8", "#CBD5E1"]
+        "displayName": "Clinical Midnight Navy",
+        "canonical": "#0e2430",
+        "tonalRamp": [
+          "#050e13",
+          "#0a1a23",
+          "#0e2430",
+          "#163647",
+          "#1d3e50",
+          "#3a6279",
+          "#9bb1bd",
+          "#edf2f5"
+        ]
       },
       "background": {
-        "role": "background",
-        "displayName": "Clinical Off-White",
-        "canonical": "#F8F9FA",
-        "tonalRamp": ["#B4BCC4", "#CBD2D9", "#DFE4EA", "#E9ECEF", "#F1F3F5", "#F8F9FA", "#FBFCFD", "#FFFFFF"]
+        "role": "neutral",
+        "displayName": "Clinical Canvas",
+        "canonical": "#f7f9fa",
+        "tonalRamp": [
+          "#0c1e28",
+          "#263842",
+          "#506471",
+          "#9bb1bd",
+          "#cbd5dc",
+          "#dde4e8",
+          "#edf2f5",
+          "#f7f9fa"
+        ]
       },
       "surface": {
-        "role": "surface",
-        "displayName": "Pure Clinical Surface",
-        "canonical": "#FFFFFF",
-        "tonalRamp": ["#CCCCCC", "#E0E0E0", "#EBEBEB", "#F5F5F5", "#FAFAFA", "#FCFCFC", "#FEFEFE", "#FFFFFF"]
+        "role": "neutral",
+        "displayName": "Pure Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0c1e28",
+          "#2a3d47",
+          "#506471",
+          "#9bb1bd",
+          "#dde4e8",
+          "#edf2f5",
+          "#f8fafb",
+          "#ffffff"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Deep Slate Foreground",
+        "canonical": "#0c1e28",
+        "tonalRamp": [
+          "#0c1e28",
+          "#1d303b",
+          "#334652",
+          "#506471",
+          "#768996",
+          "#9bb1bd",
+          "#cbd5dc",
+          "#f7f9fa"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Verified Medical Green",
+        "canonical": "#16794a",
+        "tonalRamp": [
+          "#062817",
+          "#0c472a",
+          "#11603a",
+          "#16794a",
+          "#229c62",
+          "#3ec483",
+          "#a7f3d0",
+          "#e8f5ee"
+        ]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Clinical Amber Warning",
+        "canonical": "#8d5e00",
+        "tonalRamp": [
+          "#2b1c00",
+          "#4d3300",
+          "#6e4900",
+          "#8d5e00",
+          "#b47900",
+          "#d99605",
+          "#fde047",
+          "#fff4d6"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Neutral Hairline Border",
+        "canonical": "#dde4e8",
+        "tonalRamp": [
+          "#20333d",
+          "#3a4f5b",
+          "#5d7380",
+          "#889da9",
+          "#cbd5dc",
+          "#dde4e8",
+          "#edf2f5",
+          "#f8fafb"
+        ]
       }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display Cairo", "purpose": "Hero headlines & large counters" },
-      "headline": { "displayName": "Headline Cairo", "purpose": "Screen and section titles" },
-      "title": { "displayName": "Title Cairo", "purpose": "Card titles and group headers" },
-      "body": { "displayName": "Body Cairo", "purpose": "Reassuring medical copy, instructions & notes" },
-      "label": { "displayName": "Label Cairo", "purpose": "Action buttons, pill tags & status chips" }
+      "display": {
+        "displayName": "Display Heading",
+        "purpose": "Authoritative Egyptian clinical titles and welcome headers in Cairo font."
+      },
+      "headline": {
+        "displayName": "Section Headline",
+        "purpose": "Major section banners, clinical drawer headers, and workflow milestones."
+      },
+      "title": {
+        "displayName": "Card & Category Title",
+        "purpose": "Ledger column groups, requisition titles, and telemetry headings."
+      },
+      "body": {
+        "displayName": "Clinical Body Text",
+        "purpose": "Standard requisition data, notes, and patient companion guidance in IBM Plex Sans Arabic."
+      },
+      "label": {
+        "displayName": "Tabular Data & Label",
+        "purpose": "Status indicators, timestamps, and tabular-nums counters."
+      }
     },
     "shadows": [
-      { "name": "soft-ambient", "value": "0 4px 16px rgba(0, 0, 0, 0.03)", "purpose": "Subtle card depth over canvas" },
-      { "name": "card-depth", "value": "0 6px 20px rgba(0, 0, 0, 0.05)", "purpose": "Prominent clinical cards & patient sheets" },
-      { "name": "elevated-hero", "value": "0 6px 16px rgba(229, 57, 53, 0.16)", "purpose": "Primary emergency action button glow" },
-      { "name": "bottom-nav", "value": "0 -4px 24px rgba(0, 0, 0, 0.05)", "purpose": "Persistent bottom navigation dock shadow" }
+      {
+        "name": "elevation-rest",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.03)",
+        "purpose": "Standard resting border elevation for clinical cards and ledger containers."
+      },
+      {
+        "name": "elevation-overlay",
+        "value": "0 18px 44px -18px rgb(10 31 40 / 0.30)",
+        "purpose": "Prominent layered shadow for modal dialogs and custody history flyouts."
+      }
     ],
     "motion": [
-      { "name": "ease-out-cubic", "value": "cubic-bezier(0.215, 0.61, 0.355, 1.0)", "purpose": "Gentle 200ms entrance with 3px micro-offset" },
-      { "name": "heartbeat-cycle", "value": "3800ms periodic pulse with 80% rest", "purpose": "Biological emergency pulsing rhythm" },
-      { "name": "pressable-spring", "value": "cubic-bezier(0.0, 0, 0.2, 1)", "purpose": "0.99 tactile press feedback in 80ms" }
+      {
+        "name": "ease-out-standard",
+        "value": "cubic-bezier(0, 0, 0.2, 1)",
+        "purpose": "Standard clinical transition for drawer entrances and status button states."
+      }
     ],
     "breakpoints": [
-      { "name": "compact", "value": "412px" },
-      { "name": "expanded", "value": "720px" }
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "2xl", "value": "1536px" }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Primary Action Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Primary action button with medical red fill and high contrast typography",
-      "html": "<button class=\"ds-btn-primary\">طلب كيس دم عاجل</button>",
-      "css": ".ds-btn-primary { background: #E53935; color: #FFFFFF; font-family: Cairo, sans-serif; font-weight: 700; font-size: 15px; border: none; border-radius: 14px; padding: 14px 24px; min-height: 50px; width: 100%; box-shadow: 0 6px 16px rgba(229, 57, 53, 0.16); cursor: pointer; transition: all 0.2s cubic-bezier(0,0,0.2,1); } .ds-btn-primary:hover { background: #C62828; }"
+      "description": "High-urgency primary action button for confirming triage and approving blood allocations.",
+      "html": "<button class=\"ds-btn-primary\">Confirm Allocation</button>",
+      "css": ".ds-btn-primary { background: #c92a2a; color: #ffffff; padding: 8px 16px; border-radius: 6px; font-family: 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', sans-serif; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: background-color 150ms ease-out; } .ds-btn-primary:hover { background: #b02222; } .ds-btn-primary:active { background: #8e1b1b; } .ds-btn-primary:focus-visible { outline: 2px solid #c92a2a; outline-offset: 2px; }"
     },
     {
-      "name": "Clinical Status Card",
+      "name": "Secondary Governance Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Authoritative midnight navy action button for non-urgent administrative workflows.",
+      "html": "<button class=\"ds-btn-secondary\">Export Ledger</button>",
+      "css": ".ds-btn-secondary { background: #0e2430; color: #ffffff; padding: 8px 16px; border-radius: 6px; font-family: 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', sans-serif; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: background-color 150ms ease-out; } .ds-btn-secondary:hover { background: #163647; } .ds-btn-secondary:focus-visible { outline: 2px solid #0e2430; outline-offset: 2px; }"
+    },
+    {
+      "name": "Clinical Urgency Badge",
+      "kind": "chip",
+      "refersTo": "badge-urgency",
+      "description": "High-contrast clinical status pill denoting emergency priority status.",
+      "html": "<span class=\"ds-badge-emergency\">STAT Emergency</span>",
+      "css": ".ds-badge-emergency { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; background: #fef2f2; color: #c92a2a; border: 1px solid #fecaca; font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }"
+    },
+    {
+      "name": "Blood Group Badge",
+      "kind": "chip",
+      "refersTo": "badge-blood-group",
+      "description": "Standardized ABO/Rh clinical badge ensuring glanceable identification of blood units.",
+      "html": "<span class=\"ds-badge-blood-group\"><bdi>O−</bdi></span>",
+      "css": ".ds-badge-blood-group { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 22px; padding: 0 6px; border-radius: 4px; background: #0e2430; color: #ffffff; font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif; font-size: 0.75rem; font-weight: 700; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Clinical Search Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Dense data search input with hairline border and crimson focus ring.",
+      "html": "<input type=\"search\" class=\"ds-input-search\" placeholder=\"Search Unit ID or hospital...\" />",
+      "css": ".ds-input-search { height: 36px; width: 100%; max-width: 320px; padding: 0 12px; background: #ffffff; color: #0c1e28; border: 1px solid #cbd5dc; border-radius: 6px; font-family: 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', sans-serif; font-size: 0.8125rem; outline: none; transition: border-color 150ms; } .ds-input-search:focus { border-color: #c92a2a; box-shadow: 0 0 0 2px rgba(201, 42, 42, 0.2); }"
+    },
+    {
+      "name": "Dispatch Cadence Telemetry Tile",
       "kind": "card",
-      "refersTo": "card-clinical",
-      "description": "Hospital staff requisition card with department, bed, and Hb indicator",
-      "html": "<div class=\"ds-card-clinical\"><div class=\"ds-badge-stat\">طوارئ عاجلة (STAT)</div><h4>رعاية الجراحة المركزة (SICU)</h4><p>الهيموجلوبين: 7.2 g/dL • سرير 4</p></div>",
-      "css": ".ds-card-clinical { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 18px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); font-family: Cairo, sans-serif; } .ds-badge-stat { display: inline-block; background: #FFECEE; color: #E53935; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-bottom: 8px; }"
+      "refersTo": "card-container",
+      "description": "High-density status tile for top-of-page quick triage queues.",
+      "html": "<div class=\"ds-telemetry-tile\"><span class=\"ds-tile-label\">STAT Emergency</span><span class=\"ds-tile-value\">1</span></div>",
+      "css": ".ds-telemetry-tile { display: flex; flex-direction: column; justify-content: space-between; min-height: 64px; padding: 8px 14px; background: #ffffff; border: 1px solid #dde4e8; border-radius: 8px; font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif; } .ds-tile-label { font-size: 0.75rem; font-weight: 600; color: #c92a2a; } .ds-tile-value { font-size: 1.5rem; font-weight: 700; color: #c92a2a; font-variant-numeric: tabular-nums; margin-top: 4px; }"
     }
   ],
   "narrative": {
-    "northStar": "The Clinical Vanguard (الطليعة الطبية الهادئة)",
-    "overview": "LifeLink Mobile is an Egyptian clinical blood logistics and emergency donor platform connecting hospitals, certified cold-chain couriers, caregivers, and voluntary donors. Its visual atmosphere balances institutional medical authority with reassuring human clarity.",
+    "northStar": "The Clinical Ledger",
+    "overview": "Life-Link is an operations-critical healthcare web portal designed for clinical transfusion officers, hospital physicians, lab technicians, and cold-chain dispatchers. The interface prioritizes life-safety speed, instant scanability under stress, uncompromising data fidelity, and seamless bilingual Arabic/English operation. The visual language rejects whimsical tech-startup decoration, aggressive gradients, decorative shadows, and playful micro-interactions that slow down emergency workflows. Instead, it embodies authoritative clinical serenity: a clean, off-white sterile canvas (#f7f9fa), deep midnight navy governance surfaces (#0e2430), crisp 1px borders (#dde4e8), and high-contrast medical alerts.",
     "keyCharacteristics": [
-      "Calm Clinical Authority: Crisp white surfaces framed with whisper borders (#E2E8F0) and diffused ambient shadows.",
-      "RTL-Native Ergonomics: Built specifically for Arabic Cairo typography, right-to-left layout flows, and 48x48 dp touch target compliance.",
-      "Strict Clinical Contrast: WCAG AA compliant text pairings ensuring high visibility under emergency room harsh lighting.",
-      "Evidence-Based Medical Logistics: Reflects authentic Egyptian Blood Bank standards (males 18-60, females 18-40) and official hospital requisition data."
+      "Calm, High-Contrast Palette: Pure clinical white cards on cool canvas with deep midnight navy chrome and crimson triage alerts.",
+      "Bilingual Typographic Rigor: Cairo headings and IBM Plex Sans Arabic body paired with Plus Jakarta Sans.",
+      "Dense Operational Scanability: High-information-density ledgers with sticky headers and tabular figures (tabular-nums).",
+      "Strict Bidi Isolation: Zero layout corruption with DINs and tracking codes isolated via <bdi> tags."
     ],
     "rules": [
       {
-        "name": "The Rarity of Red Rule",
-        "body": "Medical red is strictly reserved for actionable primary buttons, emergency shortage badges, and critical lab values. Input focus must use Clinical Blue to avoid mimicking an error state.",
+        "name": "The Clinical Priority Rule",
+        "body": "Crimson (#c92a2a) is strictly reserved for primary triage actions, STAT emergency indicators, and blood bag identification. Never use it as general decorative trim or arbitrary link styling.",
         "section": "colors"
       },
       {
-        "name": "The Native RTL Rule",
-        "body": "All screen typography and icon orientations must respect Arabic text direction. Directional icons must point along the reading line.",
+        "name": "The Status Tonal Pair Rule",
+        "body": "Every clinical status badge MUST pair an accessible foreground ink with its matching 8-10% tinted subtle background and soft border. Never display bare uncontained text for medical status.",
+        "section": "colors"
+      },
+      {
+        "name": "The Bidi Isolation Rule",
+        "body": "Any DIN (Donation Identification Number), unit tracking code, phone number, timestamp, or blood group symbol MUST be wrapped in <bdi> or assigned dir=\"ltr\" / unicode-bidi: isolate to guarantee zero punctuation flipping in Arabic context.",
         "section": "typography"
       },
       {
-        "name": "The Surface Integrity Rule",
-        "body": "Cards sit directly on the #F8F9FA background with a crisp 1px border (#E2E8F0) and soft ambient blur; dark heavy shadows are banned.",
+        "name": "The Tabular Precision Rule",
+        "body": "All quantities, timestamps, barcode digits, and blood bag volume counters must render with font-variant-numeric: tabular-nums to ensure scannable, rock-solid column alignment.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline Clarity Rule",
+        "body": "Boundaries between clinical cards and ledger columns are drawn with 1px hairline borders (var(--border)), never floating drop shadows. Shadows appear strictly on elevated interactive overlays.",
         "section": "elevation"
+      },
+      {
+        "name": "The Restrained Radius Rule",
+        "body": "Radii never exceed 8px for structural surfaces. Pill shapes are reserved exclusively for blood group indicators and status badges.",
+        "section": "shapes"
       }
+    ],
+    "dos": [
+      "Do isolate every DIN, unit ID, and tracking code with <bdi dir=\"ltr\"> to prevent Arabic bidirectional number flipping.",
+      "Do format all dates, timestamps, and numbers using tabular-nums.",
+      "Do keep action buttons concise with explicit verbs (Acknowledge request, Confirm allocation, Dispatch courier).",
+      "Do maintain a strict 4.5:1 text-to-background contrast ratio for all secondary clinical metadata.",
+      "Do preserve 1px hairline borders on cards and table cells for clarity under harsh fluorescent hospital lighting."
+    ],
+    "donts": [
+      "Don't use Medical Crimson (#c92a2a) for decorative or neutral elements; its urgency value must never be diluted.",
+      "Don't mix conflicting font families across RTL and LTR viewports.",
+      "Don't use decorative drop shadows or soft-blur glow halos on static data tables.",
+      "Don't allow blood bag component technical database keys (blood_bag) to leak to the UI; always format using clinical component nomenclature.",
+      "Don't hide critical clinical status behind unrevealed tooltips or buried menus."
     ]
   }
 }

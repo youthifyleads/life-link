@@ -27,7 +27,7 @@ export function AuditFilters({
   const { data: bloodBanks } = useAdminBloodBanks();
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+    <div className="rounded-lg border border-border/80 bg-card p-4 shadow-2xs">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {/* Search */}
         <div className="relative sm:col-span-2 lg:col-span-2">
@@ -37,7 +37,10 @@ export function AuditFilters({
             onChange={(e) =>
               onFilterChange({ ...filters, search: e.target.value })
             }
-            placeholder={t("admin.searchAuditPlaceholder", "Search audit records by actor, action, entity ID...")}
+            placeholder={t(
+              "admin.searchAuditPlaceholder",
+              "Search audit records by actor, action, entity ID...",
+            )}
             className="ps-9"
           />
         </div>
@@ -55,7 +58,8 @@ export function AuditFilters({
             <option value="all">{t("common.allRoles", "All Actors")}</option>
             {users?.map((u) => (
               <option key={u.id} value={u.id}>
-                {u.fullName} ({t(`roles.${u.primaryRole}`, u.primaryRole.replace(/_/g, " "))})
+                {u.fullName} (
+                {t(`roles.${u.primaryRole}`, u.primaryRole.replace(/_/g, " "))})
               </option>
             ))}
           </select>
@@ -71,7 +75,9 @@ export function AuditFilters({
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={t("admin.auditOrgCol", "Filter by organization")}
           >
-            <option value="all">{t("common.allOrganizations", "All Organizations")}</option>
+            <option value="all">
+              {t("common.allOrganizations", "All Organizations")}
+            </option>
             <option value="Blood Bank Platform Administration">
               {t("admin.operations", "Platform Administration")}
             </option>
@@ -106,9 +112,15 @@ export function AuditFilters({
             aria-label={t("common.date", "Filter by date range")}
           >
             <option value="all">{t("common.all", "All Time")}</option>
-            <option value="today">{t("common.today", "Today (Last 24h)")}</option>
-            <option value="past_7_days">{t("common.thisWeek", "Past 7 Days")}</option>
-            <option value="past_30_days">{t("common.thisMonth", "Past 30 Days")}</option>
+            <option value="today">
+              {t("common.today", "Today (Last 24h)")}
+            </option>
+            <option value="past_7_days">
+              {t("common.thisWeek", "Past 7 Days")}
+            </option>
+            <option value="past_30_days">
+              {t("common.thisMonth", "Past 30 Days")}
+            </option>
           </select>
         </div>
       </div>
@@ -127,8 +139,12 @@ export function AuditFilters({
             className="rounded border border-input bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none"
             aria-label={t("common.filterBy", "Sort order")}
           >
-            <option value="timestamp_desc">{t("hospital.newestFirst", "Newest First")}</option>
-            <option value="timestamp_asc">{t("hospital.oldestFirst", "Oldest First")}</option>
+            <option value="timestamp_desc">
+              {t("hospital.newestFirst", "Newest First")}
+            </option>
+            <option value="timestamp_asc">
+              {t("hospital.oldestFirst", "Oldest First")}
+            </option>
           </select>
         </div>
 

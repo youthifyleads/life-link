@@ -1,14 +1,11 @@
-import {
-  CheckCircle2,
-  Clock,
-  Ticket,
-} from "lucide-react";
+import { Ticket } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { DonorPageFrame } from "@/features/donor/components/donor-page-frame";
 import { useDonationHistory } from "@/features/donor/hooks/use-donor";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import {
   EmptyState,
   ErrorState,
@@ -24,13 +21,21 @@ export function DonorDonationsPage() {
     return (
       <DonorPageFrame
         breadcrumbs={[
-          { label: t("nav.donorServices", "Donor services"), href: "/donor/dashboard" },
+          {
+            label: t("nav.donorServices", "Donor services"),
+            href: "/donor/dashboard",
+          },
           { label: t("nav.donationHistory", "Donation history") },
         ]}
         title={t("donor.donationsTitle", "Donation History")}
-        description={t("donor.portalDesc", "Comprehensive personal ledger of all verified whole blood and apheresis donations.")}
+        description={t(
+          "donor.portalDesc",
+          "Comprehensive personal ledger of all verified whole blood and apheresis donations.",
+        )}
       >
-        <LoadingState label={t("common.loadingRecords", "Loading donation history…")} />
+        <LoadingState
+          label={t("common.loadingRecords", "Loading donation history…")}
+        />
       </DonorPageFrame>
     );
   }
@@ -39,11 +44,17 @@ export function DonorDonationsPage() {
     return (
       <DonorPageFrame
         breadcrumbs={[
-          { label: t("nav.donorServices", "Donor services"), href: "/donor/dashboard" },
+          {
+            label: t("nav.donorServices", "Donor services"),
+            href: "/donor/dashboard",
+          },
           { label: t("nav.donationHistory", "Donation history") },
         ]}
         title={t("donor.donationsTitle", "Donation History")}
-        description={t("donor.portalDesc", "Comprehensive personal ledger of all verified whole blood and apheresis donations.")}
+        description={t(
+          "donor.portalDesc",
+          "Comprehensive personal ledger of all verified whole blood and apheresis donations.",
+        )}
       >
         <ErrorState
           title={t("common.error", "Could not load donation history")}
@@ -61,11 +72,17 @@ export function DonorDonationsPage() {
   return (
     <DonorPageFrame
       breadcrumbs={[
-        { label: t("nav.donorServices", "Donor services"), href: "/donor/dashboard" },
+        {
+          label: t("nav.donorServices", "Donor services"),
+          href: "/donor/dashboard",
+        },
         { label: t("nav.donationHistory", "Donation history") },
       ]}
       title={t("donor.donationsTitle", "Donation History")}
-      description={t("donor.portalDesc", "Comprehensive personal ledger of all verified whole blood and apheresis donations.")}
+      description={t(
+        "donor.portalDesc",
+        "Comprehensive personal ledger of all verified whole blood and apheresis donations.",
+      )}
       actions={
         <Button asChild variant="secondary" size="sm">
           <Link to="/donor/vouchers" className="gap-2">
@@ -79,22 +96,27 @@ export function DonorDonationsPage() {
         {history.length === 0 ? (
           <EmptyState
             title={t("hospital.noRecordsTitle", "No past donations recorded")}
-            description={t("hospital.noRecordsDesc", "When you complete a verified blood donation at an accredited hospital or blood bank, it will appear here.")}
+            description={t(
+              "hospital.noRecordsDesc",
+              "When you complete a verified blood donation at an accredited hospital or blood bank, it will appear here.",
+            )}
             action={
               <Button asChild size="sm">
-                <Link to="/donor/requests">{t("nav.donationRequests", "Explore Open Requests")}</Link>
+                <Link to="/donor/requests">
+                  {t("nav.donationRequests", "Explore Open Requests")}
+                </Link>
               </Button>
             }
           />
         ) : (
-          <div className="overflow-hidden border border-border bg-surface">
+          <div className="overflow-hidden rounded-lg border border-border/80 bg-surface shadow-2xs">
             <div
               tabIndex={0}
               role="region"
               aria-label={t("donor.donationHistoryTableLabel")}
               className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <table className="w-full text-start text-xs">
+              <table className="clinical-table">
                 <thead className="border-b border-border bg-muted/40 font-semibold uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-4 py-3 sm:px-6 text-start">
@@ -153,29 +175,27 @@ export function DonorDonationsPage() {
                       </td>
                       <td className="px-4 py-4">
                         {record.status === "completed" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-700 dark:text-emerald-300">
-                            <CheckCircle2 className="size-3" aria-hidden="true" />
+                          <StatusIndicator tone="success">
                             {t("status.completed", "Completed")}
-                          </span>
+                          </StatusIndicator>
                         ) : record.status === "processing" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-blue-500/10 px-2 py-0.5 font-semibold text-blue-700 dark:text-blue-300">
-                            <Clock className="size-3" aria-hidden="true" />
+                          <StatusIndicator tone="pending">
                             {t("status.preparing", "Processing")}
-                          </span>
+                          </StatusIndicator>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-700 dark:text-amber-400">
+                          <StatusIndicator tone="warning">
                             {t("status.rejected", "Deferred")}
-                          </span>
+                          </StatusIndicator>
                         )}
                       </td>
                       <td className="px-4 py-4 sm:px-6 text-end">
                         {record.voucherId ? (
-                          <Button asChild variant="secondary" size="sm">
-                            <Link to="/donor/vouchers" className="gap-1 font-mono text-xs">
-                              <Ticket className="size-3 text-primary" />
-                              <span><bdi dir="ltr">{record.voucherId}</bdi></span>
-                            </Link>
-                          </Button>
+                          <Link
+                            to="/donor/vouchers"
+                            className="font-mono text-xs font-medium text-primary underline-offset-4 hover:underline"
+                          >
+                            <bdi dir="ltr">{record.voucherId}</bdi>
+                          </Link>
                         ) : (
                           <span className="text-muted-foreground text-[11px]">
                             —

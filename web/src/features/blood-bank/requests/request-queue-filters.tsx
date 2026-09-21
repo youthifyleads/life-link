@@ -1,4 +1,4 @@
-import { ChevronDown, ListFilter, Search, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -58,14 +58,10 @@ export function RequestQueueFilters({
   return (
     <section
       aria-labelledby="request-queue-filters-title"
-      className="overflow-hidden rounded-md border border-border bg-surface"
+      className="overflow-hidden rounded-lg border border-border/80 bg-surface shadow-2xs"
     >
-      <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 border-b border-border px-3.5 py-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-          <ListFilter
-            aria-hidden="true"
-            className="size-4 shrink-0 text-primary"
-          />
           <h2
             id="request-queue-filters-title"
             className="text-sm font-semibold text-foreground"
@@ -88,13 +84,12 @@ export function RequestQueueFilters({
             className="h-8 self-start px-2.5 text-xs text-muted-foreground sm:self-auto"
             onClick={() => onChange(defaultFilters)}
           >
-            <X aria-hidden="true" className="size-3.5" />
             {t("bloodBank.resetAllFilters")}
           </Button>
         ) : null}
       </div>
 
-      <div className="space-y-4 p-4">
+      <div className="space-y-3 p-3.5">
         <div className="relative max-w-2xl">
           <Search
             aria-hidden="true"
@@ -119,11 +114,8 @@ export function RequestQueueFilters({
           ) : null}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          <FilterSelect
-            id="filter-urgency"
-            label={t("common.urgency")}
-          >
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <FilterSelect id="filter-urgency" label={t("common.urgency")}>
             <select
               id="filter-urgency"
               className={selectClassName}
@@ -144,10 +136,7 @@ export function RequestQueueFilters({
             </select>
           </FilterSelect>
 
-          <FilterSelect
-            id="filter-blood-group"
-            label={t("common.bloodGroup")}
-          >
+          <FilterSelect id="filter-blood-group" label={t("common.bloodGroup")}>
             <select
               id="filter-blood-group"
               className={selectClassName}
@@ -168,10 +157,7 @@ export function RequestQueueFilters({
             </select>
           </FilterSelect>
 
-          <FilterSelect
-            id="filter-component"
-            label={t("common.component")}
-          >
+          <FilterSelect id="filter-component" label={t("common.component")}>
             <select
               id="filter-component"
               className={selectClassName}
@@ -213,16 +199,16 @@ export function RequestQueueFilters({
             </select>
           </FilterSelect>
 
-          <FilterSelect
-            id="filter-sort"
-            label={t("bloodBank.queueSortLabel")}
-          >
+          <FilterSelect id="filter-sort" label={t("bloodBank.queueSortLabel")}>
             <select
               id="filter-sort"
               className={selectClassName}
               value={value.sort}
               onChange={(event) =>
-                update("sort", event.target.value as RequestFilterValues["sort"])
+                update(
+                  "sort",
+                  event.target.value as RequestFilterValues["sort"],
+                )
               }
             >
               <option value="newest">{t("hospital.newestFirst")}</option>

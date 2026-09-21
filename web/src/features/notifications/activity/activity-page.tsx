@@ -1,13 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import {
-  Activity,
-  ExternalLink,
-  Eye,
-  RefreshCw,
-  Search,
-} from "lucide-react";
+import { Activity, ExternalLink, Eye, RefreshCw, Search } from "lucide-react";
 
 import type { UserRole } from "@/features/authentication/model/auth.types";
 import { ActivityResultBadge } from "@/features/notifications/components/notification-badges";
@@ -17,7 +11,6 @@ import {
   formatTimeShort,
   getLocalizedRoleName,
 } from "@/features/notifications/components/notifications-formatters";
-import { WorkflowEventSimulator } from "@/features/notifications/components/workflow-event-simulator";
 import {
   useActivityTimeline,
   useEventBusListener,
@@ -48,9 +41,15 @@ export function ActivityPage() {
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
-  const [resultFilter, setResultFilter] = useState<ActivityResult | "all">("all");
-  const [timeRange, setTimeRange] = useState<"all" | "today" | "week" | "month">("all");
-  const [selectedEvent, setSelectedEvent] = useState<ActivityEvent | null>(null);
+  const [resultFilter, setResultFilter] = useState<ActivityResult | "all">(
+    "all",
+  );
+  const [timeRange, setTimeRange] = useState<
+    "all" | "today" | "week" | "month"
+  >("all");
+  const [selectedEvent, setSelectedEvent] = useState<ActivityEvent | null>(
+    null,
+  );
 
   const activityQuery = useActivityTimeline({
     search: search || undefined,
@@ -103,7 +102,6 @@ export function ActivityPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <WorkflowEventSimulator />
           <Link to="/notifications">
             <Button variant="secondary" size="sm" className="gap-1.5 text-xs">
               <Activity className="size-3.5" />
@@ -116,7 +114,7 @@ export function ActivityPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 rounded-lg border border-border bg-card p-3 shadow-sm">
+      <div className="mt-6 grid grid-cols-1 gap-3 rounded-lg border border-border/80 bg-card p-3 shadow-2xs sm:grid-cols-2 lg:grid-cols-12">
         <div className="relative lg:col-span-5">
           <Search className="absolute start-3 top-2.5 size-4 text-muted-foreground" />
           <Input
@@ -147,7 +145,9 @@ export function ActivityPage() {
               {getLocalizedRoleName("blood_bank_staff")}
             </option>
             <option value="donor">{getLocalizedRoleName("donor")}</option>
-            <option value="caregiver">{getLocalizedRoleName("caregiver")}</option>
+            <option value="caregiver">
+              {getLocalizedRoleName("caregiver")}
+            </option>
             <option value="admin">{getLocalizedRoleName("admin")}</option>
           </select>
         </div>
@@ -155,30 +155,46 @@ export function ActivityPage() {
         <div className="lg:col-span-2">
           <select
             value={resultFilter}
-            onChange={(e) => setResultFilter(e.target.value as ActivityResult | "all")}
+            onChange={(e) =>
+              setResultFilter(e.target.value as ActivityResult | "all")
+            }
             className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-start"
             aria-label={t("activity.filterByResult", "Filter by result")}
             id="activity-result-filter"
           >
-            <option value="all">{t("activity.allResults", "All Results")}</option>
-            <option value="success">{t("activity.resultSuccess", "Success")}</option>
-            <option value="warning">{t("activity.resultWarning", "Warning")}</option>
-            <option value="failure">{t("activity.resultFailure", "Failure")}</option>
+            <option value="all">
+              {t("activity.allResults", "All Results")}
+            </option>
+            <option value="success">
+              {t("activity.resultSuccess", "Success")}
+            </option>
+            <option value="warning">
+              {t("activity.resultWarning", "Warning")}
+            </option>
+            <option value="failure">
+              {t("activity.resultFailure", "Failure")}
+            </option>
           </select>
         </div>
 
         <div className="lg:col-span-2 flex items-center gap-2">
           <select
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as "all" | "today" | "week" | "month")}
+            onChange={(e) =>
+              setTimeRange(e.target.value as "all" | "today" | "week" | "month")
+            }
             className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-start"
             aria-label={t("activity.filterByTime", "Filter by time range")}
             id="activity-time-filter"
           >
             <option value="all">{t("activity.allTime", "All Time")}</option>
             <option value="today">{t("activity.past24h", "Past 24h")}</option>
-            <option value="week">{t("activity.past7days", "Past 7 Days")}</option>
-            <option value="month">{t("activity.past30days", "Past 30 Days")}</option>
+            <option value="week">
+              {t("activity.past7days", "Past 7 Days")}
+            </option>
+            <option value="month">
+              {t("activity.past30days", "Past 30 Days")}
+            </option>
           </select>
 
           <Button
@@ -197,10 +213,18 @@ export function ActivityPage() {
       {/* Ledger Table */}
       <div className="mt-6">
         {activityQuery.isLoading ? (
-          <LoadingState label={t("activity.loadingLedger", "Loading system activity ledger")} />
+          <LoadingState
+            label={t(
+              "activity.loadingLedger",
+              "Loading system activity ledger",
+            )}
+          />
         ) : activityQuery.isError ? (
           <ErrorState
-            title={t("activity.failedToLoadLedger", "Failed to load activity ledger")}
+            title={t(
+              "activity.failedToLoadLedger",
+              "Failed to load activity ledger",
+            )}
             description={t(
               "activity.failedToLoadLedgerDesc",
               "An error occurred while retrieving system activity events.",
@@ -215,15 +239,19 @@ export function ActivityPage() {
               "No system events match your specified filter parameters.",
             )}
             action={
-              <Button variant="secondary" size="sm" onClick={handleResetFilters}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleResetFilters}
+              >
                 {t("common.reset", "Reset filters")}
               </Button>
             }
           />
         ) : (
-          <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+          <div className="overflow-hidden rounded-lg border border-border/80 bg-card shadow-2xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-start text-xs border-collapse">
+              <table className="clinical-table border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
                     <th scope="col" className="py-3 px-4 text-start">
@@ -295,12 +323,13 @@ export function ActivityPage() {
                       <td className="py-3.5 px-4 text-end whitespace-nowrap">
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="h-8 gap-1 text-xs"
+                          size="icon"
+                          className="size-8"
                           onClick={() => setSelectedEvent(event)}
+                          title={t("activity.btnDetails", "Details")}
+                          aria-label={`${t("activity.btnDetails", "Details")} ${event.id}`}
                         >
                           <Eye className="size-3.5" />
-                          <span>{t("activity.btnDetails", "Details")}</span>
                         </Button>
                       </td>
                     </tr>
@@ -313,7 +342,10 @@ export function ActivityPage() {
       </div>
 
       {/* Event Details Dialog */}
-      <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
+      <Dialog
+        open={!!selectedEvent}
+        onOpenChange={(open) => !open && setSelectedEvent(null)}
+      >
         {selectedEvent ? (
           <DialogContent className="max-w-xl text-start">
             <DialogHeader className="text-start">
@@ -387,9 +419,15 @@ export function ActivityPage() {
               {selectedEvent.metadata ? (
                 <div>
                   <span className="text-muted-foreground font-medium block mb-1">
-                    {t("activity.operationalMetadataJson", "Operational Metadata (JSON):")}
+                    {t(
+                      "activity.operationalMetadataJson",
+                      "Operational Metadata (JSON):",
+                    )}
                   </span>
-                  <pre className="rounded bg-muted p-3 text-[11px] font-mono overflow-x-auto text-foreground text-start" dir="ltr">
+                  <pre
+                    className="rounded bg-muted p-3 text-[11px] font-mono overflow-x-auto text-foreground text-start"
+                    dir="ltr"
+                  >
                     {JSON.stringify(selectedEvent.metadata, null, 2)}
                   </pre>
                 </div>
@@ -397,9 +435,17 @@ export function ActivityPage() {
 
               {selectedEvent.link ? (
                 <div className="pt-2 flex justify-end">
-                  <Link to={selectedEvent.link} onClick={() => setSelectedEvent(null)}>
+                  <Link
+                    to={selectedEvent.link}
+                    onClick={() => setSelectedEvent(null)}
+                  >
                     <Button size="sm" className="gap-1.5 text-xs">
-                      <span>{t("activity.navigateToEntity", "Navigate to Related Entity")}</span>
+                      <span>
+                        {t(
+                          "activity.navigateToEntity",
+                          "Navigate to Related Entity",
+                        )}
+                      </span>
                       <ExternalLink className="size-3.5 rtl:rotate-180" />
                     </Button>
                   </Link>

@@ -24,7 +24,6 @@ import {
   getLocalizedRoleName,
   getLocalizedSourceModuleName,
 } from "@/features/notifications/components/notifications-formatters";
-import { WorkflowEventSimulator } from "@/features/notifications/components/workflow-event-simulator";
 import {
   useEventBusListener,
   useMarkAllNotificationsRead,
@@ -56,13 +55,17 @@ export function NotificationsPage() {
   const [search, setSearch] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [typeFilter, setTypeFilter] = useState<NotificationType | "all">("all");
-  const [priorityFilter, setPriorityFilter] = useState<NotificationPriority | "all">("all");
+  const [priorityFilter, setPriorityFilter] = useState<
+    NotificationPriority | "all"
+  >("all");
   const [rolePerspective, setRolePerspective] = useState<UserRole | "all">(
     isAdmin ? "admin" : (userRole ?? "hospital_staff"),
   );
 
   const activeRole: UserRole | undefined = isAdmin
-    ? (rolePerspective !== "all" ? rolePerspective : undefined)
+    ? rolePerspective !== "all"
+      ? rolePerspective
+      : undefined
     : userRole;
 
   const notificationsQuery = useNotifications({
@@ -131,7 +134,6 @@ export function NotificationsPage() {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          <WorkflowEventSimulator />
           <Button
             variant="secondary"
             size="sm"
@@ -141,7 +143,9 @@ export function NotificationsPage() {
             id="mark-all-read-page-btn"
           >
             <CheckCheck className="size-3.5 rtl:rotate-180" />
-            <span>{t("notifications.markAllAsReadAction", "Mark all as read")}</span>
+            <span>
+              {t("notifications.markAllAsReadAction", "Mark all as read")}
+            </span>
           </Button>
           <Link to="/settings/notifications">
             <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
@@ -166,7 +170,8 @@ export function NotificationsPage() {
               className="h-7 text-xs rounded-full"
               onClick={() => setRolePerspective("admin")}
             >
-              {t("notifications.myInbox", "My Inbox")} ({getLocalizedRoleName("admin")})
+              {t("notifications.myInbox", "My Inbox")} (
+              {getLocalizedRoleName("admin")})
             </Button>
             <Button
               type="button"
@@ -180,7 +185,9 @@ export function NotificationsPage() {
             <Button
               type="button"
               size="sm"
-              variant={rolePerspective === "hospital_staff" ? "default" : "secondary"}
+              variant={
+                rolePerspective === "hospital_staff" ? "default" : "secondary"
+              }
               className="h-7 text-xs rounded-full"
               onClick={() => setRolePerspective("hospital_staff")}
             >
@@ -189,7 +196,9 @@ export function NotificationsPage() {
             <Button
               type="button"
               size="sm"
-              variant={rolePerspective === "blood_bank_staff" ? "default" : "secondary"}
+              variant={
+                rolePerspective === "blood_bank_staff" ? "default" : "secondary"
+              }
               className="h-7 text-xs rounded-full"
               onClick={() => setRolePerspective("blood_bank_staff")}
             >
@@ -207,7 +216,9 @@ export function NotificationsPage() {
             <Button
               type="button"
               size="sm"
-              variant={rolePerspective === "caregiver" ? "default" : "secondary"}
+              variant={
+                rolePerspective === "caregiver" ? "default" : "secondary"
+              }
               className="h-7 text-xs rounded-full"
               onClick={() => setRolePerspective("caregiver")}
             >
@@ -247,7 +258,7 @@ export function NotificationsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 rounded-lg border border-border bg-card p-3 shadow-sm">
+      <div className="mt-4 grid grid-cols-1 gap-3 rounded-lg border border-border/80 bg-card p-3 shadow-2xs sm:grid-cols-2 lg:grid-cols-12">
         <div className="relative lg:col-span-6">
           <Search className="absolute start-3 top-2.5 size-4 text-muted-foreground" />
           <Input
@@ -265,33 +276,65 @@ export function NotificationsPage() {
         <div className="lg:col-span-3">
           <select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as NotificationType | "all")}
+            onChange={(e) =>
+              setTypeFilter(e.target.value as NotificationType | "all")
+            }
             className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-start"
-            aria-label={t("notifications.filterByType", "Filter by notification type")}
+            aria-label={t(
+              "notifications.filterByType",
+              "Filter by notification type",
+            )}
             id="notification-type-filter"
           >
-            <option value="all">{t("notifications.allTypes", "All Types")}</option>
-            <option value="request_update">{t("notifications.typeRequestUpdate", "Request Update")}</option>
-            <option value="inventory_alert">{t("notifications.typeInventoryAlert", "Inventory Alert")}</option>
-            <option value="allocation_update">{t("notifications.typeAllocationUpdate", "Allocation Update")}</option>
-            <option value="donation_update">{t("notifications.typeDonationUpdate", "Donation Update")}</option>
-            <option value="tracking_update">{t("notifications.typeTrackingUpdate", "Tracking Update")}</option>
-            <option value="system_announcement">{t("notifications.typeSystemAnnouncement", "System Announcement")}</option>
+            <option value="all">
+              {t("notifications.allTypes", "All Types")}
+            </option>
+            <option value="request_update">
+              {t("notifications.typeRequestUpdate", "Request Update")}
+            </option>
+            <option value="inventory_alert">
+              {t("notifications.typeInventoryAlert", "Inventory Alert")}
+            </option>
+            <option value="allocation_update">
+              {t("notifications.typeAllocationUpdate", "Allocation Update")}
+            </option>
+            <option value="donation_update">
+              {t("notifications.typeDonationUpdate", "Donation Update")}
+            </option>
+            <option value="tracking_update">
+              {t("notifications.typeTrackingUpdate", "Tracking Update")}
+            </option>
+            <option value="system_announcement">
+              {t("notifications.typeSystemAnnouncement", "System Announcement")}
+            </option>
           </select>
         </div>
 
         <div className="lg:col-span-2">
           <select
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value as NotificationPriority | "all")}
+            onChange={(e) =>
+              setPriorityFilter(e.target.value as NotificationPriority | "all")
+            }
             className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-start"
-            aria-label={t("notifications.filterByPriority", "Filter by priority")}
+            aria-label={t(
+              "notifications.filterByPriority",
+              "Filter by priority",
+            )}
             id="notification-priority-filter"
           >
-            <option value="all">{t("notifications.allPriorities", "All Priorities")}</option>
-            <option value="urgent">{t("notifications.priorityUrgent", "Urgent")}</option>
-            <option value="high">{t("notifications.priorityHigh", "High")}</option>
-            <option value="normal">{t("notifications.priorityNormal", "Normal")}</option>
+            <option value="all">
+              {t("notifications.allPriorities", "All Priorities")}
+            </option>
+            <option value="urgent">
+              {t("notifications.priorityUrgent", "Urgent")}
+            </option>
+            <option value="high">
+              {t("notifications.priorityHigh", "High")}
+            </option>
+            <option value="normal">
+              {t("notifications.priorityNormal", "Normal")}
+            </option>
             <option value="low">{t("notifications.priorityLow", "Low")}</option>
           </select>
         </div>
@@ -313,10 +356,18 @@ export function NotificationsPage() {
       {/* Notifications List Content */}
       <div className="mt-6">
         {notificationsQuery.isLoading ? (
-          <LoadingState label={t("notifications.loadingLedger", "Loading notification ledger")} />
+          <LoadingState
+            label={t(
+              "notifications.loadingLedger",
+              "Loading notification ledger",
+            )}
+          />
         ) : notificationsQuery.isError ? (
           <ErrorState
-            title={t("notifications.failedToLoad", "Failed to load notifications")}
+            title={t(
+              "notifications.failedToLoad",
+              "Failed to load notifications",
+            )}
             description={t(
               "notifications.failedToLoadDesc",
               "An error occurred while retrieving your notification records.",
@@ -325,19 +376,26 @@ export function NotificationsPage() {
           />
         ) : notifications.length === 0 ? (
           <EmptyState
-            title={t("notifications.noNotificationsFound", "No notifications found")}
+            title={t(
+              "notifications.noNotificationsFound",
+              "No notifications found",
+            )}
             description={t(
               "notifications.noNotificationsFoundDesc",
               "There are no records matching your current filter criteria.",
             )}
             action={
-              <Button variant="secondary" size="sm" onClick={handleResetFilters}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleResetFilters}
+              >
                 {t("notifications.resetFilters", "Reset filters")}
               </Button>
             }
           />
         ) : (
-          <div className="divide-y divide-border rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+          <div className="divide-y divide-border/70 overflow-hidden rounded-lg border border-border/80 bg-card shadow-2xs">
             {notifications.map((item) => (
               <div
                 key={item.id}
@@ -382,7 +440,7 @@ export function NotificationsPage() {
 
                     <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                       {item.relatedEntity.label ? (
-                        <span className="inline-flex items-center gap-1 font-mono text-[11px] rounded bg-muted px-2 py-0.5 text-foreground">
+                        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-foreground">
                           {t("notifications.targetLabel", "Target")}:{" "}
                           <bdi dir="ltr">{item.relatedEntity.label}</bdi>
                         </span>

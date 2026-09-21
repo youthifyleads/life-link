@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Bell, Check, CheckCheck, ExternalLink, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Bell, Check, CheckCheck, Settings } from "lucide-react";
 
 import type { AuthenticatedUser } from "@/features/authentication/model/auth.types";
-import {
-  NotificationPriorityBadge,
-  NotificationTypeBadge,
-} from "@/features/notifications/components/notification-badges";
+import { NotificationPriorityBadge } from "@/features/notifications/components/notification-badges";
 import {
   getLocalizedNotificationMessage,
   getLocalizedNotificationTitle,
@@ -35,15 +32,15 @@ export function HeaderNotificationPopover({
 }: HeaderNotificationPopoverProps) {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
 
   // Listen to any background or cross-tab mock events
   useEventBusListener();
 
   const unreadCountQuery = useUnreadNotificationCount(user.primary_role);
-  const notificationsQuery = useNotifications({
-    roleView: user.primary_role,
-  });
+  const notificationsQuery = useNotifications(
+    { roleView: user.primary_role },
+    { enabled: open },
+  );
 
   const markReadMutation = useMarkNotificationRead();
   const markAllMutation = useMarkAllNotificationsRead();
@@ -64,12 +61,11 @@ export function HeaderNotificationPopover({
     }
   };
 
-  const handleItemClick = (notificationId: string, link?: string) => {
-    void markReadMutation.mutateAsync(notificationId);
-    setOpen(false);
-    if (link) {
-      navigate(link);
+  const handleDetailsClick = (notificationId: string, isRead: boolean) => {
+    if (!isRead) {
+      void markReadMutation.mutateAsync(notificationId);
     }
+    setOpen(false);
   };
 
   const handleMarkAllRead = (e: React.MouseEvent) => {
@@ -84,7 +80,7 @@ export function HeaderNotificationPopover({
           type="button"
           variant="ghost"
           size="icon"
-          className="relative"
+          className="relative text-header-muted hover:bg-white/[0.06] hover:text-white"
           id="header-notification-bell-btn"
           aria-label={
             unreadCount > 0
@@ -106,17 +102,21 @@ export function HeaderNotificationPopover({
 
       <PopoverContent
         align="end"
-        className="w-80 sm:w-96 p-0 shadow-lg border-border"
-        aria-label={t("notifications.quickPreviewTitle", "Notification quick preview")}
+        className="w-80 border-border p-0 shadow-lg sm:w-96"
+        aria-label={t(
+          "notifications.quickPreviewTitle",
+          "Notification quick preview",
+        )}
       >
-        <div className="flex items-center justify-between border-b border-border px-4 py-3 bg-muted/20">
+        <div className="flex items-center justify-between border-b border-border bg-muted/20 px-4 py-3">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-foreground">
               {t("nav.notifications", "Notifications")}
             </h2>
             {unreadCount > 0 ? (
               <span className="rounded-full bg-emergency/15 px-2 py-0.5 text-xs font-semibold text-emergency">
-                <bdi dir="ltr">{unreadCount}</bdi> {t("notifications.unreadBadge", "new")}
+                <bdi dir="ltr">{unreadCount}</bdi>{" "}
+                {t("notifications.unreadBadge", "new")}
               </span>
             ) : null}
           </div>
@@ -126,7 +126,7 @@ export function HeaderNotificationPopover({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
+              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
               onClick={handleMarkAllRead}
               id="header-mark-all-read-btn"
             >
@@ -136,82 +136,109 @@ export function HeaderNotificationPopover({
           ) : null}
         </div>
 
-        <div className="max-h-[22rem] overflow-y-auto divide-y divide-border/60">
+        <div className="max-h-[22rem] divide-y divide-border/70 overflow-y-auto px-2">
           {previewList.length === 0 ? (
-            <div className="py-8 text-center px-4">
-              <Bell className="size-8 mx-auto text-muted-foreground/50" />
+            <div className="px-4 py-8 text-center">
+              <Bell className="mx-auto size-8 text-muted-foreground/50" />
               <p className="mt-2 text-sm font-medium text-muted-foreground">
-                {t("notifications.noNotificationsPreview", "No notifications right now")}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("notifications.noAlerts", "New workflow updates will appear here automatically.")}
+                {t(
+                  "notifications.noNotificationsPreview",
+                  "No notifications right now",
+                )}
               </p>
             </div>
           ) : (
             previewList.map((item) => (
-              <div
+              <article
                 key={item.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleItemClick(item.id, item.relatedEntity.link)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    handleItemClick(item.id, item.relatedEntity.link);
-                  }
-                }}
-                className={`group flex items-start gap-3 p-3.5 text-start transition-colors hover:bg-muted/40 cursor-pointer ${
-                  !item.isRead ? "bg-primary/5 dark:bg-primary/10" : ""
+                className={`px-2 py-3 text-start ${
+                  !item.isRead ? "bg-primary/[0.04]" : "bg-surface"
                 }`}
               >
-                <span
-                  className={`mt-1 size-2 shrink-0 rounded-full ${
-                    !item.isRead ? "bg-emergency ring-2 ring-emergency/20" : "bg-transparent"
-                  }`}
-                  aria-hidden="true"
-                />
+                <div className="flex items-start gap-2.5">
+                  <span
+                    className={`mt-1.5 size-1.5 shrink-0 rounded-full ${
+                      !item.isRead ? "bg-primary" : "bg-muted-foreground/30"
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">
+                    {!item.isRead
+                      ? t("notifications.unreadStatus", "Unread")
+                      : t("notifications.readStatus", "Read")}
+                  </span>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <NotificationPriorityBadge priority={item.priority} />
-                    <NotificationTypeBadge type={item.type} />
-                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="line-clamp-1 text-xs font-semibold leading-5 text-foreground">
+                        {getLocalizedNotificationTitle(item)}
+                      </p>
+                      <time className="shrink-0 text-[11px] leading-5 text-muted-foreground">
+                        <bdi dir="ltr">{formatTime(item.createdAt)}</bdi>
+                      </time>
+                    </div>
 
-                  <p className="mt-1 text-xs font-semibold text-foreground leading-snug line-clamp-1">
-                    {getLocalizedNotificationTitle(item)}
-                  </p>
+                    <p className="line-clamp-1 text-xs leading-5 text-muted-foreground">
+                      {getLocalizedNotificationMessage(item)}
+                    </p>
 
-                  <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                    {getLocalizedNotificationMessage(item)}
-                  </p>
+                    <div className="mt-1.5 flex min-h-7 items-center justify-between gap-2">
+                      <div>
+                        {item.priority === "urgent" ||
+                        item.priority === "high" ? (
+                          <NotificationPriorityBadge priority={item.priority} />
+                        ) : null}
+                      </div>
 
-                  <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span>
-                      <bdi dir="ltr">{formatTime(item.createdAt)}</bdi>
-                    </span>
-                    {item.relatedEntity.link ? (
-                      <span className="inline-flex items-center gap-0.5 font-medium text-primary group-hover:underline">
-                        {t("common.inspect", "Inspect")} <ExternalLink className="size-3 rtl:rotate-180" />
-                      </span>
-                    ) : null}
+                      <div className="flex items-center gap-1">
+                        {item.relatedEntity.link ? (
+                          <Button
+                            asChild
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 gap-1 px-2 text-xs"
+                          >
+                            <Link
+                              to={item.relatedEntity.link}
+                              onClick={() =>
+                                handleDetailsClick(item.id, item.isRead)
+                              }
+                            >
+                              <span>
+                                {t("common.viewDetails", "View details")}
+                              </span>
+                              <ArrowRight
+                                aria-hidden="true"
+                                className="size-3 rtl:rotate-180"
+                              />
+                            </Link>
+                          </Button>
+                        ) : null}
+
+                        {!item.isRead ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-muted-foreground hover:text-foreground"
+                            aria-label={t(
+                              "notifications.markRead",
+                              "Mark as read",
+                            )}
+                            title={t("notifications.markRead", "Mark as read")}
+                            onClick={() =>
+                              void markReadMutation.mutateAsync(item.id)
+                            }
+                          >
+                            <Check aria-hidden="true" className="size-3.5" />
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                {!item.isRead ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-6 shrink-0 opacity-80 hover:opacity-100 hover:bg-muted"
-                    aria-label={t("notifications.markAllRead", "Mark as read")}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void markReadMutation.mutateAsync(item.id);
-                    }}
-                  >
-                    <Check className="size-3.5" />
-                  </Button>
-                ) : null}
-              </div>
+              </article>
             ))
           )}
         </div>
@@ -232,7 +259,12 @@ export function HeaderNotificationPopover({
             onClick={() => setOpen(false)}
             id="header-view-all-notifications-link"
           >
-            <span>{t("notifications.viewAllNotificationsAction", "View all notifications")}</span>
+            <span>
+              {t(
+                "notifications.viewAllNotificationsAction",
+                "View all notifications",
+              )}
+            </span>
             <ArrowRight className="size-3 rtl:rotate-180" />
           </Link>
         </div>

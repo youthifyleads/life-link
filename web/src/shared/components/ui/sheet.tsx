@@ -17,7 +17,7 @@ export function SheetContent({
   const { t } = useTranslation();
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#071a26]/55 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-clinical-navy/50 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
       <DialogPrimitive.Content
         className={cn(
           "fixed inset-y-0 start-0 z-50 w-80 max-w-[calc(100vw-3rem)] border-e border-sidebar-border bg-sidebar text-sidebar-foreground shadow-[var(--shadow-overlay)] outline-none data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left rtl:data-[state=closed]:slide-out-to-right rtl:data-[state=open]:slide-in-from-right",
@@ -26,7 +26,7 @@ export function SheetContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute end-3 top-3 flex size-10 items-center justify-center rounded-md text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80">
+        <DialogPrimitive.Close className="absolute end-3 top-3 flex size-9 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/12 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80">
           <X aria-hidden="true" className="size-5" />
           <span className="sr-only">{t("common.closeNavigation")}</span>
         </DialogPrimitive.Close>

@@ -6,53 +6,77 @@
 :root {
   color-scheme: light;
 
-  --background: #f4f7f9;
-  --foreground: #102a3a;
+  /* Background & Surfaces */
+  --background: #f7f9fa;
+  --foreground: #0c1e28;
   --surface: #ffffff;
   --surface-subtle: #f8fafb;
   --card: #ffffff;
-  --card-foreground: #102a3a;
+  --card-foreground: #0c1e28;
   --popover: #ffffff;
-  --popover-foreground: #102a3a;
+  --popover-foreground: #0c1e28;
 
-  --primary: #0b5f7a;
-  --primary-hover: #084b61;
+  /* Primary: Medical Red */
+  --primary: #c92a2a;
+  --primary-hover: #b02222;
+  --primary-active: #8e1b1b;
   --primary-foreground: #ffffff;
-  --secondary: #dceff5;
-  --secondary-foreground: #12344d;
-  --muted: #edf2f5;
-  --muted-foreground: #526675;
-  --accent: #dceff5;
-  --accent-foreground: #12344d;
 
+  /* Secondary: Dark Navy Blue */
+  --secondary: #0e2430;
+  --secondary-foreground: #ffffff;
+
+  /* Neutral UI Elements */
+  --muted: #edf2f5;
+  --muted-foreground: #506471;
+  --accent: #fef2f2;
+  --accent-foreground: #c92a2a;
+
+  /* Clinical Red: Blood-related highlights, critical alerts, emergency, destructive */
   --destructive: #b42318;
   --destructive-foreground: #ffffff;
-  --emergency: #b42318;
-  --emergency-subtle: #feeceb;
+  --emergency: #c92a2a;
+  --emergency-subtle: #fef2f2;
+
+  /* Clinical Status Indicators */
   --success: #16794a;
   --success-subtle: #e8f5ee;
-  --warning: #946200;
+  --warning: #8d5e00;
   --warning-subtle: #fff4d6;
 
-  --border: #d8e2e8;
-  --input: #c7d5de;
-  --ring: #2563eb;
-  --clinical-navy: #12344d;
-  --clinical-canvas: #f4f7f9;
-  --sidebar: #12344d;
-  --sidebar-foreground: #ffffff;
-  --sidebar-muted: #bfd4df;
-  --sidebar-accent: #1c4a64;
-  --sidebar-border: #31566d;
+  /* Borders & Inputs */
+  --border: #dde4e8;
+  --input: #cbd5dc;
+  --ring: #c92a2a;
 
-  --radius: 0.5rem;
-  --shadow-overlay: 0 12px 32px -12px rgb(16 42 58 / 0.25);
+  /* Navigation & Main Branding */
+  --clinical-navy: #0e2430;
+  --clinical-canvas: #f7f9fa;
+
+  /* Sidebar: Refined Clinical Midnight Navy */
+  --sidebar: #0e2430;
+  --sidebar-foreground: #ffffff;
+  --sidebar-muted: #9bb1bd;
+  --sidebar-accent: #163647;
+  --sidebar-border: #1d3e50;
+
+  /* Header: Dark Navy Blue */
+  --header: #0e2430;
+  --header-foreground: #ffffff;
+  --header-muted: #9bb1bd;
+  --header-border: #1d3e50;
+
+  --radius: 0.375rem;
+  --shadow-overlay: 0 18px 44px -18px rgb(10 31 40 / 0.3);
 }
 
 @theme inline {
   --font-sans:
-    "IBM Plex Sans Variable", "Noto Sans Arabic Variable", ui-sans-serif,
-    system-ui, sans-serif;
+    "Plus Jakarta Sans", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-heading:
+    "Cairo", "Plus Jakarta Sans", "IBM Plex Sans Arabic", sans-serif;
+  --font-brand:
+    "Cairo", "Plus Jakarta Sans", sans-serif;
   --font-mono:
     ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 
@@ -91,6 +115,10 @@
   --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-border: var(--sidebar-border);
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-header-muted: var(--header-muted);
+  --color-header-border: var(--header-border);
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -104,14 +132,20 @@
 
   html {
     min-width: 320px;
+    height: 100%;
     background: var(--background);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
   }
 
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
   body {
     min-width: 320px;
-    min-height: 100vh;
+    height: 100%;
     margin: 0;
     background: var(--background);
     color: var(--foreground);
@@ -120,8 +154,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  #root {
+    height: 100%;
+  }
+
   html[dir="rtl"] body {
-    font-family: "Noto Sans Arabic Variable", "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
+    font-family: "IBM Plex Sans Arabic", var(--font-sans);
     line-height: 1.65;
   }
 
@@ -147,6 +185,21 @@
   textarea,
   select {
     font: inherit;
+  }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  thead {
+    background: var(--surface-subtle);
+    color: var(--muted-foreground);
+  }
+
+  tbody tr {
+    transition: background-color 120ms ease-out;
   }
 
   input::placeholder,
@@ -175,6 +228,41 @@
   }
 }
 
+@layer components {
+  .clinical-table {
+    width: 100%;
+    color: var(--foreground);
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+  }
+
+  .clinical-table th {
+    height: 2.25rem;
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
+    vertical-align: middle;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1rem;
+    text-transform: none;
+  }
+
+  .clinical-table td {
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
+    vertical-align: middle;
+  }
+
+  .clinical-table tbody > tr + tr {
+    border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  }
+
+  html[dir="rtl"] .clinical-table th {
+    letter-spacing: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -185,3 +273,108 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  /* Hide application navigation, sidebars, headers, and interactive buttons */
+  nav,
+  header,
+  aside,
+  .no-print,
+  button:not(.print-visible),
+  [data-slot="sidebar"],
+  .group\/sidebar {
+    display: none !important;
+  }
+
+  body,
+  main {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure printable elements break cleanly on standard paper / label stock */
+  .printable-unit-label {
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  /* Strict Isolation for Blood Bag Label Printing */
+  body.print-label-mode {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.print-label-mode * {
+    visibility: hidden !important;
+  }
+
+  body.print-label-mode #blood-unit-printable-label,
+  body.print-label-mode #blood-unit-printable-label * {
+    visibility: visible !important;
+  }
+
+  body.print-label-mode #blood-unit-printable-label {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    margin: 0 auto !important;
+    display: block !important;
+    box-shadow: none !important;
+  }
+
+  body.print-label-mode.print-thermal-mode #blood-unit-printable-label {
+    max-width: 100mm !important;
+    width: 100mm !important;
+  }
+
+  body.print-label-mode:not(.print-thermal-mode) #blood-unit-printable-label {
+    max-width: 130mm !important;
+    margin-top: 10mm !important;
+  }
+}
+
+/* Typography Hierarchy & Arabic Polish */
+html {
+  font-family: var(--font-sans);
+}
+
+[dir="rtl"],
+:lang(ar) {
+  font-family: "IBM Plex Sans Arabic", var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
+[dir="rtl"] h6,
+:lang(ar) h1,
+:lang(ar) h2,
+:lang(ar) h3,
+:lang(ar) h4,
+:lang(ar) h5,
+:lang(ar) h6 {
+  font-family: "Cairo", sans-serif;
+  letter-spacing: -0.015em;
+}
+
+.font-brand {
+  font-family: "Cairo", "Plus Jakarta Sans", sans-serif;
+}
+

@@ -39,7 +39,7 @@ export function BloodBankTrackingPage() {
       title={t("bloodBank.trackingTitle")}
       description={t("bloodBank.trackingSubtitle")}
       actions={
-        <Button asChild variant="secondary" size="sm" className="h-9 text-xs">
+        <Button asChild variant="secondary" size="sm" className="h-9 gap-1.5 text-xs no-print">
           <Link to="/blood-bank/inventory">
             <Boxes aria-hidden="true" className="size-3.5" />
             {t("bloodBank.centralInventoryAction")}
@@ -68,10 +68,8 @@ export function BloodBankTrackingPage() {
           />
         ) : !activeId ? (
           /* Empty / Unscanned State */
-          <div className="border border-border bg-surface p-12 text-center">
-            <div className="mx-auto flex size-12 items-center justify-center border border-border bg-surface-subtle text-muted-foreground">
-              <QrCode aria-hidden="true" className="size-6" />
-            </div>
+          <div className="rounded-lg border border-border/80 bg-surface p-10 text-center shadow-2xs">
+            <QrCode aria-hidden="true" className="mx-auto size-8 text-primary" />
             <h3 className="mt-3 text-sm font-semibold text-foreground">
               {t("bloodBank.noUnitScannedTitle")}
             </h3>
@@ -81,9 +79,9 @@ export function BloodBankTrackingPage() {
           </div>
         ) : !foundUnit ? (
           /* Unit Not Found Alert */
-          <div className="border border-destructive/30 bg-emergency-subtle p-6 text-xs text-foreground space-y-3">
+          <div className="rounded-lg border border-emergency/25 bg-emergency-subtle/70 p-5 text-xs text-foreground space-y-3 shadow-2xs">
             <div className="flex items-center gap-2 font-semibold text-emergency text-sm">
-              <SearchX aria-hidden="true" className="size-5" />
+              <SearchX aria-hidden="true" className="size-4.5" />
               <span>
                 {t("bloodBank.unitNotFoundTitle", { id: activeId })}
               </span>
@@ -91,20 +89,6 @@ export function BloodBankTrackingPage() {
             <p className="text-muted-foreground">
               {t("bloodBank.unitNotFoundDesc")}
             </p>
-            <div className="flex flex-wrap gap-2 pt-1">
-              {["UNT-O-NEG-0142", "UNT-B-POS-0331", "UNT-AB-POS-0451", "UNT-A-POS-0211"].map(
-                (demoId) => (
-                  <button
-                    key={demoId}
-                    type="button"
-                    onClick={() => handleSearch(demoId)}
-                    className="border border-emergency/40 bg-surface px-2.5 py-1 font-mono text-xs font-semibold text-emergency hover:bg-emergency/10 focus:outline-none"
-                  >
-                    <bdi dir="ltr">{demoId}</bdi>
-                  </button>
-                ),
-              )}
-            </div>
           </div>
         ) : (
           /* Found Unit Display */

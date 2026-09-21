@@ -1,5 +1,4 @@
 import {
-  CheckCircle2,
   ExternalLink,
   Filter,
   HeartHandshake,
@@ -15,10 +14,9 @@ import {
   useDonationRequests,
   useRespondToDonationRequest,
 } from "@/features/donor/hooks/use-donor";
-import type {
-  DonationResponseStatus,
-} from "@/features/donor/types/donor.types";
+import type { DonationResponseStatus } from "@/features/donor/types/donor.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import { UrgencyBadge } from "@/shared/components/clinical/urgency-badge";
 import {
   EmptyState,
@@ -72,7 +70,10 @@ export function DonorRequestsPage() {
   return (
     <DonorPageFrame
       breadcrumbs={[
-        { label: t("nav.donorServices", "Donor services"), href: "/donor/dashboard" },
+        {
+          label: t("nav.donorServices", "Donor services"),
+          href: "/donor/dashboard",
+        },
         { label: t("nav.donationRequests", "Donation requests") },
       ]}
       title={t("donor.appealsTitle", "Donation Requests")}
@@ -83,7 +84,7 @@ export function DonorRequestsPage() {
     >
       <div className="space-y-6">
         {/* Filter Controls Bar */}
-        <div className="flex flex-col gap-4 border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 rounded-lg border border-border/80 bg-surface p-4 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 min-w-[16rem]">
             <Search
               aria-hidden="true"
@@ -92,7 +93,10 @@ export function DonorRequestsPage() {
             <Input
               type="search"
               aria-label={t("common.search", "Search donation requests")}
-              placeholder={t("hospital.searchPlaceholder", "Search by request reference, hospital name, or department…")}
+              placeholder={t(
+                "hospital.searchPlaceholder",
+                "Search by request reference, hospital name, or department…",
+              )}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-10 ps-9 text-xs"
@@ -111,10 +115,18 @@ export function DonorRequestsPage() {
                 onChange={(e) => setUrgencyFilter(e.target.value)}
                 className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <option value="all">{t("hospital.allUrgencies", "All Urgencies")}</option>
-                <option value="emergency">{t("urgency.emergency", "Emergency")}</option>
-                <option value="urgent">{t("urgency.urgent", "Urgent")}</option>
-                <option value="routine">{t("urgency.routine", "Routine")}</option>
+                <option value="all">
+                  {t("hospital.allUrgencies", "All Urgencies")}
+                </option>
+                <option value="emergency">
+                  {t("urgency.emergency", "Emergency")}
+                </option>
+                <option value="urgent">
+                  {t("urgency.urgent", "Urgent")}
+                </option>
+                <option value="routine">
+                  {t("urgency.routine", "Routine")}
+                </option>
               </select>
             </div>
 
@@ -128,10 +140,18 @@ export function DonorRequestsPage() {
                 onChange={(e) => setResponseFilter(e.target.value)}
                 className="h-9 rounded-md border border-input bg-background px-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <option value="all">{t("common.allStatuses", "All Statuses")}</option>
-                <option value="pending">{t("status.pending", "Pending")}</option>
-                <option value="interested">{t("status.confirmed", "Interested")}</option>
-                <option value="declined">{t("status.rejected", "Declined")}</option>
+                <option value="all">
+                  {t("common.allStatuses", "All Statuses")}
+                </option>
+                <option value="pending">
+                  {t("status.pending", "Pending")}
+                </option>
+                <option value="interested">
+                  {t("status.confirmed", "Interested")}
+                </option>
+                <option value="declined">
+                  {t("status.rejected", "Declined")}
+                </option>
               </select>
             </div>
           </div>
@@ -139,7 +159,9 @@ export function DonorRequestsPage() {
 
         {/* Requests Table / Cards */}
         {requestsQuery.isPending ? (
-          <LoadingState label={t("common.loadingRecords", "Loading donation requests…")} />
+          <LoadingState
+            label={t("common.loadingRecords", "Loading donation requests…")}
+          />
         ) : requestsQuery.isError ? (
           <ErrorState
             title={t("common.error", "Could not load donation requests")}
@@ -150,8 +172,14 @@ export function DonorRequestsPage() {
           />
         ) : filteredRequests.length === 0 ? (
           <EmptyState
-            title={t("hospital.noRecordsTitle", "No donation requests match your filters")}
-            description={t("hospital.noRecordsDesc", "Try adjusting your search criteria or checking back later for new shortage calls.")}
+            title={t(
+              "hospital.noRecordsTitle",
+              "No donation requests match your filters",
+            )}
+            description={t(
+              "hospital.noRecordsDesc",
+              "Try adjusting your search criteria or checking back later for new shortage calls.",
+            )}
             action={
               <Button
                 variant="secondary"
@@ -167,11 +195,11 @@ export function DonorRequestsPage() {
             }
           />
         ) : (
-          <div className="space-y-4">
+          <div className="divide-y divide-border/70 rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden">
             {filteredRequests.map((req) => (
               <article
                 key={req.id}
-                className="border border-border bg-surface p-5 transition-colors hover:border-primary/50 sm:p-6"
+                className="p-5 transition-colors sm:p-6"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2">
@@ -185,19 +213,17 @@ export function DonorRequestsPage() {
                         {req.component.replace("_", " ")}
                       </span>
                       {req.myResponse === "interested" ? (
-                        <span className="inline-flex items-center gap-1 rounded bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:text-blue-300">
-                          <CheckCircle2 className="size-3" aria-hidden="true" />
+                        <StatusIndicator tone="success">
                           {t("status.confirmed", "Interested / Accepted")}
-                        </span>
+                        </StatusIndicator>
                       ) : req.myResponse === "declined" ? (
-                        <span className="inline-flex items-center gap-1 rounded bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive">
-                          <XCircle className="size-3" aria-hidden="true" />
+                        <StatusIndicator tone="danger">
                           {t("status.rejected", "Declined")}
-                        </span>
+                        </StatusIndicator>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        <StatusIndicator tone="pending">
                           {t("status.pending", "Pending Response")}
-                        </span>
+                        </StatusIndicator>
                       )}
                     </div>
 
@@ -206,16 +232,22 @@ export function DonorRequestsPage() {
                     </h3>
 
                     <p className="text-xs text-muted-foreground">
-                      <strong className="text-foreground">{t("hospital.clinicalIndication", "Clinical Purpose")}:</strong>{" "}
-                      {req.clinicalContextSafe} · {t("hospital.created", "Requested on")}{" "}
-                      <bdi dir="ltr">{req.requestDate}</bdi> · {t("hospital.requiredBy", "Target")}:{" "}
+                      <strong className="text-foreground">
+                        {t("hospital.clinicalIndication", "Clinical Purpose")}:
+                      </strong>{" "}
+                      {req.clinicalContextSafe} ·{" "}
+                      {t("hospital.created", "Requested on")}{" "}
+                      <bdi dir="ltr">{req.requestDate}</bdi> ·{" "}
+                      {t("hospital.requiredBy", "Target")}:{" "}
                       <strong className="text-foreground">
                         <bdi dir="ltr">{req.requiredByDate}</bdi>
                       </strong>
                     </p>
 
                     <p className="text-xs text-muted-foreground">
-                      <strong className="text-foreground">{t("common.facility", "Donation Facility")}:</strong>{" "}
+                      <strong className="text-foreground">
+                        {t("common.facility", "Donation Facility")}:
+                      </strong>{" "}
                       {req.location}
                     </p>
                   </div>
@@ -231,8 +263,13 @@ export function DonorRequestsPage() {
                         }
                         className="gap-1.5"
                       >
-                        <HeartHandshake className="size-3.5" aria-hidden="true" />
-                        <span>{t("donor.commitDonation", "I'm Interested")}</span>
+                        <HeartHandshake
+                          className="size-3.5"
+                          aria-hidden="true"
+                        />
+                        <span>
+                          {t("donor.commitDonation", "I'm Interested")}
+                        </span>
                       </Button>
                     ) : (
                       <Button
@@ -250,9 +287,15 @@ export function DonorRequestsPage() {
                     )}
 
                     <Button asChild variant="secondary" size="sm">
-                      <Link to={`/donor/requests/${req.id}`} className="gap-1.5">
+                      <Link
+                        to={`/donor/requests/${req.id}`}
+                        className="gap-1.5"
+                      >
                         <span>{t("common.viewDetails", "View Details")}</span>
-                        <ExternalLink className="size-3.5 rtl:rotate-180" aria-hidden="true" />
+                        <ExternalLink
+                          className="size-3.5 rtl:rotate-180"
+                          aria-hidden="true"
+                        />
                       </Link>
                     </Button>
                   </div>

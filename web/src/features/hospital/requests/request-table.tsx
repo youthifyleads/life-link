@@ -1,4 +1,3 @@
-import { ArrowUpRight, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -18,35 +17,37 @@ interface RequestTableProps {
 
 export function RequestTable({ requests, compact = false }: RequestTableProps) {
   const { t } = useTranslation();
+  const headerCellClassName = compact ? "px-3 py-2.5" : "px-4 py-3";
+  const bodyCellClassName = compact ? "px-3 py-2.5" : "px-4 py-3";
 
   return (
-    <div className="border border-border bg-surface">
+    <div className="rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden">
       <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[62rem] border-collapse text-start text-sm">
+        <table className="clinical-table min-w-[62rem] border-collapse">
           <thead className="bg-surface-subtle text-xs font-semibold text-muted-foreground">
             <tr className="border-b border-border">
-              <th scope="col" className="px-4 py-3 text-start">
+              <th scope="col" className={`${headerCellClassName} text-start`}>
                 {t("hospital.requestId", "Request ID")}
               </th>
-              <th scope="col" className="px-4 py-3 text-start">
+              <th scope="col" className={`${headerCellClassName} text-start`}>
                 {t("hospital.recipientBank", "Recipient Bank")}
               </th>
-              <th scope="col" className="px-4 py-3 text-start">
+              <th scope="col" className={`${headerCellClassName} text-start`}>
                 {t("common.bloodGroup", "Blood group")}
               </th>
-              <th scope="col" className="px-4 py-3 text-start">
+              <th scope="col" className={`${headerCellClassName} text-start`}>
                 {t("common.component", "Component")}
               </th>
-              <th scope="col" className="px-4 py-3 text-end">
+              <th scope="col" className={`${headerCellClassName} text-end`}>
                 {t("common.quantity", "Quantity")}
               </th>
-              <th scope="col" className="px-4 py-3 text-start">
+              <th scope="col" className={`${headerCellClassName} text-start`}>
                 {t("common.urgency", "Urgency")}
               </th>
-              <th scope="col" className="px-4 py-3 text-start">
+              <th scope="col" className={`${headerCellClassName} text-start`}>
                 {t("common.status", "Status")}
               </th>
-              <th scope="col" className="px-4 py-3 text-start">
+              <th scope="col" className={`${headerCellClassName} text-start`}>
                 {t("hospital.created", "Created")}
               </th>
             </tr>
@@ -54,16 +55,15 @@ export function RequestTable({ requests, compact = false }: RequestTableProps) {
           <tbody className="divide-y divide-border">
             {requests.map((request) => (
               <tr key={request.id} className="hover:bg-surface-subtle">
-                <th scope="row" className="px-4 py-3 text-start">
+                <th scope="row" className={`${bodyCellClassName} text-start`}>
                   <Link
                     to={`/hospital/requests/${request.id}`}
-                    className="inline-flex min-h-8 items-center gap-1 font-semibold text-primary hover:underline"
+                    className="font-semibold text-primary hover:underline"
                   >
                     <bdi dir="ltr">{request.id}</bdi>
-                    <ArrowUpRight aria-hidden="true" className="size-3.5 rtl:-rotate-90" />
                   </Link>
                 </th>
-                <td className="px-4 py-3">
+                <td className={bodyCellClassName}>
                   <div className="font-medium text-foreground">
                     {request.targetBloodBank?.name ?? "Regional Blood Bank"}
                   </div>
@@ -71,22 +71,41 @@ export function RequestTable({ requests, compact = false }: RequestTableProps) {
                     {request.targetBloodBank?.governorate ?? "Cairo"}
                   </div>
                 </td>
-                <td className="px-4 py-3">
-                  <BloodGroupBadge group={request.bloodGroup} />
+                <td className={bodyCellClassName}>
+                  {compact ? (
+                    <bdi
+                      dir="ltr"
+                      className="font-semibold tabular-nums text-foreground"
+                    >
+                      {request.bloodGroup}
+                    </bdi>
+                  ) : (
+                    <BloodGroupBadge group={request.bloodGroup} />
+                  )}
                 </td>
-                <td className="px-4 py-3 font-medium">
-                  {t(`healthcare.${request.component}`, bloodComponentLabels[request.component])}
+                <td className={`${bodyCellClassName} font-medium`}>
+                  {t(
+                    `healthcare.${request.component}`,
+                    bloodComponentLabels[request.component],
+                  )}
                 </td>
-                <td className="px-4 py-3 text-end font-semibold tabular-nums">
-                  {request.quantity} {request.quantity === 1 ? t("common.unit", "unit") : t("common.units", "units")}
+                <td
+                  className={`${bodyCellClassName} text-end font-semibold tabular-nums`}
+                >
+                  {request.quantity}{" "}
+                  {request.quantity === 1
+                    ? t("common.unit", "unit")
+                    : t("common.units", "units")}
                 </td>
-                <td className="px-4 py-3">
+                <td className={bodyCellClassName}>
                   <UrgencyBadge urgency={request.urgency} />
                 </td>
-                <td className="px-4 py-3">
+                <td className={bodyCellClassName}>
                   <RequestStatusBadge status={request.status} />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                <td
+                  className={`${bodyCellClassName} whitespace-nowrap text-muted-foreground`}
+                >
                   {formatDateTime(request.createdAt)}
                 </td>
               </tr>
@@ -97,39 +116,56 @@ export function RequestTable({ requests, compact = false }: RequestTableProps) {
 
       <div className="divide-y divide-border md:hidden">
         {requests.map((request) => (
-          <article key={request.id} className="p-4">
+          <article key={request.id} className="p-3.5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <Link
                   to={`/hospital/requests/${request.id}`}
-                  className="inline-flex min-h-8 items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                  className="text-sm font-semibold text-primary hover:underline"
                 >
                   <bdi dir="ltr">{request.id}</bdi>
-                  <ArrowUpRight aria-hidden="true" className="size-3.5 rtl:-rotate-90" />
                 </Link>
-                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                  <Building2 className="size-3" />
-                  <span>{request.targetBloodBank?.name ?? "Regional Blood Bank"}</span>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {request.targetBloodBank?.name ?? "Regional Blood Bank"}
                 </div>
                 <p className="mt-1 text-sm font-medium text-foreground">
-                  {t(`healthcare.${request.component}`, bloodComponentLabels[request.component])}
+                  {t(
+                    `healthcare.${request.component}`,
+                    bloodComponentLabels[request.component],
+                  )}
                 </p>
               </div>
-              <BloodGroupBadge group={request.bloodGroup} />
+              {compact ? (
+                <bdi
+                  dir="ltr"
+                  className="font-semibold tabular-nums text-foreground"
+                >
+                  {request.bloodGroup}
+                </bdi>
+              ) : (
+                <BloodGroupBadge group={request.bloodGroup} />
+              )}
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <UrgencyBadge urgency={request.urgency} />
               <RequestStatusBadge status={request.status} />
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-border pt-3 text-xs">
+            <dl className="mt-3 grid grid-cols-2 gap-3 border-t border-border/70 pt-3 text-xs">
               <div>
-                <dt className="text-muted-foreground">{t("common.quantity", "Quantity")}</dt>
+                <dt className="text-muted-foreground">
+                  {t("common.quantity", "Quantity")}
+                </dt>
                 <dd className="mt-1 font-semibold tabular-nums">
-                  {request.quantity} {request.quantity === 1 ? t("common.unit", "unit") : t("common.units", "units")}
+                  {request.quantity}{" "}
+                  {request.quantity === 1
+                    ? t("common.unit", "unit")
+                    : t("common.units", "units")}
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">{t("hospital.created", "Created")}</dt>
+                <dt className="text-muted-foreground">
+                  {t("hospital.created", "Created")}
+                </dt>
                 <dd className="mt-1 font-medium">
                   {formatDateTime(request.createdAt)}
                 </dd>

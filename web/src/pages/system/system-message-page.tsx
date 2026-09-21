@@ -25,7 +25,7 @@ export function SystemMessagePage({ type }: SystemMessagePageProps) {
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-background px-6 py-12">
-      <section className="w-full max-w-lg border-y border-border bg-surface px-2 py-10 text-center sm:border sm:px-10">
+      <section className="w-full max-w-lg rounded-xl border border-border/80 bg-surface px-6 py-10 text-center shadow-2xs sm:px-10">
         <ShieldAlert
           aria-hidden="true"
           className="mx-auto size-9 text-primary"

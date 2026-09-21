@@ -11,7 +11,10 @@ import { Link } from "react-router-dom";
 import { AdminPageFrame } from "@/features/admin/components/admin-page-frame";
 import { AdminKPIs } from "@/features/admin/dashboard/admin-kpis";
 import { AdminRecentActivity } from "@/features/admin/dashboard/admin-recent-activity";
-import { useAdminAuditLogs, useAdminKPIs } from "@/features/admin/hooks/use-admin";
+import {
+  useAdminAuditLogs,
+  useAdminKPIs,
+} from "@/features/admin/hooks/use-admin";
 import { LoadingState } from "@/shared/components/feedback/system-states";
 import { buttonVariants } from "@/shared/components/ui/button.variants";
 import { cn } from "@/shared/lib/utils";
@@ -26,7 +29,10 @@ export function AdminDashboardPage() {
       <AdminPageFrame
         title={t("admin.operations")}
         description={t("admin.operationsDesc")}
-        breadcrumbs={[{ label: t("nav.administration") }, { label: t("nav.dashboard") }]}
+        breadcrumbs={[
+          { label: t("nav.administration") },
+          { label: t("nav.dashboard") },
+        ]}
       >
         <LoadingState label={t("common.loading")} rows={5} />
       </AdminPageFrame>
@@ -37,7 +43,10 @@ export function AdminDashboardPage() {
     <AdminPageFrame
       title={t("admin.operations")}
       description={t("admin.operationsDesc")}
-      breadcrumbs={[{ label: t("nav.administration") }, { label: t("nav.dashboard") }]}
+      breadcrumbs={[
+        { label: t("nav.administration") },
+        { label: t("nav.dashboard") },
+      ]}
       actions={
         <div className="flex flex-wrap items-center gap-2.5">
           <Link
@@ -62,18 +71,17 @@ export function AdminDashboardPage() {
         <AdminKPIs kpis={kpis} />
 
         {/* Operational Domains Overview */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-border/80 bg-card shadow-2xs md:grid-cols-3 md:divide-x md:divide-border rtl:md:divide-x-reverse">
+          <div className="p-4 sm:p-5">
             <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-md bg-sky-50 text-sky-900 border border-sky-200">
-                <Hospital className="size-4" aria-hidden="true" />
-              </span>
+              <Hospital className="size-5 shrink-0 text-primary" aria-hidden="true" />
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
                   {t("admin.hospitalFacilitiesTitle")}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  <bdi dir="ltr">{kpis.totalHospitals}</bdi> {t("admin.totalHospitalsHelper")}
+                  <bdi dir="ltr">{kpis.totalHospitals}</bdi>{" "}
+                  {t("admin.totalHospitalsHelper")}
                 </p>
               </div>
             </div>
@@ -86,22 +94,24 @@ export function AdminDashboardPage() {
                 className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
               >
                 <span>{t("admin.viewHospitalDirectory")}</span>
-                <ChevronRight className="size-3 rtl:rotate-180" aria-hidden="true" />
+                <ChevronRight
+                  className="size-3 rtl:rotate-180"
+                  aria-hidden="true"
+                />
               </Link>
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <div className="border-t border-border p-4 sm:p-5 md:border-t-0">
             <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-md bg-rose-50 text-rose-900 border border-rose-200">
-                <Building2 className="size-4" aria-hidden="true" />
-              </span>
+              <Building2 className="size-5 shrink-0 text-primary" aria-hidden="true" />
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
                   {t("admin.regionalBloodBanksTitle")}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  <bdi dir="ltr">{kpis.totalBloodBanks}</bdi> {t("admin.totalBloodBanksHelper")}
+                  <bdi dir="ltr">{kpis.totalBloodBanks}</bdi>{" "}
+                  {t("admin.totalBloodBanksHelper")}
                 </p>
               </div>
             </div>
@@ -114,16 +124,17 @@ export function AdminDashboardPage() {
                 className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
               >
                 <span>{t("admin.viewBloodBankDirectory")}</span>
-                <ChevronRight className="size-3 rtl:rotate-180" aria-hidden="true" />
+                <ChevronRight
+                  className="size-3 rtl:rotate-180"
+                  aria-hidden="true"
+                />
               </Link>
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <div className="border-t border-border p-4 sm:p-5 md:border-t-0">
             <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-md bg-purple-50 text-purple-900 border border-purple-200">
-                <ShieldCheck className="size-4" aria-hidden="true" />
-              </span>
+              <ShieldCheck className="size-5 shrink-0 text-primary" aria-hidden="true" />
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
                   {t("admin.rolesPermissionsTitle")}
@@ -142,7 +153,10 @@ export function AdminDashboardPage() {
                 className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
               >
                 <span>{t("admin.rolesPermissionsTitle")}</span>
-                <ChevronRight className="size-3 rtl:rotate-180" aria-hidden="true" />
+                <ChevronRight
+                  className="size-3 rtl:rotate-180"
+                  aria-hidden="true"
+                />
               </Link>
             </div>
           </div>

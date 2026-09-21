@@ -17,10 +17,10 @@ export function DialogContent({
   const { t } = useTranslation();
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#071a26]/55 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-clinical-navy/50 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] border border-border bg-surface p-6 shadow-[var(--shadow-overlay)] outline-none duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "fixed left-[50%] top-[50%] z-50 w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-overlay)] outline-none duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className,
         )}
         {...props}
@@ -35,10 +35,7 @@ export function DialogContent({
   );
 }
 
-export function DialogHeader({
-  className,
-  ...props
-}: ComponentProps<"div">) {
+export function DialogHeader({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       className={cn("flex flex-col space-y-1.5 text-start", className)}
@@ -47,14 +44,11 @@ export function DialogHeader({
   );
 }
 
-export function DialogFooter({
-  className,
-  ...props
-}: ComponentProps<"div">) {
+export function DialogFooter({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        "mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
         className,
       )}
       {...props}

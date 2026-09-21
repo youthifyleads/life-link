@@ -7,11 +7,21 @@ import {
 } from "@/features/blood-bank/types/blood-bank.types";
 import {
   formatHospitalName,
+  formatMimeType,
   formatOrganizationName,
+  formatShortId,
+  formatStorageLocation,
   formatUserName,
 } from "@/shared/lib/formatters";
 
-export { formatHospitalName, formatOrganizationName, formatUserName };
+export {
+  formatHospitalName,
+  formatMimeType,
+  formatOrganizationName,
+  formatShortId,
+  formatStorageLocation,
+  formatUserName,
+};
 
 export function formatBloodBankDateTime(value: string) {
   const locale = i18n.language.startsWith("ar") ? "ar-EG" : "en-GB";
@@ -66,10 +76,11 @@ export function formatBloodBankFileSize(bytes: number) {
   return `${format(kib / 1024, 1)} MB`;
 }
 
-export function formatBloodBankComponent(component: BloodBankComponent): string {
+export function formatBloodBankComponent(component: BloodBankComponent | string): string {
   const isArabic = i18n.language.startsWith("ar");
+  const normalized = component === "blood_bag" ? "whole_blood" : component;
   if (isArabic) {
-    switch (component) {
+    switch (normalized) {
       case "red_cells":
         return "خلايا دم حمراء مركزة";
       case "platelets":
@@ -81,10 +92,10 @@ export function formatBloodBankComponent(component: BloodBankComponent): string 
       case "whole_blood":
         return "دم كامل";
       default:
-        return bloodBankComponentLabels[component] ?? component;
+        return bloodBankComponentLabels[normalized as BloodBankComponent] ?? normalized;
     }
   }
-  return bloodBankComponentLabels[component] ?? component;
+  return bloodBankComponentLabels[normalized as BloodBankComponent] ?? normalized;
 }
 
 const documentTitleArabicMap: Record<string, string> = {

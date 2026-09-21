@@ -1,12 +1,4 @@
-import {
-  AlarmClock,
-  AlertTriangle,
-  CheckCircle2,
-  Layers,
-  PackageCheck,
-  PackageOpen,
-  X,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -78,7 +70,9 @@ export function RequestQueuePage() {
     const active = allRequests.filter(
       (request) => !terminalStatuses.includes(request.status),
     );
-    const emergency = active.filter((request) => request.urgency === "emergency");
+    const emergency = active.filter(
+      (request) => request.urgency === "emergency",
+    );
     const urgent = active.filter((request) => request.urgency === "urgent");
     const needsAllocation = active.filter(
       (request) =>
@@ -86,8 +80,7 @@ export function RequestQueuePage() {
     );
     const readyOrPreparing = active.filter(
       (request) =>
-        request.status === "confirmed" ||
-        request.status === "preparing",
+        request.status === "confirmed" || request.status === "preparing",
     );
 
     return {
@@ -108,9 +101,18 @@ export function RequestQueuePage() {
           !query ||
           request.id.toLowerCase().includes(query) ||
           request.hospital.name.toLowerCase().includes(query) ||
-          formatHospitalName(request.hospital.name, request.hospital.id).toLowerCase().includes(query) ||
+          formatHospitalName(request.hospital.name, request.hospital.id)
+            .toLowerCase()
+            .includes(query) ||
           request.hospital.facilityCode.toLowerCase().includes(query) ||
-          ((bloodBankComponentLabels as Record<string, string>)[request.component] || "")
+          (
+            (bloodBankComponentLabels as Record<string, string>)[
+              request.component
+            ] || ""
+          )
+            .toLowerCase()
+            .includes(query) ||
+          formatBloodBankComponent(request.component)
             .toLowerCase()
             .includes(query) ||
           formatBloodBankComponent(request.component)
@@ -204,10 +206,10 @@ export function RequestQueuePage() {
           onRetry={() => void requestsQuery.refetch()}
         />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <section
             aria-label={t("bloodBank.queueSummaryLabel")}
-            className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-3 md:grid-cols-5"
+            className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border/80 bg-border shadow-2xs sm:grid-cols-3 md:grid-cols-5"
           >
             {/* Tile 1: Total Active */}
             <button
@@ -219,15 +221,16 @@ export function RequestQueuePage() {
                   urgency: "all",
                 }))
               }
-              className={`flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
+              className={`flex min-h-16 flex-col justify-between bg-surface px-3.5 py-2 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
                 filters.status === "all" && filters.urgency === "all"
                   ? "bg-primary/8 shadow-[inset_0_0_0_1px_var(--primary)]"
                   : "hover:bg-surface-subtle"
               }`}
             >
-              <div className="flex items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
-                <span>{t("bloodBank.queueActiveRequisitions", "Active in Queue")}</span>
-                <Layers aria-hidden="true" className="size-3.5 text-primary" />
+              <div className="text-xs font-medium text-muted-foreground">
+                <span>
+                  {t("bloodBank.queueActiveRequisitions", "Active in Queue")}
+                </span>
               </div>
               <span className="mt-2 text-2xl font-semibold tracking-tight text-foreground tabular-nums">
                 {telemetry.activeCount}
@@ -244,15 +247,16 @@ export function RequestQueuePage() {
                   status: "all",
                 }))
               }
-              className={`flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
+              className={`flex min-h-16 flex-col justify-between bg-surface px-3.5 py-2 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
                 filters.urgency === "emergency"
                   ? "bg-destructive/10 shadow-[inset_0_0_0_1px_var(--destructive)]"
                   : "hover:bg-destructive/[0.04]"
               }`}
             >
-              <div className="flex items-center justify-between gap-2 text-xs font-semibold text-destructive">
-                <span>{t("bloodBank.queueStatEmergency", "STAT Emergency")}</span>
-                <AlertTriangle aria-hidden="true" className="size-3.5" />
+              <div className="text-xs font-semibold text-destructive">
+                <span>
+                  {t("bloodBank.queueStatEmergency", "STAT Emergency")}
+                </span>
               </div>
               <span className="mt-2 text-2xl font-semibold tracking-tight text-destructive tabular-nums">
                 {telemetry.emergencyCount}
@@ -269,17 +273,16 @@ export function RequestQueuePage() {
                   status: "all",
                 }))
               }
-              className={`flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
+              className={`flex min-h-16 flex-col justify-between bg-surface px-3.5 py-2 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
                 filters.urgency === "urgent"
                   ? "bg-amber-500/15 shadow-[inset_0_0_0_1px_rgb(217_119_6)]"
                   : "hover:bg-amber-500/[0.05]"
               }`}
             >
-              <div className="flex items-center justify-between gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+              <div className="text-xs font-medium text-warning">
                 <span>{t("bloodBank.queueUrgentTriage", "Urgent Triage")}</span>
-                <AlarmClock aria-hidden="true" className="size-3.5" />
               </div>
-              <span className="mt-2 text-2xl font-semibold tracking-tight text-amber-700 dark:text-amber-400 tabular-nums">
+              <span className="mt-2 text-2xl font-semibold tracking-tight text-warning tabular-nums">
                 {telemetry.urgentCount}
               </span>
             </button>
@@ -294,15 +297,16 @@ export function RequestQueuePage() {
                   urgency: "all",
                 }))
               }
-              className={`flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
+              className={`flex min-h-16 flex-col justify-between bg-surface px-3.5 py-2 text-start transition-colors focus-visible:relative focus-visible:z-10 ${
                 filters.status === "submitted"
                   ? "bg-secondary shadow-[inset_0_0_0_1px_var(--secondary-foreground)]"
                   : "hover:bg-surface-subtle"
               }`}
             >
-              <div className="flex items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
-                <span>{t("bloodBank.queueNeedsAllocation", "Needs Allocation")}</span>
-                <PackageOpen aria-hidden="true" className="size-3.5 text-secondary-foreground" />
+              <div className="text-xs font-medium text-muted-foreground">
+                <span>
+                  {t("bloodBank.queueNeedsAllocation", "Needs Allocation")}
+                </span>
               </div>
               <span className="mt-2 text-2xl font-semibold tracking-tight text-foreground tabular-nums">
                 {telemetry.needsAllocationCount}
@@ -319,15 +323,16 @@ export function RequestQueuePage() {
                   urgency: "all",
                 }))
               }
-              className={`col-span-2 flex min-h-20 flex-col justify-between bg-surface px-4 py-3 text-start transition-colors focus-visible:relative focus-visible:z-10 sm:col-span-2 md:col-span-1 ${
+              className={`col-span-2 flex min-h-16 flex-col justify-between bg-surface px-3.5 py-2 text-start transition-colors focus-visible:relative focus-visible:z-10 sm:col-span-2 md:col-span-1 ${
                 filters.status === "preparing"
                   ? "bg-success/10 shadow-[inset_0_0_0_1px_var(--success)]"
                   : "hover:bg-success/[0.04]"
               }`}
             >
-              <div className="flex items-center justify-between gap-2 text-xs font-medium text-success">
-                <span>{t("bloodBank.queueReadyOrPreparing", "Preparing & Ready")}</span>
-                <PackageCheck aria-hidden="true" className="size-3.5" />
+              <div className="text-xs font-medium text-success">
+                <span>
+                  {t("bloodBank.queueReadyOrPreparing", "Preparing & Ready")}
+                </span>
               </div>
               <span className="mt-2 text-2xl font-semibold tracking-tight text-success tabular-nums">
                 {telemetry.readyOrPreparingCount}
@@ -339,7 +344,7 @@ export function RequestQueuePage() {
           {feedback ? (
             <div
               role={feedback.tone === "error" ? "alert" : "status"}
-              className={`flex items-center justify-between gap-3 rounded-md border px-4 py-3 text-sm font-medium ${
+              className={`flex items-center justify-between gap-3 rounded-md border px-4 py-2.5 text-sm font-medium ${
                 feedback.tone === "error"
                   ? "border-destructive/30 bg-emergency-subtle text-destructive"
                   : "border-success/30 bg-success-subtle text-success"
@@ -347,9 +352,15 @@ export function RequestQueuePage() {
             >
               <div className="flex items-center gap-2">
                 {feedback.tone === "error" ? (
-                  <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
+                  <AlertTriangle
+                    aria-hidden="true"
+                    className="size-4 shrink-0"
+                  />
                 ) : (
-                  <CheckCircle2 aria-hidden="true" className="size-4 shrink-0" />
+                  <CheckCircle2
+                    aria-hidden="true"
+                    className="size-4 shrink-0"
+                  />
                 )}
                 <span className="leading-5">{feedback.message}</span>
               </div>

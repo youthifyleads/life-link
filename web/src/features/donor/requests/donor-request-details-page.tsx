@@ -1,7 +1,6 @@
 import {
   ArrowLeft,
   CheckCircle2,
-  Clock,
   HeartHandshake,
   Hospital,
   Info,
@@ -21,6 +20,7 @@ import {
 } from "@/features/donor/hooks/use-donor";
 import type { DonationResponseStatus } from "@/features/donor/types/donor.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import { UrgencyBadge } from "@/shared/components/clinical/urgency-badge";
 import {
   ErrorState,
@@ -40,14 +40,25 @@ export function DonorRequestDetailsPage() {
     return (
       <DonorPageFrame
         breadcrumbs={[
-          { label: t("nav.donorServices", "Donor services"), href: "/donor/dashboard" },
-          { label: t("nav.donationRequests", "Donation requests"), href: "/donor/requests" },
+          {
+            label: t("nav.donorServices", "Donor services"),
+            href: "/donor/dashboard",
+          },
+          {
+            label: t("nav.donationRequests", "Donation requests"),
+            href: "/donor/requests",
+          },
           { label: t("common.details", "Request details") },
         ]}
         title={t("common.details", "Donation Request Details")}
-        description={t("donor.portalDesc", "Clinical request context, appointment guidelines, and response management.")}
+        description={t(
+          "donor.portalDesc",
+          "Clinical request context, appointment guidelines, and response management.",
+        )}
       >
-        <LoadingState label={t("common.loadingRecords", "Loading request details…")} />
+        <LoadingState
+          label={t("common.loadingRecords", "Loading request details…")}
+        />
       </DonorPageFrame>
     );
   }
@@ -58,12 +69,21 @@ export function DonorRequestDetailsPage() {
     return (
       <DonorPageFrame
         breadcrumbs={[
-          { label: t("nav.donorServices", "Donor services"), href: "/donor/dashboard" },
-          { label: t("nav.donationRequests", "Donation requests"), href: "/donor/requests" },
+          {
+            label: t("nav.donorServices", "Donor services"),
+            href: "/donor/dashboard",
+          },
+          {
+            label: t("nav.donationRequests", "Donation requests"),
+            href: "/donor/requests",
+          },
           { label: t("common.details", "Request details") },
         ]}
         title={t("common.details", "Donation Request Details")}
-        description={t("donor.portalDesc", "Clinical request context, appointment guidelines, and response management.")}
+        description={t(
+          "donor.portalDesc",
+          "Clinical request context, appointment guidelines, and response management.",
+        )}
       >
         <ErrorState
           title={t("common.error", "Donation request not found")}
@@ -81,8 +101,14 @@ export function DonorRequestDetailsPage() {
       await respondMutation.mutateAsync({ id: req.id, response: status });
       setFeedbackMessage(
         status === "interested"
-          ? t("donor.commitSuccess", "Thank you! Your donation commitment has been recorded.")
-          : t("common.success", "You have declined this request. Your status has been updated."),
+          ? t(
+              "donor.commitSuccess",
+              "Thank you! Your donation commitment has been recorded.",
+            )
+          : t(
+              "common.success",
+              "You have declined this request. Your status has been updated.",
+            ),
       );
       setTimeout(() => setFeedbackMessage(null), 5000);
     } catch {
@@ -93,12 +119,21 @@ export function DonorRequestDetailsPage() {
   return (
     <DonorPageFrame
       breadcrumbs={[
-        { label: t("nav.donorServices", "Donor services"), href: "/donor/dashboard" },
-        { label: t("nav.donationRequests", "Donation requests"), href: "/donor/requests" },
+        {
+          label: t("nav.donorServices", "Donor services"),
+          href: "/donor/dashboard",
+        },
+        {
+          label: t("nav.donationRequests", "Donation requests"),
+          href: "/donor/requests",
+        },
         { label: req.reference },
       ]}
       title={`${t("healthcare.bloodRequest", "Donation Request")} ${req.reference}`}
-      description={t("donor.appealsDescription", "Clinical urgency, department needs, and preparation guidelines. Patient identity is strictly decoupled for privacy.")}
+      description={t(
+        "donor.appealsDescription",
+        "Clinical urgency, department needs, and preparation guidelines. Patient identity is strictly decoupled for privacy.",
+      )}
       actions={
         <Button asChild variant="secondary" size="sm">
           <Link to="/donor/requests" className="gap-2">
@@ -123,7 +158,7 @@ export function DonorRequestDetailsPage() {
         {/* Header Summary Banner */}
         <section
           aria-labelledby="request-overview-heading"
-          className="border border-border bg-surface p-6 sm:p-8"
+          className="rounded-xl border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs"
         >
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
@@ -133,7 +168,7 @@ export function DonorRequestDetailsPage() {
                 </span>
                 <BloodGroupBadge group={req.bloodGroup} />
                 <UrgencyBadge urgency={req.urgency} />
-                <span className="rounded bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="text-xs font-semibold text-muted-foreground">
                   {req.component.replace("_", " ")}
                 </span>
               </div>
@@ -154,30 +189,30 @@ export function DonorRequestDetailsPage() {
             </div>
 
             {/* Current Response Status Card */}
-            <div className="rounded-lg border border-border bg-muted/40 p-4 text-center lg:min-w-[16rem]">
+            <div className="bg-muted/40 p-4 text-center lg:min-w-[16rem]">
               <span className="text-xs font-medium text-muted-foreground">
                 {t("common.status", "Your Current Response")}
               </span>
               <div className="mt-2">
                 {req.myResponse === "interested" ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/15 px-3 py-1 text-xs font-bold text-blue-700 dark:text-blue-300">
-                    <CheckCircle2 className="size-4" aria-hidden="true" />
+                  <StatusIndicator tone="success">
                     {t("status.confirmed", "Interested / Accepted")}
-                  </span>
+                  </StatusIndicator>
                 ) : req.myResponse === "declined" ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/15 px-3 py-1 text-xs font-bold text-destructive">
-                    <XCircle className="size-4" aria-hidden="true" />
+                  <StatusIndicator tone="danger">
                     {t("status.rejected", "Declined")}
-                  </span>
+                  </StatusIndicator>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-                    <Clock className="size-4" aria-hidden="true" />
+                  <StatusIndicator tone="pending">
                     {t("status.pending", "Pending Decision")}
-                  </span>
+                  </StatusIndicator>
                 )}
               </div>
               <p className="mt-2 text-[11px] text-muted-foreground">
-                {t("donor.portalDesc", "You may update your response anytime before the appointment window.")}
+                {t(
+                  "donor.portalDesc",
+                  "You may update your response anytime before the appointment window.",
+                )}
               </p>
             </div>
           </div>
@@ -196,7 +231,10 @@ export function DonorRequestDetailsPage() {
               <span>
                 {req.myResponse === "interested"
                   ? t("status.confirmed", "You have Accepted this Request")
-                  : t("donor.commitDonation", "Accept / I'm Interested to Donate")}
+                  : t(
+                      "donor.commitDonation",
+                      "Accept / I'm Interested to Donate",
+                    )}
               </span>
             </Button>
 
@@ -220,7 +258,7 @@ export function DonorRequestDetailsPage() {
           {/* Facility & Logistics */}
           <section
             aria-labelledby="facility-logistics-heading"
-            className="border border-border bg-surface p-6 space-y-4"
+            className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs space-y-4"
           >
             <div className="flex items-center gap-2 border-b border-border pb-3">
               <Hospital className="size-5 text-primary" aria-hidden="true" />
@@ -234,21 +272,27 @@ export function DonorRequestDetailsPage() {
 
             <dl className="grid grid-cols-1 gap-4 text-xs sm:grid-cols-2">
               <div className="space-y-1">
-                <dt className="text-muted-foreground">{t("hospital.created", "Request Date")}</dt>
+                <dt className="text-muted-foreground">
+                  {t("hospital.created", "Request Date")}
+                </dt>
                 <dd className="font-semibold text-foreground font-mono">
                   <bdi dir="ltr">{req.requestDate}</bdi>
                 </dd>
               </div>
 
               <div className="space-y-1">
-                <dt className="text-muted-foreground">{t("hospital.requiredBy", "Required By Cutoff")}</dt>
+                <dt className="text-muted-foreground">
+                  {t("hospital.requiredBy", "Required By Cutoff")}
+                </dt>
                 <dd className="font-semibold text-foreground font-mono">
                   <bdi dir="ltr">{req.requiredByDate}</bdi>
                 </dd>
               </div>
 
               <div className="space-y-1 sm:col-span-2">
-                <dt className="text-muted-foreground">{t("common.address", "Facility Address")}</dt>
+                <dt className="text-muted-foreground">
+                  {t("common.address", "Facility Address")}
+                </dt>
                 <dd className="flex items-start gap-1.5 font-semibold text-foreground">
                   <MapPin className="size-4 shrink-0 text-primary mt-0.5" />
                   <span>
@@ -259,10 +303,14 @@ export function DonorRequestDetailsPage() {
               </div>
 
               <div className="space-y-1 sm:col-span-2">
-                <dt className="text-muted-foreground">{t("common.phone", "Direct Desk Contact")}</dt>
+                <dt className="text-muted-foreground">
+                  {t("common.phone", "Direct Desk Contact")}
+                </dt>
                 <dd className="flex items-center gap-1.5 font-semibold text-foreground font-mono">
                   <Phone className="size-4 shrink-0 text-primary" />
-                  <span><bdi dir="ltr">{req.requestingOrg.phone}</bdi></span>
+                  <span>
+                    <bdi dir="ltr">{req.requestingOrg.phone}</bdi>
+                  </span>
                 </dd>
               </div>
             </dl>
@@ -271,7 +319,7 @@ export function DonorRequestDetailsPage() {
           {/* Clinical Preparation Guidelines */}
           <section
             aria-labelledby="prep-guidelines-heading"
-            className="border border-border bg-surface p-6 space-y-4"
+            className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs space-y-4"
           >
             <div className="flex items-center gap-2 border-b border-border pb-3">
               <Info className="size-5 text-primary" aria-hidden="true" />
@@ -283,7 +331,7 @@ export function DonorRequestDetailsPage() {
               </h3>
             </div>
 
-            <div className="rounded-md border border-primary/20 bg-primary/5 p-4 text-xs leading-relaxed text-foreground">
+            <div className="bg-primary/5 p-4 text-xs leading-relaxed text-foreground">
               <p className="font-medium">{req.specialInstructions}</p>
             </div>
 
@@ -291,19 +339,28 @@ export function DonorRequestDetailsPage() {
               <li className="flex items-start gap-2">
                 <ShieldCheck className="size-4 shrink-0 text-emerald-600 mt-0.5" />
                 <span>
-                  {t("healthcare.temperatureAssurance", "Drink at least 500 mL of water or non-caffeinated fluid prior to arrival.")}
+                  {t(
+                    "healthcare.temperatureAssurance",
+                    "Drink at least 500 mL of water or non-caffeinated fluid prior to arrival.",
+                  )}
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <ShieldCheck className="size-4 shrink-0 text-emerald-600 mt-0.5" />
                 <span>
-                  {t("donor.eligibleNotice", "Have a light, healthy meal within 2-3 hours before donating.")}
+                  {t(
+                    "donor.eligibleNotice",
+                    "Have a light, healthy meal within 2-3 hours before donating.",
+                  )}
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <ShieldCheck className="size-4 shrink-0 text-emerald-600 mt-0.5" />
                 <span>
-                  {t("common.verified", "Bring your national ID or passport for on-site verification.")}
+                  {t(
+                    "common.verified",
+                    "Bring your national ID or passport for on-site verification.",
+                  )}
                 </span>
               </li>
             </ul>

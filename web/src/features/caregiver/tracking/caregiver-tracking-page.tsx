@@ -1,12 +1,9 @@
 import {
   ArrowLeft,
   CheckCircle2,
-  Clock,
   Hospital,
   MapPin,
-  PackageCheck,
   ShieldCheck,
-  Truck,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
@@ -14,14 +11,21 @@ import { Link, useParams } from "react-router-dom";
 import { CaregiverPageFrame } from "@/features/caregiver/components/caregiver-page-frame";
 import { useCaregiverUnit } from "@/features/caregiver/hooks/use-caregiver";
 import type { CaregiverUnitStatus } from "@/features/caregiver/types/caregiver.types";
+import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
 import {
-  BloodGroupBadge,
-} from "@/shared/components/clinical/blood-group-badge";
+  StatusIndicator,
+  type StatusTone,
+} from "@/shared/components/clinical/status-indicator";
 import {
   ErrorState,
   LoadingState,
 } from "@/shared/components/feedback/system-states";
 import { Button } from "@/shared/components/ui/button";
+import {
+  formatDateTime,
+  formatHospitalName,
+  formatStorageLocation,
+} from "@/shared/lib/formatters";
 
 export function CaregiverTrackingPage() {
   const { t } = useTranslation();
@@ -32,13 +36,24 @@ export function CaregiverTrackingPage() {
     return (
       <CaregiverPageFrame
         breadcrumbs={[
-          { label: t("nav.caregiverTracking", "Caregiver tracking"), href: "/caregiver/dashboard" },
+          {
+            label: t("nav.caregiverTracking", "Caregiver tracking"),
+            href: "/caregiver/dashboard",
+          },
           { label: t("common.status", "Bag Status") },
         ]}
         title={t("hospital.trackDelivery", "Tracking Status")}
-        description={t("bloodBank.scanningLedger", "Querying national cold-chain custody ledger…")}
+        description={t(
+          "bloodBank.scanningLedger",
+          "Querying national cold-chain custody ledger…",
+        )}
       >
-        <LoadingState label={t("bloodBank.scanningLedger", "Tracing blood bag dispatch status…")} />
+        <LoadingState
+          label={t(
+            "bloodBank.scanningLedger",
+            "Tracing blood bag dispatch status…",
+          )}
+        />
       </CaregiverPageFrame>
     );
   }
@@ -49,14 +64,22 @@ export function CaregiverTrackingPage() {
     return (
       <CaregiverPageFrame
         breadcrumbs={[
-          { label: t("nav.caregiverTracking", "Caregiver tracking"), href: "/caregiver/dashboard" },
+          {
+            label: t("nav.caregiverTracking", "Caregiver tracking"),
+            href: "/caregiver/dashboard",
+          },
           { label: t("common.status", "Bag Status") },
         ]}
         title={t("common.status", "Blood Bag Status")}
-        description={t("healthcare.temperatureAssurance", "Verified cold chain transfer records.")}
+        description={t(
+          "healthcare.temperatureAssurance",
+          "Verified cold chain transfer records.",
+        )}
         actions={
           <Button asChild variant="secondary" size="sm">
-            <Link to="/caregiver/scan">{t("caregiver.scanBarcodeButton", "Scan Another Code")}</Link>
+            <Link to="/caregiver/scan">
+              {t("caregiver.scanBarcodeButton", "Scan Another Code")}
+            </Link>
           </Button>
         }
       >
@@ -71,29 +94,35 @@ export function CaregiverTrackingPage() {
     );
   }
 
-  const getStatusIcon = (status: CaregiverUnitStatus) => {
+  const getStatusTone = (status: CaregiverUnitStatus): StatusTone => {
     switch (status) {
       case "received_at_hospital":
       case "ready_for_transfusion":
       case "transfused":
-        return <CheckCircle2 className="size-6 text-emerald-600" aria-hidden="true" />;
+        return "success";
       case "in_transit":
-        return <Truck className="size-6 text-blue-600" aria-hidden="true" />;
+        return "pending";
       case "allocated":
-        return <PackageCheck className="size-6 text-amber-600" aria-hidden="true" />;
+        return "pending";
       default:
-        return <Clock className="size-6 text-primary" aria-hidden="true" />;
+        return "neutral";
     }
   };
 
   return (
     <CaregiverPageFrame
       breadcrumbs={[
-        { label: t("nav.caregiverTracking", "Caregiver tracking"), href: "/caregiver/dashboard" },
+        {
+          label: t("nav.caregiverTracking", "Caregiver tracking"),
+          href: "/caregiver/dashboard",
+        },
         { label: unit.reference },
       ]}
       title={`${t("healthcare.bloodUnit", "Bag")} ${unit.reference}`}
-      description={t("caregiver.safeTempAssurance", "Live transfer progress and cold chain verification. Decoupled from patient medical records.")}
+      description={t(
+        "caregiver.safeTempAssurance",
+        "Live transfer progress and cold chain verification. Decoupled from patient medical records.",
+      )}
       actions={
         <Button asChild variant="secondary" size="sm">
           <Link to="/caregiver/dashboard" className="gap-2">
@@ -107,7 +136,7 @@ export function CaregiverTrackingPage() {
         {/* Status Card */}
         <section
           aria-labelledby="unit-status-heading"
-          className="border border-border bg-surface p-6 space-y-4 rounded-lg shadow-xs"
+          className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs space-y-4"
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b border-border pb-4">
             <div className="space-y-1.5">
@@ -120,24 +149,19 @@ export function CaregiverTrackingPage() {
                   {unit.component.replace("_", " ")}
                 </span>
               </div>
-              <h2
-                id="unit-status-heading"
-                className="text-lg font-bold text-foreground"
-              >
-                {unit.statusLabel}
+              <h2 id="unit-status-heading">
+                <StatusIndicator tone={getStatusTone(unit.status)}>
+                  {unit.statusLabel}
+                </StatusIndicator>
               </h2>
-            </div>
-
-            <div className="flex items-center gap-3 self-start sm:self-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-surface-subtle border border-border">
-                {getStatusIcon(unit.status)}
-              </div>
             </div>
           </div>
 
           <dl className="grid grid-cols-1 gap-4 text-xs sm:grid-cols-2 pt-1">
             <div className="space-y-1">
-              <dt className="text-muted-foreground">{t("caregiver.hospitalArrival", "Destination Facility")}</dt>
+              <dt className="text-muted-foreground">
+                {t("caregiver.hospitalArrival", "Destination Facility")}
+              </dt>
               <dd className="flex items-center gap-1.5 font-semibold text-foreground">
                 <Hospital className="size-4 shrink-0 text-primary" />
                 <span>{unit.destinationHospital}</span>
@@ -145,7 +169,9 @@ export function CaregiverTrackingPage() {
             </div>
 
             <div className="space-y-1">
-              <dt className="text-muted-foreground">{t("caregiver.lastCheckpoint", "Current Verified Location")}</dt>
+              <dt className="text-muted-foreground">
+                {t("caregiver.lastCheckpoint", "Current Verified Location")}
+              </dt>
               <dd className="flex items-center gap-1.5 font-semibold text-foreground">
                 <MapPin className="size-4 shrink-0 text-muted-foreground" />
                 <span>{unit.currentLocation}</span>
@@ -153,17 +179,26 @@ export function CaregiverTrackingPage() {
             </div>
 
             <div className="space-y-1">
-              <dt className="text-muted-foreground">{t("caregiver.safeTemp", "Cold-Chain Temperature Assurance")}</dt>
+              <dt className="text-muted-foreground">
+                {t("caregiver.safeTemp", "Cold-Chain Temperature Assurance")}
+              </dt>
               <dd className="flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-300">
                 <ShieldCheck className="size-4 shrink-0 text-emerald-600" />
-                <span><bdi dir="ltr">+2°C to +6°C</bdi> ({t("common.verified", "Monitored")})</span>
+                <span>
+                  <bdi dir="ltr">+2°C to +6°C</bdi> (
+                  {t("common.verified", "Monitored")})
+                </span>
               </dd>
             </div>
 
             <div className="space-y-1">
-              <dt className="text-muted-foreground">{t("bloodBank.lastUpdated", "Last Telemetry Timestamp")}</dt>
+              <dt className="text-muted-foreground">
+                {t("bloodBank.lastUpdated", "Last Telemetry Timestamp")}
+              </dt>
               <dd className="font-mono font-semibold text-foreground">
-                <bdi dir="ltr">{unit.lastUpdated.replace("T", " ").split(".")[0]}</bdi>
+                <bdi dir="ltr">
+                  {unit.lastUpdated.replace("T", " ").split(".")[0]}
+                </bdi>
               </dd>
             </div>
           </dl>
@@ -172,14 +207,15 @@ export function CaregiverTrackingPage() {
         {/* Milestone Custody Progression */}
         <section
           aria-labelledby="custody-milestones-heading"
-          className="border border-border bg-surface p-6 space-y-4 rounded-lg"
+          className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs space-y-4"
         >
           <div className="flex items-center justify-between border-b border-border pb-3">
             <h3
               id="custody-milestones-heading"
               className="text-sm font-semibold uppercase tracking-wider text-muted-foreground"
             >
-              {t("bloodBank.timelineTitle", "Custody Transfer Milestones")} (<bdi dir="ltr">{unit.milestones.length}</bdi>)
+              {t("bloodBank.timelineTitle", "Custody Transfer Milestones")} (
+              <bdi dir="ltr">{unit.milestones.length}</bdi>)
             </h3>
             <span className="text-[11px] text-muted-foreground">
               {t("hospital.newestFirst", "Newest milestone first")}
@@ -190,7 +226,10 @@ export function CaregiverTrackingPage() {
             {[...unit.milestones].reverse().map((milestone) => (
               <li key={milestone.id} className="relative ps-9">
                 <span className="absolute start-0 top-0.5 flex size-7 items-center justify-center rounded-full border border-border bg-surface text-primary">
-                  <CheckCircle2 className="size-4 text-primary" aria-hidden="true" />
+                  <CheckCircle2
+                    className="size-4 text-primary"
+                    aria-hidden="true"
+                  />
                 </span>
 
                 <div className="space-y-1">
@@ -198,15 +237,18 @@ export function CaregiverTrackingPage() {
                     <span className="text-xs font-bold text-foreground">
                       {milestone.title}
                     </span>
-                    <time className="font-mono text-[10px] text-muted-foreground">
-                      <bdi dir="ltr">{milestone.timestamp.replace("T", " ").split(".")[0]}</bdi>
+                    <time className="text-[11px] text-muted-foreground font-medium">
+                      <bdi dir="auto">
+                        {formatDateTime(milestone.timestamp)}
+                      </bdi>
                     </time>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     {milestone.summary}
                   </p>
                   <p className="text-[11px] font-medium text-muted-foreground">
-                    {t("common.address", "Location")}: <bdi dir="auto">{milestone.location}</bdi>
+                    {t("common.address", "Location")}:{" "}
+                    <bdi dir="auto">{formatStorageLocation(milestone.location)}</bdi>
                   </p>
                 </div>
               </li>
@@ -219,7 +261,11 @@ export function CaregiverTrackingPage() {
           <div className="flex items-start gap-2.5">
             <ShieldCheck className="size-4 shrink-0 text-emerald-600 mt-0.5" />
             <p className="leading-relaxed">
-              {t("bloodBank.traceabilityNotice", "This unit is verified under the National Blood Safety Protocol. If you have questions about the scheduled transfusion time, please consult the charge nurse at")} {unit.destinationHospital}.
+              {t(
+                "bloodBank.traceabilityNotice",
+                "This unit is verified under the National Blood Safety Protocol. If you have questions about the scheduled transfusion time, please consult the charge nurse at",
+              )}{" "}
+              {formatHospitalName(unit.destinationHospital)}.
             </p>
           </div>
         </div>

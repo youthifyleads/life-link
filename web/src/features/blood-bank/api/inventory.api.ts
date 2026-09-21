@@ -36,6 +36,16 @@ export interface BackendBagHistoryDTO {
   created_at: string;
 }
 
+function parseBloodBankComponent(value: unknown): BloodBankComponent {
+  const comp = String(value || "").toLowerCase().trim();
+  if (comp === "red_cells" || comp === "red blood cells" || comp === "rbc") return "red_cells";
+  if (comp === "platelets" || comp === "plt") return "platelets";
+  if (comp === "fresh_frozen_plasma" || comp === "ffp" || comp === "plasma") return "fresh_frozen_plasma";
+  if (comp === "cryoprecipitate" || comp === "cryo") return "cryoprecipitate";
+  if (comp === "whole_blood" || comp === "wb" || comp === "blood_bag") return "whole_blood";
+  return "whole_blood";
+}
+
 export function mapBackendDtoToBloodUnit(dto: any): BloodUnit {
   let status: BloodUnitStatus;
   const rawStatus = dto?.status ?? (dto?.is_available ? "available" : "quarantined");
@@ -49,7 +59,7 @@ export function mapBackendDtoToBloodUnit(dto: any): BloodUnit {
   return {
     id: dto.qr_code || dto.barcode || dto.id || `UNT-${Date.now().toString().slice(-6)}`,
     bloodGroup: (dto.blood_type || dto.bloodGroup || "O+") as BloodGroup,
-    component: (dto.component as BloodBankComponent) || "red_cells",
+    component: parseBloodBankComponent(dto.component),
     collectionDate: dto.collection_date ? String(dto.collection_date).split("T")[0] : new Date().toISOString().split("T")[0],
     expiryDate: dto.expiry_date ? String(dto.expiry_date).split("T")[0] : new Date(Date.now() + 35 * 86400000).toISOString().split("T")[0],
     storageLocation: dto.current_location || dto.storage_location || "Central Storage Rack",

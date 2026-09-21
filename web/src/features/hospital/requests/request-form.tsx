@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   MapPin,
   Phone,
+  QrCode,
   Send,
 } from "lucide-react";
 import { useState } from "react";
@@ -19,6 +20,7 @@ import {
   useAvailableBloodBanks,
   useCreateHospitalRequest,
 } from "@/features/hospital/hooks/use-hospital-requests";
+import { HospitalRequestQrModal } from "@/features/hospital/requests/hospital-request-qr-modal";
 import {
   bloodComponentLabels,
   bloodComponents,
@@ -92,6 +94,7 @@ export function RequestForm() {
   const [step, setStep] = useState<
     "details" | "blood_bank" | "review" | "success"
   >("details");
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   const {
     register,
@@ -166,7 +169,15 @@ export function RequestForm() {
           ({mutation.data.targetBloodBank?.governorate}).
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button asChild>
+          <Button
+            type="button"
+            onClick={() => setQrModalOpen(true)}
+            className="gap-2 font-semibold shadow-sm"
+          >
+            <QrCode aria-hidden="true" className="size-4" />
+            <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
+          </Button>
+          <Button asChild variant="secondary">
             <Link to={`/hospital/requests/${mutation.data.id}`}>
               {t("common.viewDetails")}
               <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
@@ -176,6 +187,12 @@ export function RequestForm() {
             <Link to="/hospital/requests">{t("common.back")}</Link>
           </Button>
         </div>
+
+        <HospitalRequestQrModal
+          open={qrModalOpen}
+          onOpenChange={setQrModalOpen}
+          request={mutation.data}
+        />
       </section>
     );
   }

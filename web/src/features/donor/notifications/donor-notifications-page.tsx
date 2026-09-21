@@ -133,7 +133,7 @@ export function DonorNotificationsPage() {
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                  <div className="mt-0.5 shrink-0">
                     {getCategoryIcon(notif.category)}
                   </div>
                   <div className="space-y-1">

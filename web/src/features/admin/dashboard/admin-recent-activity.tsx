@@ -1,9 +1,10 @@
-import { ArrowRight, CheckCircle2, Clock, ShieldAlert } from "lucide-react";
+import { ArrowRight, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { formatTimeShort } from "@/features/admin/components/admin-formatters";
 import type { AuditLogEvent } from "@/features/admin/types/admin.types";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import { buttonVariants } from "@/shared/components/ui/button.variants";
 import { cn } from "@/shared/lib/utils";
 
@@ -18,7 +19,7 @@ export function AdminRecentActivity({ logs }: AdminRecentActivityProps) {
   return (
     <section
       aria-labelledby="recent-activity-ledger-heading"
-      className="rounded-lg border border-border bg-card shadow-sm"
+      className="rounded-lg border border-border/80 bg-card shadow-2xs overflow-hidden"
     >
       <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -26,7 +27,10 @@ export function AdminRecentActivity({ logs }: AdminRecentActivityProps) {
             id="recent-activity-ledger-heading"
             className="text-base font-semibold tracking-tight text-foreground"
           >
-            {t("admin.recentAdminActivityTitle", "Recent Administrative Activity")}
+            {t(
+              "admin.recentAdminActivityTitle",
+              "Recent Administrative Activity",
+            )}
           </h2>
           <p className="text-xs text-muted-foreground">
             {t(
@@ -42,7 +46,9 @@ export function AdminRecentActivity({ logs }: AdminRecentActivityProps) {
             "self-start sm:self-auto gap-1.5",
           )}
         >
-          <span>{t("admin.openFullAuditLedger", "Open Full Audit Ledger")}</span>
+          <span>
+            {t("admin.openFullAuditLedger", "Open Full Audit Ledger")}
+          </span>
           <ArrowRight className="size-3.5 rtl:rotate-180" aria-hidden="true" />
         </Link>
       </div>
@@ -53,7 +59,7 @@ export function AdminRecentActivity({ logs }: AdminRecentActivityProps) {
         aria-label={t("admin.recentActivityTableLabel")}
         className="overflow-x-auto"
       >
-        <table className="w-full text-start text-xs">
+        <table className="clinical-table">
           <thead className="border-b border-border bg-muted/40 font-semibold uppercase tracking-wider text-muted-foreground text-start">
             <tr>
               <th scope="col" className="px-4 py-3 text-start">
@@ -93,7 +99,10 @@ export function AdminRecentActivity({ logs }: AdminRecentActivityProps) {
                     {log.actor.name}
                   </div>
                   <div className="text-[11px] text-muted-foreground">
-                    {t(`roles.${log.actor.role}`, log.actor.role.replace(/_/g, " "))}
+                    {t(
+                      `roles.${log.actor.role}`,
+                      log.actor.role.replace(/_/g, " "),
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -107,7 +116,7 @@ export function AdminRecentActivity({ logs }: AdminRecentActivityProps) {
                   ) : null}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <span className="inline-flex rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+                  <span className="font-mono text-[11px] text-foreground">
                     <bdi dir="ltr">{log.entityType}</bdi>
                   </span>
                   {log.entityName ? (
@@ -121,15 +130,13 @@ export function AdminRecentActivity({ logs }: AdminRecentActivityProps) {
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   {log.result === "success" ? (
-                    <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
-                      <CheckCircle2 className="size-3.5" aria-hidden="true" />
-                      <span>{t("common.success", "Success")}</span>
-                    </span>
+                    <StatusIndicator tone="success">
+                      {t("common.success", "Success")}
+                    </StatusIndicator>
                   ) : (
-                    <span className="inline-flex items-center gap-1 font-medium text-amber-700">
-                      <ShieldAlert className="size-3.5" aria-hidden="true" />
-                      <span>{t("common.warning", "Warning")}</span>
-                    </span>
+                    <StatusIndicator tone="warning">
+                      {t("common.warning", "Warning")}
+                    </StatusIndicator>
                   )}
                 </td>
               </tr>

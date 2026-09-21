@@ -17,6 +17,7 @@ interface OrganizationContextProps {
   activeOrganizationId: string;
   onOrganizationChange?: (organizationId: string) => void;
   compact?: boolean;
+  collapsible?: boolean;
 }
 
 function getOrganizationTypeKey(type: OrganizationSummary["type"]) {
@@ -35,6 +36,7 @@ export function OrganizationContext({
   activeOrganizationId,
   onOrganizationChange,
   compact = false,
+  collapsible = false,
 }: OrganizationContextProps) {
   const { t } = useTranslation();
   const activeOrganization =
@@ -52,10 +54,10 @@ export function OrganizationContext({
   if (compact) {
     return (
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-foreground">
+        <p className="truncate text-sm font-semibold text-white">
           <BidiText>{activeOrgDisplayName}</BidiText>
         </p>
-        <p className="truncate text-xs text-muted-foreground">
+        <p className="truncate text-xs text-header-muted">
           {t(getOrganizationTypeKey(activeOrganization.type))}
         </p>
       </div>
@@ -63,8 +65,14 @@ export function OrganizationContext({
   }
 
   return (
-    <div className="px-4 py-4">
-      <p className="mb-2 text-xs font-medium text-sidebar-muted">
+    <div className={cn("py-2.5", collapsible ? "px-2 group-hover/sidebar:px-2.5" : "px-2.5")}>
+      <p
+        className={cn(
+          "mb-1 whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.06em] text-white/75 px-1 rtl:tracking-normal",
+          collapsible &&
+            "max-h-0 overflow-hidden opacity-0 transition-[max-height,opacity] group-hover/sidebar:max-h-4 group-hover/sidebar:opacity-100 group-hover/sidebar:mb-1",
+        )}
+      >
         {t("nav.organization")}
       </p>
       <Popover>
@@ -73,27 +81,46 @@ export function OrganizationContext({
             type="button"
             variant="ghost"
             disabled={!canSwitch}
-            className="h-auto min-h-14 w-full justify-start gap-3 border border-sidebar-border bg-white/[0.04] px-3 py-2 text-start text-white hover:bg-sidebar-accent hover:text-white disabled:pointer-events-none disabled:opacity-100"
+            className={cn(
+              "h-9 w-full rounded-md text-start text-white/90 transition-colors duration-150 hover:bg-white/12 hover:text-white disabled:pointer-events-none disabled:opacity-100",
+              collapsible
+                ? "justify-center gap-0 px-0 group-hover/sidebar:justify-start group-hover/sidebar:gap-2.5 group-hover/sidebar:px-2.5"
+                : "justify-start gap-2.5 px-2.5",
+            )}
             aria-label={
               canSwitch
-                ? t("nav.changeOrganizationCurrent", { name: activeOrgDisplayName })
+                ? t("nav.changeOrganizationCurrent", {
+                    name: activeOrgDisplayName,
+                  })
                 : t("nav.currentOrganization", { name: activeOrgDisplayName })
             }
           >
             <Building2
               aria-hidden="true"
-              className="size-5 shrink-0 text-sidebar-muted"
+              className="size-[1.125rem] shrink-0 text-white/90 transition-colors"
             />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold">
+            <span
+              className={cn(
+                "min-w-0 flex-1 transition-[max-width,opacity] duration-150",
+                collapsible &&
+                  "max-w-0 overflow-hidden opacity-0 group-hover/sidebar:max-w-44 group-hover/sidebar:opacity-100",
+              )}
+            >
+              <span className="block truncate text-sm font-semibold text-white">
                 <BidiText>{activeOrgDisplayName}</BidiText>
               </span>
-              <span className="mt-0.5 block truncate text-xs font-normal text-sidebar-muted">
+              <span className="block truncate text-xs font-normal text-white/75">
                 {t(getOrganizationTypeKey(activeOrganization.type))}
               </span>
             </span>
             {canSwitch ? (
-              <ChevronsUpDown aria-hidden="true" className="size-4" />
+              <ChevronsUpDown
+                aria-hidden="true"
+                className={cn(
+                  "size-3.5 shrink-0 text-white/75",
+                  collapsible && "hidden group-hover/sidebar:block",
+                )}
+              />
             ) : null}
           </Button>
         </PopoverTrigger>
@@ -105,7 +132,9 @@ export function OrganizationContext({
             <div className="space-y-1">
               {organizations.map((organization) => {
                 const isActive = organization.id === activeOrganization.id;
-                const orgDisplayName = formatOrganizationName(organization.name);
+                const orgDisplayName = formatOrganizationName(
+                  organization.name,
+                );
 
                 return (
                   <button
@@ -141,4 +170,3 @@ export function OrganizationContext({
     </div>
   );
 }
-

@@ -82,6 +82,15 @@ export interface HospitalRequest {
   createdBy: string;
   history: RequestHistoryEvent[];
   documents: SupportingDocument[];
+  patientName?: string;
+  patientNationalId?: string;
+  medicalRecordNumber?: string;
+  department?: string;
+  attendingDoctor?: string;
+  unitPrice?: number;
+  totalAmount?: number;
+  paymentStatus?: "unpaid" | "paid" | "pending";
+  trackingReference?: string;
 }
 
 export interface HospitalRequestInput {

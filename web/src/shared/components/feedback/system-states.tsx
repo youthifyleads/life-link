@@ -34,22 +34,21 @@ function StateFrame({
   return (
     <section
       className={cn(
-        "flex min-h-36 flex-col justify-between gap-5 border border-border bg-surface p-5 sm:flex-row sm:items-center sm:p-6",
+        "flex min-h-36 flex-col justify-between gap-5 rounded-lg border border-border/80 bg-surface p-5 sm:flex-row sm:items-center sm:p-6 shadow-2xs",
         tone === "error" && "border-destructive/25 bg-emergency-subtle",
         tone === "permission" && "bg-surface-subtle",
         className,
       )}
     >
       <div className="flex min-w-0 items-start gap-4">
-        <span
+        <Icon
+          aria-hidden="true"
           className={cn(
-            "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground",
-            tone === "error" && "bg-white/70 text-destructive",
-            tone === "permission" && "bg-secondary text-primary",
+            "mt-0.5 size-6 shrink-0 text-muted-foreground",
+            tone === "error" && "text-destructive",
+            tone === "permission" && "text-primary",
           )}
-        >
-          <Icon aria-hidden="true" className="size-5" />
-        </span>
+        />
         <div>
           <h2 className="text-base font-semibold text-foreground">{title}</h2>
           <p className="mt-1.5 max-w-[65ch] text-sm leading-6 text-muted-foreground">
@@ -107,11 +106,15 @@ export function LoadingState({
   className,
 }: LoadingStateProps) {
   const { t } = useTranslation();
-  const displayLabel = label ?? t("common.loadingRecords", "Loading clinical records…");
+  const displayLabel =
+    label ?? t("common.loadingRecords", "Loading clinical records…");
 
   return (
     <section
-      className={cn("border border-border bg-surface", className)}
+      className={cn(
+        "overflow-hidden rounded-lg border border-border/80 bg-surface shadow-2xs",
+        className,
+      )}
       role="status"
       aria-busy="true"
       aria-label={displayLabel}

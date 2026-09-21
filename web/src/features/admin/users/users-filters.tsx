@@ -26,7 +26,7 @@ export function UsersFilters({
   const { data: bloodBanks } = useAdminBloodBanks();
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+    <div className="rounded-lg border border-border/80 bg-card p-4 shadow-2xs">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {/* Search */}
         <div className="relative sm:col-span-2 lg:col-span-2">
@@ -36,7 +36,10 @@ export function UsersFilters({
             onChange={(e) =>
               onFilterChange({ ...filters, search: e.target.value })
             }
-            placeholder={t("admin.searchUsersPlaceholder", "Search users by name, email, ID...")}
+            placeholder={t(
+              "admin.searchUsersPlaceholder",
+              "Search users by name, email, ID...",
+            )}
             className="ps-9"
           />
         </div>
@@ -55,13 +58,25 @@ export function UsersFilters({
             aria-label={t("common.filterBy", "Filter by role")}
           >
             <option value="all">{t("common.allRoles", "All Roles")}</option>
-            <option value="admin">{t("roles.admin", "System Administrator")}</option>
-            <option value="hospital_staff">{t("roles.hospital_staff", "Hospital Staff")}</option>
-            <option value="blood_bank_staff">{t("roles.blood_bank_staff", "Blood Bank Staff")}</option>
-            <option value="medical_lead">{t("roles.medical_lead", "Medical Lead")}</option>
-            <option value="platform_support">{t("roles.platform_support", "Platform Support")}</option>
+            <option value="admin">
+              {t("roles.admin", "System Administrator")}
+            </option>
+            <option value="hospital_staff">
+              {t("roles.hospital_staff", "Hospital Staff")}
+            </option>
+            <option value="blood_bank_staff">
+              {t("roles.blood_bank_staff", "Blood Bank Staff")}
+            </option>
+            <option value="medical_lead">
+              {t("roles.medical_lead", "Medical Lead")}
+            </option>
+            <option value="platform_support">
+              {t("roles.platform_support", "Platform Support")}
+            </option>
             <option value="donor">{t("roles.donor", "Donor")}</option>
-            <option value="caregiver">{t("roles.caregiver", "Caregiver")}</option>
+            <option value="caregiver">
+              {t("roles.caregiver", "Caregiver")}
+            </option>
           </select>
         </div>
 
@@ -78,7 +93,9 @@ export function UsersFilters({
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={t("common.facility", "Filter by organization")}
           >
-            <option value="all">{t("common.allOrganizations", "All Organizations")}</option>
+            <option value="all">
+              {t("common.allOrganizations", "All Organizations")}
+            </option>
             <optgroup label={t("nav.administration", "Platform")}>
               <option value="platform-administration">
                 {t("admin.operations", "Platform Administration")}
@@ -114,9 +131,15 @@ export function UsersFilters({
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={t("common.status", "Filter by status")}
           >
-            <option value="all">{t("common.allStatuses", "All Statuses")}</option>
-            <option value="active">{t("common.active", "Active Accounts")}</option>
-            <option value="inactive">{t("common.inactive", "Inactive Accounts")}</option>
+            <option value="all">
+              {t("common.allStatuses", "All Statuses")}
+            </option>
+            <option value="active">
+              {t("common.active", "Active Accounts")}
+            </option>
+            <option value="inactive">
+              {t("common.inactive", "Inactive Accounts")}
+            </option>
           </select>
         </div>
       </div>
@@ -136,8 +159,13 @@ export function UsersFilters({
             aria-label={t("common.filterBy", "Sort users")}
           >
             <option value="name_asc">{t("admin.sortNameAscending")}</option>
-            <option value="created_desc">{t("admin.userCreatedCol", "Created Date")} ({t("hospital.newestFirst", "Newest")})</option>
-            <option value="activity_desc">{t("admin.userLastActivityCol", "Recent Activity")}</option>
+            <option value="created_desc">
+              {t("admin.userCreatedCol", "Created Date")} (
+              {t("hospital.newestFirst", "Newest")})
+            </option>
+            <option value="activity_desc">
+              {t("admin.userLastActivityCol", "Recent Activity")}
+            </option>
           </select>
         </div>
 

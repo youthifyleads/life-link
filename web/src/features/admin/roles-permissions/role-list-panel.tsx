@@ -1,4 +1,4 @@
-import { ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Clock3, ShieldCheck, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { AdminRoleBadge } from "@/features/admin/components/admin-role-badge";
@@ -29,11 +29,12 @@ export function RoleListPanel({
           {t("admin.rolesTitle", "Operational Roles Directory")}
         </h2>
         <span className="text-xs text-muted-foreground">
-          <bdi dir="ltr">{roles.length}</bdi> {t("admin.rolesTitle", "defined roles")}
+          <bdi dir="ltr">{roles.length}</bdi>{" "}
+          {t("admin.rolesTitle", "defined roles")}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 rounded-lg border border-border/80 bg-card shadow-2xs overflow-hidden sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {roles.map((role) => {
           const isSelected = selectedRole === role.code;
 
@@ -43,23 +44,24 @@ export function RoleListPanel({
               type="button"
               onClick={() => onSelectRole(role.code)}
               className={cn(
-                "flex flex-col justify-between rounded-lg border p-4 text-start transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                isSelected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "border-border bg-card hover:border-border/80",
+                "flex flex-col justify-between border-b border-border/70 p-4 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                isSelected ? "bg-primary/5" : "bg-card hover:bg-muted/30",
               )}
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <AdminRoleBadge role={role.code} />
+                  <AdminRoleBadge
+                    role={role.code}
+                    className="bg-transparent px-0 text-foreground"
+                  />
                   {role.isSystem ? (
-                    <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-700">
                       <ShieldCheck className="size-3" />
                       <span>{t("nav.administration", "System")}</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
-                      <Sparkles className="size-3" />
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-800">
+                      <Clock3 className="size-3" />
                       <span>{t("common.optional", "Future")}</span>
                     </span>
                   )}
@@ -77,16 +79,21 @@ export function RoleListPanel({
                 <span className="flex items-center gap-1.5">
                   <Users className="size-3.5" />
                   <span>
-                    <bdi dir="ltr">{role.userCount}</bdi> {t("admin.totalUsersHelper", "users")}
+                    <bdi dir="ltr">{role.userCount}</bdi>{" "}
+                    {t("admin.totalUsersHelper", "users")}
                   </span>
                 </span>
                 <span
                   className={cn(
                     "text-[11px] font-medium",
-                    isSelected ? "text-primary font-semibold" : "text-muted-foreground",
+                    isSelected
+                      ? "text-primary font-semibold"
+                      : "text-muted-foreground",
                   )}
                 >
-                  {isSelected ? t("common.inspect", "Inspecting") : t("common.inspect", "Inspect")}
+                  {isSelected
+                    ? t("common.inspect", "Inspecting")
+                    : t("common.inspect", "Inspect")}
                 </span>
               </div>
             </button>

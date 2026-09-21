@@ -51,9 +51,7 @@ export function RejectRequestModal({
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit} noValidate>
           <DialogHeader>
-            <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-emergency-subtle text-emergency">
-              <AlertTriangle aria-hidden="true" className="size-5" />
-            </div>
+            <AlertTriangle aria-hidden="true" className="mb-2 size-6 text-emergency" />
             <DialogTitle>
               {t("bloodBank.rejectModalTitle", "Reject hospital blood request?")}
             </DialogTitle>

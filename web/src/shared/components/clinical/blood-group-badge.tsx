@@ -1,4 +1,3 @@
-import { Droplet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { BloodGroup } from "@/shared/components/clinical/clinical.types";
@@ -20,18 +19,14 @@ export function BloodGroupBadge({
     <span
       aria-label={t("healthcare.bloodGroupValue", { group })}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-md border border-primary/30 bg-surface font-bold text-clinical-navy tabular-nums",
-        size === "default"
-          ? "min-h-9 min-w-14 px-2.5 text-sm"
-          : "min-h-7 min-w-11 px-2 text-xs",
+        "inline-flex items-center font-bold font-mono tracking-tight tabular-nums text-emergency dark:text-rose-400",
+        size === "default" ? "text-sm" : "text-xs",
         className,
       )}
     >
-      <Droplet
-        aria-hidden="true"
-        className="size-3.5 fill-secondary text-primary shrink-0"
-      />
-      <bdi dir="ltr" className="unicode-isolate">{group}</bdi>
+      <bdi dir="ltr" className="unicode-isolate">
+        {group}
+      </bdi>
     </span>
   );
 }

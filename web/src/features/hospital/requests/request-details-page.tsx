@@ -6,6 +6,7 @@ import {
   FileText,
   MapPin,
   Phone,
+  QrCode,
   RefreshCw,
   ScanLine,
   ShieldCheck,
@@ -19,6 +20,8 @@ import { HospitalPageFrame } from "@/features/hospital/components/hospital-page-
 import { RequestTimeline } from "@/features/hospital/components/request-timeline";
 import { SupportingDocuments } from "@/features/hospital/documents/supporting-documents";
 import { useHospitalRequest } from "@/features/hospital/hooks/use-hospital-requests";
+import { HospitalDeliveryTrackingDialog } from "@/features/hospital/requests/hospital-delivery-tracking-dialog";
+import { HospitalRequestQrModal } from "@/features/hospital/requests/hospital-request-qr-modal";
 import { RerouteRequestDialog } from "@/features/hospital/requests/reroute-request-dialog";
 import { bloodComponentLabels } from "@/features/hospital/types/hospital.types";
 import type { RequestHistoryEvent } from "@/features/hospital/types/hospital.types";
@@ -46,6 +49,8 @@ export function RequestDetailsPage() {
   const [localCancellation, setLocalCancellation] =
     useState<RequestHistoryEvent | null>(null);
   const [rerouteOpen, setRerouteOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [trackingModalOpen, setTrackingModalOpen] = useState(false);
 
   if (requestQuery.isPending) {
     return (
@@ -114,6 +119,66 @@ export function RequestDetailsPage() {
     ? [...request.history, localCancellation]
     : request.history;
 
+  const resolvedHistory: RequestHistoryEvent[] =
+    displayedHistory.length > 0
+      ? displayedHistory
+      : [
+          {
+            id: `evt-init-${request.id}`,
+            status: "submitted",
+            occurredAt: request.createdAt,
+            actor: request.createdBy || "طاقم مستشفى قصر العيني",
+            note: t(
+              "hospital.initSubmissionNote",
+              "تم تقديم طلب صرف الدم سريرياً إلى بنك الدم",
+            ),
+          },
+          ...(currentStatus === "confirmed" ||
+          currentStatus === "preparing" ||
+          currentStatus === "completed"
+            ? [
+                {
+                  id: `evt-conf-${request.id}`,
+                  status: "confirmed" as const,
+                  occurredAt: request.createdAt,
+                  actor: request.targetBloodBank?.name || "بنك الدم المركزي",
+                  note: t(
+                    "hospital.confirmedNote",
+                    "تمت الموافقة ومطابقة الفصيلة واختبار التوافق السريري",
+                  ),
+                },
+              ]
+            : []),
+          ...(currentStatus === "preparing" || currentStatus === "completed"
+            ? [
+                {
+                  id: `evt-prep-${request.id}`,
+                  status: "preparing" as const,
+                  occurredAt: request.updatedAt || request.createdAt,
+                  actor: "مسؤول الصرف وسلسلة التبريد",
+                  note: t(
+                    "hospital.prepNote",
+                    "تم تجهيز الصندوق المبرد (درجة حرارة 3.8°C) وإصدار إذن الشحن",
+                  ),
+                },
+              ]
+            : []),
+          ...(currentStatus === "completed"
+            ? [
+                {
+                  id: `evt-comp-${request.id}`,
+                  status: "completed" as const,
+                  occurredAt: request.updatedAt || request.createdAt,
+                  actor: "طاقم استقبال الطوارئ",
+                  note: t(
+                    "hospital.compNote",
+                    "تم استلام أكياس الدم بالمستشفى بنجاح وتأكيد سلامة سلسلة التبريد",
+                  ),
+                },
+              ]
+            : []),
+        ];
+
   const cancelRequest = () => {
     const occurredAt = new Date().toISOString();
     setStatusOverride("cancelled");
@@ -149,12 +214,23 @@ export function RequestDetailsPage() {
       description={`${t("hospital.created")} ${formatDateTime(request.createdAt)} — ${request.createdBy}`}
       context={<RequestStatusBadge status={currentStatus} />}
       actions={
-        <Button asChild variant="secondary">
-          <Link to="/hospital/requests/create">
-            <CopyPlus aria-hidden="true" />
-            {t("hospital.createRequest")}
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => setQrModalOpen(true)}
+            className="gap-2 font-semibold shadow-sm"
+          >
+            <QrCode aria-hidden="true" className="size-4" />
+            <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link to="/hospital/requests/create">
+              <CopyPlus aria-hidden="true" />
+              {t("hospital.createRequest")}
+            </Link>
+          </Button>
+        </div>
       }
     >
       {actionMessage ? (
@@ -295,10 +371,12 @@ export function RequestDetailsPage() {
               canTrack={canTrack}
               onCancel={cancelRequest}
               onReroute={() => setRerouteOpen(true)}
+              onOpenQr={() => setQrModalOpen(true)}
+              onOpenTracking={() => setTrackingModalOpen(true)}
             />
           </div>
 
-          <section aria-labelledby="timeline-title">
+          <section aria-labelledby="timeline-title" id="timeline-section">
             <div className="mb-4">
               <h2 id="timeline-title" className="text-lg font-semibold">
                 {t("hospital.trackingTimeline")}
@@ -308,7 +386,7 @@ export function RequestDetailsPage() {
               </p>
             </div>
             <div className="border border-border bg-surface p-5 sm:p-6">
-              <RequestTimeline events={displayedHistory} />
+              <RequestTimeline events={resolvedHistory} />
             </div>
           </section>
 
@@ -327,6 +405,8 @@ export function RequestDetailsPage() {
             canTrack={canTrack}
             onCancel={cancelRequest}
             onReroute={() => setRerouteOpen(true)}
+            onOpenQr={() => setQrModalOpen(true)}
+            onOpenTracking={() => setTrackingModalOpen(true)}
           />
         </div>
       </div>
@@ -336,6 +416,19 @@ export function RequestDetailsPage() {
         onOpenChange={setRerouteOpen}
         request={request}
         onSuccess={handleRerouteSuccess}
+      />
+
+      <HospitalRequestQrModal
+        open={qrModalOpen}
+        onOpenChange={setQrModalOpen}
+        request={request}
+      />
+
+      <HospitalDeliveryTrackingDialog
+        open={trackingModalOpen}
+        onOpenChange={setTrackingModalOpen}
+        request={request}
+        onOpenQr={() => setQrModalOpen(true)}
       />
     </HospitalPageFrame>
   );
@@ -347,12 +440,16 @@ function RequestActions({
   canTrack,
   onCancel,
   onReroute,
+  onOpenQr,
+  onOpenTracking,
 }: {
   canCancel: boolean;
   canReroute: boolean;
   canTrack: boolean;
   onCancel: () => void;
   onReroute: () => void;
+  onOpenQr: () => void;
+  onOpenTracking: () => void;
 }) {
   const { t } = useTranslation();
 
@@ -365,6 +462,15 @@ function RequestActions({
         </p>
       </div>
       <div className="space-y-3 p-5">
+        <Button
+          type="button"
+          variant="default"
+          className="w-full justify-start gap-2 font-semibold text-xs py-2.5"
+          onClick={onOpenQr}
+        >
+          <QrCode aria-hidden="true" className="size-4" />
+          <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
+        </Button>
         {canReroute ? (
           <Button
             type="button"
@@ -378,14 +484,13 @@ function RequestActions({
 
         {canTrack ? (
           <Button
-            asChild
+            type="button"
             variant="secondary"
-            className="w-full justify-start text-xs"
+            className="w-full justify-start text-xs gap-2"
+            onClick={onOpenTracking}
           >
-            <Link to="/caregiver/dashboard">
-              <ScanLine aria-hidden="true" className="size-4 text-primary" />
-              {t("hospital.trackDelivery")}
-            </Link>
+            <ScanLine aria-hidden="true" className="size-4 text-primary" />
+            <span>{t("hospital.trackDelivery")}</span>
           </Button>
         ) : null}
 

@@ -1,78 +1,90 @@
+import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  AlertCircle,
+  AlertTriangle,
+  Check,
   CheckCircle2,
-  CircleDot,
-  Clock3,
+  Clock,
   FileEdit,
-  PackageCheck,
-  PackageOpen,
+  Package,
   XCircle,
-  type LucideIcon,
 } from "lucide-react";
 
 import type { RequestStatus } from "@/shared/components/clinical/clinical.types";
+import {
+  StatusIndicator,
+  type StatusTone,
+} from "@/shared/components/clinical/status-indicator";
 import { cn } from "@/shared/lib/utils";
 
 interface StatusDefinition {
   label: string;
-  icon: LucideIcon;
-  className: string;
+  tone: StatusTone;
 }
 
 const statusDefinitions: Record<RequestStatus, StatusDefinition> = {
-  draft: {
-    label: "Draft",
-    icon: FileEdit,
-    className: "border-border bg-surface text-muted-foreground",
-  },
-  submitted: {
-    label: "Submitted",
-    icon: CircleDot,
-    className: "border-primary/25 bg-secondary text-secondary-foreground",
-  },
-  acknowledged: {
-    label: "Acknowledged",
-    icon: CheckCircle2,
-    className: "border-primary/25 bg-secondary text-secondary-foreground",
-  },
-  needs_information: {
-    label: "Needs information",
-    icon: AlertCircle,
-    className: "border-warning/30 bg-warning-subtle text-[#6f4a00]",
-  },
-  confirmed: {
-    label: "Confirmed",
-    icon: CheckCircle2,
-    className: "border-primary/25 bg-secondary text-secondary-foreground",
-  },
-  preparing: {
-    label: "Preparing",
-    icon: PackageOpen,
-    className: "border-primary/25 bg-secondary text-secondary-foreground",
-  },
-  ready: {
-    label: "Ready",
-    icon: PackageCheck,
-    className: "border-success/25 bg-success-subtle text-success",
-  },
-  completed: {
-    label: "Completed",
-    icon: CheckCircle2,
-    className: "border-success/25 bg-success-subtle text-success",
-  },
-  rejected: {
-    label: "Rejected",
-    icon: XCircle,
-    className: "border-destructive/25 bg-emergency-subtle text-[#8d1c14]",
-  },
-  cancelled: {
-    label: "Cancelled",
-    icon: XCircle,
-    className: "border-border bg-muted text-muted-foreground",
-  },
+  draft: { label: "Draft", tone: "neutral" },
+  submitted: { label: "Submitted", tone: "pending" },
+  acknowledged: { label: "Acknowledged", tone: "success" },
+  needs_information: { label: "Needs information", tone: "warning" },
+  confirmed: { label: "Confirmed", tone: "success" },
+  preparing: { label: "Preparing", tone: "pending" },
+  ready: { label: "Ready", tone: "success" },
+  completed: { label: "Completed", tone: "neutral" },
+  rejected: { label: "Rejected", tone: "danger" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
 };
 
-import { useTranslation } from "react-i18next";
+export function getRequestStatusIcon(status: RequestStatus): ReactNode {
+  switch (status) {
+    case "draft":
+      return (
+        <FileEdit aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+    case "submitted":
+      return (
+        <Clock aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+    case "acknowledged":
+      return (
+        <Check aria-hidden="true" className="size-3.5 shrink-0 text-success" />
+      );
+    case "needs_information":
+      return (
+        <AlertTriangle aria-hidden="true" className="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+      );
+    case "confirmed":
+      return (
+        <CheckCircle2 aria-hidden="true" className="size-3.5 shrink-0 text-success" />
+      );
+    case "preparing":
+      return (
+        <Package aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
+      );
+    case "ready":
+      return (
+        <CheckCircle2 aria-hidden="true" className="size-3.5 shrink-0 text-emerald-600" />
+      );
+    case "completed":
+      return (
+        <CheckCircle2 aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+    case "rejected":
+      return (
+        <XCircle aria-hidden="true" className="size-3.5 shrink-0 text-destructive" />
+      );
+    case "cancelled":
+      return (
+        <XCircle aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+    default:
+      return null;
+  }
+}
+
+export function getRequestStatusIndicator(status: RequestStatus): ReactNode {
+  return getRequestStatusIcon(status);
+}
 
 interface RequestStatusBadgeProps {
   status: RequestStatus;
@@ -84,29 +96,28 @@ export function RequestStatusBadge({
   className,
 }: RequestStatusBadgeProps) {
   const { t } = useTranslation();
-  const definition = statusDefinitions[status];
-  const Icon = definition.icon;
-  const label = t(`status.${status}`, definition.label);
+  const definition = statusDefinitions[status] ?? statusDefinitions.draft;
 
   return (
-    <span
-      className={cn(
-        "inline-flex min-h-7 items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold leading-none",
-        definition.className,
-        className,
-      )}
+    <StatusIndicator
+      tone={definition.tone}
+      indicator={getRequestStatusIcon(status)}
+      className={className}
     >
-      <Icon aria-hidden="true" className="size-3.5" strokeWidth={2} />
-      {label}
-    </span>
+      {t(`status.${status}`, definition.label)}
+    </StatusIndicator>
   );
 }
 
 export function RequestStatusTimestamp({ children }: { children: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-      <Clock3 aria-hidden="true" className="size-3.5" />
-      <span className="tabular-nums">{children}</span>
+    <span
+      className={cn(
+        "text-xs tabular-nums text-muted-foreground",
+        "unicode-isolate",
+      )}
+    >
+      {children}
     </span>
   );
 }

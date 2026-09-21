@@ -1,7 +1,10 @@
 import { apiClient, authHttpClient } from "@/shared/api/http-client";
 import type {
+  AuthMessageResponse,
   AuthenticatedUser,
+  ForgotPasswordInput,
   LoginInput,
+  ResetPasswordInput,
   TokenResponse,
   UserRole,
 } from "@/features/authentication/model/auth.types";
@@ -116,18 +119,22 @@ export const authApi = {
     await authHttpClient.post("/auth/logout");
   },
 
-  async forgotPassword(input: { email: string }) {
-    const { data } = await authHttpClient.post<{ message: string }>(
+  async forgotPassword(input: ForgotPasswordInput) {
+    const { data } = await authHttpClient.post<AuthMessageResponse>(
       "/auth/forgot-password",
       input,
     );
     return data;
   },
 
-  async resetPassword(input: { email: string; code: string; new_password: string }) {
-    const { data } = await authHttpClient.post<{ message: string }>(
+  async resetPassword(input: ResetPasswordInput) {
+    const { data } = await authHttpClient.post<AuthMessageResponse>(
       "/auth/reset-password",
-      input,
+      {
+        email: input.email,
+        code: input.code ?? input.otp ?? "",
+        new_password: input.new_password,
+      },
     );
     return data;
   },

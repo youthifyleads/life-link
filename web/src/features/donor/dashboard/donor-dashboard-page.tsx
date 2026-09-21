@@ -2,14 +2,12 @@ import {
   AlertCircle,
   ArrowRight,
   Bell,
-  CheckCircle2,
   Droplets,
   Heart,
   HeartHandshake,
   History,
   Inbox,
   ShieldCheck,
-  Sparkles,
   Ticket,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -23,6 +21,7 @@ import {
   useDonorProfile,
 } from "@/features/donor/hooks/use-donor";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import { UrgencyBadge } from "@/shared/components/clinical/urgency-badge";
 import {
   ErrorState,
@@ -49,7 +48,9 @@ export function DonorDashboardPage() {
           "Personal blood donation record, community shortage calls, and priority vouchers.",
         )}
       >
-        <LoadingState label={t("common.loading", "Loading your donor profile…")} />
+        <LoadingState
+          label={t("common.loading", "Loading your donor profile…")}
+        />
       </DonorPageFrame>
     );
   }
@@ -110,13 +111,11 @@ export function DonorDashboardPage() {
         {/* Donor Identity & Eligibility Card */}
         <section
           aria-labelledby="donor-status-heading"
-          className="overflow-hidden border border-border bg-surface p-6 sm:p-8"
+          className="rounded-xl border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs"
         >
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Droplets className="size-7" aria-hidden="true" />
-              </div>
+              <Droplets className="size-8 shrink-0 text-emergency mt-0.5" aria-hidden="true" />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-3">
                   <h2
@@ -128,27 +127,26 @@ export function DonorDashboardPage() {
                   <BloodGroupBadge group={profile.bloodGroup} />
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {t("roles.donor", "Registered Voluntary Donor")} · {t("common.appName", "Life Link")}
+                  {t("roles.donor", "Registered Voluntary Donor")} ·{" "}
+                  {t("common.appName", "Life Link")}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                    <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                  <StatusIndicator tone="success">
                     {t("donor.eligibleNotice", "Eligible to Donate")}
-                  </span>
+                  </StatusIndicator>
                   <span className="text-xs text-muted-foreground">
                     {t("donor.nextEligibleDate", "Last donated on")}{" "}
-                    <strong className="text-foreground">
-                      <bdi dir="ltr">{profile.lastDonationDate}</bdi>
-                    </strong>
+                    <bdi dir="ltr">{profile.lastDonationDate}</bdi>
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-md border border-emerald-500/30 bg-emerald-50/50 p-4 text-xs text-emerald-950 dark:bg-emerald-950/20 dark:text-emerald-200 lg:max-w-md">
+            {/* Quick Eligibility Badge */}
+            <div className="rounded-lg border border-border/70 bg-surface-subtle p-4 text-xs text-muted-foreground lg:max-w-xs">
               <div className="flex items-start gap-2">
                 <ShieldCheck
-                  className="size-4 shrink-0 text-emerald-600 mt-0.5"
+                  className="size-4 shrink-0 text-success mt-0.5"
                   aria-hidden="true"
                 />
                 <p className="leading-relaxed">{profile.eligibilityMessage}</p>
@@ -160,7 +158,7 @@ export function DonorDashboardPage() {
           <div className="mt-8 grid grid-cols-2 gap-4 border-t border-border pt-6 sm:grid-cols-4">
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Heart className="size-3.5 text-primary" aria-hidden="true" />
+                <Heart className="size-3.5 text-emergency" aria-hidden="true" />
                 <span>{t("donor.donationsTitle", "Total Donations")}</span>
               </div>
               <p className="text-2xl font-bold text-foreground">
@@ -174,7 +172,7 @@ export function DonorDashboardPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Droplets
-                  className="size-3.5 text-rose-500"
+                  className="size-3.5 text-emergency"
                   aria-hidden="true"
                 />
                 <span>{t("donor.unitsDonated", "Units Contributed")}</span>
@@ -189,7 +187,7 @@ export function DonorDashboardPage() {
 
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Sparkles
+                <HeartHandshake
                   className="size-3.5 text-amber-500"
                   aria-hidden="true"
                 />
@@ -222,14 +220,15 @@ export function DonorDashboardPage() {
         {urgentRequests.length > 0 && (
           <section
             aria-labelledby="urgent-shortage-heading"
-            className="border-s-4 border-s-emergency border-y border-e border-border bg-surface p-5 sm:p-6"
+            className="rounded-lg border border-emergency/30 bg-surface p-4 sm:p-5 shadow-2xs"
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="flex size-7 items-center justify-center rounded-full bg-emergency/10 text-emergency">
-                    <AlertCircle className="size-4" aria-hidden="true" />
-                  </span>
+                  <AlertCircle
+                    className="size-4 shrink-0 text-emergency"
+                    aria-hidden="true"
+                  />
                   <h3
                     id="urgent-shortage-heading"
                     className="text-base font-bold text-foreground"
@@ -239,13 +238,17 @@ export function DonorDashboardPage() {
                   <UrgencyBadge urgency={urgentRequests[0].urgency} />
                 </div>
                 <p className="text-xs text-muted-foreground max-w-2xl">
-                  {urgentRequests[0].requestingOrg.name} — {urgentRequests[0].clinicalContextSafe}.
+                  {urgentRequests[0].requestingOrg.name} —{" "}
+                  {urgentRequests[0].clinicalContextSafe}.
                 </p>
               </div>
               <Button asChild size="sm" className="shrink-0 gap-1.5">
                 <Link to={`/donor/requests/${urgentRequests[0].id}`}>
                   <span>{t("donor.commitDonation", "Respond to Request")}</span>
-                  <ArrowRight className="size-3.5 rtl:rotate-180" aria-hidden="true" />
+                  <ArrowRight
+                    className="size-3.5 rtl:rotate-180"
+                    aria-hidden="true"
+                  />
                 </Link>
               </Button>
             </div>
@@ -264,25 +267,32 @@ export function DonorDashboardPage() {
                   id="active-requests-heading"
                   className="text-base font-semibold text-foreground"
                 >
-                  {t("donor.urgentCalls", "Active Donation Requests")} (<bdi dir="ltr">{requests.length}</bdi>)
+                  {t("donor.urgentCalls", "Active Donation Requests")} (
+                  <bdi dir="ltr">{requests.length}</bdi>)
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  {t("donor.appealsDescription", "Verified hospital & regional blood bank requests matching your profile.")}
+                  {t(
+                    "donor.appealsDescription",
+                    "Verified hospital & regional blood bank requests matching your profile.",
+                  )}
                 </p>
               </div>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/donor/requests" className="text-xs gap-1">
                   <span>{t("hospital.viewAllRequests", "View All")}</span>
-                  <ArrowRight className="size-3.5 rtl:rotate-180" aria-hidden="true" />
+                  <ArrowRight
+                    className="size-3.5 rtl:rotate-180"
+                    aria-hidden="true"
+                  />
                 </Link>
               </Button>
             </div>
 
-            <div className="space-y-3">
+            <div className="divide-y divide-border/70 rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden">
               {requests.slice(0, 3).map((req) => (
                 <div
                   key={req.id}
-                  className="flex flex-col gap-3 border border-border bg-surface p-4 transition-colors hover:border-primary/50 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
@@ -292,17 +302,17 @@ export function DonorDashboardPage() {
                       <BloodGroupBadge group={req.bloodGroup} />
                       <UrgencyBadge urgency={req.urgency} />
                       {req.myResponse === "interested" && (
-                        <span className="inline-flex items-center gap-1 rounded bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:text-blue-300">
-                          <CheckCircle2 className="size-3" aria-hidden="true" />
+                        <StatusIndicator tone="success">
                           {t("status.confirmed", "Interested")}
-                        </span>
+                        </StatusIndicator>
                       )}
                     </div>
                     <h4 className="text-sm font-semibold text-foreground">
                       {req.requestingOrg.name}
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      {req.clinicalContextSafe} · {t("hospital.requiredBy", "Required by")}{" "}
+                      {req.clinicalContextSafe} ·{" "}
+                      {t("hospital.requiredBy", "Required by")}{" "}
                       <bdi dir="ltr">{req.requiredByDate}</bdi>
                     </p>
                   </div>
@@ -317,11 +327,8 @@ export function DonorDashboardPage() {
           </section>
 
           {/* Recent Notifications & Quick Links */}
-          <aside
-            aria-labelledby="recent-updates-heading"
-            className="space-y-6"
-          >
-            <div className="border border-border bg-surface p-5 space-y-4">
+          <aside aria-labelledby="recent-updates-heading" className="space-y-6">
+            <div className="rounded-lg border border-border/80 bg-surface p-4 sm:p-5 shadow-2xs space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-2">
                   <Bell className="size-4 text-primary" aria-hidden="true" />
@@ -353,7 +360,10 @@ export function DonorDashboardPage() {
                       {!notif.read && (
                         <span
                           className="size-1.5 rounded-full bg-primary"
-                          title={t("notifications.unreadBadge", "Unread notification")}
+                          title={t(
+                            "notifications.unreadBadge",
+                            "Unread notification",
+                          )}
                         />
                       )}
                     </div>
@@ -369,7 +379,7 @@ export function DonorDashboardPage() {
             </div>
 
             {/* Quick Actions Card */}
-            <div className="border border-border bg-surface p-5 space-y-3">
+            <div className="rounded-lg border border-border/80 bg-surface p-4 sm:p-5 shadow-2xs space-y-3">
               <h3 className="text-sm font-semibold text-foreground">
                 {t("common.overview", "Donor Shortcuts")}
               </h3>
@@ -393,7 +403,10 @@ export function DonorDashboardPage() {
                   >
                     <span className="flex items-center gap-2">
                       <Ticket className="size-4 text-primary" />
-                      {t("nav.donationVouchers", "Priority Replacement Vouchers")}
+                      {t(
+                        "nav.donationVouchers",
+                        "Priority Replacement Vouchers",
+                      )}
                     </span>
                     <ArrowRight className="size-3.5 rtl:rotate-180" />
                   </Link>

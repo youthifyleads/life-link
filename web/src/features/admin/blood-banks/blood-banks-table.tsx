@@ -1,9 +1,10 @@
-import { Boxes, Edit, Eye, Power, PowerOff } from "lucide-react";
+import { Edit, Eye, Power, PowerOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { AdminStatusBadge } from "@/features/admin/components/admin-status-badge";
 import { useToggleBloodBankStatus } from "@/features/admin/hooks/use-admin";
 import type { AdminBloodBank } from "@/features/admin/types/admin.types";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import { Button } from "@/shared/components/ui/button";
 
 interface BloodBanksTableProps {
@@ -26,9 +27,12 @@ export function BloodBanksTable({
 
   if (bloodBanks.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card p-12 text-center">
+      <div className="overflow-hidden rounded-lg border border-border/80 bg-card p-12 text-center shadow-2xs">
         <h3 className="text-sm font-semibold text-foreground">
-          {t("admin.noUsersFoundTitle", "No blood bank facilities match your criteria")}
+          {t(
+            "admin.noUsersFoundTitle",
+            "No blood bank facilities match your criteria",
+          )}
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">
           {t(
@@ -41,15 +45,15 @@ export function BloodBanksTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-border/80 bg-card shadow-2xs">
       <div
         tabIndex={0}
         role="region"
         aria-label={t("admin.bloodBanksTableLabel")}
         className="overflow-x-auto"
       >
-        <table className="w-full text-start text-xs">
-          <thead className="border-b border-border bg-muted/40 font-semibold uppercase tracking-wider text-muted-foreground">
+        <table className="clinical-table">
+          <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-3 text-start">
                 {t("admin.auditEntityIdCol", "Blood Bank ID")}
@@ -116,28 +120,31 @@ export function BloodBanksTable({
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 font-mono font-semibold text-foreground">
-                      <Boxes className="size-3 text-muted-foreground" />
-                      <span><bdi dir="ltr">{bloodBank.inventorySummary.totalAvailable}</bdi> {t("common.units", "units")}</span>
+                    <span className="font-mono font-semibold text-foreground">
+                      <bdi dir="ltr">
+                        {bloodBank.inventorySummary.totalAvailable}
+                      </bdi>{" "}
+                      {t("common.units", "units")}
                     </span>
-                    <span
-                      className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                    <StatusIndicator
+                      tone={
                         bloodBank.inventorySummary.posture === "optimal"
-                          ? "bg-emerald-100 text-emerald-900"
+                          ? "success"
                           : bloodBank.inventorySummary.posture === "warning"
-                            ? "bg-amber-100 text-amber-900"
-                            : "bg-rose-100 text-rose-900"
-                      }`}
+                            ? "warning"
+                            : "danger"
+                      }
+                      className="uppercase"
                     >
                       {bloodBank.inventorySummary.posture}
-                    </span>
+                    </StatusIndicator>
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-end">
                   <div className="inline-flex items-center gap-1 justify-end">
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => onView(bloodBank)}
                       className="size-7 p-0"
@@ -148,7 +155,7 @@ export function BloodBanksTable({
                     </Button>
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => onEdit(bloodBank)}
                       className="size-7 p-0"
@@ -159,7 +166,7 @@ export function BloodBanksTable({
                     </Button>
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleToggle(bloodBank)}
                       disabled={toggleMutation.isPending}
@@ -170,7 +177,10 @@ export function BloodBanksTable({
                       }`}
                       title={
                         bloodBank.status === "active"
-                          ? t("admin.deactivateUserAction", "Deactivate facility")
+                          ? t(
+                              "admin.deactivateUserAction",
+                              "Deactivate facility",
+                            )
                           : t("admin.activateUserAction", "Activate facility")
                       }
                       aria-label={
@@ -193,7 +203,8 @@ export function BloodBanksTable({
         </table>
       </div>
       <div className="border-t border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-        {t("hospital.records", "records")}: <bdi dir="ltr">{bloodBanks.length}</bdi>
+        {t("hospital.records", "records")}:{" "}
+        <bdi dir="ltr">{bloodBanks.length}</bdi>
       </div>
     </div>
   );

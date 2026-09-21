@@ -1,13 +1,10 @@
 import {
   ArrowRight,
-  CheckCircle2,
-  Clock,
   Hospital,
   MapPin,
   QrCode,
   Search,
   ShieldCheck,
-  Truck,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,6 +14,7 @@ import { CaregiverPageFrame } from "@/features/caregiver/components/caregiver-pa
 import { useCaregiverDashboardUnits } from "@/features/caregiver/hooks/use-caregiver";
 import type { CaregiverUnitStatus } from "@/features/caregiver/types/caregiver.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import {
   EmptyState,
   ErrorState,
@@ -34,7 +32,9 @@ export function CaregiverDashboardPage() {
   const handleLookupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (quickReference.trim()) {
-      navigate(`/caregiver/tracking/${encodeURIComponent(quickReference.trim())}`);
+      navigate(
+        `/caregiver/tracking/${encodeURIComponent(quickReference.trim())}`,
+      );
     }
   };
 
@@ -43,31 +43,24 @@ export function CaregiverDashboardPage() {
       case "received_at_hospital":
       case "ready_for_transfusion":
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 className="size-3.5" aria-hidden="true" />
+          <StatusIndicator tone="success">
             {t("caregiver.atHospital", "At Hospital")}
-          </span>
+          </StatusIndicator>
         );
       case "in_transit":
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-700 dark:text-blue-300">
-            <Truck className="size-3.5" aria-hidden="true" />
+          <StatusIndicator tone="pending">
             {t("caregiver.inTransit", "In Transit")}
-          </span>
+          </StatusIndicator>
         );
       case "allocated":
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
-            <Clock className="size-3.5" aria-hidden="true" />
+          <StatusIndicator tone="pending">
             {t("caregiver.allocated", "Allocated")}
-          </span>
+          </StatusIndicator>
         );
       default:
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-            {status}
-          </span>
-        );
+        return <StatusIndicator tone="neutral">{status}</StatusIndicator>;
     }
   };
 
@@ -78,7 +71,10 @@ export function CaregiverDashboardPage() {
         { label: t("nav.dashboard", "Dashboard") },
       ]}
       title={t("caregiver.dashboardTitle", "Blood Unit Tracking")}
-      description={t("caregiver.portalDesc", "Track the real-time transfer progress and cold-chain status of assigned blood units for your patient.")}
+      description={t(
+        "caregiver.portalDesc",
+        "Track the real-time transfer progress and cold-chain status of assigned blood units for your patient.",
+      )}
       actions={
         <Button asChild size="sm" className="gap-2">
           <Link to="/caregiver/scan">
@@ -92,7 +88,7 @@ export function CaregiverDashboardPage() {
         {/* Quick Reference Lookup Box */}
         <section
           aria-labelledby="tracking-lookup-heading"
-          className="border border-border bg-surface p-5 sm:p-6"
+          className="rounded-lg border border-border/80 bg-surface p-4 sm:p-5 shadow-2xs"
         >
           <div className="space-y-1.5 mb-4">
             <h2
@@ -102,11 +98,17 @@ export function CaregiverDashboardPage() {
               {t("caregiver.scanPrompt", "Enter Blood Bag Tracking Reference")}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {t("caregiver.privacyNotice", "Type the code found on your hospital dispatch notification or scan the container barcode.")}
+              {t(
+                "caregiver.privacyNotice",
+                "Type the code found on your hospital dispatch notification or scan the container barcode.",
+              )}
             </p>
           </div>
 
-          <form onSubmit={handleLookupSubmit} className="flex flex-col gap-2.5 sm:flex-row">
+          <form
+            onSubmit={handleLookupSubmit}
+            className="flex flex-col gap-2.5 sm:flex-row"
+          >
             <div className="relative flex-1">
               <Search
                 aria-hidden="true"
@@ -114,7 +116,10 @@ export function CaregiverDashboardPage() {
               />
               <Input
                 type="search"
-                aria-label={t("caregiver.trackingCode", "Enter Blood Unit Reference")}
+                aria-label={t(
+                  "caregiver.trackingCode",
+                  "Enter Blood Unit Reference",
+                )}
                 placeholder={t("caregiver.referencePlaceholder")}
                 value={quickReference}
                 onChange={(e) => setQuickReference(e.target.value)}
@@ -128,10 +133,7 @@ export function CaregiverDashboardPage() {
         </section>
 
         {/* Assigned Units Section */}
-        <section
-          aria-labelledby="assigned-units-heading"
-          className="space-y-4"
-        >
+        <section aria-labelledby="assigned-units-heading" className="space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <h2
               id="assigned-units-heading"
@@ -140,12 +142,20 @@ export function CaregiverDashboardPage() {
               {t("caregiver.activeConsignments", "Active Assigned Units")}
             </h2>
             <span className="text-xs text-muted-foreground">
-              {t("caregiver.transitNotice", "Auto-refreshes with dispatch updates")}
+              {t(
+                "caregiver.transitNotice",
+                "Auto-refreshes with dispatch updates",
+              )}
             </span>
           </div>
 
           {unitsQuery.isPending ? (
-            <LoadingState label={t("common.loadingRecords", "Checking unit dispatch status…")} />
+            <LoadingState
+              label={t(
+                "common.loadingRecords",
+                "Checking unit dispatch status…",
+              )}
+            />
           ) : unitsQuery.isError ? (
             <ErrorState
               title={t("common.error", "Could not load tracked units")}
@@ -156,20 +166,28 @@ export function CaregiverDashboardPage() {
             />
           ) : (unitsQuery.data?.length ?? 0) === 0 ? (
             <EmptyState
-              title={t("hospital.noRecordsTitle", "No active blood units assigned")}
-              description={t("hospital.noRecordsDesc", "When a blood unit is allocated for your family member, it will automatically appear here.")}
+              title={t(
+                "hospital.noRecordsTitle",
+                "No active blood units assigned",
+              )}
+              description={t(
+                "hospital.noRecordsDesc",
+                "When a blood unit is allocated for your family member, it will automatically appear here.",
+              )}
               action={
                 <Button asChild size="sm">
-                  <Link to="/caregiver/scan">{t("caregiver.scanBarcodeButton", "Scan Unit Barcode")}</Link>
+                  <Link to="/caregiver/scan">
+                    {t("caregiver.scanBarcodeButton", "Scan Unit Barcode")}
+                  </Link>
                 </Button>
               }
             />
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-border/70 rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden">
               {unitsQuery.data?.map((unit) => (
                 <article
                   key={unit.reference}
-                  className="border border-border bg-surface p-5 transition-colors hover:border-primary/60"
+                  className="p-4 sm:p-5 transition-colors"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-2">
@@ -187,19 +205,36 @@ export function CaregiverDashboardPage() {
                         </p>
                         <p className="flex items-center gap-1.5 text-muted-foreground">
                           <Hospital className="size-3.5 shrink-0 text-primary" />
-                          <span>{t("caregiver.hospitalArrival", "Destination")}: {unit.destinationHospital}</span>
+                          <span>
+                            {t("caregiver.hospitalArrival", "Destination")}:{" "}
+                            {unit.destinationHospital}
+                          </span>
                         </p>
                         <p className="flex items-center gap-1.5 text-muted-foreground">
                           <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
-                          <span>{t("caregiver.lastCheckpoint", "Current")}: {unit.currentLocation}</span>
+                          <span>
+                            {t("caregiver.lastCheckpoint", "Current")}:{" "}
+                            {unit.currentLocation}
+                          </span>
                         </p>
                       </div>
                     </div>
 
-                    <Button asChild size="lg" className="h-11 sm:h-9 shrink-0 gap-2">
-                      <Link to={`/caregiver/tracking/${encodeURIComponent(unit.reference)}`}>
-                        <span>{t("hospital.trackDelivery", "View Live Status")}</span>
-                        <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
+                    <Button
+                      asChild
+                      size="lg"
+                      className="h-11 sm:h-9 shrink-0 gap-2"
+                    >
+                      <Link
+                        to={`/caregiver/tracking/${encodeURIComponent(unit.reference)}`}
+                      >
+                        <span>
+                          {t("hospital.trackDelivery", "View Live Status")}
+                        </span>
+                        <ArrowRight
+                          className="size-4 rtl:rotate-180"
+                          aria-hidden="true"
+                        />
                       </Link>
                     </Button>
                   </div>
@@ -210,12 +245,17 @@ export function CaregiverDashboardPage() {
         </section>
 
         {/* Privacy & Cold Chain Assurance Note */}
-        <div className="rounded-lg border border-border bg-surface-subtle p-4 text-xs text-muted-foreground">
+        <div className="rounded-lg border border-border/80 bg-surface-subtle p-4 text-xs text-muted-foreground">
           <div className="flex items-start gap-2.5">
             <ShieldCheck className="size-4 shrink-0 text-emerald-600 mt-0.5" />
             <p className="leading-relaxed">
-              <strong>{t("caregiver.privacyNotice", "Patient Privacy Protected")}:</strong>{" "}
-              {t("caregiver.safeTempAssurance", "This tracking workspace displays verified temperature-control events and location transitions only. Patient clinical diagnoses and donor identities are decoupled in adherence to medical privacy regulations.")}
+              <strong>
+                {t("caregiver.privacyNotice", "Patient Privacy Protected")}:
+              </strong>{" "}
+              {t(
+                "caregiver.safeTempAssurance",
+                "This tracking workspace displays verified temperature-control events and location transitions only. Patient clinical diagnoses and donor identities are decoupled in adherence to medical privacy regulations.",
+              )}
             </p>
           </div>
         </div>

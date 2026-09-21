@@ -1,4 +1,4 @@
-import { Shield } from "lucide-react";
+import { LockKeyhole } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -7,7 +7,10 @@ import { AuditFilters as AuditFiltersBar } from "@/features/admin/audit/audit-fi
 import { AuditTable } from "@/features/admin/audit/audit-table";
 import { AdminPageFrame } from "@/features/admin/components/admin-page-frame";
 import { useAdminAuditLogs } from "@/features/admin/hooks/use-admin";
-import type { AuditFilters, AuditLogEvent } from "@/features/admin/types/admin.types";
+import type {
+  AuditFilters,
+  AuditLogEvent,
+} from "@/features/admin/types/admin.types";
 import { LoadingState } from "@/shared/components/feedback/system-states";
 
 const initialFilters: AuditFilters = {
@@ -22,7 +25,9 @@ const initialFilters: AuditFilters = {
 export function AuditPage() {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<AuditFilters>(initialFilters);
-  const [selectedEvent, setSelectedEvent] = useState<AuditLogEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<AuditLogEvent | null>(
+    null,
+  );
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const { data: logs, isLoading } = useAdminAuditLogs(filters);
@@ -48,8 +53,8 @@ export function AuditPage() {
         { label: t("nav.governanceAudit", "Governance Audit") },
       ]}
       actions={
-        <div className="flex items-center gap-1.5 rounded-md bg-muted/60 px-3 py-1.5 font-mono text-xs text-muted-foreground border border-border">
-          <Shield className="size-3.5 text-primary" />
+        <div className="flex items-center gap-1.5 bg-muted/60 px-3 py-1.5 font-mono text-xs text-muted-foreground">
+          <LockKeyhole className="size-3.5 text-primary" />
           <span>{t("admin.readOnlyAuditTrail", "Read-Only Audit Trail")}</span>
         </div>
       }
@@ -62,7 +67,10 @@ export function AuditPage() {
         />
 
         {isLoading || !logs ? (
-          <LoadingState label={t("common.loadingRecords", "Loading audit activity ledger…")} rows={6} />
+          <LoadingState
+            label={t("common.loadingRecords", "Loading audit activity ledger…")}
+            rows={6}
+          />
         ) : (
           <AuditTable logs={logs} onInspect={handleInspect} />
         )}

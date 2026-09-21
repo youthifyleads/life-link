@@ -1,35 +1,56 @@
 import {
   AlertOctagon,
-  ArrowRight,
-  BookmarkCheck,
-  CheckCircle2,
+  Check,
   ClockAlert,
-  ExternalLink,
-  Layers,
-  MapPin,
+  Copy,
+  History,
   ScanLine,
   ShieldAlert,
+  ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import {
-  bloodBankComponentLabels,
-  type BloodUnit,
-  type BloodUnitStatus,
+  formatBloodBankComponent,
+  formatShortId,
+  formatStorageLocation,
+} from "@/features/blood-bank/components/blood-bank-formatters";
+import type {
+  BloodUnit,
+  BloodUnitStatus,
 } from "@/features/blood-bank/types/blood-bank.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
+import { StatusIndicator } from "@/shared/components/clinical/status-indicator";
 import { Button } from "@/shared/components/ui/button";
 
 interface InventoryTableProps {
   units: BloodUnit[];
   onUpdateStatus?: (unitId: string, newStatus: BloodUnitStatus) => void;
+  onViewHistory?: (unitId: string) => void;
 }
 
-export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
+export function InventoryTable({
+  units,
+  onUpdateStatus,
+  onViewHistory,
+}: InventoryTableProps) {
   const { t } = useTranslation();
   const [now] = useState(() => Date.now());
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyId = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1800);
+    } catch {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1800);
+    }
+  };
 
   const getExpiryDisplay = (expiryDateStr: string, status: BloodUnitStatus) => {
     const expTime = new Date(expiryDateStr).getTime();
@@ -70,38 +91,33 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
     switch (status) {
       case "available":
         return (
-          <span className="inline-flex items-center gap-1 rounded-none border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 aria-hidden="true" className="size-3" />
+          <span className="text-xs text-muted-foreground font-medium">
             {t("status.available", "Available")}
           </span>
         );
       case "reserved":
         return (
-          <span className="inline-flex items-center gap-1 rounded-none border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-            <BookmarkCheck aria-hidden="true" className="size-3" />
+          <StatusIndicator tone="pending">
             {t("status.reserved", "Reserved")}
-          </span>
+          </StatusIndicator>
         );
       case "allocated":
         return (
-          <span className="inline-flex items-center gap-1 rounded-none border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-            <Layers aria-hidden="true" className="size-3" />
+          <StatusIndicator tone="pending">
             {t("status.allocated", "Allocated")}
-          </span>
+          </StatusIndicator>
         );
       case "quarantined":
         return (
-          <span className="inline-flex items-center gap-1 rounded-none border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:text-purple-300">
-            <ShieldAlert aria-hidden="true" className="size-3" />
+          <StatusIndicator tone="warning">
             {t("status.quarantined", "Quarantined")}
-          </span>
+          </StatusIndicator>
         );
       case "expired":
         return (
-          <span className="inline-flex items-center gap-1 rounded-none border border-emergency/30 bg-emergency-subtle px-2 py-0.5 text-[11px] font-semibold text-emergency">
-            <AlertOctagon aria-hidden="true" className="size-3" />
+          <StatusIndicator tone="danger">
             {t("status.expired", "Expired")}
-          </span>
+          </StatusIndicator>
         );
       default:
         return <span>{status}</span>;
@@ -116,7 +132,10 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
             {t("bloodBank.inventoryOverview", "Blood Unit Inventory Ledger")}
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("bloodBank.inventorySubtitle", "Detailed itemized inventory records for all units stored in the central cold chain.")}
+            {t(
+              "bloodBank.inventorySubtitle",
+              "Detailed itemized inventory records for all units stored in the central cold chain.",
+            )}
           </p>
         </div>
         <span className="text-xs text-muted-foreground font-medium tabular-nums">
@@ -125,8 +144,11 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
       </div>
 
       {units.length === 0 ? (
-        <div className="border border-border bg-surface p-8 text-center text-xs text-muted-foreground">
-          {t("common.noRecordsDesc", "No blood units found matching the selected filters or search query.")}
+        <div className="rounded-lg border border-border/80 bg-surface p-8 text-center text-xs text-muted-foreground shadow-2xs">
+          {t(
+            "common.noRecordsDesc",
+            "No blood units found matching the selected filters or search query.",
+          )}
         </div>
       ) : (
         <>
@@ -134,61 +156,89 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
           <div
             tabIndex={0}
             role="region"
-            aria-label={t("bloodBank.inventoryOverview", "Blood unit inventory ledger table.")}
-            className="overflow-x-auto border border-border bg-surface"
+            aria-label={t(
+              "bloodBank.inventoryOverview",
+              "Blood unit inventory ledger table.",
+            )}
+            className="overflow-x-auto rounded-lg border border-border/80 bg-surface shadow-2xs"
           >
-            <table className="w-full min-w-[62rem] table-fixed border-collapse text-start text-xs">
+            <table className="clinical-table min-w-[58rem] table-fixed border-collapse">
               <thead className="border-b border-border bg-surface-subtle font-semibold text-muted-foreground">
                 <tr>
-                  <th scope="col" className="w-[18%] px-3.5 py-2.5 text-start">
+                  <th scope="col" className="w-[20%] px-3.5 py-2.5 text-start">
                     {t("bloodBank.unitId", "Unit ID")}
                   </th>
                   <th scope="col" className="w-[10%] px-3 py-2.5 text-start">
                     {t("common.bloodGroup", "Group")}
                   </th>
-                  <th scope="col" className="w-[15%] px-3 py-2.5 text-start">
+                  <th scope="col" className="w-[18%] px-3 py-2.5 text-start">
                     {t("common.component", "Component")}
                   </th>
-                  <th scope="col" className="w-[11%] px-3 py-2.5 text-start">
+                  <th scope="col" className="w-[12%] px-3 py-2.5 text-start">
                     {t("bloodBank.collection", "Collection")}
                   </th>
-                  <th scope="col" className="w-[13%] px-3 py-2.5 text-start">
+                  <th scope="col" className="w-[14%] px-3 py-2.5 text-start">
                     {t("bloodBank.expiry", "Expiry Date")}
                   </th>
                   <th scope="col" className="w-[11%] px-3 py-2.5 text-start">
                     {t("common.status", "Status")}
                   </th>
-                  <th scope="col" className="w-[16%] px-3 py-2.5 text-start">
+                  <th scope="col" className="w-[15%] px-3 py-2.5 text-start">
                     {t("bloodBank.storageLocation", "Storage Location")}
                   </th>
-                  <th scope="col" className="w-[13%] px-3 py-2.5 text-start">
-                    {t("hospital.requestId", "Assigned Request")}
-                  </th>
-                  <th scope="col" className="w-[13%] px-3.5 py-2.5 text-end">
+                  <th scope="col" className="w-[10%] px-3.5 py-2.5 text-end">
                     {t("common.actions", "Actions")}
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border bg-surface">
                 {units.map((unit) => {
-                  const expInfo = getExpiryDisplay(unit.expiryDate, unit.status);
+                  const expInfo = getExpiryDisplay(
+                    unit.expiryDate,
+                    unit.status,
+                  );
 
                   return (
                     <tr
                       key={unit.id}
                       className="hover:bg-surface-subtle/70 transition-colors"
                     >
-                      {/* Unit ID */}
+                      {/* Unit ID & Optional Sub-line for Assigned Request */}
                       <td className="px-3.5 py-2.5 text-start">
                         <div className="flex items-center gap-1.5 font-mono font-bold text-foreground">
                           <Link
                             to={`/blood-bank/tracking?id=${unit.id}`}
-                            className="hover:text-primary hover:underline"
-                            title={t("healthcare.tracking", "Track unit in QR Tracking")}
+                            className="hover:text-primary hover:underline truncate max-w-[130px]"
+                            title={unit.id}
                           >
-                            <bdi dir="ltr">{unit.id}</bdi>
+                            <bdi dir="ltr">{formatShortId(unit.id)}</bdi>
                           </Link>
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyId(unit.id, e)}
+                            className="inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-surface-subtle transition-colors cursor-pointer"
+                            title={copiedId === unit.id ? t("common.copied", "Copied!") : t("common.copyId", "Copy full ID")}
+                            aria-label={`${t("common.copyId", "Copy full ID")} ${unit.id}`}
+                          >
+                            {copiedId === unit.id ? (
+                              <Check className="size-3 text-success" />
+                            ) : (
+                              <Copy className="size-3" />
+                            )}
+                          </button>
                         </div>
+                        {unit.allocatedRequestId ? (
+                          <div className="mt-0.5 text-[11px] text-muted-foreground">
+                            <span>{t("hospital.requestId", "Req")}: </span>
+                            <Link
+                              to={`/blood-bank/requests/${unit.allocatedRequestId}`}
+                              className="font-mono font-semibold text-primary hover:underline"
+                              title={unit.allocatedRequestId}
+                            >
+                              <bdi dir="ltr">#{formatShortId(unit.allocatedRequestId)}</bdi>
+                            </Link>
+                          </div>
+                        ) : null}
                       </td>
 
                       {/* Group */}
@@ -198,7 +248,7 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
 
                       {/* Component */}
                       <td className="px-3 py-2.5 text-start font-medium text-foreground">
-                        {bloodBankComponentLabels[unit.component]}
+                        {formatBloodBankComponent(unit.component)}
                       </td>
 
                       {/* Collection Date */}
@@ -221,9 +271,15 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
                               }`}
                             >
                               {expInfo.tone === "emergency" ? (
-                                <AlertOctagon aria-hidden="true" className="size-3" />
+                                <AlertOctagon
+                                  aria-hidden="true"
+                                  className="size-3"
+                                />
                               ) : (
-                                <ClockAlert aria-hidden="true" className="size-3" />
+                                <ClockAlert
+                                  aria-hidden="true"
+                                  className="size-3"
+                                />
                               )}
                               <bdi dir="ltr">{expInfo.badge}</bdi>
                             </span>
@@ -238,60 +294,72 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
 
                       {/* Storage Location */}
                       <td className="px-3 py-2.5 text-start">
-                        <span className="flex items-center gap-1 text-muted-foreground">
-                          <MapPin aria-hidden="true" className="size-3 shrink-0 text-primary" />
-                          <span className="truncate">{unit.storageLocation}</span>
+                        <span className="block truncate text-muted-foreground" title={unit.storageLocation}>
+                          {formatStorageLocation(unit.storageLocation)}
                         </span>
-                      </td>
-
-                      {/* Assigned Request */}
-                      <td className="px-3 py-2.5 text-start">
-                        {unit.allocatedRequestId ? (
-                          <Link
-                            to={`/blood-bank/requests/${unit.allocatedRequestId}`}
-                            className="inline-flex items-center gap-1 font-mono font-semibold text-primary hover:underline"
-                          >
-                            <span><bdi dir="ltr">{unit.allocatedRequestId}</bdi></span>
-                            <ExternalLink aria-hidden="true" className="size-3" />
-                          </Link>
-                        ) : (
-                          <span className="text-muted-foreground/60">—</span>
-                        )}
                       </td>
 
                       {/* Actions */}
                       <td className="px-3.5 py-2.5 text-end">
                         <div className="flex items-center justify-end gap-1.5">
+                          {onViewHistory ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              onClick={() => onViewHistory(unit.id)}
+                              title={t(
+                                "bloodBank.viewCustodyHistory",
+                                "View custody history",
+                              )}
+                              aria-label={`${t("bloodBank.viewCustodyHistory", "View custody history")} ${unit.id}`}
+                            >
+                              <History aria-hidden="true" />
+                            </Button>
+                          ) : null}
                           <Button
                             asChild
                             variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
+                            size="icon"
+                            className="size-8"
                           >
-                            <Link to={`/blood-bank/tracking?id=${unit.id}`}>
-                              <ScanLine aria-hidden="true" className="size-3" />
-                              {t("healthcare.tracking", "Track")}
+                            <Link
+                              to={`/blood-bank/tracking?id=${unit.id}`}
+                              title={t("healthcare.tracking", "Track unit")}
+                              aria-label={`${t("healthcare.tracking", "Track unit")} ${unit.id}`}
+                            >
+                              <ScanLine aria-hidden="true" />
                             </Link>
                           </Button>
                           {unit.status === "available" && onUpdateStatus ? (
                             <Button
                               type="button"
-                              variant="secondary"
-                              size="sm"
-                              className="h-7 px-2 text-[11px]"
-                              onClick={() => onUpdateStatus(unit.id, "quarantined")}
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-warning"
+                              onClick={() =>
+                                onUpdateStatus(unit.id, "quarantined")
+                              }
+                              title={t("status.quarantined", "Quarantine")}
+                              aria-label={`${t("status.quarantined", "Quarantine")} ${unit.id}`}
                             >
-                              {t("status.quarantined", "Quarantine")}
+                              <ShieldAlert aria-hidden="true" />
                             </Button>
-                          ) : unit.status === "quarantined" && onUpdateStatus ? (
+                          ) : unit.status === "quarantined" &&
+                            onUpdateStatus ? (
                             <Button
                               type="button"
-                              variant="secondary"
-                              size="sm"
-                              className="h-7 px-2 text-[11px]"
-                              onClick={() => onUpdateStatus(unit.id, "available")}
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-success"
+                              onClick={() =>
+                                onUpdateStatus(unit.id, "available")
+                              }
+                              title={t("status.available", "Release")}
+                              aria-label={`${t("status.available", "Release")} ${unit.id}`}
                             >
-                              {t("status.available", "Release")}
+                              <ShieldCheck aria-hidden="true" />
                             </Button>
                           ) : null}
                         </div>
@@ -304,31 +372,44 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
           </div>
 
           {/* Mobile Card View (shown below md breakpoint) */}
-          <div className="grid grid-cols-1 gap-3 md:hidden">
+          <div className="divide-y divide-border/70 rounded-lg border border-border/80 bg-surface shadow-2xs overflow-hidden md:hidden">
             {units.map((unit) => {
               const expInfo = getExpiryDisplay(unit.expiryDate, unit.status);
 
               return (
                 <div
                   key={unit.id}
-                  className="border border-border bg-surface p-4 text-xs space-y-3"
+                  className="p-3.5 sm:p-4 text-xs space-y-2.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono font-bold text-foreground text-sm">
-                      <bdi dir="ltr">{unit.id}</bdi>
-                    </span>
+                    <div className="flex items-center gap-1.5 font-mono font-bold text-foreground text-sm">
+                      <bdi dir="ltr">{formatShortId(unit.id)}</bdi>
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopyId(unit.id, e)}
+                        className="inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                        title={copiedId === unit.id ? t("common.copied", "Copied!") : t("common.copyId", "Copy full ID")}
+                      >
+                        {copiedId === unit.id ? (
+                          <Check className="size-3 text-success" />
+                        ) : (
+                          <Copy className="size-3" />
+                        )}
+                      </button>
+                    </div>
                     {getStatusBadge(unit.status)}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-muted-foreground">
                     <div>
                       <span className="block text-[10px] uppercase tracking-wider">
-                        {t("common.bloodGroup", "Group")} &amp; {t("common.component", "Component")}
+                        {t("common.bloodGroup", "Group")} &amp;{" "}
+                        {t("common.component", "Component")}
                       </span>
                       <div className="mt-1 flex items-center gap-1.5">
                         <BloodGroupBadge group={unit.bloodGroup} />
                         <span className="font-medium text-foreground">
-                          {bloodBankComponentLabels[unit.component]}
+                          {formatBloodBankComponent(unit.component)}
                         </span>
                       </div>
                     </div>
@@ -354,33 +435,54 @@ export function InventoryTable({ units, onUpdateStatus }: InventoryTableProps) {
                         {t("bloodBank.storageLocation", "Storage Location")}
                       </span>
                       <span className="mt-1 block text-foreground font-medium">
-                        {unit.storageLocation}
+                        {formatStorageLocation(unit.storageLocation)}
                       </span>
                     </div>
 
-                    <div>
-                      <span className="block text-[10px] uppercase tracking-wider">
-                        {t("hospital.requestId", "Assigned Request")}
-                      </span>
-                      {unit.allocatedRequestId ? (
+                    {unit.allocatedRequestId ? (
+                      <div>
+                        <span className="block text-[10px] uppercase tracking-wider">
+                          {t("hospital.requestId", "Assigned Request")}
+                        </span>
                         <Link
                           to={`/blood-bank/requests/${unit.allocatedRequestId}`}
-                          className="mt-1 inline-flex items-center gap-1 font-mono font-semibold text-primary hover:underline"
+                          className="mt-1 block font-mono font-semibold text-primary hover:underline"
                         >
-                          <bdi dir="ltr">{unit.allocatedRequestId}</bdi>
-                          <ArrowRight aria-hidden="true" className="size-3 rtl:rotate-180" />
+                          <bdi dir="ltr">#{formatShortId(unit.allocatedRequestId)}</bdi>
                         </Link>
-                      ) : (
-                        <span className="mt-1 block text-muted-foreground/60">—</span>
-                      )}
-                    </div>
+                      </div>
+                    ) : null}
                   </div>
 
-                  <div className="pt-2 border-t border-border flex items-center justify-end">
-                    <Button asChild size="sm" variant="secondary" className="h-7 text-xs">
-                      <Link to={`/blood-bank/tracking?id=${unit.id}`}>
-                        <ScanLine aria-hidden="true" className="size-3" />
-                        {t("healthcare.tracking", "Track Unit")}
+                  <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-2">
+                    {onViewHistory ? (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="size-8"
+                        onClick={() => onViewHistory(unit.id)}
+                        title={t(
+                          "bloodBank.viewCustodyHistory",
+                          "View custody history",
+                        )}
+                        aria-label={`${t("bloodBank.viewCustodyHistory", "View custody history")} ${unit.id}`}
+                      >
+                        <History aria-hidden="true" />
+                      </Button>
+                    ) : null}
+                    <Button
+                      asChild
+                      size="icon"
+                      variant="secondary"
+                      className="size-8"
+                    >
+                      <Link
+                        to={`/blood-bank/tracking?id=${unit.id}`}
+                        title={t("healthcare.tracking", "Track unit")}
+                        aria-label={`${t("healthcare.tracking", "Track unit")} ${unit.id}`}
+                      >
+                        <ScanLine aria-hidden="true" />
                       </Link>
                     </Button>
                   </div>

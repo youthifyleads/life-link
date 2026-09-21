@@ -1,11 +1,4 @@
-import {
-  Check,
-  CheckCircle2,
-  Clock3,
-  FileText,
-  LoaderCircle,
-  MessageSquareWarning,
-} from "lucide-react";
+import { Check, LoaderCircle, MessageSquareWarning } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -17,6 +10,10 @@ import type {
   BloodBankSupportingDocument,
   DocumentReviewStatus,
 } from "@/features/blood-bank/types/blood-bank.types";
+import {
+  StatusIndicator,
+  type StatusTone,
+} from "@/shared/components/clinical/status-indicator";
 import { Button } from "@/shared/components/ui/button";
 
 interface BloodBankDocumentsSectionProps {
@@ -27,25 +24,22 @@ interface BloodBankDocumentsSectionProps {
 
 const reviewBadgeMap: Record<
   DocumentReviewStatus,
-  { labelKey: string; defaultLabel: string; icon: typeof Clock3; className: string }
+  { labelKey: string; defaultLabel: string; tone: StatusTone }
 > = {
   pending: {
     labelKey: "bloodBank.reviewPending",
     defaultLabel: "Review pending",
-    icon: Clock3,
-    className: "border-warning/30 bg-warning-subtle text-[#6f4a00]",
+    tone: "pending",
   },
   accepted: {
     labelKey: "bloodBank.accepted",
     defaultLabel: "Accepted",
-    icon: CheckCircle2,
-    className: "border-success/25 bg-success-subtle text-success",
+    tone: "success",
   },
   changes_requested: {
     labelKey: "bloodBank.changesRequested",
     defaultLabel: "Changes requested",
-    icon: MessageSquareWarning,
-    className: "border-destructive/25 bg-emergency-subtle text-[#8d1c14]",
+    tone: "danger",
   },
 };
 
@@ -65,26 +59,31 @@ export function BloodBankDocumentsSection({
   return (
     <section
       aria-labelledby="documents-section-heading"
-      className="border border-border bg-surface p-5"
+      className="rounded-lg border border-border/80 bg-surface p-5 sm:p-6 shadow-2xs"
     >
       <div className="mb-4">
         <h2 id="documents-section-heading" className="text-base font-semibold">
           {t("bloodBank.supportingDocs", "Supporting clinical documentation")}
         </h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {t("bloodBank.supportingDocsDesc", "Requisition orders, cross-match release authorizations, and compatibility reports.")}
+          {t(
+            "bloodBank.supportingDocsDesc",
+            "Requisition orders, cross-match release authorizations, and compatibility reports.",
+          )}
         </p>
       </div>
 
       {documents.length === 0 ? (
         <div className="rounded border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-          {t("bloodBank.noSupportingDocs", "No supporting documentation uploaded by hospital staff for this requisition.")}
+          {t(
+            "bloodBank.noSupportingDocs",
+            "No supporting documentation uploaded by hospital staff for this requisition.",
+          )}
         </div>
       ) : (
-        <ul className="divide-y divide-border border border-border">
+        <ul className="divide-y divide-border/70 rounded-lg border border-border/80 overflow-hidden shadow-2xs">
           {documents.map((doc) => {
             const reviewConfig = reviewBadgeMap[doc.reviewStatus];
-            const ReviewIcon = reviewConfig.icon;
             const isDocPending = isPending && activeDocId === doc.id;
 
             return (
@@ -93,24 +92,23 @@ export function BloodBankDocumentsSection({
                 className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-start gap-3">
-                  <div className="rounded border border-border bg-surface-subtle p-2">
-                    <FileText aria-hidden="true" className="size-4 text-primary" />
-                  </div>
                   <div>
                     <p className="text-xs font-semibold text-foreground">
                       {doc.name}
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
-                      <bdi dir="ltr">{formatBloodBankFileSize(doc.sizeBytes)}</bdi> ·{" "}
-                      <bdi dir="ltr">{formatBloodBankDateTime(doc.uploadedAt)}</bdi>
+                      <bdi dir="ltr">
+                        {formatBloodBankFileSize(doc.sizeBytes)}
+                      </bdi>{" "}
+                      ·{" "}
+                      <bdi dir="ltr">
+                        {formatBloodBankDateTime(doc.uploadedAt)}
+                      </bdi>
                     </p>
                     <div className="mt-2">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-semibold ${reviewConfig.className}`}
-                      >
-                        <ReviewIcon aria-hidden="true" className="size-3" />
+                      <StatusIndicator tone={reviewConfig.tone}>
                         {t(reviewConfig.labelKey, reviewConfig.defaultLabel)}
-                      </span>
+                      </StatusIndicator>
                     </div>
                   </div>
                 </div>
@@ -119,31 +117,38 @@ export function BloodBankDocumentsSection({
                 <div className="flex items-center gap-1.5 self-end sm:self-center">
                   <Button
                     type="button"
-                    size="sm"
-                    variant={doc.reviewStatus === "accepted" ? "secondary" : "default"}
-                    className="h-7 px-2.5 text-xs"
+                    size="icon"
+                    variant={
+                      doc.reviewStatus === "accepted" ? "secondary" : "default"
+                    }
+                    className="size-8"
                     disabled={isPending || doc.reviewStatus === "accepted"}
                     onClick={() => handleAction(doc.id, "accepted")}
                     aria-label={`${t("bloodBank.accept", "Accept")} ${doc.name}`}
+                    title={t("bloodBank.accept", "Accept")}
                   >
                     {isDocPending ? (
-                      <LoaderCircle aria-hidden="true" className="size-3 animate-spin" />
+                      <LoaderCircle
+                        aria-hidden="true"
+                        className="size-3 animate-spin"
+                      />
                     ) : (
                       <Check aria-hidden="true" className="size-3" />
                     )}
-                    {t("bloodBank.accept", "Accept")}
                   </Button>
                   <Button
                     type="button"
-                    size="sm"
+                    size="icon"
                     variant="secondary"
-                    className="h-7 px-2.5 text-xs text-destructive hover:text-destructive"
-                    disabled={isPending || doc.reviewStatus === "changes_requested"}
+                    className="size-8 text-destructive hover:text-destructive"
+                    disabled={
+                      isPending || doc.reviewStatus === "changes_requested"
+                    }
                     onClick={() => handleAction(doc.id, "changes_requested")}
                     aria-label={`${t("bloodBank.requestChanges", "Request changes")} ${doc.name}`}
+                    title={t("bloodBank.requestChanges", "Request changes")}
                   >
-                    <MessageSquareWarning aria-hidden="true" className="size-3" />
-                    {t("bloodBank.requestChanges", "Request changes")}
+                    <MessageSquareWarning aria-hidden="true" />
                   </Button>
                 </div>
               </li>

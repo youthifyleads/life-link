@@ -15,7 +15,7 @@ import { z } from "zod";
 import {
   ALL_BLOOD_GROUPS,
   ALL_COMPONENTS,
-} from "@/features/blood-bank/inventory/inventory.mock";
+} from "@/features/blood-bank/constants/blood-bank.constants";
 import {
   bloodBankComponentLabels,
   type BloodBankComponent,
@@ -38,27 +38,24 @@ import { Label } from "@/shared/components/ui/label";
 const intakeSchema = z
   .object({
     unitId: z.string().optional(),
-    bloodGroup: z.enum([
-      "A+",
-      "A−",
-      "B+",
-      "B−",
-      "AB+",
-      "AB−",
-      "O+",
-      "O−",
-    ] as const, {
-      required_error: "Blood group is required.",
-    }),
-    component: z.enum([
-      "red_cells",
-      "platelets",
-      "fresh_frozen_plasma",
-      "whole_blood",
-      "cryoprecipitate",
-    ] as const, {
-      required_error: "Component is required.",
-    }),
+    bloodGroup: z.enum(
+      ["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−"] as const,
+      {
+        required_error: "Blood group is required.",
+      },
+    ),
+    component: z.enum(
+      [
+        "red_cells",
+        "platelets",
+        "fresh_frozen_plasma",
+        "whole_blood",
+        "cryoprecipitate",
+      ] as const,
+      {
+        required_error: "Component is required.",
+      },
+    ),
     collectionDate: z.string().min(1, "Collection date is required."),
     expiryDate: z.string().min(1, "Expiry date is required."),
     quantity: z.coerce
@@ -98,14 +95,21 @@ const commonLocations = [
   "Deep Freezer 2 — Rack B",
 ];
 
-function calculateDefaultExpiry(collectionDateStr: string, component: BloodBankComponent): string {
+function calculateDefaultExpiry(
+  collectionDateStr: string,
+  component: BloodBankComponent,
+): string {
   const base = new Date(collectionDateStr);
   if (isNaN(base.getTime())) return "";
 
   let addDays = 42; // red cells default
   if (component === "platelets") addDays = 5;
   else if (component === "whole_blood") addDays = 35;
-  else if (component === "fresh_frozen_plasma" || component === "cryoprecipitate") addDays = 365;
+  else if (
+    component === "fresh_frozen_plasma" ||
+    component === "cryoprecipitate"
+  )
+    addDays = 365;
 
   base.setDate(base.getDate() + addDays);
   return base.toISOString().split("T")[0];
@@ -153,7 +157,10 @@ export function UnitIntakeDialog({
   // Auto-adjust default expiry when component or collection date changes
   useEffect(() => {
     if (selectedCollectionDate && selectedComponent) {
-      const suggestedExpiry = calculateDefaultExpiry(selectedCollectionDate, selectedComponent);
+      const suggestedExpiry = calculateDefaultExpiry(
+        selectedCollectionDate,
+        selectedComponent,
+      );
       setValue("expiryDate", suggestedExpiry);
     }
   }, [selectedComponent, selectedCollectionDate, setValue]);
@@ -314,7 +321,10 @@ export function UnitIntakeDialog({
 
               {/* Collection Date */}
               <div className="space-y-1.5">
-                <Label htmlFor="collectionDate" className="text-xs font-semibold">
+                <Label
+                  htmlFor="collectionDate"
+                  className="text-xs font-semibold"
+                >
                   {t("bloodBank.collectionDateRequired")}
                 </Label>
                 <Input
@@ -358,7 +368,10 @@ export function UnitIntakeDialog({
 
             {/* Storage Location */}
             <div className="space-y-1.5">
-              <Label htmlFor="storageLocation" className="text-xs font-semibold">
+              <Label
+                htmlFor="storageLocation"
+                className="text-xs font-semibold"
+              >
                 {t("bloodBank.storageLocationRequired")}
               </Label>
               <Input
@@ -420,41 +433,54 @@ export function UnitIntakeDialog({
 
             <dl className="grid grid-cols-2 gap-px border border-border bg-border">
               <div className="bg-surface p-3">
-                <dt className="text-[11px] text-muted-foreground">{t("common.bloodGroup")}</dt>
+                <dt className="text-[11px] text-muted-foreground">
+                  {t("common.bloodGroup")}
+                </dt>
                 <dd className="mt-1 font-semibold flex items-center gap-2">
                   <BloodGroupBadge group={formValues.bloodGroup} />
-                  <bdi dir="ltr">{formValues.bloodGroup}</bdi>
                 </dd>
               </div>
 
               <div className="bg-surface p-3">
-                <dt className="text-[11px] text-muted-foreground">{t("common.component")}</dt>
+                <dt className="text-[11px] text-muted-foreground">
+                  {t("common.component")}
+                </dt>
                 <dd className="mt-1 font-semibold">
                   {bloodBankComponentLabels[formValues.component]}
                 </dd>
               </div>
 
               <div className="bg-surface p-3">
-                <dt className="text-[11px] text-muted-foreground">{t("bloodBank.quantityToRegister")}</dt>
+                <dt className="text-[11px] text-muted-foreground">
+                  {t("bloodBank.quantityToRegister")}
+                </dt>
                 <dd className="mt-1 font-semibold tabular-nums">
                   <bdi dir="ltr">{formValues.quantity}</bdi> {t("common.units")}
                 </dd>
               </div>
 
               <div className="bg-surface p-3">
-                <dt className="text-[11px] text-muted-foreground">{t("bloodBank.targetStorage")}</dt>
-                <dd className="mt-1 font-semibold">{formValues.storageLocation}</dd>
+                <dt className="text-[11px] text-muted-foreground">
+                  {t("bloodBank.targetStorage")}
+                </dt>
+                <dd className="mt-1 font-semibold">
+                  {formValues.storageLocation}
+                </dd>
               </div>
 
               <div className="bg-surface p-3">
-                <dt className="text-[11px] text-muted-foreground">{t("bloodBank.collection")}</dt>
+                <dt className="text-[11px] text-muted-foreground">
+                  {t("bloodBank.collection")}
+                </dt>
                 <dd className="mt-1 font-semibold tabular-nums">
                   <bdi dir="ltr">{formValues.collectionDate}</bdi>
                 </dd>
               </div>
 
               <div className="bg-surface p-3">
-                <dt className="text-[11px] text-muted-foreground">{t("bloodBank.expiry")}</dt>
+                <dt className="text-[11px] text-muted-foreground">
+                  {t("bloodBank.expiry")}
+                </dt>
                 <dd className="mt-1 font-semibold tabular-nums text-emergency">
                   <bdi dir="ltr">{formValues.expiryDate}</bdi>
                 </dd>
@@ -476,10 +502,15 @@ export function UnitIntakeDialog({
         {step === "success" ? (
           <div className="space-y-4 py-3 text-xs">
             <div className="flex items-center gap-3 border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-800 dark:text-emerald-300">
-              <CheckCircle2 aria-hidden="true" className="size-5 shrink-0 text-emerald-600" />
+              <CheckCircle2
+                aria-hidden="true"
+                className="size-5 shrink-0 text-emerald-600"
+              />
               <div>
                 <p className="font-semibold text-sm">
-                  {t("bloodBank.registeredUnitsCount", { count: createdUnits.length })}
+                  {t("bloodBank.registeredUnitsCount", {
+                    count: createdUnits.length,
+                  })}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {t("bloodBank.registeredUnitsDesc")}
@@ -519,7 +550,10 @@ export function UnitIntakeDialog({
               </Button>
               <Button type="submit" form="unit-intake-form">
                 {t("bloodBank.reviewRegistrationAction")}
-                <ChevronRight aria-hidden="true" className="size-3.5 rtl:rotate-180" />
+                <ChevronRight
+                  aria-hidden="true"
+                  className="size-3.5 rtl:rotate-180"
+                />
               </Button>
             </>
           ) : step === "review" ? (
@@ -538,7 +572,10 @@ export function UnitIntakeDialog({
                 onClick={onConfirmSave}
               >
                 {isSubmitting ? (
-                  <LoaderCircle aria-hidden="true" className="size-3.5 animate-spin" />
+                  <LoaderCircle
+                    aria-hidden="true"
+                    className="size-3.5 animate-spin"
+                  />
                 ) : (
                   <CheckCircle2 aria-hidden="true" className="size-3.5" />
                 )}
@@ -555,7 +592,10 @@ export function UnitIntakeDialog({
                   reset();
                 }}
               >
-                <RotateCcw aria-hidden="true" className="size-3.5 rtl:rotate-180" />
+                <RotateCcw
+                  aria-hidden="true"
+                  className="size-3.5 rtl:rotate-180"
+                />
                 {t("bloodBank.registerMoreUnitsAction")}
               </Button>
               <Button type="button" onClick={handleClose}>

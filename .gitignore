@@ -41,6 +41,7 @@ lib/
 lib64/
 !mobile/lib/
 !web/src/**/lib/
+!web/src/**/lib/**
 parts/
 sdist/
 var/

@@ -5,15 +5,13 @@ import {
   Building2,
   ClipboardList,
   FileCheck2,
-  Gauge,
   History,
   Hospital,
   Inbox,
+  LayoutDashboard,
   QrCode,
-  ScanLine,
   ScrollText,
   ShieldCheck,
-  SlidersHorizontal,
   Ticket,
   Users,
   type LucideIcon,
@@ -41,7 +39,7 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
         {
           label: "Dashboard",
           href: "/hospital/dashboard",
-          icon: Gauge,
+          icon: LayoutDashboard,
           enabled: true,
         },
         {
@@ -72,7 +70,7 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
         {
           label: "Dashboard",
           href: "/blood-bank/dashboard",
-          icon: Gauge,
+          icon: LayoutDashboard,
           enabled: true,
         },
         {
@@ -90,7 +88,7 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
         {
           label: "QR tracking",
           href: "/blood-bank/tracking",
-          icon: ScanLine,
+          icon: QrCode,
           enabled: true,
         },
         {
@@ -115,7 +113,7 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
         {
           label: "Dashboard",
           href: "/admin/dashboard",
-          icon: Gauge,
+          icon: LayoutDashboard,
           enabled: true,
         },
         {
@@ -170,7 +168,7 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
         {
           label: "Dashboard",
           href: "/donor/dashboard",
-          icon: Gauge,
+          icon: LayoutDashboard,
           enabled: true,
         },
         {
@@ -203,12 +201,6 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
           icon: Bell,
           enabled: true,
         },
-        {
-          label: "Preferences",
-          href: "/settings/notifications",
-          icon: SlidersHorizontal,
-          enabled: true,
-        },
       ],
     },
   ],
@@ -219,7 +211,7 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
         {
           label: "Dashboard",
           href: "/caregiver/dashboard",
-          icon: Activity,
+          icon: LayoutDashboard,
           enabled: true,
         },
         {
@@ -244,7 +236,7 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
         {
           label: "Dashboard",
           href: "/hospital/dashboard",
-          icon: Gauge,
+          icon: LayoutDashboard,
           enabled: true,
         },
         {
@@ -275,7 +267,7 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
         {
           label: "Dashboard",
           href: "/admin/dashboard",
-          icon: Gauge,
+          icon: LayoutDashboard,
           enabled: true,
         },
         {
@@ -299,7 +291,7 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
         {
           label: "Governance audit",
           href: "/admin/audit",
-          icon: History,
+          icon: ScrollText,
           enabled: true,
         },
         {

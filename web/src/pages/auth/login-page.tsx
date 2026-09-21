@@ -8,13 +8,14 @@ import {
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import { env } from "@/app/config/env";
 import { useAuth } from "@/features/authentication/model/use-auth";
 import type { UserRole } from "@/features/authentication/model/auth.types";
 import { normalizeApiError } from "@/shared/api/api-error";
+import { BrandWordmark } from "@/shared/components/branding/brand-wordmark";
 import { LanguageSwitcher } from "@/shared/components/navigation/language-switcher";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -133,22 +134,20 @@ export function LoginPage() {
     <main className="grid min-h-svh bg-background lg:grid-cols-[minmax(20rem,38%)_1fr]">
       <section className="relative overflow-hidden bg-clinical-navy px-6 py-8 text-white sm:px-10 lg:flex lg:flex-col lg:justify-between lg:px-12 lg:py-12">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-5">
             <img
-              src="/logo.webp"
+              src="/logo.svg"
               alt="Life Link Logo"
-              className="size-11 rounded-lg object-contain bg-white/10 p-1 border border-white/25 shadow-sm"
+              className="h-20 w-auto shrink-0 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] sm:h-24"
             />
-            <span className="text-xl font-semibold tracking-[-0.02em]">
-              {t("common.appName", env.appName)}
-            </span>
+            <BrandWordmark size="lg" variant="on-dark" showSubtitle />
           </div>
 
-          <div className="mt-12 max-w-md lg:mt-24">
-            <h1 className="max-w-[15ch] text-3xl font-semibold leading-tight tracking-[-0.025em] sm:text-4xl">
+          <div className="mt-10 max-w-md lg:mt-16">
+            <h1 className="max-w-[16ch] text-3xl font-black leading-[1.25] tracking-tight sm:text-4xl lg:text-[2.65rem] font-heading text-white">
               {t("auth.brandHeadline")}
             </h1>
-            <p className="mt-5 max-w-[52ch] text-base leading-7 text-[#d3e4ec]">
+            <p className="mt-4 max-w-[52ch] text-base leading-7 text-[#d3e4ec]">
               {t("auth.brandDescription")}
             </p>
           </div>
@@ -179,7 +178,7 @@ export function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold tracking-[-0.02em] text-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
               {t("auth.title")}
             </h2>
             <p className="mt-3 max-w-[52ch] text-sm leading-6 text-muted-foreground">
@@ -244,6 +243,15 @@ export function LoginPage() {
               {!isSubmitting ? <ArrowRight aria-hidden="true" className="rtl:rotate-180" /> : null}
             </Button>
           </form>
+
+          <div className="mt-6 text-center">
+            <Link
+              to="/forgot-password"
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t("auth.forgotPasswordLink")}
+            </Link>
+          </div>
 
           <p className="mt-8 flex items-start gap-3 border-t border-border pt-5 text-xs leading-5 text-muted-foreground">
             <LockKeyhole

@@ -14,7 +14,7 @@ export function RequestTimeline({ events }: RequestTimelineProps) {
   const { t } = useTranslation();
   if (events.length === 0) {
     return (
-      <p className="border-y border-border py-5 text-sm text-muted-foreground">
+      <p className="rounded-lg border border-border/80 bg-surface p-5 text-center text-sm text-muted-foreground shadow-2xs">
         {t("hospital.timelineEmpty")}
       </p>
     );

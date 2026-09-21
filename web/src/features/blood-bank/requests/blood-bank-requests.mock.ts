@@ -8,7 +8,6 @@ import {
 import type {
   BloodBankDocumentItem,
   BloodBankOperationalSnapshot,
-  BloodBankQueueStatus,
   BloodBankRequest,
   BloodBankRequestAction,
   BloodUnit,
@@ -365,50 +364,20 @@ const initialRequests: BloodBankRequest[] = [
 
 let requests = structuredClone(initialRequests);
 
-const actionTransitions: Record<
-  BloodBankRequestAction,
-  { from: BloodBankQueueStatus[]; to: BloodBankQueueStatus; note: string }
-> = {
-  acknowledge: {
-    from: ["submitted"],
-    to: "acknowledged",
-    note: "Request acknowledged in this local preview.",
-  },
-  confirm: {
-    from: ["acknowledged"],
-    to: "confirmed",
-    note: "Request availability confirmed in this local preview.",
-  },
-  start_preparation: {
-    from: ["confirmed"],
-    to: "preparing",
-    note: "Preparation started in this local preview.",
-  },
-  complete: {
-    from: ["preparing"],
-    to: "completed",
-    note: "Request marked complete in this local preview.",
-  },
-  reject: {
-    from: ["submitted", "acknowledged"],
-    to: "rejected",
-    note: "Request rejected in this local preview.",
-  },
-};
-
-function waitForMock<T>(value: T) {
+function waitForMock<T>(value: T): Promise<T> {
   return new Promise<T>((resolve) => {
     window.setTimeout(() => resolve(value), mockLatency);
   });
 }
 
-export function getAvailableActions(
-  request: BloodBankRequest,
-): BloodBankRequestAction[] {
-  return (Object.keys(actionTransitions) as BloodBankRequestAction[]).filter(
-    (action) => actionTransitions[action].from.includes(request.status),
-  );
-}
+import {
+  ACTION_TRANSITIONS,
+  getAvailableActions,
+} from "@/features/blood-bank/constants/blood-bank.constants";
+
+const actionTransitions = ACTION_TRANSITIONS;
+
+export { actionTransitions, getAvailableActions };
 
 export async function getBloodBankRequests() {
   return waitForMock(structuredClone(requests));
