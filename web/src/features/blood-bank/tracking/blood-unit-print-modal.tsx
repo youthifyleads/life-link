@@ -83,6 +83,7 @@ export function BloodUnitPrintModal({
               box-sizing: border-box !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
+              color-adjust: exact !important;
             }
             html, body {
               margin: 0 !important;
@@ -107,6 +108,18 @@ export function BloodUnitPrintModal({
               page-break-after: avoid !important;
               break-after: avoid !important;
             }
+            /* Ensure QR code SVGs print at correct size with sharp edges */
+            [role="img"] svg {
+              width: 100% !important;
+              height: 100% !important;
+              display: block !important;
+              shape-rendering: crispEdges !important;
+              image-rendering: pixelated !important;
+            }
+            [role="img"] svg path,
+            [role="img"] svg rect {
+              shape-rendering: crispEdges !important;
+            }
           </style>
         </head>
         <body>
@@ -117,6 +130,7 @@ export function BloodUnitPrintModal({
     doc.close();
 
     setIsPrinting(true);
+    // 500ms delay gives the iframe time to fully render SVG barcodes & QR codes
     setTimeout(() => {
       try {
         iframe.contentWindow?.focus();
@@ -128,7 +142,7 @@ export function BloodUnitPrintModal({
         setIsPrinting(false);
         setTimeout(() => setHasPrinted(false), 3000);
       }
-    }, 250);
+    }, 500);
   };
 
   return (

@@ -158,7 +158,7 @@ export function BloodUnitLabel({
         </div>
 
         {/* QUADRANT 3 (Bottom-Left): Component & Cold-Chain Specs */}
-        <div className="p-2 flex flex-col justify-between min-h-[125px]">
+        <div className="p-2 flex flex-col justify-between min-h-[110px]">
           <div>
             <span className="block text-[8.5px] font-bold uppercase tracking-wider text-gray-700">
               {t("common.component", "Biological Component")}
@@ -192,7 +192,7 @@ export function BloodUnitLabel({
         </div>
 
         {/* QUADRANT 4 (Bottom-Right): Expiry, Allocation & Verification QR */}
-        <div className="p-2 flex flex-col justify-between min-h-[125px] bg-gray-50/70">
+        <div className="p-2 flex flex-col justify-between min-h-[110px] bg-gray-50/70">
           <div>
             <span className="block text-[8.5px] font-bold uppercase tracking-wider text-gray-700">
               {t("bloodBank.expiry", "Expiration Date")}
@@ -213,12 +213,13 @@ export function BloodUnitLabel({
 
           {/* Verification QR Code or Compact Reference */}
           {showQr ? (
-            <div className="flex items-center gap-1.5 pt-1 border-t border-dashed border-gray-400">
+            <div className="flex items-center gap-2 pt-1 border-t border-dashed border-gray-400">
               <div className="border border-black bg-white p-0.5 shrink-0">
                 <MedicalQrCode
-                  value={finalVerificationUrl}
-                  size={44}
-                  margin={0}
+                  value={unit.id}
+                  size={48}
+                  margin={1}
+                  errorCorrectionLevel="H"
                   ariaLabel={`Verification QR code for unit ${unit.id}`}
                 />
               </div>
