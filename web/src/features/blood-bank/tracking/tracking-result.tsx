@@ -20,7 +20,6 @@ import {
   formatShortId,
   formatStorageLocation,
 } from "@/features/blood-bank/components/blood-bank-formatters";
-import { BloodUnitLabel } from "@/features/blood-bank/tracking/blood-unit-label";
 import { BloodUnitPrintModal } from "@/features/blood-bank/tracking/blood-unit-print-modal";
 import type {
   BloodUnit,
@@ -99,11 +98,6 @@ export function TrackingResult({ unit }: TrackingResultProps) {
 
   return (
     <div className="border border-border/80 bg-surface shadow-2xs rounded-lg p-4 sm:p-5 space-y-5">
-      {/* Printable Thermal Label (Visible only on print) */}
-      <div className="hidden print:block printable-unit-label mb-6">
-        <BloodUnitLabel unit={unit} />
-      </div>
-
       {/* Hero Unit Identification Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/70 pb-4">
         <div className="flex items-center gap-3">

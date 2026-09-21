@@ -1,19 +1,21 @@
 import {
+  Check,
   CheckCircle2,
   Clock,
+  Copy,
   MapPin,
   Phone,
   QrCode,
   ThermometerSnowflake,
   Truck,
 } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { formatDateTime } from "@/features/hospital/components/hospital-formatters";
 import type { HospitalRequest } from "@/features/hospital/types/hospital.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
 import { RequestStatusBadge } from "@/shared/components/clinical/request-status-badge";
-import { TechnicalText } from "@/shared/components/i18n/bidi-text";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -38,11 +40,28 @@ export function HospitalDeliveryTrackingDialog({
   onOpenQr,
 }: HospitalDeliveryTrackingDialogProps) {
   const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
 
   const isCompleted = request.status === "completed";
 
-  const trackingCode =
-    request.trackingReference || `SEC-REQ-${request.id.replace("REQ-", "").replace("BR-", "")}-EGY`;
+  // Clean, human-readable requisition & tracking code (avoids raw JWT string overflow)
+  const rawId = request.id.replace("REQ-", "").replace("BR-", "").replace("#", "");
+  const displayTrackingCode =
+    request.id.startsWith("REQ-") || request.id.startsWith("BR-")
+      ? request.id
+      : `REQ-${rawId.slice(0, 8).toUpperCase()}`;
+
+  const copyPayload = request.trackingReference || displayTrackingCode;
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(copyPayload);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
 
   const waypoints = [
     {
@@ -143,23 +162,46 @@ export function HospitalDeliveryTrackingDialog({
           </div>
 
           {/* Blood Order Summary Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-surface p-3.5 rounded-lg">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-surface p-3 sm:p-3.5 rounded-lg">
+            <div className="flex items-center gap-3 min-w-0">
               <BloodGroupBadge group={request.bloodGroup} />
-              <div>
+              <div className="min-w-0">
                 <span className="font-semibold text-foreground text-xs block">
                   {request.quantity} {request.quantity === 1 ? "كيس دم" : "أكياس دم"}
                 </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {request.reason}
+                <span
+                  className="text-[11px] text-muted-foreground truncate block max-w-[200px] sm:max-w-xs"
+                  title={request.reason}
+                >
+                  {request.reason || "طلب نقل دم سريري"}
                 </span>
               </div>
             </div>
-            <div className="text-end">
-              <span className="text-[10px] text-muted-foreground block">كود التتبع:</span>
-              <span className="font-mono font-bold text-foreground text-xs">
-                <TechnicalText>{trackingCode}</TechnicalText>
+            <div className="text-end shrink-0 ms-auto">
+              <span className="text-[10px] text-muted-foreground block">
+                {t("hospital.trackingCode", "كود التتبع:")}
               </span>
+              <div className="mt-0.5 flex items-center gap-1.5 justify-end">
+                <span
+                  className="font-mono font-bold text-foreground text-xs bg-muted/70 px-2 py-0.5 rounded border border-border select-all"
+                  dir="ltr"
+                >
+                  {displayTrackingCode}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void handleCopyCode()}
+                  className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                  title={t("common.copy", "نسخ كود التتبع")}
+                  aria-label={t("common.copy", "نسخ كود التتبع")}
+                >
+                  {copied ? (
+                    <Check className="size-3.5 text-success" />
+                  ) : (
+                    <Copy className="size-3.5" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
