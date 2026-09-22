@@ -24,7 +24,7 @@ export function PasswordResetShell({
         <div>
           <div className="flex items-center gap-5">
             <img
-              src="/logo.svg"
+              src="/logo-white.svg"
               alt="Life Link Logo"
               className="h-16 w-auto shrink-0 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] sm:h-20"
             />

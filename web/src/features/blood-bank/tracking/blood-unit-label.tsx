@@ -216,7 +216,7 @@ export function BloodUnitLabel({
             <div className="flex items-center gap-2 pt-1 border-t border-dashed border-gray-400">
               <div className="border border-black bg-white p-0.5 shrink-0">
                 <MedicalQrCode
-                  value={unit.id}
+                  value={finalVerificationUrl}
                   size={48}
                   margin={1}
                   errorCorrectionLevel="H"

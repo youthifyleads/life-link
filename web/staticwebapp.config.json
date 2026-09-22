@@ -6,6 +6,7 @@
       "/assets/*",
       "/logo.webp",
       "/logo.svg",
+      "/logo-white.svg",
       "/*.{png,jpg,jpeg,webp,svg,ico,css,js,json,woff,woff2,ttf}"
     ]
   },
