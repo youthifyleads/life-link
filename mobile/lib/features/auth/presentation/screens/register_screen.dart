@@ -143,6 +143,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             'isRegistration': state.isRegistration,
             'pendingUserData': state.pendingUserData,
             'challengeId': state.challengeId,
+            'devOtp': state.devOtp,
           });
         }
         if (state is AuthAuthenticated) {

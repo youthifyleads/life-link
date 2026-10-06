@@ -226,6 +226,9 @@ class AppRouter {
                   challengeId: map['challengeId'] is String
                       ? map['challengeId'] as String
                       : null,
+                  devOtp: map['devOtp'] is String
+                      ? map['devOtp'] as String
+                      : null,
                 );
               }
             } else {

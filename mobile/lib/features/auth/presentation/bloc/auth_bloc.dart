@@ -102,16 +102,18 @@ class AuthOtpRequiredState extends AuthState {
   final bool isRegistration;
   final Map<String, dynamic>? pendingUserData;
   final String? challengeId;
+  final String? devOtp;
 
   AuthOtpRequiredState({
     required this.email,
     this.isRegistration = false,
     this.pendingUserData,
     this.challengeId,
+    this.devOtp,
   });
 
   @override
-  List<Object?> get props => [email, isRegistration, challengeId];
+  List<Object?> get props => [email, isRegistration, challengeId, devOtp];
 }
 
 class AuthAuthenticated extends AuthState {
@@ -246,6 +248,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       isRegistration: true,
       challengeId: registration.challengeId,
       pendingUserData: null,
+      devOtp: registration.devOtp,
     ));
   }
 

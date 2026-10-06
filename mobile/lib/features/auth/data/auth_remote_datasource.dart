@@ -35,11 +35,13 @@ class RegistrationResult {
   final UserModel? user;
   final String? challengeId;
   final int? expiresInSeconds;
+  final String? devOtp;
 
   RegistrationResult({
     this.user,
     this.challengeId,
     this.expiresInSeconds,
+    this.devOtp,
   });
 }
 
@@ -118,6 +120,7 @@ class AuthRemoteDataSource {
             ? UserModel.fromJson(body['user'] as Map<String, dynamic>)
             : null,
         challengeId: body['challenge_id'] as String?,
+        devOtp: body['dev_otp'] as String?,
       ));
     } on DioException catch (e) {
       return _handleDioError(e);

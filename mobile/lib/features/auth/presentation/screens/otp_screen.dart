@@ -16,6 +16,7 @@ class OtpVerificationScreen extends StatefulWidget {
   final bool isRegistration;
   final Map<String, dynamic>? pendingUserData;
   final String? challengeId;
+  final String? devOtp;
 
   const OtpVerificationScreen({
     super.key,
@@ -23,6 +24,7 @@ class OtpVerificationScreen extends StatefulWidget {
     this.isRegistration = false,
     this.pendingUserData,
     this.challengeId,
+    this.devOtp,
   });
 
   @override
@@ -39,7 +41,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   void initState() {
     super.initState();
-    _otpCtrl = TextEditingController();
+    _otpCtrl = TextEditingController(text: widget.devOtp ?? '');
     _challengeId = widget.challengeId;
     _startCountdown();
   }
@@ -201,7 +203,35 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               fontFamily: 'Cairo',
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.xl),
+                          const SizedBox(height: AppSpacing.lg),
+
+                          if (widget.devOtp != null && widget.devOtp!.isNotEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight.withValues(alpha: 0.45),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'رمز التحقق للتجربة: ${widget.devOtp}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                      fontFamily: 'Cairo',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                          ],
 
                           // PIN input field
                           TextField(
