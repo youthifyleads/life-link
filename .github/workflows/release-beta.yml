@@ -1,0 +1,130 @@
+name: LifeLink Mobile Beta Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g., v1.0.0-beta.1)'
+        required: false
+        default: 'v1.0.0-beta.1'
+      is_prerelease:
+        description: 'Mark as Pre-release (Beta)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release-apk:
+    name: Build & Release Android Beta APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine Release Tag
+        id: release_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          elif [ -n "${{ github.ref_name }}" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="v1.0.0-beta.1"
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Building release for tag: $TAG"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Verify Code Quality
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build Android Release APK (Azure Backend)
+        run: |
+          flutter build apk --release --dart-define=APP_ENV=azure
+
+      - name: Prepare Release Artifacts
+        id: prepare_artifacts
+        run: |
+          APK_SOURCE="build/app/outputs/flutter-apk/app-release.apk"
+          TAG="${{ steps.release_tag.outputs.TAG }}"
+          TARGET_NAME="lifelink-${TAG}.apk"
+          
+          if [ -f "$APK_SOURCE" ]; then
+            cp "$APK_SOURCE" "$TARGET_NAME"
+            echo "APK_PATH=mobile/$TARGET_NAME" >> "$GITHUB_OUTPUT"
+            echo "Artifact prepared: $TARGET_NAME"
+            ls -lh "$TARGET_NAME"
+          else
+            echo "::error::Built APK not found at $APK_SOURCE"
+            exit 1
+          fi
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          TAG="${{ steps.release_tag.outputs.TAG }}"
+          cat << 'EOF' > release_notes.md
+          ## 🩸 LifeLink Mobile — Beta Release
+
+          Welcome to the **LifeLink Mobile Beta**! This version connects directly to the live **Azure Cloud Backend** for live blood donation and caregiver workflows.
+
+          ### 📦 Download & Installation (Android)
+          1. Download the **`.apk`** file attached below.
+          2. On your Android device, tap the downloaded file.
+          3. If prompted, allow **"Install unknown apps"** from your browser / file manager.
+          4. Open **LifeLink** and sign in or register!
+
+          ---
+
+          ### 📱 iOS Availability
+          - **Note for iPhone Users**: iPhones cannot run `.apk` files.
+          - iOS testing will be distributed through **Apple TestFlight**.
+          - The iOS project scaffold is initialized in this repository and ready for TestFlight builds once Apple Developer credentials are configured.
+
+          ---
+
+          ### ☁️ Cloud & Architecture
+          - **Backend**: Azure App Service (`lifelink-backend-dev`)
+          - **Database**: Azure SQL Server
+          - **Auth & Storage**: JWT + Secure Local Storage + Azure Cloud
+          - **App Icons**: Official LifeLink Adaptive Icons (Light, Dark, and Android 13+ Themed Icons)
+          EOF
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_tag.outputs.TAG }}
+          name: "LifeLink Mobile ${{ steps.release_tag.outputs.TAG }} (Beta)"
+          body_path: mobile/release_notes.md
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.is_prerelease || true }}
+          files: |
+            mobile/lifelink-*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

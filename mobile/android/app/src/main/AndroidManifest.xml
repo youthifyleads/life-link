@@ -22,6 +22,7 @@
         android:label="LifeLink"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:usesCleartextTraffic="false">
         
         <activity

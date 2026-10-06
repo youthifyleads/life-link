@@ -256,51 +256,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: AppSpacing.sm),
-
-                      // Quick preview shortcuts for testing
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton.icon(
-                            icon: const Icon(Icons.water_drop_rounded, size: 15, color: AppColors.primary),
-                            label: const Text(
-                              'معاينة كمتبرع',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
-                                fontFamily: 'Cairo',
-                              ),
-                            ),
-                            onPressed: () {
-                              context.read<AuthBloc>().add(AuthSetDemoUserEvent(UserRole.donor));
-                              context.go('/donor/home');
-                            },
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4),
-                            child: Text('•', style: TextStyle(color: AppColors.border)),
-                          ),
-                          TextButton.icon(
-                            icon: const Icon(Icons.favorite_rounded, size: 15, color: AppColors.textSecondary),
-                            label: const Text(
-                              'معاينة كمرافق',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textSecondary,
-                                fontFamily: 'Cairo',
-                              ),
-                            ),
-                            onPressed: () {
-                              context.read<AuthBloc>().add(AuthSetDemoUserEvent(UserRole.caregiver));
-                              context.go('/caregiver/home');
-                            },
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),

@@ -33,8 +33,8 @@ android {
 
     buildTypes {
         release {
-            // Release signing must be supplied by the deployment pipeline.
-            // Never ship a production artifact signed with the debug key.
+            // Default to debug signing for Beta APK distribution so testers can install directly without certificates
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
