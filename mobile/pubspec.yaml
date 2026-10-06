@@ -36,7 +36,7 @@ dependencies:
 
 
   # QR Code Scanner
-  mobile_scanner: ^5.1.1
+  mobile_scanner: ^7.4.2
 
   # QR Code Display
   qr_flutter: ^4.1.0

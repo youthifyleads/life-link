@@ -9,10 +9,10 @@ import '../bloc/tracking_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// QR Scanner Screen
-/// - Uses [mobile_scanner] to activate the device camera.
+/// - Uses [mobile_scanner] 7.x with modern CameraX 1.6+ for Android 15 & 16 support.
 /// - Explicitly requests and verifies Camera runtime permissions.
 /// - Handles application lifecycle (resumed/paused) cleanly.
-/// - NEVER validates the QR payload locally.
+/// - Touches are never intercepted or blocked when an error occurs.
 /// - Forwards the scanned reference to FastAPI: POST /api/v1/qr/scan
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -29,7 +29,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   bool _isPermissionGranted = false;
   bool _isPermissionPermanentlyDenied = false;
   bool _isCameraStarted = false;
-  String? _cameraErrorMessage;
 
   @override
   void initState() {
@@ -49,7 +48,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
-        // When coming back from background or Phone Settings, re-check permissions and restart camera
         _checkAndRequestPermission(isLifecycleResume: true);
         break;
       case AppLifecycleState.inactive:
@@ -91,13 +89,15 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     }
 
     if (isLifecycleResume) {
-      // Just check status on resume without repeatedly spamming the system dialog
       if (mounted) {
         setState(() {
           _isPermissionGranted = status.isGranted;
           _isPermissionChecking = false;
           _isPermissionPermanentlyDenied = status.isPermanentlyDenied;
         });
+        if (status.isGranted) {
+          _startCamera();
+        }
       }
       return;
     }
@@ -131,15 +131,13 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   Future<void> _startCamera() async {
     if (_isCameraStarted) return;
     try {
-      setState(() => _cameraErrorMessage = null);
       await _cameraController.start();
-      _isCameraStarted = true;
-    } catch (e) {
       if (mounted) {
-        setState(() {
-          _cameraErrorMessage = e.toString();
-          _isCameraStarted = false;
-        });
+        setState(() => _isCameraStarted = true);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isCameraStarted = false);
       }
     }
   }
@@ -242,7 +240,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                 backgroundColor: AppColors.error,
               ),
             );
-            // Allow re-scanning after error
             setState(() => _hasScanned = false);
             _startCamera();
           }
@@ -268,20 +265,38 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             } else if (!_isPermissionGranted) {
               bodyContent = _buildPermissionDeniedView();
             } else {
-              bodyContent = Stack(
-                children: [
-                  // Camera view
-                  MobileScanner(
-                    controller: _cameraController,
-                    onDetect: _onDetect,
-                    errorBuilder: (context, error, child) {
-                      return _buildScannerErrorView(error);
-                    },
-                  ),
+              // Listen to camera controller state to separate error UI from scanning overlay
+              bodyContent = ValueListenableBuilder<MobileScannerState>(
+                valueListenable: _cameraController,
+                builder: (context, scannerState, child) {
+                  final error = scannerState.error;
+                  if (error != null) {
+                    // When error occurs, show error view with 100% working touch (NO overlay on top!)
+                    return _buildScannerErrorView(error);
+                  }
 
-                  // Scan overlay with clear cutout hole
-                  _buildScanOverlay(),
-                ],
+                  // Normal camera preview with non-blocking hardware cutout overlay
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Camera texture view
+                      MobileScanner(
+                        controller: _cameraController,
+                        onDetect: _onDetect,
+                        errorBuilder: (context, err) => _buildScannerErrorView(err),
+                      ),
+
+                      // Hardware cutout overlay - wrapped in IgnorePointer so touches are NEVER blocked
+                      IgnorePointer(
+                        ignoring: true,
+                        child: _buildScanCutout(),
+                      ),
+
+                      // Interactive controls on bottom (Instructions + Manual Code Input)
+                      _buildBottomControls(),
+                    ],
+                  );
+                },
               );
             }
 
@@ -415,19 +430,21 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   }
 
   Widget _buildScannerErrorView(MobileScannerException error) {
-    String message = _cameraErrorMessage ?? 'تعذر تشغيل الكاميرا';
+    String message = 'تعذر تشغيل الكاميرا';
     bool isPermission = false;
 
     if (error.errorCode == MobileScannerErrorCode.permissionDenied) {
       message = 'تم رفض إذن الكاميرا';
       isPermission = true;
     } else if (error.errorCode == MobileScannerErrorCode.unsupported) {
-      message = 'الكاميرا غير مدعومة على هذا الجهاز';
+      message = 'الكاميرا غير مدعومة على هذا الجهاز أو بيئة التشغيل';
+    } else if (error.errorDetails?.message != null && error.errorDetails!.message!.isNotEmpty) {
+      message = 'خطأ في الكاميرا: ${error.errorDetails!.message}';
     }
 
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -445,9 +462,16 @@ class _QrScannerScreenState extends State<QrScannerScreen>
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
             ),
+            if (error.errorCode.name.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'رمز الخطأ: ${error.errorCode.name}',
+                style: const TextStyle(color: Colors.white38, fontSize: 11),
+              ),
+            ],
             const SizedBox(height: 8),
             const Text(
-              'يمكنك إعادة المحاولة أو إدخال رقم الطلب يدوياً بدون كاميرا',
+              'يمكنك إعادة المحاولة أو إدخال رقم الطلب المطبوع يدوياً مباشرة دون الحاجة للكاميرا',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
@@ -458,11 +482,11 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                   await openAppSettings();
                 },
                 icon: const Icon(Icons.settings_rounded, size: 18),
-                label: const Text('فتح إعدادات الهاتف'),
+                label: const Text('فتح إعدادات الهاتف لتفعيل الكاميرا'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               )
@@ -480,7 +504,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -488,10 +512,10 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             OutlinedButton.icon(
               onPressed: _showManualInputDialog,
               icon: const Icon(Icons.keyboard_outlined, color: Colors.white, size: 18),
-              label: const Text('إدخال كود الطلب يدوياً', style: TextStyle(color: Colors.white)),
+              label: const Text('إدخال كود الطلب يدوياً', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
                 side: const BorderSide(color: Colors.white54),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -562,7 +586,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'إذا تعذر استخدام الكاميرا أو للمحاكي، يمكنك إدخال رقم الطلب أو كود التتبع يدوياً',
+                        'أدخل رقم طلب الدم أو كود التتبع المطبوع في إذن الصرف بالمستشفى',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                       ),
@@ -590,8 +614,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                           ),
                         ),
                       ),
-
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       ElevatedButton.icon(
                         onPressed: () {
                           final code = controller.text.trim();
@@ -625,7 +648,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     );
   }
 
-  Widget _buildScanOverlay() {
+  Widget _buildScanCutout() {
     return LayoutBuilder(builder: (context, constraints) {
       final boxSize = (constraints.maxWidth * 0.68).clamp(240.0, 320.0);
       final left = (constraints.maxWidth - boxSize) / 2;
@@ -633,8 +656,8 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       final scanRect = Rect.fromLTWH(left, top, boxSize, boxSize);
 
       return Stack(
+        fit: StackFit.expand,
         children: [
-          // Clear hardware cutout overlay that won't invert or black-out on Android textures
           CustomPaint(
             size: Size(constraints.maxWidth, constraints.maxHeight),
             painter: _ScannerCutoutPainter(
@@ -643,64 +666,64 @@ class _QrScannerScreenState extends State<QrScannerScreen>
               overlayColor: Colors.black.withValues(alpha: 0.58),
             ),
           ),
-
-          // Corner borders on the scan box
           Positioned(
             left: left,
             top: top,
             child: _buildScanCorners(boxSize),
           ),
-
-          // Instructions & Manual Code Action
-          Positioned(
-            bottom: 36,
-            left: 24,
-            right: 24,
-            child: Column(
-              children: [
-                const Icon(Icons.qr_code_scanner, color: Colors.white, size: 36),
-                const SizedBox(height: 10),
-                const Text(
-                  'وجّه الكاميرا نحو كود طلب الدم',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'المطبوع في إذن صرف المستشفى أو المعروض على شاشة الطبيب',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: _showManualInputDialog,
-                  icon: const Icon(Icons.keyboard_outlined, color: Colors.white, size: 18),
-                  label: const Text(
-                    'إدخال كود الطلب يدوياً كرقم',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white70, width: 1.5),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    backgroundColor: Colors.black.withValues(alpha: 0.35),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       );
     });
+  }
+
+  Widget _buildBottomControls() {
+    return Positioned(
+      bottom: 36,
+      left: 24,
+      right: 24,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.qr_code_scanner, color: Colors.white, size: 36),
+          const SizedBox(height: 10),
+          const Text(
+            'وجّه الكاميرا نحو كود طلب الدم',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'المطبوع في إذن صرف المستشفى أو المعروض على شاشة الطبيب',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _showManualInputDialog,
+            icon: const Icon(Icons.keyboard_outlined, color: Colors.white, size: 18),
+            label: const Text(
+              'إدخال كود الطلب يدوياً كرقم',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.white70, width: 1.5),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              backgroundColor: Colors.black.withValues(alpha: 0.35),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildScanCorners(double size) {
@@ -714,25 +737,21 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       height: size,
       child: Stack(
         children: [
-          // Top-left
           Positioned(
             top: 0,
             left: 0,
             child: _corner(borderColor, borderWidth, borderLength, radius, 0, 0),
           ),
-          // Top-right
           Positioned(
             top: 0,
             right: 0,
             child: _corner(borderColor, borderWidth, borderLength, radius, 0, 1),
           ),
-          // Bottom-left
           Positioned(
             bottom: 0,
             left: 0,
             child: _corner(borderColor, borderWidth, borderLength, radius, 1, 0),
           ),
-          // Bottom-right
           Positioned(
             bottom: 0,
             right: 0,
@@ -766,8 +785,6 @@ class _QrScannerScreenState extends State<QrScannerScreen>
 }
 
 /// A CustomPainter that cleanly punches a rounded cutout hole out of a dark overlay.
-/// Unlike BlendMode.srcOut, this works reliably across all Android GPUs, Impeller, and Skia
-/// without inverting or blacking out underlying camera texture views.
 class _ScannerCutoutPainter extends CustomPainter {
   final Rect cutoutRect;
   final double borderRadius;
