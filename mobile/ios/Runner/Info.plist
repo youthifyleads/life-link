@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>يحتاج تطبيق LifeLink إلى الكاميرا لمسح كود طلب الدم وفواتير المستشفى</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>يحتاج تطبيق LifeLink إلى الوصول للصور لرفع التقارير الطبية</string>
 </dict>
 </plist>

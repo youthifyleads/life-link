@@ -354,38 +354,7 @@ class _CaregiverHomeScreenState extends State<CaregiverHomeScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            ActionChip(
-                              label: Text(
-                                isAr ? 'طلب دم معتمد (700 ج.م)' : 'Verified Request (700 EGP)',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
-                              ),
-                              backgroundColor: const Color(0xFFF1F5F9),
-                              avatar: const Icon(Icons.payment_rounded, size: 14, color: AppColors.primary),
-                              onPressed: () {
-                                controller.text = '3c72d998-e459-484c-b8c3-457d79269436';
-                                submitCode(controller.text, navigateToPayment: true);
-                              },
-                            ),
-                            ActionChip(
-                              label: const Text(
-                                'REQ-2024-8842',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, fontFamily: 'Cairo'),
-                              ),
-                              backgroundColor: const Color(0xFFF1F5F9),
-                              avatar: const Icon(Icons.local_hospital_rounded, size: 14, color: Color(0xFF1976D2)),
-                              onPressed: () {
-                                controller.text = 'REQ-2024-8842';
-                                submitCode(controller.text, navigateToPayment: false);
-                              },
-                            ),
-                          ],
-                        ),
+
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: isProcessing
