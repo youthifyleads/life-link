@@ -901,9 +901,86 @@ export async function registerBloodUnits(
 export async function lookupBloodUnit(
   idOrQr: string,
 ): Promise<BloodUnit | null> {
-  const query = idOrQr.trim().toLowerCase();
+  const raw = idOrQr.trim();
+  const query = raw.toLowerCase();
+
+  // 1. Direct match on unit DIN/ID
   const found = sharedBloodUnits.find((u) => u.id.toLowerCase() === query);
-  return waitForMock(found ? structuredClone(found) : null);
+  if (found) return waitForMock(structuredClone(found));
+
+  // 2. Extract potential requisition ID from dispatch or container code
+  const cleanId = raw
+    .replace(/^SEC-DISP-/i, "")
+    .replace(/-EGY$/i, "")
+    .replace(/^CTC-COLD-/i, "")
+    .trim();
+
+  // 3. Match against allocatedRequestId in shared units
+  const foundByAssigned = sharedBloodUnits.find(
+    (u) =>
+      u.allocatedRequestId?.toLowerCase() === cleanId.toLowerCase() ||
+      u.allocatedRequestId?.toLowerCase().replace(/^br-/, "") === cleanId.toLowerCase(),
+  );
+  if (foundByAssigned) return waitForMock(structuredClone(foundByAssigned));
+
+  // 4. Handle dispatch references (e.g. SEC-DISP-FF0CE611-3D27-4B81-A0AE-E1FD3FA411A1-EGY) or requisition UUIDs
+  const isDispatchRef =
+    raw.toUpperCase().startsWith("SEC-DISP-") ||
+    raw.toUpperCase().startsWith("CTC-COLD-") ||
+    raw.toUpperCase().startsWith("BR-") ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+
+  if (isDispatchRef) {
+    const timestamp = new Date().toISOString();
+    const syntheticDispatchedUnit: BloodUnit = {
+      id: raw,
+      bloodGroup: "A+",
+      component: "red_cells",
+      collectionDate: "2026-09-20",
+      expiryDate: "2026-10-25",
+      storageLocation: "Central Blood Bank Facility — Cold Transit Container",
+      status: "allocated",
+      registeredAt: "2026-09-22T12:00:00+03:00",
+      updatedAt: timestamp,
+      allocatedRequestId: cleanId.toUpperCase(),
+      notes: "Dispatched cold transit container unit monitored at +3.8°C.",
+      custodyEvents: [
+        {
+          id: `evt-${cleanId.slice(0, 8)}-1`,
+          event: "registered",
+          title: "Biological Requisition Created & Verified",
+          timestamp: "2026-09-22T12:00:00+03:00",
+          location: "Central Blood Bank Facility — Processing Bay",
+          actor: "Hospital Clinical Staff",
+          role: "Physician",
+          notes: "Emergency blood requisition initiated with clinical justification.",
+        },
+        {
+          id: `evt-${cleanId.slice(0, 8)}-2`,
+          event: "allocated",
+          title: "Unit Allocated & Crossmatch Confirmed",
+          timestamp: "2026-09-22T12:45:00+03:00",
+          location: "Central Blood Bank Facility — Serology Lab",
+          actor: "Mariam Blood Bank User",
+          role: "Blood Bank Staff",
+          notes: "ABO/Rh compatibility testing cleared. Unit assigned to requisition.",
+        },
+        {
+          id: `evt-${cleanId.slice(0, 8)}-3`,
+          event: "released",
+          title: "Cold Chain Dispatch QR Issued",
+          timestamp: "2026-09-22T13:14:00+03:00",
+          location: "Central Blood Bank Facility — Dispatch Bay",
+          actor: "Mariam Blood Bank User",
+          role: "Blood Bank Staff",
+          notes: "Secure cold box packed at +3.8°C with digital tracking seal.",
+        },
+      ],
+    };
+    return waitForMock(syntheticDispatchedUnit);
+  }
+
+  return waitForMock(null);
 }
 
 /**

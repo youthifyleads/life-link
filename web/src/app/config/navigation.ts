@@ -5,14 +5,11 @@ import {
   Building2,
   ClipboardList,
   FileCheck2,
-  History,
   Hospital,
-  Inbox,
   LayoutDashboard,
   QrCode,
   ScrollText,
   ShieldCheck,
-  Ticket,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -161,74 +158,8 @@ export const navigationByRole: Record<UserRole, NavigationGroup[]> = {
       ],
     },
   ],
-  donor: [
-    {
-      label: "Donor Services",
-      items: [
-        {
-          label: "Dashboard",
-          href: "/donor/dashboard",
-          icon: LayoutDashboard,
-          enabled: true,
-        },
-        {
-          label: "Donation requests",
-          href: "/donor/requests",
-          icon: Inbox,
-          enabled: true,
-        },
-        {
-          label: "Donation history",
-          href: "/donor/donations",
-          icon: History,
-          enabled: true,
-        },
-        {
-          label: "Donation vouchers",
-          href: "/donor/vouchers",
-          icon: Ticket,
-          enabled: true,
-        },
-        {
-          label: "Consents & rights",
-          href: "/donor/consents",
-          icon: ShieldCheck,
-          enabled: true,
-        },
-        {
-          label: "Notifications",
-          href: "/notifications",
-          icon: Bell,
-          enabled: true,
-        },
-      ],
-    },
-  ],
-  caregiver: [
-    {
-      label: "Caregiver Tracking",
-      items: [
-        {
-          label: "Dashboard",
-          href: "/caregiver/dashboard",
-          icon: LayoutDashboard,
-          enabled: true,
-        },
-        {
-          label: "QR scan & lookup",
-          href: "/caregiver/scan",
-          icon: QrCode,
-          enabled: true,
-        },
-        {
-          label: "Notifications",
-          href: "/notifications",
-          icon: Bell,
-          enabled: true,
-        },
-      ],
-    },
-  ],
+  donor: [],
+  caregiver: [],
   medical_lead: [
     {
       label: "Hospital operations",

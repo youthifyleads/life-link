@@ -33,6 +33,11 @@ class SQLAlchemyRequestRepository(RequestRepository):
         return request
 
     async def get_by_id(self, request_id: str) -> BloodRequestRecord | None:
+        try:
+            import uuid
+            uuid.UUID(str(request_id))
+        except (ValueError, TypeError):
+            return None
         result = await self.session.execute(select(BloodRequestModel).where(BloodRequestModel.blood_request_id == request_id))
         obj = result.scalar_one_or_none()
         return request_to_record(obj) if obj else None
@@ -40,6 +45,11 @@ class SQLAlchemyRequestRepository(RequestRepository):
     async def get_by_tracking_reference(self, reference: str) -> BloodRequestRecord | None:
         request_id = decode_tracking_reference(reference)
         if request_id is None:
+            return None
+        try:
+            import uuid
+            uuid.UUID(str(request_id))
+        except (ValueError, TypeError):
             return None
         result = await self.session.execute(select(BloodRequestModel).where(BloodRequestModel.blood_request_id == request_id))
         obj = result.scalar_one_or_none()

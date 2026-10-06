@@ -222,6 +222,8 @@ export const resources = {
           "We could not sign you in. Check your email and password, then try again.",
         accountBanned:
           "This account has been suspended. Please check your email and contact customer support.",
+        mobileOnlyAccount:
+          "Access Denied: Donor and caregiver accounts are mobile-only. The web portal is strictly reserved for hospital, blood bank, and administrative personnel.",
         secureNotice:
           "Authorized healthcare personnel only. Activity is recorded for clinical governance and security.",
         switchRole: "Quick login with test persona:",
@@ -396,7 +398,8 @@ export const resources = {
         uploadedAtLabel: "Uploaded at",
         complianceSeal: "Compliance seal",
         selectRequestError: "Please select a target blood request.",
-        documentNameError: "Please enter a descriptive document name.",
+        documentNameError: "Please enter a document title or file name.",
+        fileRequiredError: "Please select a clinical document file to attach.",
         attachDocumentFailed: "Failed to attach document.",
         loadingDocuments: "Loading clinical documents register…",
         documentsLoadErrorDescription:
@@ -1180,6 +1183,9 @@ export const resources = {
         editUserAction: "Edit User",
         activateUserAction: "Activate",
         deactivateUserAction: "Deactivate",
+        deleteUserTitle: "Delete User Account",
+        deleteUserConfirm:
+          "Are you sure you want to permanently delete user \"{{name}}\"? This action cannot be undone.",
         hospitalsDirectoryTitle: "Hospitals Management",
         hospitalsDirectoryDesc:
           "Manage healthcare facility records, regional governorates, emergency contact channels, and facility access states.",
@@ -1744,6 +1750,8 @@ export const resources = {
           "تعذر تسجيل الدخول. يرجى التحقق من صحة البريد الإلكتروني وكلمة المرور ثم المحاولة مجدداً.",
         accountBanned:
           "تم إيقاف هذا الحساب. يرجى مراجعة بريدك الإلكتروني والتواصل مع الدعم الفني.",
+        mobileOnlyAccount:
+          "تم رفض الوصول: حسابات المتبرعين ومرافقي المرضى مخصصة لتطبيق الهاتف المحمول فقط. بوابة الويب مقتصرة على كوادر المستشفيات وبنوك الدم والإدارة.",
         secureNotice:
           "بوابة مؤمنة مخصصة للكوادر الطبية والإدارية المصرح لها. تخضع كافة العمليات للتوثيق والتدقيق وفق معايير الحوكمة السريرية وأمن المعلومات.",
         switchRole: "تجربة المنظومة بحسابات تمثيلية:",
@@ -1915,7 +1923,8 @@ export const resources = {
         uploadedAtLabel: "وقت الرفع",
         complianceSeal: "ختم الاعتماد",
         selectRequestError: "يرجى اختيار طلب الدم المستهدف.",
-        documentNameError: "يرجى إدخال اسم وصفي للمستند.",
+        documentNameError: "يرجى إدخال عنوان المستند / اسم الملف.",
+        fileRequiredError: "يرجى اختيار ملف لإرفاقه.",
         attachDocumentFailed: "تعذر إرفاق المستند.",
         loadingDocuments: "جارٍ تحميل سجل المستندات الطبية…",
         documentsLoadErrorDescription:
@@ -2684,6 +2693,9 @@ export const resources = {
         editUserAction: "تعديل المستخدم",
         activateUserAction: "تفعيل",
         deactivateUserAction: "تعطيل",
+        deleteUserTitle: "حذف حساب المستخدم",
+        deleteUserConfirm:
+          "هل أنت متأكد من رغبتك في حذف حساب \"{{name}}\" نهائيًا؟ لا يمكن التراجع عن هذا الإجراء.",
         hospitalsDirectoryTitle: "إدارة المستشفيات",
         hospitalsDirectoryDesc:
           "إدارة سجلات المنشآت الصحية، والمحافظات، وقنوات الاتصال الطارئة، وحالات الترخيص.",

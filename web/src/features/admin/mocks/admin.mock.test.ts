@@ -3,6 +3,7 @@ import {
   createAdminBloodBank,
   createAdminHospital,
   createAdminUser,
+  deleteAdminUser,
   getAdminAuditLogs,
   getAdminBloodBanks,
   getAdminHospitals,
@@ -145,5 +146,32 @@ describe("Admin Mock Governance Repository", () => {
     expect(codes).toContain("platform_support");
     expect(codes).toContain("donor");
     expect(codes).toContain("caregiver");
+  });
+
+  it("excludes normal_user and donor from admin web portal user list", async () => {
+    const users = await getAdminUsers();
+    const roles = users.map((u) => u.primaryRole);
+    const emails = users.map((u) => u.email.toLowerCase());
+
+    expect(roles).not.toContain("donor");
+    expect(roles).not.toContain("normal_user");
+    expect(emails).not.toContain("user@lifelink.dev");
+    expect(emails).not.toContain("donor@lifelink.dev");
+  });
+
+  it("deletes a user and appends an audit log event", async () => {
+    const initialUsers = await getAdminUsers();
+    const targetUserId = "USR-002";
+    expect(initialUsers.some((u) => u.id === targetUserId)).toBe(true);
+
+    const result = await deleteAdminUser(targetUserId);
+    expect(result).toBe(true);
+
+    const updatedUsers = await getAdminUsers();
+    expect(updatedUsers.some((u) => u.id === targetUserId)).toBe(false);
+
+    const auditLogs = await getAdminAuditLogs();
+    expect(auditLogs[0].action).toBe("User account deleted");
+    expect(auditLogs[0].entityId).toBe(targetUserId);
   });
 });

@@ -83,3 +83,9 @@ class InMemoryUserRepository(UserRepository):
 
     async def list_all(self) -> list[UserRecord]:
         return list(self._users.values())
+
+    async def delete(self, user_id: str) -> bool:
+        if user_id in self._users:
+            del self._users[user_id]
+            return True
+        return False

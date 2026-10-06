@@ -172,11 +172,16 @@ export function HospitalDocumentsPage() {
       );
       return;
     }
-    const finalDocName =
-      documentName.trim() || selectedFile?.name || "clinical-document.pdf";
+    if (!selectedFile) {
+      setUploadError(
+        t("hospital.fileRequiredError", "Please select a clinical document file to attach."),
+      );
+      return;
+    }
+    const finalDocName = documentName.trim();
     if (!finalDocName) {
       setUploadError(
-        t("hospital.documentNameError", "Please provide a document title or upload a file."),
+        t("hospital.documentNameError", "Please enter a document title or file name."),
       );
       return;
     }
@@ -187,10 +192,9 @@ export function HospitalDocumentsPage() {
         requestId: selectedRequestId,
         file: {
           name: finalDocName,
-          mimeType: selectedFile?.type || "application/pdf",
-          sizeBytes:
-            selectedFile?.size ??
-            (154_000 + Math.floor(Math.random() * 800_000)),
+          mimeType: selectedFile.type || "application/pdf",
+          sizeBytes: selectedFile.size,
+          rawFile: selectedFile,
         },
       });
       setUploadDialogOpen(false);
@@ -712,23 +716,28 @@ export function HospitalDocumentsPage() {
             </div>
 
             {/* Optional Document Title */}
+            {/* Document Title / File Name */}
             <div>
               <label
                 htmlFor="upload-doc-name"
-                className="font-medium text-muted-foreground text-xs"
+                className="font-medium text-foreground text-xs"
               >
                 {t(
                   "hospital.documentTitleFileName",
-                  "Document display name (optional)",
-                )}
+                  "Document title / file name",
+                )} <span className="text-emergency">*</span>
               </label>
               <input
                 id="upload-doc-name"
                 type="text"
                 value={documentName}
-                onChange={(e) => setDocumentName(e.target.value)}
+                onChange={(e) => {
+                  setDocumentName(e.target.value);
+                  if (e.target.value.trim() && uploadError) {
+                    setUploadError(null);
+                  }
+                }}
                 placeholder={
-                  selectedFile?.name ||
                   t(
                     "hospital.documentNamePlaceholder",
                     "e.g., crossmatch-compatibility-report.pdf",
@@ -763,7 +772,7 @@ export function HospitalDocumentsPage() {
                 disabled={
                   uploadMutation.isPending ||
                   !selectedRequestId ||
-                  (!selectedFile && !documentName)
+                  !selectedFile
                 }
               >
                 {uploadMutation.isPending

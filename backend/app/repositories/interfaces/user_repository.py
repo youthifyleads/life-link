@@ -27,3 +27,6 @@ class UserRepository(ABC):
 
     @abstractmethod
     async def list_all(self) -> list[UserRecord]: ...
+
+    @abstractmethod
+    async def delete(self, user_id: str) -> bool: ...

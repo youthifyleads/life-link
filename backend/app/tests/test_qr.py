@@ -16,6 +16,7 @@ def test_valid_reference_scan_returns_no_sensitive_info(client, hospital_token):
     assert set(body.keys()) == {
         "reference", "status", "blood_type", "component", "last_updated",
         "request_id", "unit_price", "total_price", "payment_status", "bank_name",
+        "patient_name", "medical_record_number",
     }
     assert "notes" not in body
     assert "hospital_id" not in body
@@ -71,3 +72,22 @@ def test_tracking_endpoint_matches_scan(client, hospital_token):
     assert resp.json()["status"] == "requested"
     assert resp.json()["request_id"] == created["id"]
     assert resp.json()["payment_status"] == "unpaid"
+
+
+def test_dispatch_reference_scan_resolves_request(client, hospital_token):
+    created = client.post(
+        "/api/v1/requests",
+        json={"blood_type": "A+", "component": "red_cells", "quantity_units": 1},
+        headers=auth_headers(hospital_token),
+    ).json()
+
+    # Formatted like web dispatch modal: SEC-DISP-{request_id}-EGY
+    dispatch_ref = f"SEC-DISP-{created['id']}-EGY"
+    resp = client.post(
+        "/api/v1/qr/scan",
+        json={"reference": dispatch_ref},
+        headers=auth_headers(hospital_token),
+    )
+    assert resp.status_code == 200
+    assert resp.json()["request_id"] == created["id"]
+    assert resp.json()["blood_type"] == "A+"

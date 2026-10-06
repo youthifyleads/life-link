@@ -58,6 +58,11 @@ class QRService:
 
     async def resolve_reference(self, reference: str, current_user: UserRecord | None = None) -> TrackingPublic:
         request = await self._request_repo.get_by_tracking_reference(reference)
+        if request is None and reference.startswith("SEC-DISP-"):
+            clean_ref = reference[len("SEC-DISP-"):]
+            if clean_ref.endswith("-EGY"):
+                clean_ref = clean_ref[:-len("-EGY")]
+            request = await self._request_repo.get_by_id(clean_ref)
         if request is None:
             decoded = decode_tracking_reference(reference)
             if decoded:
@@ -83,7 +88,7 @@ class QRService:
             )
 
         unit_p = float(request.unit_price) if getattr(request, "unit_price", None) is not None else None
-        qty = getattr(request, "quantity_units", 1) or 1
+        qty = int(getattr(request, "quantity_units", 1) or 1)
         total_p = round(unit_p * qty, 2) if unit_p is not None else None
 
         pay_status = "unpaid"

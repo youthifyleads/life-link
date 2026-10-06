@@ -99,7 +99,23 @@ export const adminApi = {
       params.role = filters.role;
     }
     const { data } = await apiClient.get<BackendUserDTO[]>("/users", { params });
-    return data.map(mapBackendUserDtoToAdminUser);
+    // Exclude normal user and donor as they belong exclusively to the mobile app ecosystem
+    return data
+      .filter((u) => {
+        const role = (u.role || "").toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        return (
+          role !== "normal_user" &&
+          role !== "donor" &&
+          email !== "user@lifelink.dev" &&
+          email !== "donor@lifelink.dev"
+        );
+      })
+      .map(mapBackendUserDtoToAdminUser);
+  },
+
+  async deleteUser(id: string): Promise<void> {
+    await apiClient.delete(`/users/${id}`);
   },
 
   async createUser(input: CreateUserInput): Promise<AdminUser> {

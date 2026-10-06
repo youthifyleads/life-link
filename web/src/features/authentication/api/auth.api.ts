@@ -55,6 +55,17 @@ export function adaptBackendUser(data: unknown): AuthenticatedUser {
   }
 
   const roleStr = String(raw.role || raw.primary_role || "hospital_user");
+  if (
+    roleStr === "normal_user" ||
+    roleStr === "donor" ||
+    roleStr === "caregiver" ||
+    raw.email === "donor@lifelink.dev" ||
+    raw.email === "user@lifelink.dev"
+  ) {
+    const error = new Error("MOBILE_ONLY_ROLE");
+    (error as any).code = "MOBILE_ONLY_ROLE";
+    throw error;
+  }
   const primaryRole = mapBackendRoleToFrontendRole(roleStr);
   const orgType =
     primaryRole === "hospital_staff" || primaryRole === "medical_lead"

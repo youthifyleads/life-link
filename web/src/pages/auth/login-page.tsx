@@ -30,29 +30,22 @@ interface LoginLocationState {
 export function getDestinationForRole(role?: UserRole): string {
   if (role === "admin" || role === "platform_support") return "/admin/dashboard";
   if (role === "blood_bank_staff") return "/blood-bank/dashboard";
-  if (role === "donor") return "/donor/dashboard";
-  if (role === "caregiver") return "/caregiver/dashboard";
-  return "/hospital/dashboard";
+  if (role === "hospital_staff" || role === "medical_lead") return "/hospital/dashboard";
+  return "/login";
 }
 
 export function isPathAllowedForRole(path: string, role?: UserRole): boolean {
   if (!role) return false;
-  if (path.startsWith("/hospital") && role !== "hospital_staff" && role !== "medical_lead") {
-    return false;
+  if (path.startsWith("/hospital") && (role === "hospital_staff" || role === "medical_lead")) {
+    return true;
   }
-  if (path.startsWith("/blood-bank") && role !== "blood_bank_staff") {
-    return false;
+  if (path.startsWith("/blood-bank") && role === "blood_bank_staff") {
+    return true;
   }
-  if (path.startsWith("/admin") && role !== "admin" && role !== "platform_support") {
-    return false;
+  if (path.startsWith("/admin") && (role === "admin" || role === "platform_support")) {
+    return true;
   }
-  if (path.startsWith("/donor") && role !== "donor") {
-    return false;
-  }
-  if (path.startsWith("/caregiver") && role !== "caregiver") {
-    return false;
-  }
-  return true;
+  return false;
 }
 
 export function LoginPage() {
@@ -100,9 +93,30 @@ export function LoginPage() {
   }
 
   const onSubmit = handleSubmit(async (values) => {
+    const emailNorm = values.email.trim().toLowerCase();
+    if (emailNorm === "donor@lifelink.dev" || emailNorm === "user@lifelink.dev") {
+      setError("root", {
+        message: t(
+          "auth.mobileOnlyAccount",
+          "Access Denied: Donor and caregiver accounts are mobile-only. The web portal is reserved for hospital, blood bank, and administrative personnel.",
+        ),
+      });
+      return;
+    }
+
     try {
       const authenticatedUser = await signIn(values);
       const role = authenticatedUser?.primary_role;
+      if (role === "donor" || role === "caregiver") {
+        setError("root", {
+          message: t(
+            "auth.mobileOnlyAccount",
+            "Access Denied: Donor and caregiver accounts are mobile-only. The web portal is reserved for hospital, blood bank, and administrative personnel.",
+          ),
+        });
+        return;
+      }
+
       const requestedPath = locationState?.from;
       const targetPath =
         requestedPath && isPathAllowedForRole(requestedPath, role)
@@ -111,6 +125,20 @@ export function LoginPage() {
 
       navigate(targetPath, { replace: true });
     } catch (error) {
+      const isMobileRole =
+        (error instanceof Error && error.message.includes("MOBILE_ONLY_ROLE")) ||
+        (error as any)?.code === "MOBILE_ONLY_ROLE";
+
+      if (isMobileRole) {
+        setError("root", {
+          message: t(
+            "auth.mobileOnlyAccount",
+            "Access Denied: Donor and caregiver accounts are mobile-only. The web portal is reserved for hospital, blood bank, and administrative personnel.",
+          ),
+        });
+        return;
+      }
+
       const apiError = normalizeApiError(error);
       let errorMessage = apiError.message;
       if (apiError.code === "ACCOUNT_BANNED") {

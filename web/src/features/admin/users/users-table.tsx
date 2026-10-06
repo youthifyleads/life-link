@@ -1,4 +1,5 @@
-import { Edit, Eye, Power, PowerOff } from "lucide-react";
+import { Edit, Eye, Power, PowerOff, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -7,9 +8,20 @@ import {
 } from "@/features/admin/components/admin-formatters";
 import { AdminRoleBadge } from "@/features/admin/components/admin-role-badge";
 import { AdminStatusBadge } from "@/features/admin/components/admin-status-badge";
-import { useToggleUserStatus } from "@/features/admin/hooks/use-admin";
+import {
+  useDeleteAdminUser,
+  useToggleUserStatus,
+} from "@/features/admin/hooks/use-admin";
 import type { AdminUser } from "@/features/admin/types/admin.types";
 import { Button } from "@/shared/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 
 interface UsersTableProps {
   users: AdminUser[];
@@ -20,6 +32,8 @@ interface UsersTableProps {
 export function UsersTable({ users, onView, onEdit }: UsersTableProps) {
   const { t } = useTranslation();
   const toggleMutation = useToggleUserStatus();
+  const deleteMutation = useDeleteAdminUser();
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
 
   const handleToggle = (user: AdminUser) => {
     void toggleMutation.mutateAsync(user.id);
@@ -175,6 +189,17 @@ export function UsersTable({ users, onView, onEdit }: UsersTableProps) {
                         <Power className="size-3.5" aria-hidden="true" />
                       )}
                     </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setUserToDelete(user)}
+                      className="size-7 p-0 text-muted-foreground hover:text-rose-700"
+                      title={t("common.delete", "Delete user")}
+                      aria-label={`${t("common.delete", "Delete")} ${user.fullName}`}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
                   </div>
                 </td>
               </tr>
@@ -185,6 +210,68 @@ export function UsersTable({ users, onView, onEdit }: UsersTableProps) {
       <div className="border-t border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
         {t("hospital.records", "records")}: <bdi dir="ltr">{users.length}</bdi>
       </div>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog
+        open={Boolean(userToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setUserToDelete(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base text-destructive flex items-center gap-2">
+              <Trash2 className="size-4.5" />
+              {t("admin.deleteUserTitle", "Delete User Account")}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {t("admin.deleteUserConfirm", {
+                name: userToDelete?.fullName,
+                defaultValue: `Are you sure you want to permanently delete user "${userToDelete?.fullName}"? This action cannot be undone.`,
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2 text-xs text-muted-foreground space-y-1">
+            <p>
+              <span className="font-semibold text-foreground">
+                {t("admin.userEmailCol", "Email")}:
+              </span>{" "}
+              {userToDelete?.email}
+            </p>
+            <p>
+              <span className="font-semibold text-foreground">
+                {t("admin.userRoleCol", "Role")}:
+              </span>{" "}
+              {userToDelete?.primaryRole}
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setUserToDelete(null)}
+              disabled={deleteMutation.isPending}
+            >
+              {t("common.cancel", "Cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={async () => {
+                if (userToDelete) {
+                  await deleteMutation.mutateAsync(userToDelete.id);
+                  setUserToDelete(null);
+                }
+              }}
+            >
+              {deleteMutation.isPending
+                ? t("common.deleting", "Deleting…")
+                : t("common.delete", "Delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

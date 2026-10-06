@@ -693,7 +693,16 @@ function appendAuditLog(event: Omit<AuditLogEvent, "id" | "timestamp" | "actor">
 // -------------------------------------------------------------
 
 export async function getAdminUsers(filters?: Partial<UserFilters>): Promise<AdminUser[]> {
-  let result = [...users];
+  let result = users.filter((u) => {
+    const role = (u.primaryRole || "").toLowerCase();
+    const email = (u.email || "").toLowerCase();
+    return (
+      role !== "donor" &&
+      role !== "normal_user" &&
+      email !== "user@lifelink.dev" &&
+      email !== "donor@lifelink.dev"
+    );
+  });
 
   if (filters?.search?.trim()) {
     const q = filters.search.trim().toLowerCase();
@@ -893,6 +902,30 @@ export async function toggleUserStatus(id: string): Promise<AdminUser> {
   });
 
   return waitForMock(structuredClone(updated));
+}
+
+export async function deleteAdminUser(id: string): Promise<boolean> {
+  const index = users.findIndex((u) => u.id === id);
+  if (index >= 0) {
+    const deleted = users[index];
+    users = users.filter((u) => u.id !== id);
+    appendAuditLog({
+      action: "User account deleted",
+      entityType: "User",
+      entityId: deleted.id,
+      entityName: `${deleted.fullName} (${deleted.primaryRole})`,
+      organization: deleted.organizationName,
+      result: "success",
+      details: `Permanently removed user account ${deleted.fullName} (${deleted.email}).`,
+      metadata: {
+        userId: deleted.id,
+        email: deleted.email,
+        role: deleted.primaryRole,
+      },
+    });
+    return waitForMock(true);
+  }
+  return waitForMock(false);
 }
 
 // -------------------------------------------------------------

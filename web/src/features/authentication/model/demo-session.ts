@@ -15,7 +15,7 @@ function assertDevelopmentMode() {
 
 export type DemoSessionRole = Extract<
   UserRole,
-  "hospital_staff" | "blood_bank_staff" | "admin" | "donor" | "caregiver"
+  "hospital_staff" | "blood_bank_staff" | "admin"
 >;
 
 function createHospitalDemoUser(): AuthenticatedUser {
@@ -94,65 +94,12 @@ function createAdminDemoUser(): AuthenticatedUser {
   };
 }
 
-function createDonorDemoUser(): AuthenticatedUser {
-  return {
-    id: "demo-donor-user",
-    email: "omar.donor@example.test",
-    display_name: "Omar Donor",
-    primary_role: "donor",
-    roles: ["donor"],
-    active_organization_id: "donor-portal",
-    organizations: [
-      {
-        id: "donor-portal",
-        name: "Donor Portal",
-        type: "platform",
-      },
-    ],
-    permissions: [
-      "donor.profile.view",
-      "donor.requests.view",
-      "donor.requests.respond",
-      "donor.donations.view",
-      "donor.vouchers.view",
-      "donor.notifications.view",
-    ],
-  };
-}
-
-function createCaregiverDemoUser(): AuthenticatedUser {
-  return {
-    id: "demo-caregiver-user",
-    email: "sara.caregiver@example.test",
-    display_name: "Sara Caregiver",
-    primary_role: "caregiver",
-    roles: ["caregiver"],
-    active_organization_id: "caregiver-tracking",
-    organizations: [
-      {
-        id: "caregiver-tracking",
-        name: "Caregiver Tracking",
-        type: "platform",
-      },
-    ],
-    permissions: [
-      "caregiver.dashboard.view",
-      "caregiver.tracking.view",
-      "caregiver.scan.use",
-    ],
-  };
-}
-
 function createDemoUser(role: DemoSessionRole): AuthenticatedUser {
   switch (role) {
     case "admin":
       return createAdminDemoUser();
     case "blood_bank_staff":
       return createBloodBankDemoUser();
-    case "donor":
-      return createDonorDemoUser();
-    case "caregiver":
-      return createCaregiverDemoUser();
     case "hospital_staff":
     default:
       return createHospitalDemoUser();
@@ -169,20 +116,18 @@ export function restoreDemoSession() {
   assertDevelopmentMode();
   const storedRole = window.sessionStorage.getItem(demoSessionKey);
 
+  // If a mobile-only role (donor/caregiver) was previously cached in sessionStorage, purge it immediately
+  if (storedRole === "donor" || storedRole === "caregiver") {
+    window.sessionStorage.removeItem(demoSessionKey);
+    return null;
+  }
+
   if (storedRole === "admin") {
     return createDemoUser("admin");
   }
 
   if (storedRole === "blood_bank_staff") {
     return createDemoUser("blood_bank_staff");
-  }
-
-  if (storedRole === "donor") {
-    return createDemoUser("donor");
-  }
-
-  if (storedRole === "caregiver") {
-    return createDemoUser("caregiver");
   }
 
   if (storedRole === "hospital_staff" || storedRole === "active") {

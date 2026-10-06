@@ -43,3 +43,32 @@ def test_admin_can_create_donor_with_phone_and_then_otp_login(client, admin_toke
     otp_verify = client.post("/api/v1/auth/otp/verify", json={"phone": "01099999999", "otp": dev_otp})
     assert otp_verify.status_code == 200, otp_verify.text
     assert "access_token" in otp_verify.json()
+
+
+def test_admin_can_delete_user(client, admin_token, hospital_token):
+    # Create a user to delete
+    create_resp = client.post(
+        "/api/v1/users",
+        headers=auth_headers(admin_token),
+        json={
+            "email": "user.to.delete@lifelink.dev",
+            "full_name": "Temporary User",
+            "password": "Password@123",
+            "role": "hospital_user",
+            "institution_id": "hospital_1",
+        },
+    )
+    assert create_resp.status_code == 201
+    user_id = create_resp.json()["id"]
+
+    # Non-admin cannot delete
+    forbidden_resp = client.delete(f"/api/v1/users/{user_id}", headers=auth_headers(hospital_token))
+    assert forbidden_resp.status_code == 403
+
+    # Admin can delete
+    del_resp = client.delete(f"/api/v1/users/{user_id}", headers=auth_headers(admin_token))
+    assert del_resp.status_code == 204
+
+    # Second delete returns 404
+    not_found_resp = client.delete(f"/api/v1/users/{user_id}", headers=auth_headers(admin_token))
+    assert not_found_resp.status_code == 404

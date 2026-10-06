@@ -17,13 +17,10 @@ function RootRedirect() {
   if (role === "blood_bank_staff") {
     return <Navigate to="/blood-bank/dashboard" replace />;
   }
-  if (role === "donor") {
-    return <Navigate to="/donor/dashboard" replace />;
+  if (role === "hospital_staff" || role === "medical_lead") {
+    return <Navigate to="/hospital/dashboard" replace />;
   }
-  if (role === "caregiver") {
-    return <Navigate to="/caregiver/dashboard" replace />;
-  }
-  return <Navigate to="/hospital/dashboard" replace />;
+  return <Navigate to="/login" replace />;
 }
 
 export const router = createBrowserRouter([
@@ -274,114 +271,12 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                element: <ProtectedRoute allowedRoles={["donor"]} />,
-                children: [
-                  {
-                    path: "donor/dashboard",
-                    lazy: async () => {
-                      const { DonorDashboardPage } =
-                        await import(
-                          "@/features/donor/dashboard/donor-dashboard-page"
-                        );
-                      return { Component: DonorDashboardPage };
-                    },
-                  },
-                  {
-                    path: "donor/requests",
-                    lazy: async () => {
-                      const { DonorRequestsPage } =
-                        await import(
-                          "@/features/donor/requests/donor-requests-page"
-                        );
-                      return { Component: DonorRequestsPage };
-                    },
-                  },
-                  {
-                    path: "donor/requests/:id",
-                    lazy: async () => {
-                      const { DonorRequestDetailsPage } =
-                        await import(
-                          "@/features/donor/requests/donor-request-details-page"
-                        );
-                      return { Component: DonorRequestDetailsPage };
-                    },
-                  },
-                  {
-                    path: "donor/donations",
-                    lazy: async () => {
-                      const { DonorDonationsPage } =
-                        await import(
-                          "@/features/donor/donations/donor-donations-page"
-                        );
-                      return { Component: DonorDonationsPage };
-                    },
-                  },
-                  {
-                    path: "donor/vouchers",
-                    lazy: async () => {
-                      const { DonorVouchersPage } =
-                        await import(
-                          "@/features/donor/vouchers/donor-vouchers-page"
-                        );
-                      return { Component: DonorVouchersPage };
-                    },
-                  },
-                  {
-                    path: "donor/consents",
-                    lazy: async () => {
-                      const { DonorConsentsPage } =
-                        await import(
-                          "@/features/donor/consents/donor-consents-page"
-                        );
-                      return { Component: DonorConsentsPage };
-                    },
-                  },
-                  {
-                    path: "donor/notifications",
-                    lazy: async () => {
-                      const { DonorNotificationsPage } =
-                        await import(
-                          "@/features/donor/notifications/donor-notifications-page"
-                        );
-                      return { Component: DonorNotificationsPage };
-                    },
-                  },
-                ],
+                path: "donor/*",
+                element: <Navigate to="/forbidden" replace />,
               },
               {
-                element: <ProtectedRoute allowedRoles={["caregiver"]} />,
-                children: [
-                  {
-                    path: "caregiver/dashboard",
-                    lazy: async () => {
-                      const { CaregiverDashboardPage } =
-                        await import(
-                          "@/features/caregiver/dashboard/caregiver-dashboard-page"
-                        );
-                      return { Component: CaregiverDashboardPage };
-                    },
-                  },
-                  {
-                    path: "caregiver/scan",
-                    lazy: async () => {
-                      const { CaregiverScanPage } =
-                        await import(
-                          "@/features/caregiver/scan/caregiver-scan-page"
-                        );
-                      return { Component: CaregiverScanPage };
-                    },
-                  },
-                  {
-                    path: "caregiver/tracking/:reference",
-                    lazy: async () => {
-                      const { CaregiverTrackingPage } =
-                        await import(
-                          "@/features/caregiver/tracking/caregiver-tracking-page"
-                        );
-                      return { Component: CaregiverTrackingPage };
-                    },
-                  },
-                ],
+                path: "caregiver/*",
+                element: <Navigate to="/forbidden" replace />,
               },
             ],
           },

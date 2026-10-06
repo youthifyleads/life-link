@@ -66,35 +66,13 @@ describe("development demo session", () => {
     ]);
   });
 
-  it("creates and restores an isolated donor workspace session", () => {
-    const user = startDemoSession("donor");
+  it("purges mobile-only roles (donor/caregiver) from demo session and returns null", () => {
+    window.sessionStorage.setItem("blood-bank:development-demo-session", "donor");
+    expect(restoreDemoSession()).toBeNull();
+    expect(window.sessionStorage.getItem("blood-bank:development-demo-session")).toBeNull();
 
-    expect(user).toMatchObject({
-      display_name: "Omar Donor",
-      primary_role: "donor",
-      active_organization_id: "donor-portal",
-    });
-    expect(restoreDemoSession()?.organizations).toEqual([
-      expect.objectContaining({
-        name: "Donor Portal",
-        type: "platform",
-      }),
-    ]);
-  });
-
-  it("creates and restores an isolated caregiver workspace session", () => {
-    const user = startDemoSession("caregiver");
-
-    expect(user).toMatchObject({
-      display_name: "Sara Caregiver",
-      primary_role: "caregiver",
-      active_organization_id: "caregiver-tracking",
-    });
-    expect(restoreDemoSession()?.organizations).toEqual([
-      expect.objectContaining({
-        name: "Caregiver Tracking",
-        type: "platform",
-      }),
-    ]);
+    window.sessionStorage.setItem("blood-bank:development-demo-session", "caregiver");
+    expect(restoreDemoSession()).toBeNull();
+    expect(window.sessionStorage.getItem("blood-bank:development-demo-session")).toBeNull();
   });
 });

@@ -30,8 +30,8 @@ class BloodBagPublic(BaseModel):
     blood_type: str
     component: str = "whole_blood"
     quantity: int
-    collection_date: date
-    expiry_date: date | None
+    collection_date: date | datetime
+    expiry_date: date | datetime | None = None
     qr_code: str
     status: BloodBagStatus
     current_location: str | None

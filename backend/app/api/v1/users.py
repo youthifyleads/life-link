@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.core.domain import Role
-from app.core.exceptions import ConflictError
+from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import require_roles
 from app.repositories.interfaces.user_repository import UserRepository
 from app.repositories.models import UserRecord
@@ -51,3 +51,19 @@ async def create_user(payload: UserCreate, user_repo: UserRepository = Depends(g
     )
     created = await user_repo.create(record)
     return UserPublic.model_validate(created)
+
+
+@router.delete(
+    "/{user_id}",
+    status_code=204,
+    summary="Delete a user",
+    description="Admin only.",
+    dependencies=[Depends(require_roles(Role.ADMIN))],
+    responses={404: {"description": "User not found"}},
+)
+async def delete_user(user_id: str, user_repo: UserRepository = Depends(get_user_repository)):
+    existing = await user_repo.get_by_id(user_id)
+    if existing is None:
+        raise NotFoundError("User not found", code="USER_NOT_FOUND")
+    await user_repo.delete(user_id)
+    return None

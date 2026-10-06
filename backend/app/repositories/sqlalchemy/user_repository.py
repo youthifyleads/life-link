@@ -76,3 +76,11 @@ class SQLAlchemyUserRepository(UserRepository):
     async def list_all(self) -> list[UserRecord]:
         result = await self.session.execute(select(UserModel).options(joinedload(UserModel.role), joinedload(UserModel.phones)).order_by(UserModel.created_at.desc()))
         return [user_to_record(o) for o in result.unique().scalars().all()]
+
+    async def delete(self, user_id: str) -> bool:
+        obj = (await self.session.execute(select(UserModel).where(UserModel.user_id == user_id))).scalar_one_or_none()
+        if obj:
+            await self.session.delete(obj)
+            await self.session.commit()
+            return True
+        return False

@@ -48,11 +48,35 @@ const initialState: AuthState = {
 export function AuthProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  useEffect(() => {
+    try {
+      const stored = window.sessionStorage.getItem("blood-bank:development-demo-session");
+      if (stored === "donor" || stored === "caregiver") {
+        window.sessionStorage.removeItem("blood-bank:development-demo-session");
+      }
+    } catch {
+      // Ignore
+    }
+  }, []);
+
   const establishSession = useCallback(async (accessToken: string) => {
     setAccessToken(accessToken);
-    const user = await authApi.getCurrentUser();
-    dispatch({ type: "authenticated", user });
-    return user;
+    try {
+      const user = await authApi.getCurrentUser();
+      if (user.primary_role === "donor" || user.primary_role === "caregiver") {
+        setAccessToken(null);
+        dispatch({ type: "unauthenticated" });
+        const error = new Error("MOBILE_ONLY_ROLE");
+        (error as any).code = "MOBILE_ONLY_ROLE";
+        throw error;
+      }
+      dispatch({ type: "authenticated", user });
+      return user;
+    } catch (error) {
+      setAccessToken(null);
+      dispatch({ type: "unauthenticated" });
+      throw error;
+    }
   }, []);
 
   const restoreSession = useCallback(async () => {

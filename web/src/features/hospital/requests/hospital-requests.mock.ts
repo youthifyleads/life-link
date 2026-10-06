@@ -525,9 +525,40 @@ export async function uploadHospitalDocumentToRequest(
 ): Promise<{ request: HospitalRequest; document: HospitalDocumentItem }> {
   await wait(500);
 
-  const reqIndex = requests.findIndex((r) => r.id === requestId);
+  let reqIndex = requests.findIndex((r) => r.id === requestId);
   if (reqIndex < 0) {
-    throw new Error("Target requisition not found.");
+    const dynamicReq: HospitalRequest = {
+      id: requestId,
+      bloodBankId: "central-blood-bank",
+      targetBloodBank: {
+        id: "central-blood-bank",
+        name: "Central Blood Bank Facility",
+        facilityCode: "BB-CENTRAL",
+        governorate: "Cairo",
+        address: "Central District",
+        phone: "+20 2 2456 7890",
+        status: "active",
+        availabilitySummary: {
+          totalAvailable: 42,
+          posture: "optimal",
+          lowStockGroupsCount: 1,
+        },
+      },
+      bloodGroup: "A+",
+      component: "red_cells",
+      quantity: 1,
+      urgency: "emergency",
+      requiredAt: new Date().toISOString(),
+      reason: "Clinical Requisition",
+      status: "submitted",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: "Ahmed Hospital User",
+      history: [],
+      documents: [],
+    };
+    requests.push(dynamicReq);
+    reqIndex = requests.length - 1;
   }
 
   const current = requests[reqIndex];

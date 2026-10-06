@@ -9,7 +9,7 @@ class UserPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
-    email: EmailStr
+    email: str = Field(description="User email address")
     full_name: str
     role: Role
     institution_id: str | None = Field(

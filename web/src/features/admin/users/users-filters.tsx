@@ -73,10 +73,6 @@ export function UsersFilters({
             <option value="platform_support">
               {t("roles.platform_support", "Platform Support")}
             </option>
-            <option value="donor">{t("roles.donor", "Donor")}</option>
-            <option value="caregiver">
-              {t("roles.caregiver", "Caregiver")}
-            </option>
           </select>
         </div>
 

@@ -98,5 +98,16 @@ describe("hospital-requests.mock", () => {
     expect(uploadRes.document.name).toBe("crossmatch-compatibility.pdf");
     expect(uploadRes.document.requestId).toBe("BR-2026-1048");
     expect(uploadRes.request.documents.some((d) => d.name === "crossmatch-compatibility.pdf")).toBe(true);
+
+    // Test resilient upload for dynamic backend UUID requisition (TC 51 resolution)
+    const dynamicUuid = "FF0CE611-3D27-4B81-A0AE-E1FD3FA411A1";
+    const dynamicUpload = await uploadHospitalDocumentToRequest(dynamicUuid, {
+      name: "lab-compat-report.pdf",
+      sizeBytes: 104800,
+      mimeType: "application/pdf",
+    });
+    expect(dynamicUpload.document.name).toBe("lab-compat-report.pdf");
+    expect(dynamicUpload.document.requestId).toBe(dynamicUuid);
+    expect(dynamicUpload.request.id).toBe(dynamicUuid);
   });
 });

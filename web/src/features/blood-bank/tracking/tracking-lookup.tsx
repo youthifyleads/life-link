@@ -1,5 +1,5 @@
 import { Loader2, ScanBarcode, Search, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/shared/components/ui/button";
@@ -18,6 +18,10 @@ export function TrackingLookup({
 }: TrackingLookupProps) {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState(currentQuery);
+
+  useEffect(() => {
+    setInputValue(currentQuery);
+  }, [currentQuery]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

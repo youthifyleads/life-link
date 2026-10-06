@@ -182,4 +182,15 @@ describe("Blood Bank Inventory & Shared Store (Single Source of Truth)", () => {
     expect(lastEvent?.location).toBe("Quarantine Bay 3");
     expect(lastEvent?.notes).toBe("Flagged for lipemic inspection");
   });
+
+  it("resolves unit lookup seamlessly for dispatch barcodes and requisition tracking codes (TC 59)", async () => {
+    const dispatchCode = "SEC-DISP-FF0CE611-3D27-4B81-A0AE-E1FD3FA411A1-EGY";
+    const trackedUnit = await lookupBloodUnit(dispatchCode);
+
+    expect(trackedUnit).not.toBeNull();
+    expect(trackedUnit?.allocatedRequestId).toContain("FF0CE611-3D27-4B81-A0AE-E1FD3FA411A1");
+    expect(trackedUnit?.status).toBe("allocated");
+    expect(trackedUnit?.bloodGroup).toBe("A+");
+    expect(trackedUnit?.custodyEvents?.length).toBeGreaterThan(0);
+  });
 });

@@ -14,12 +14,15 @@ class SQLAlchemyBloodBagRepository(BloodBagRepository):
 
     def _to_record(self, obj: BloodBagModel) -> BloodBagRecord:
         st = str(obj.status).lower() if obj.status else "available"
+        c_date = obj.collection_date.date() if hasattr(obj.collection_date, "date") else obj.collection_date
+        e_date = obj.expiry_date.date() if hasattr(obj.expiry_date, "date") else obj.expiry_date
+        qty = int(obj.quantity) if obj.quantity is not None else 1
         return BloodBagRecord(
             id=obj.blood_bag_id,
             blood_type=obj.blood_type,
-            quantity=obj.quantity,
-            collection_date=obj.collection_date,
-            expiry_date=obj.expiry_date,
+            quantity=qty,
+            collection_date=c_date,
+            expiry_date=e_date,
             qr_code=obj.qr_code,
             status=st,
             current_location=obj.current_location,

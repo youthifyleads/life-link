@@ -90,9 +90,10 @@ def request_to_record(m: BloodRequestModel) -> BloodRequestRecord:
     except ValueError:
         st = RequestStatus.REQUESTED
 
+    req_qty = int(m.requested_quantity) if getattr(m, "requested_quantity", None) is not None else 1
     return BloodRequestRecord(
         id=m.blood_request_id, hospital_id=m.hospital_id, blood_type=m.blood_type,
-        component=getattr(m, "component", None) or "whole_blood", quantity_units=m.requested_quantity,
+        component=getattr(m, "component", None) or "whole_blood", quantity_units=req_qty,
         urgency=(str(m.urgency).lower() in {"urgent", "true", "1", "emergency", "critical"}), notes=m.reason, status=st,
         tracking_reference=create_tracking_reference(m.blood_request_id),
         created_by=m.created_by_user_id, unit_price=unit_price, required_by=m.required_by, created_at=m.created_at, updated_at=m.created_at,
@@ -103,9 +104,10 @@ def inventory_to_record(m: BloodBagModel) -> InventoryItemRecord:
     comp = getattr(m, "component", None)
     if not comp or comp == "blood_bag":
         comp = "whole_blood"
+    bag_qty = int(m.quantity) if getattr(m, "quantity", None) is not None else 1
     return InventoryItemRecord(
         id=m.blood_bag_id, blood_bank_id=m.current_blood_bank_id, blood_type=m.blood_type,
-        component=comp, quantity_units=m.quantity,
+        component=comp, quantity_units=bag_qty,
         is_available=(m.status or "").lower() in {"available", "reserved"},
         expiry_date=m.expiry_date, last_updated=m.created_at,
         qr_code=m.qr_code, status=m.status or "available",

@@ -4,6 +4,7 @@ import {
   createAdminBloodBank,
   createAdminHospital,
   createAdminUser,
+  deleteAdminUser,
   getAdminAuditLogs,
   getAdminBloodBanks,
   getAdminHospitals,
@@ -19,6 +20,8 @@ import {
   updateAdminUser,
   updateRolePermissions,
 } from "@/features/admin/mocks/admin.mock";
+import { adminApi } from "@/features/admin/api/admin.api";
+import { getAccessToken } from "@/shared/api/auth-token";
 import type {
   AuditFilters,
   BloodBankFilters,
@@ -54,7 +57,16 @@ export function useAdminKPIs() {
 export function useAdminUsers(filters?: Partial<UserFilters>) {
   return useQuery({
     queryKey: adminQueryKeys.users(filters),
-    queryFn: () => getAdminUsers(filters),
+    queryFn: async () => {
+      if (getAccessToken()) {
+        try {
+          return await adminApi.getUsers(filters);
+        } catch (err) {
+          console.warn("Live users fetch failed, fallback:", err);
+        }
+      }
+      return getAdminUsers(filters);
+    },
   });
 }
 
@@ -83,6 +95,26 @@ export function useToggleUserStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => toggleUserStatus(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["admin"] });
+    },
+  });
+}
+
+export function useDeleteAdminUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (getAccessToken()) {
+        try {
+          await adminApi.deleteUser(id);
+          return;
+        } catch (err) {
+          console.warn("Live user deletion fallback:", err);
+        }
+      }
+      return deleteAdminUser(id);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["admin"] });
     },
