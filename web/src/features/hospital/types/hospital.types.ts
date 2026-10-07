@@ -58,6 +58,9 @@ export interface TargetBloodBank {
   address: string;
   phone: string;
   status: "active" | "inactive";
+  latitude?: number | null;
+  longitude?: number | null;
+  inventoryByType?: Record<string, number>;
   availabilitySummary: {
     totalAvailable: number;
     posture: "optimal" | "warning" | "critical";

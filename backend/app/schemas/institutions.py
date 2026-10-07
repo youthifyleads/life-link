@@ -16,3 +16,5 @@ class InstitutionPublic(BaseModel):
     status: str
     phones: list[str]
     kind: str
+    latitude: float | None = None
+    longitude: float | None = None

@@ -51,6 +51,7 @@ class UserPhoneModel(Base):
 class HospitalModel(Base):
     __tablename__ = "hospitals"
     hospital_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(Unicode(200), nullable=False); governorate: Mapped[Optional[str]] = mapped_column(Unicode(100)); address: Mapped[Optional[str]] = mapped_column(Unicode(500)); status: Mapped[Optional[str]] = mapped_column(String(40), default="active")
+    latitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(9, 6), nullable=True); longitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(9, 6), nullable=True)
     phones: Mapped[list[HospitalPhoneModel]] = relationship(back_populates="hospital", cascade="all, delete-orphan"); users: Mapped[list[UserModel]] = relationship(back_populates="hospital"); requests: Mapped[list[BloodRequestModel]] = relationship(back_populates="hospital")
 
 class HospitalPhoneModel(Base):
@@ -61,6 +62,7 @@ class HospitalPhoneModel(Base):
 class BloodBankModel(Base):
     __tablename__ = "blood_banks"
     blood_bank_id: Mapped[str] = id_col(); name: Mapped[str] = mapped_column(Unicode(200), nullable=False); governorate: Mapped[Optional[str]] = mapped_column(Unicode(100)); address: Mapped[Optional[str]] = mapped_column(Unicode(500)); status: Mapped[Optional[str]] = mapped_column(String(40), default="active")
+    latitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(9, 6), nullable=True); longitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(9, 6), nullable=True)
     phones: Mapped[list[BloodBankPhoneModel]] = relationship(back_populates="blood_bank", cascade="all, delete-orphan"); users: Mapped[list[UserModel]] = relationship(back_populates="blood_bank"); donations: Mapped[list[DonationModel]] = relationship(back_populates="blood_bank"); blood_bags: Mapped[list[BloodBagModel]] = relationship(back_populates="current_blood_bank")
 
 class BloodBankPhoneModel(Base):

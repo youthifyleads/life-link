@@ -14,23 +14,77 @@ class SQLAlchemyInstitutionRepository(InstitutionRepository):
                 select(HospitalModel).options(selectinload(HospitalModel.phones)).order_by(HospitalModel.name)
             )
             rows = result.scalars().all()
-            return [InstitutionRecord(x.hospital_id,x.name,x.governorate,x.address,x.status or "active",[p.phone for p in x.phones],"hospital") for x in rows]
+            return [
+                InstitutionRecord(
+                    x.hospital_id,
+                    x.name,
+                    x.governorate,
+                    x.address,
+                    x.status or "active",
+                    [p.phone for p in x.phones],
+                    "hospital",
+                    float(x.latitude) if getattr(x, "latitude", None) is not None else None,
+                    float(x.longitude) if getattr(x, "longitude", None) is not None else None,
+                )
+                for x in rows
+            ]
         result = await self.session.execute(
             select(BloodBankModel).options(selectinload(BloodBankModel.phones)).order_by(BloodBankModel.name)
         )
         rows = result.scalars().all()
-        return [InstitutionRecord(x.blood_bank_id,x.name,x.governorate,x.address,x.status or "active",[p.phone for p in x.phones],"blood_bank") for x in rows]
+        return [
+            InstitutionRecord(
+                x.blood_bank_id,
+                x.name,
+                x.governorate,
+                x.address,
+                x.status or "active",
+                [p.phone for p in x.phones],
+                "blood_bank",
+                float(x.latitude) if getattr(x, "latitude", None) is not None else None,
+                float(x.longitude) if getattr(x, "longitude", None) is not None else None,
+            )
+            for x in rows
+        ]
 
     async def get(self, kind, institution_id):
         if kind == "hospital":
             x = (await self.session.execute(
                 select(HospitalModel).options(selectinload(HospitalModel.phones)).where(HospitalModel.hospital_id==institution_id)
             )).scalar_one_or_none()
-            return InstitutionRecord(x.hospital_id,x.name,x.governorate,x.address,x.status or "active",[p.phone for p in x.phones],"hospital") if x else None
+            return (
+                InstitutionRecord(
+                    x.hospital_id,
+                    x.name,
+                    x.governorate,
+                    x.address,
+                    x.status or "active",
+                    [p.phone for p in x.phones],
+                    "hospital",
+                    float(x.latitude) if getattr(x, "latitude", None) is not None else None,
+                    float(x.longitude) if getattr(x, "longitude", None) is not None else None,
+                )
+                if x
+                else None
+            )
         x = (await self.session.execute(
             select(BloodBankModel).options(selectinload(BloodBankModel.phones)).where(BloodBankModel.blood_bank_id==institution_id)
         )).scalar_one_or_none()
-        return InstitutionRecord(x.blood_bank_id,x.name,x.governorate,x.address,x.status or "active",[p.phone for p in x.phones],"blood_bank") if x else None
+        return (
+            InstitutionRecord(
+                x.blood_bank_id,
+                x.name,
+                x.governorate,
+                x.address,
+                x.status or "active",
+                [p.phone for p in x.phones],
+                "blood_bank",
+                float(x.latitude) if getattr(x, "latitude", None) is not None else None,
+                float(x.longitude) if getattr(x, "longitude", None) is not None else None,
+            )
+            if x
+            else None
+        )
 
     async def create(self, record):
         if record.kind == "hospital":

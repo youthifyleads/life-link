@@ -5,10 +5,12 @@ import {
   ArrowRight,
   CheckCircle2,
   MapPin,
+  Navigation,
   Phone,
   QrCode,
   Search,
   Send,
+  Sparkles,
   Star,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -17,6 +19,8 @@ import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 
+import { i18n } from "@/app/i18n/i18n";
+import { useAuth } from "@/features/authentication/model/use-auth";
 import { formatDateTime } from "@/features/hospital/components/hospital-formatters";
 import {
   useAvailableBloodBanks,
@@ -74,6 +78,37 @@ const requestSchema = z.object({
 
 type RequestFormValues = z.infer<typeof requestSchema>;
 
+// Clinical Red Blood Cell (RBC) & Whole Blood compatibility:
+const COMPATIBLE_RBC_DONORS: Record<string, string[]> = {
+  "O-": ["O-"],
+  "O+": ["O-", "O+"],
+  "A-": ["O-", "A-"],
+  "A+": ["O-", "O+", "A-", "A+"],
+  "B-": ["O-", "B-"],
+  "B+": ["O-", "O+", "B-", "B+"],
+  "AB-": ["O-", "A-", "B-", "AB-"],
+  "AB+": ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
+};
+
+function calculateHaversineDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
 function getDefaultRequiredAt() {
   const date = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const localDate = new Date(
@@ -89,6 +124,8 @@ const textareaClassName = `${fieldClassName} min-h-28 resize-y py-2.5 leading-6`
 
 export function RequestForm() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const isAr = i18n.language.startsWith("ar");
   const [searchParams] = useSearchParams();
   const mutation = useCreateHospitalRequest(
     searchParams.get("simulate") === "error",
@@ -99,6 +136,11 @@ export function RequestForm() {
   >("details");
   const [searchQuery, setSearchQuery] = useState("");
   const [qrModalOpen, setQrModalOpen] = useState(false);
+
+  // Hospital coordinates (Shobra Hospital or Kasr Al-Ainy or Cairo center)
+  const orgId = user?.active_organization_id?.toLowerCase() || "";
+  const hospitalLat = orgId === "c502917c-d942-4523-8420-d378414afc62" ? 30.073456 : 30.0444;
+  const hospitalLon = orgId === "c502917c-d942-4523-8420-d378414afc62" ? 31.252333 : 31.2357;
 
   const {
     register,
@@ -122,33 +164,80 @@ export function RequestForm() {
   });
 
   const selectedBloodBankId = watch("bloodBankId");
+  const requestedBloodGroup = watch("bloodGroup") || "O+";
+  const requestedQuantity = Number(watch("quantity")) || 1;
   const values = getValues();
   const availableBanks = bloodBanksQuery.data ?? [];
 
   const sortedBanks = useMemo(() => {
-    return [...availableBanks].sort((a, b) => {
-      // 1. Shobra General Hospital Blood Bank (test blood bank account) is highest priority
-      const aIsAffiliated =
-        a.id.toLowerCase() === "239d19f5-bcd5-482f-9b89-00a3fcab54ee" ||
-        a.name.toLowerCase().includes("shobra");
-      const bIsAffiliated =
-        b.id.toLowerCase() === "239d19f5-bcd5-482f-9b89-00a3fcab54ee" ||
-        b.name.toLowerCase().includes("shobra");
-      if (aIsAffiliated && !bIsAffiliated) return -1;
-      if (!aIsAffiliated && bIsAffiliated) return 1;
+    const list = availableBanks.map((bank) => {
+      const bankLat = bank.latitude ?? 30.0444;
+      const bankLon = bank.longitude ?? 31.2357;
+      const distanceKm = calculateHaversineDistanceKm(hospitalLat, hospitalLon, bankLat, bankLon);
+
+      const matchingUnits = bank.inventoryByType?.[requestedBloodGroup] ?? 0;
+      const compatibleTypes = COMPATIBLE_RBC_DONORS[requestedBloodGroup] || [requestedBloodGroup];
+      const compatibleUnits = compatibleTypes.reduce(
+        (sum, t) => sum + (bank.inventoryByType?.[t] ?? 0),
+        0,
+      );
+
+      const isAffiliated =
+        bank.id.toLowerCase() === "239d19f5-bcd5-482f-9b89-00a3fcab54ee" ||
+        bank.name.toLowerCase().includes("shobra");
+
+      const hasSufficientMatching = matchingUnits >= requestedQuantity;
+      const hasSufficientCompatible = compatibleUnits >= requestedQuantity;
+
+      return {
+        ...bank,
+        distanceKm,
+        matchingUnits,
+        compatibleUnits,
+        isAffiliated,
+        hasSufficientMatching,
+        hasSufficientCompatible,
+      };
+    });
+
+    return list.sort((a, b) => {
+      // 1. Shobra affiliated partner bank for current hospital always at the apex
+      if (a.isAffiliated && !b.isAffiliated) return -1;
+      if (!a.isAffiliated && b.isAffiliated) return 1;
 
       // 2. Active banks over inactive
       if (a.status !== "inactive" && b.status === "inactive") return -1;
       if (a.status === "inactive" && b.status !== "inactive") return 1;
 
-      // 3. Available stock units descending
-      const aUnits = a.availabilitySummary?.totalAvailable ?? 0;
-      const bUnits = b.availabilitySummary?.totalAvailable ?? 0;
-      if (bUnits !== aUnits) return bUnits - aUnits;
+      // 3. Clinical stock sufficiency tiers:
+      // Tier 1: Has enough exact matching units (>= quantity)
+      // Tier 2: Has enough compatible units (>= quantity)
+      // Tier 3: Has some matching units (> 0)
+      // Tier 4: Zero matching stock
+      const getTier = (item: typeof a) => {
+        if (item.hasSufficientMatching) return 1;
+        if (item.hasSufficientCompatible) return 2;
+        if (item.matchingUnits > 0) return 3;
+        return 4;
+      };
+
+      const aTier = getTier(a);
+      const bTier = getTier(b);
+      if (aTier !== bTier) return aTier - bTier;
+
+      // 4. Proximity: Sort by Haversine distance ascending
+      if (Math.abs(a.distanceKm - b.distanceKm) > 0.1) {
+        return a.distanceKm - b.distanceKm;
+      }
+
+      // 5. Quantity of matching units descending
+      if (b.matchingUnits !== a.matchingUnits) {
+        return b.matchingUnits - a.matchingUnits;
+      }
 
       return a.name.localeCompare(b.name);
     });
-  }, [availableBanks]);
+  }, [availableBanks, hospitalLat, hospitalLon, requestedBloodGroup, requestedQuantity]);
 
   const filteredBanks = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -464,14 +553,11 @@ export function RequestForm() {
                   {t("hospital.noMatchingBanks", "لا توجد بنوك دم مطابقة لكلمات البحث.")}
                 </div>
               ) : (
-                filteredBanks.map((bank) => {
+                filteredBanks.map((bank, index) => {
                   const isSelected = selectedBloodBankId === bank.id;
                   const isInactive = bank.status === "inactive";
-                  const posture = bank.availabilitySummary?.posture ?? "optimal";
-                  const isAffiliated =
-                    bank.id.toLowerCase() === "239d19f5-bcd5-482f-9b89-00a3fcab54ee" ||
-                    bank.name.toLowerCase().includes("shobra");
                   const displayName = formatOrganizationName(bank.name, bank.id);
+                  const isTopRecommended = index === 0 && !searchQuery.trim();
 
                   return (
                     <div
@@ -507,12 +593,23 @@ export function RequestForm() {
                               >
                                 {displayName}
                               </label>
-                              {isAffiliated && (
+
+                              {isTopRecommended && (
                                 <span className="inline-flex items-center gap-1 rounded bg-primary/10 border border-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
-                                  <Star className="size-3 fill-primary text-primary" />
-                                  {t("hospital.recommendedPartner", "بنك الدم الموصى به للمستشفى")}
+                                  <Sparkles className="size-3 fill-primary text-primary" />
+                                  {isAr
+                                    ? `★ موصى به سريرياً (أقرب مسافة: ${bank.distanceKm} كم • ${bank.matchingUnits} وحدة ${requestedBloodGroup})`
+                                    : `★ Clinically Recommended (${bank.distanceKm} km • ${bank.matchingUnits} units ${requestedBloodGroup})`}
                                 </span>
                               )}
+
+                              {!isTopRecommended && bank.isAffiliated && (
+                                <span className="inline-flex items-center gap-1 rounded bg-primary/10 border border-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
+                                  <Star className="size-3 fill-primary text-primary" />
+                                  {t("hospital.recommendedPartner", "بنك الدم المعتمد للمستشفى")}
+                                </span>
+                              )}
+
                               <span className="rounded bg-muted px-2 py-0.5 text-xs font-mono font-medium text-muted-foreground">
                                 <bdi dir="ltr">{bank.facilityCode}</bdi>
                               </span>
@@ -528,6 +625,14 @@ export function RequestForm() {
                             </div>
 
                             <div className="mt-2 flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-muted-foreground">
+                              {/* GPS Distance */}
+                              <span className="flex items-center gap-1 font-semibold text-primary">
+                                <Navigation className="size-3.5" aria-hidden="true" />
+                                {bank.distanceKm <= 0.1
+                                  ? (isAr ? "0.0 كم (داخل مجمع المستشفى)" : "0.0 km (Hospital Campus)")
+                                  : `${bank.distanceKm} ${isAr ? "كم" : "km"}`}
+                              </span>
+
                               <span className="flex items-center gap-1">
                                 <MapPin className="size-3.5" aria-hidden="true" />
                                 {bank.governorate} — {bank.address}
@@ -540,22 +645,30 @@ export function RequestForm() {
                           </div>
                         </div>
 
-                        {/* Stock Posture Pill */}
+                        {/* Matching Stock Pill */}
                         <div className="hidden text-end sm:block">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                              posture === "optimal"
-                                ? "bg-success-subtle text-success border border-success/30"
-                                : posture === "warning"
-                                  ? "bg-warning-subtle text-[#854d0e] border border-warning/30"
-                                  : "bg-emergency-subtle text-destructive border border-destructive/30"
-                            }`}
-                          >
-                            {posture === "warning" && <AlertTriangle className="size-3" />}
-                            {bank.availabilitySummary.totalAvailable} {t("common.units")}
-                          </span>
-                          <p className="mt-1 text-[11px] text-muted-foreground capitalize">
-                            {posture}
+                          {bank.matchingUnits >= requestedQuantity ? (
+                            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-success-subtle text-success border border-success/30">
+                              <CheckCircle2 className="size-3" />
+                              {bank.matchingUnits} {t("common.units")} ({requestedBloodGroup}) • {isAr ? "مطابق كافٍ" : "Sufficient"}
+                            </span>
+                          ) : bank.matchingUnits > 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-warning-subtle text-[#854d0e] border border-warning/30">
+                              <AlertTriangle className="size-3" />
+                              {bank.matchingUnits} {t("common.units")} ({requestedBloodGroup}) • {isAr ? `جزئي (مطلوب ${requestedQuantity})` : `Partial (Need ${requestedQuantity})`}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-emergency-subtle text-destructive border border-destructive/30">
+                              <AlertTriangle className="size-3" />
+                              0 {t("common.units")} ({requestedBloodGroup}) • {isAr ? "غير متوفر" : "Unavailable"}
+                            </span>
+                          )}
+
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            {isAr ? "إجمالي بنك الدم:" : "Total bank stock:"} {bank.availabilitySummary.totalAvailable} {t("common.units")}
+                            {bank.compatibleUnits > bank.matchingUnits
+                              ? ` • ${bank.compatibleUnits} ${isAr ? "متوافق" : "compatible"}`
+                              : ""}
                           </p>
                         </div>
                       </div>

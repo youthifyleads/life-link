@@ -10,3 +10,5 @@ class InstitutionRecord:
     status: str = "active"
     phones: list[str] = field(default_factory=list)
     kind: str = "hospital"
+    latitude: float | None = None
+    longitude: float | None = None

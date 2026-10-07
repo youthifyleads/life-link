@@ -58,12 +58,22 @@ export function useAvailableBloodBanks() {
           const banks = Array.isArray(banksRes.data) ? banksRes.data : [];
           const inventory = Array.isArray(inventoryRes.data) ? inventoryRes.data : [];
 
+          const inventoryByBank = new Map<string, Record<string, number>>();
           const unitsByBank = new Map<string, number>();
+
           for (const item of inventory) {
             if (item.is_available && item.blood_bank_id) {
               const bankId = String(item.blood_bank_id).toLowerCase();
               const qty = Number(item.quantity_units) || 1;
+              const bt = String(item.blood_type || "").trim().toUpperCase();
+
               unitsByBank.set(bankId, (unitsByBank.get(bankId) || 0) + qty);
+
+              if (!inventoryByBank.has(bankId)) {
+                inventoryByBank.set(bankId, {});
+              }
+              const map = inventoryByBank.get(bankId)!;
+              map[bt] = (map[bt] || 0) + qty;
             }
           }
 
@@ -77,6 +87,19 @@ export function useAvailableBloodBanks() {
                   ? ("warning" as const)
                   : ("critical" as const);
 
+            const lat =
+              typeof b.latitude === "number"
+                ? b.latitude
+                : bankId === "239d19f5-bcd5-482f-9b89-00a3fcab54ee"
+                  ? 30.076
+                  : (b.governorate?.toLowerCase() === "giza" ? 30.0131 : 30.0444);
+            const lon =
+              typeof b.longitude === "number"
+                ? b.longitude
+                : bankId === "239d19f5-bcd5-482f-9b89-00a3fcab54ee"
+                  ? 31.245
+                  : (b.governorate?.toLowerCase() === "giza" ? 31.2089 : 31.2357);
+
             return {
               id: b.id,
               name: b.name,
@@ -85,6 +108,9 @@ export function useAvailableBloodBanks() {
               address: b.address || "Central District",
               phone: b.phones?.[0] || "+20 2 3761 1111",
               status: b.status || "active",
+              latitude: lat,
+              longitude: lon,
+              inventoryByType: inventoryByBank.get(bankId) || {},
               availabilitySummary: {
                 totalAvailable,
                 posture,
