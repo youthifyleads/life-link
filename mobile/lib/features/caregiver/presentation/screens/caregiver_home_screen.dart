@@ -209,23 +209,19 @@ class _CaregiverHomeScreenState extends State<CaregiverHomeScreen> {
               TrackingPublic? resolvedTracking;
               try {
                 resolvedTracking = await getIt<TrackingRemoteDataSource>().scanQr(code);
-              } catch (_) {
-                resolvedTracking = TrackingPublic(
-                  reference: code,
-                  status: 'confirmed',
-                  bloodType: 'A+',
-                  component: 'whole_blood',
-                  lastUpdated: DateTime.now(),
-                  requestId: code,
-                  unitPrice: 700.0,
-                  totalPrice: 700.0,
-                  paymentStatus: 'unpaid',
-                  bankName: isAr ? 'مستشفى قصر العيني (بنك الدم المركزي)' : 'Kasr Al-Ainy Central Blood Bank',
-                  bankLocation: isAr ? 'شارع قصر العيني، القاهرة' : 'Kasr Al-Ainy St, Cairo',
-                  quantity: 1,
-                  patientName: isAr ? 'كريم أحمد الصاوي' : 'Karim Ahmed El-Sawy',
-                  medicalFileNumber: '#MED-${code.length >= 4 ? code.substring(code.length - 4).toUpperCase() : "9042"}',
+              } catch (e) {
+                setModalState(() => isProcessing = false);
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isAr
+                          ? 'كود التتبع غير مسجل في قاعدة البيانات أو غير صحيح'
+                          : 'Reference code not found in database or invalid',
+                    ),
+                    backgroundColor: const Color(0xFFD32F2F),
+                  ),
                 );
+                return;
               }
 
               if (mounted) {
@@ -405,23 +401,23 @@ class _CaregiverHomeScreenState extends State<CaregiverHomeScreen> {
     PatientModel? patient,
     bool isAr,
   ) {
-    final patientName = tracking?.patientName ?? patient?.fullName ?? (isAr ? 'كريم أحمد الصاوي' : 'Karim Ahmed El-Sawy');
-    final age = tracking?.patientAge ?? patient?.age ?? 42;
-    final gender = tracking?.patientGender ?? patient?.gender ?? (isAr ? 'ذكر' : 'Male');
-    final hospName = tracking?.hospitalName ?? patient?.hospitalName ?? (isAr ? 'مستشفى قصر العيني الفرنساوي' : 'Kasr Al-Ainy French Hospital');
-    final dept = tracking?.department ?? patient?.department ?? (isAr ? 'العناية المركزة الجراحية (SICU)' : 'Surgical ICU');
-    final roomBed = tracking?.roomBed ?? patient?.roomBed ?? (isAr ? 'جناح 3 - سرير 4' : 'Ward 3 - Bed 4');
-    final doctor = tracking?.attendingDoctor ?? patient?.attendingDoctor ?? (isAr ? 'د. أحمد كمال (استشاري جراحة الأوعية الدموية)' : 'Dr. Ahmed Kamal (Vascular Consultant)');
-    final diagnosis = tracking?.diagnosis ?? patient?.diagnosis ?? (isAr ? 'نزيف حاد ما بعد الجراحة وتراجع نسبة الأكسجين' : 'Post-operative hemorrhage with hypoxemia');
-    final hb = tracking?.currentHemoglobin ?? patient?.currentHemoglobin ?? '7.2 g/dL';
-    final urgency = tracking?.urgencyLevel ?? patient?.urgencyLevel ?? (isAr ? 'حرج / طارئ جداً (خلال ساعتين)' : 'Critical / Stat (within 2h)');
-    final crossmatch = tracking?.crossMatchStatus ?? (isAr ? 'تم فحص واختبار التوافق (متطابق مخبرياً ✓)' : 'Crossmatched & Compatible ✓');
-    final bloodType = tracking?.bloodType ?? patient?.bloodType ?? 'A+';
+    final patientName = tracking?.patientName ?? patient?.fullName ?? (isAr ? 'المريض' : 'Patient');
+    final age = tracking?.patientAge ?? patient?.age;
+    final gender = tracking?.patientGender ?? patient?.gender ?? '—';
+    final hospName = tracking?.hospitalName ?? patient?.hospitalName ?? '—';
+    final dept = tracking?.department ?? patient?.department ?? '—';
+    final roomBed = tracking?.roomBed ?? patient?.roomBed ?? '—';
+    final doctor = tracking?.attendingDoctor ?? patient?.attendingDoctor ?? '—';
+    final diagnosis = tracking?.diagnosis ?? patient?.diagnosis ?? '—';
+    final hb = tracking?.currentHemoglobin ?? patient?.currentHemoglobin ?? '—';
+    final urgency = tracking?.urgencyLevel ?? patient?.urgencyLevel ?? (isAr ? 'عاجل' : 'Urgent');
+    final crossmatch = tracking?.crossMatchStatus ?? (isAr ? 'تم التحقق من الفصيلة' : 'Verified');
+    final bloodType = tracking?.bloodType ?? patient?.bloodType ?? '—';
     final component = _formatComponent(tracking?.component, isAr);
-    final units = tracking?.quantity ?? 2;
-    final fileNo = tracking?.medicalFileNumber ?? patient?.hospitalId ?? '#MED-8842';
-    final reqRef = tracking?.reference ?? 'REQ-2024-8842';
-    final staffNotes = tracking?.staffNotes ?? patient?.notes ?? (isAr ? 'نقل المحلول تحت إشراف تمريض العناية، مع قياس العلامات الحيوية والضغط كل 15 دقيقة.' : 'Administer under ICU supervision; monitor vitals every 15 minutes.');
+    final units = tracking?.quantity ?? 1;
+    final fileNo = tracking?.medicalFileNumber ?? patient?.hospitalId ?? tracking?.reference ?? '—';
+    final reqRef = tracking?.reference ?? '—';
+    final staffNotes = tracking?.staffNotes ?? patient?.notes ?? '—';
     final lastUpdated = tracking?.lastUpdated ?? DateTime.now();
 
     showModalBottomSheet(
@@ -532,7 +528,7 @@ class _CaregiverHomeScreenState extends State<CaregiverHomeScreen> {
                           _buildModalRow(isAr ? 'اسم المريض' : 'Patient Name', patientName, isBold: true),
                           _buildModalRow(isAr ? 'السن والنوع' : 'Age & Gender', '$age ${isAr ? "سنة" : "yrs"} • $gender'),
                           _buildModalRow(isAr ? 'رقم الملف الطبي' : 'Medical Record #', fileNo, isBold: true),
-                          _buildModalRow(isAr ? 'الرقم القومي' : 'National ID', '28405120102431'),
+                          _buildModalRow(isAr ? 'الرقم القومي / المرجع' : 'National ID / Ref', patient?.id ?? tracking?.reference ?? '—'),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -1135,21 +1131,21 @@ class _PatientClinicalStatusCard extends StatelessWidget {
     }
 
     // Has Data
-    final patientName = tracking?.patientName ?? patient?.fullName ?? (hasActiveScan ? 'كريم أحمد الصاوي' : 'مريض غير محدد');
-    final bloodType = tracking?.bloodType ?? patient?.bloodType ?? (hasActiveScan ? 'A+' : '--');
+    final patientName = tracking?.patientName ?? patient?.fullName ?? (isAr ? 'المريض' : 'Patient');
+    final bloodType = tracking?.bloodType ?? patient?.bloodType ?? '--';
     final hospId = patient?.hospitalId;
-    final fileNumber = tracking?.medicalFileNumber ?? (hospId != null && hospId.isNotEmpty ? hospId : (hasActiveScan ? '#MED-8842' : '--'));
-    final age = tracking?.patientAge ?? patient?.age ?? (hasActiveScan ? 42 : null);
-    final gender = tracking?.patientGender ?? patient?.gender ?? (hasActiveScan ? (isAr ? 'ذكر' : 'Male') : null);
-    final hospitalName = tracking?.hospitalName ?? patient?.hospitalName ?? (hasActiveScan ? (isAr ? 'مستشفى قصر العيني الفرنساوي' : 'Kasr Al-Ainy French Hospital') : null);
-    final department = tracking?.department ?? patient?.department ?? (hasActiveScan ? (isAr ? 'العناية المركزة (SICU)' : 'Surgical ICU') : null);
-    final roomBed = tracking?.roomBed ?? patient?.roomBed ?? (hasActiveScan ? (isAr ? 'جناح 3 - سرير 4' : 'Ward 3 - Bed 4') : null);
-    final doctor = tracking?.attendingDoctor ?? patient?.attendingDoctor ?? (hasActiveScan ? (isAr ? 'د. أحمد كمال (استشاري جراحة الأوعية)' : 'Dr. Ahmed Kamal') : null);
-    final diagnosis = tracking?.diagnosis ?? patient?.diagnosis ?? (hasActiveScan ? (isAr ? 'نزيف حاد ما بعد الجراحة وتراجع نسبة الأكسجين' : 'Post-op bleeding with hypoxemia') : null);
-    final hb = tracking?.currentHemoglobin ?? patient?.currentHemoglobin ?? (hasActiveScan ? '7.2 g/dL' : null);
-    final urgency = tracking?.urgencyLevel ?? patient?.urgencyLevel ?? (hasActiveScan ? (isAr ? 'حرج / طارئ (Stat)' : 'Critical / Stat') : null);
-    final crossmatch = tracking?.crossMatchStatus ?? (hasActiveScan ? (isAr ? 'متطابق مخبرياً ✓' : 'Compatible ✓') : null);
-    final staffNotes = tracking?.staffNotes ?? patient?.notes ?? (hasActiveScan ? (isAr ? 'نقل المحلول تحت إشراف تمريض العناية، مع قياس العلامات الحيوية والضغط كل 15 دقيقة.' : 'Administer under ICU supervision; monitor vitals every 15 min.') : null);
+    final fileNumber = tracking?.medicalFileNumber ?? (hospId != null && hospId.isNotEmpty ? hospId : (tracking?.reference ?? '--'));
+    final age = tracking?.patientAge ?? patient?.age;
+    final gender = tracking?.patientGender ?? patient?.gender;
+    final hospitalName = tracking?.hospitalName ?? patient?.hospitalName;
+    final department = tracking?.department ?? patient?.department;
+    final roomBed = tracking?.roomBed ?? patient?.roomBed;
+    final doctor = tracking?.attendingDoctor ?? patient?.attendingDoctor;
+    final diagnosis = tracking?.diagnosis ?? patient?.diagnosis;
+    final hb = tracking?.currentHemoglobin ?? patient?.currentHemoglobin;
+    final urgency = tracking?.urgencyLevel ?? patient?.urgencyLevel;
+    final crossmatch = tracking?.crossMatchStatus;
+    final staffNotes = tracking?.staffNotes ?? patient?.notes;
 
     return LifeLinkCard(
       onTap: onViewReportTap,
@@ -1719,8 +1715,8 @@ class _ActiveDeliveryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isAr = context.isArabic;
     final hasData = hasActiveScan || tracking != null;
-    final matchedType = tracking?.bloodType ?? (hasActiveScan ? 'A+' : null);
-    final bank = tracking?.bankName ?? (hasActiveScan ? 'مستشفى قصر العيني (مبنى الطوارئ)' : null);
+    final matchedType = tracking?.bloodType;
+    final bank = tracking?.bankName;
 
     return LifeLinkCard(
       padding: const EdgeInsets.all(AppSpacing.md),

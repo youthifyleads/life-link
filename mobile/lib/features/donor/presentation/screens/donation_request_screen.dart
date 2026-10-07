@@ -7,6 +7,8 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/lifelink_button.dart';
 import '../../../../core/widgets/lifelink_card.dart';
 import '../../../../core/widgets/notification_badge_button.dart';
+import '../../../../core/di/injection.dart';
+import '../../data/donor_remote_datasource.dart';
 
 /// Screen matching the "Donation Request" phone screen in reference image 2:
 /// - Red App Bar with "Donation Request"
@@ -38,13 +40,15 @@ class _DonationRequestScreenState extends State<DonationRequestScreen> {
     final isAr = context.isArabic;
     final hospital = widget.requestData?['hospital'] as String? ??
         widget.requestData?['title'] as String? ??
-        (isAr ? 'مستشفى قصر العيني - بنك الدم' : 'Kasr Al-Ainy Hospital - Blood Bank');
-    final doctor = widget.requestData?['doctor'] as String? ?? (isAr ? 'د. أحمد فؤاد' : 'Dr. Ahmed Fouad');
-    final date = widget.requestData?['date'] as String? ?? (isAr ? '15 يونيو 2024' : 'June 15, 2024');
-    final time = widget.requestData?['time'] as String? ?? (isAr ? '10:00 ص إلى 07:00 م' : '10:00 AM to 07:00 PM');
+        (isAr ? 'أقرب بنك دم معتمد' : 'Nearest Certified Blood Bank');
+    final doctor = widget.requestData?['doctor'] as String? ?? (isAr ? 'طبيب بنك الدم المناوب' : 'Attending Physician');
+    final date = widget.requestData?['date'] as String? ?? (isAr ? 'اليوم' : 'Today');
+    final time = widget.requestData?['time'] as String? ?? (isAr ? '09:00 ص إلى 05:00 م' : '09:00 AM to 05:00 PM');
     final address = widget.requestData?['address'] as String? ??
-        (isAr ? 'شارع قصر العيني، المنيل، القاهرة' : 'Kasr Al-Ainy St, Manial, Cairo');
-    final bloodType = widget.requestData?['bloodType'] as String? ?? 'B+';
+        widget.requestData?['city'] as String? ??
+        (isAr ? 'القاهرة' : 'Cairo');
+    final bloodType = widget.requestData?['bloodType'] as String? ?? 'O+';
+    final requestId = widget.requestData?['requestId'] as String?;
 
     return PopScope(
       canPop: false,
@@ -433,6 +437,7 @@ class _DonationRequestScreenState extends State<DonationRequestScreen> {
                                 hospital: hospital,
                                 date: date,
                                 time: time,
+                                requestId: requestId,
                               );
                             }
                           },
@@ -470,6 +475,7 @@ class _DonationRequestScreenState extends State<DonationRequestScreen> {
     required String hospital,
     required String date,
     required String time,
+    String? requestId,
   }) {
     showDialog(
       context: context,
@@ -565,22 +571,33 @@ class _DonationRequestScreenState extends State<DonationRequestScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(dialogCtx).pop();
               setState(() {
                 _isConfirmed = true;
               });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    isAr
-                        ? 'تم تأكيد موعدك بنجاح! شكراً لمساهمتك في إنقاذ الأرواح.'
-                        : 'Donation appointment confirmed! Thank you for saving lives.',
+              if (requestId != null && requestId.isNotEmpty) {
+                try {
+                  await getIt<DonorRemoteDataSource>().respondToRequest(
+                    requestId,
+                    'accepted',
+                    notes: 'Confirmed via LifeLink mobile app',
+                  );
+                } catch (_) {}
+              }
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isAr
+                          ? 'تم تأكيد موعدك وحفظ الاستجابة في النظام بنجاح! شكراً لمساهمتك.'
+                          : 'Donation appointment confirmed and recorded in database! Thank you for saving lives.',
+                    ),
+                    backgroundColor: const Color(0xFF2E7D32),
+                    behavior: SnackBarBehavior.floating,
                   ),
-                  backgroundColor: const Color(0xFF2E7D32),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+                );
+              }
             },
             child: Text(
               isAr ? 'نعم، تأكيد الموعد' : 'Yes, Confirm',

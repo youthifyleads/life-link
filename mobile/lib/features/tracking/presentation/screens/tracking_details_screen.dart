@@ -572,19 +572,21 @@ class TrackingDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildPatientClinicalCard(BuildContext context) {
-    final patientName = tracking.patientName ?? 'كريم أحمد الصاوي';
-    final age = tracking.patientAge ?? 42;
-    final gender = tracking.patientGender ?? 'ذكر';
-    final hospName = tracking.hospitalName ?? 'مستشفى قصر العيني الفرنساوي';
-    final dept = tracking.department ?? 'العناية المركزة الجراحية (SICU)';
-    final roomBed = tracking.roomBed ?? 'جناح 3 - سرير 4';
-    final doctor = tracking.attendingDoctor ?? 'د. أحمد كمال (استشاري جراحة الأوعية)';
-    final diagnosis = tracking.diagnosis ?? 'نزيف حاد ما بعد الجراحة وتراجع نسبة الأكسجين';
-    final hb = tracking.currentHemoglobin ?? '7.2 g/dL';
-    final urgency = tracking.urgencyLevel ?? 'حرج / طارئ (Stat)';
-    final crossmatch = tracking.crossMatchStatus ?? 'تم فحص واختبار التوافق (متطابق مخبرياً ✓)';
-    final notes = tracking.staffNotes ?? 'نقل المحلول تحت إشراف تمريض العناية، مع قياس العلامات الحيوية والضغط كل 15 دقيقة.';
-    final fileNo = tracking.medicalFileNumber ?? '#MED-8842';
+    final patientName = tracking.patientName ?? '—';
+    final age = tracking.patientAge;
+    final gender = tracking.patientGender ?? '—';
+    final hospName = tracking.hospitalName ?? '—';
+    final dept = tracking.department ?? '—';
+    final roomBed = tracking.roomBed ?? '—';
+    final doctor = tracking.attendingDoctor ?? '—';
+    final diagnosis = tracking.diagnosis ?? '—';
+    final hb = tracking.currentHemoglobin ?? '—';
+    final urgency = tracking.urgencyLevel ?? '—';
+    final crossmatch = tracking.crossMatchStatus ?? '—';
+    final notes = tracking.staffNotes ?? '—';
+    final fileNo = tracking.medicalFileNumber ?? tracking.reference;
+
+    final ageGenderText = age != null ? ' ($age سنة • $gender)' : (gender != '—' ? ' ($gender)' : '');
 
     return Container(
       width: double.infinity,
@@ -649,14 +651,14 @@ class TrackingDetailsScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          _clinicalRow('اسم المريض', '$patientName ($age سنة • $gender)', isBold: true),
+          _clinicalRow('اسم المريض', '$patientName$ageGenderText', isBold: true),
           _clinicalRow('الملف الطبي', fileNo),
           _clinicalRow('المستشفى والقسم', '$hospName - $dept'),
           _clinicalRow('الغرفة والسرير', roomBed),
           _clinicalRow('الطبيب المعالج', doctor),
           const Divider(height: 18),
           _clinicalRow('التشخيص الطبي', diagnosis, valueColor: const Color(0xFFD32F2F), isBold: true),
-          _clinicalRow('نسبة الهيموجلوبين', '$hb (حرج)', valueColor: const Color(0xFFD32F2F), isBold: true),
+          _clinicalRow('نسبة الهيموجلوبين', hb, valueColor: const Color(0xFFD32F2F), isBold: true),
           _clinicalRow('الأولوية والخطورة', urgency, valueColor: const Color(0xFFE65100), isBold: true),
           _clinicalRow('نتيجة التوافق', crossmatch, valueColor: const Color(0xFF2E7D32)),
           const SizedBox(height: 8),

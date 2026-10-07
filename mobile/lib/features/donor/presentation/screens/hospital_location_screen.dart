@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/lifelink_button.dart';
 import '../../../../core/widgets/notification_badge_button.dart';
+import '../../../../core/localization/localization_extension.dart';
 
 /// Screen matching Image 2, 3, & 4 in the reference designs:
 /// - Stylized interactive city map canvas with roads, blocks, hospital pin, and pulsing marker
@@ -47,12 +48,17 @@ class _HospitalLocationScreenState extends State<HospitalLocationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.isArabic;
     final title = widget.hospitalData?['title'] as String? ??
         widget.hospitalData?['hospital'] as String? ??
-        'مستشفى قصر العيني - مبنى الطوارئ G';
+        widget.hospitalData?['name'] as String? ??
+        (isAr ? 'المركز الطبي المعتمد' : 'Certified Medical Center');
     final address = widget.hospitalData?['address'] as String? ??
-        'شارع قصر العيني، مبنى الطوارئ، القاهرة';
-    final bloodTypes = (widget.hospitalData?['bloodTypes'] as String? ?? 'O+  A+  AB+')
+        widget.hospitalData?['city'] as String? ??
+        widget.hospitalData?['governorate'] as String? ??
+        (isAr ? 'القاهرة، مصر' : 'Cairo, Egypt');
+    final bloodTypeRaw = (widget.hospitalData?['bloodTypes'] ?? widget.hospitalData?['bloodType'] ?? 'O+ A+ B+ AB+') as String;
+    final bloodTypes = bloodTypeRaw
         .split(RegExp(r'\s+'))
         .where((s) => s.isNotEmpty)
         .toList();

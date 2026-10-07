@@ -16,6 +16,7 @@ import '../../../../core/localization/localization_extension.dart';
 import '../bloc/donor_bloc.dart';
 import '../utils/donor_hero_slogan_session.dart';
 import '../../domain/models/donor_profile_model.dart';
+import '../../data/donor_remote_datasource.dart';
 
 class DonorHomeScreen extends StatefulWidget {
   const DonorHomeScreen({super.key});
@@ -65,18 +66,24 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
     BuildContext context, {
     required bool isAr,
     required String bloodType,
+    DonorProfileModel? profile,
   }) async {
+    final hospName = isAr
+        ? (profile?.daysUntilEligible != null && profile!.daysUntilEligible > 0
+            ? 'المركز الإقليمي لبنك الدم'
+            : 'أقرب بنك دم معتمد')
+        : (profile?.daysUntilEligible != null && profile!.daysUntilEligible > 0
+            ? 'Regional Blood Bank'
+            : 'Nearest Certified Blood Center');
     final res = await context.push<bool>(
       '/donor/request-details',
       extra: {
-        'hospital': isAr
-            ? 'مركز صحة المجتمع وبنك الدم'
-            : 'Community Health & Blood Center',
+        'hospital': hospName,
         'bloodType': bloodType,
-        'doctor': isAr ? 'د. أحمد فؤاد' : 'Dr. Ahmed Fouad',
-        'date': isAr ? '15 يونيو 2024' : 'June 15, 2024',
-        'time': isAr ? '11:30 ص إلى 02:00 م' : '11:30 AM to 02:00 PM',
-        'address': isAr ? 'شارع قصر العيني، القاهرة' : 'Kasr Al-Ainy St, Cairo',
+        'doctor': isAr ? 'طبيب بنك الدم المناوب' : 'Attending Blood Bank Physician',
+        'date': isAr ? 'اليوم' : 'Today',
+        'time': isAr ? '09:00 ص إلى 05:00 م' : '09:00 AM to 05:00 PM',
+        'address': isAr ? 'القاهرة' : 'Cairo',
         'isConfirmed': _isNextDonationConfirmed,
       },
     );
@@ -184,29 +191,35 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
                               children: [
                                 _SectionHeader(
                                   title: isAr ? 'تبرعك القادم' : 'Your Next Donation',
-                                  actionTitle: isAr ? 'عرض الكل' : 'See All',
+                                  actionTitle: isAr ? 'عرض التفاصيل' : 'Details',
                                   onActionTap: () => _openNextDonationDetails(
                                     context,
                                     isAr: isAr,
                                     bloodType: bloodType,
+                                    profile: profile,
                                   ),
                                 ),
                                 const SizedBox(height: AppSpacing.sm),
                                 _NextDonationCard(
                                   bloodType: bloodType,
                                   hospitalName: isAr
-                                      ? 'مركز صحة المجتمع وبنك الدم'
-                                      : 'Community Health & Blood Center',
+                                      ? (profile?.daysUntilEligible != null && profile!.daysUntilEligible > 0
+                                          ? 'المركز الإقليمي لبنك الدم'
+                                          : 'أقرب بنك دم معتمد')
+                                      : (profile?.daysUntilEligible != null && profile!.daysUntilEligible > 0
+                                          ? 'Regional Blood Bank'
+                                          : 'Nearest Certified Blood Center'),
                                   dateTime: profile?.daysUntilEligible != null && profile!.daysUntilEligible > 0
                                       ? (isAr
-                                          ? 'متاح بعد ${profile.daysUntilEligible} يوم'
-                                          : 'Available in ${profile.daysUntilEligible} days')
-                                      : (isAr ? '15 يونيو • 11:30 ص' : 'June 15 • 11:30 AM'),
+                                          ? 'متاح للتبرع بعد ${profile.daysUntilEligible} يوم'
+                                          : 'Eligible in ${profile.daysUntilEligible} days')
+                                      : (isAr ? 'أنت مؤهل للتبرع الآن' : 'Eligible to donate today'),
                                   isConfirmed: _isNextDonationConfirmed,
                                   onCardTap: () => _openNextDonationDetails(
                                     context,
                                     isAr: isAr,
                                     bloodType: bloodType,
+                                    profile: profile,
                                   ),
                                 ),
                               ],
@@ -227,16 +240,25 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
                                 ),
                                 const SizedBox(height: AppSpacing.sm),
                                 _UrgentRequestsList(
-                                  onItemTap: (hospital) {
+                                  requests: state is DonorLoaded ? state.nearbyRequests : const [],
+                                  onItemTap: (req) {
+                                    final distanceText = req.distanceKm != null
+                                        ? '${req.distanceKm!.toStringAsFixed(1)} ${isAr ? 'كم' : 'km'}'
+                                        : (isAr ? 'قريب' : 'Nearby');
+                                    final cityText = req.governorate ?? (isAr ? 'القاهرة' : 'Cairo');
                                     context.push(
                                       '/donor/request-details',
                                       extra: {
-                                        'hospital': hospital,
-                                        'bloodType': 'O-  A+  AB+',
-                                        'doctor': isAr ? 'د. محمود صبري' : 'Dr. Mahmoud Sabry',
-                                        'date': isAr ? 'اليوم • طوارئ' : 'Today • Emergency',
-                                        'time': isAr ? 'متاح على مدار 24 ساعة' : 'Available 24 Hours',
-                                        'address': isAr ? 'ميدان التحرير، القاهرة' : 'Tahrir Square, Cairo',
+                                        'requestId': req.requestId,
+                                        'hospital': req.hospitalName,
+                                        'bloodType': req.bloodType,
+                                        'component': req.component,
+                                        'distance': distanceText,
+                                        'city': cityText,
+                                        'address': cityText,
+                                        'notes': req.notes,
+                                        'isUrgent': req.urgency,
+                                        'quantity': req.quantityUnits,
                                       },
                                     );
                                   },
@@ -941,34 +963,92 @@ class _NextDonationCard extends StatelessWidget {
   }
 }
 
-// ── 7. "Requests" List (Matching Reference) ───────────────────
+// ── 7. "Requests" List (Database-driven) ───────────────────
 class _UrgentRequestsList extends StatelessWidget {
-  final ValueChanged<String> onItemTap;
+  final List<NearbyBloodRequest> requests;
+  final ValueChanged<NearbyBloodRequest> onItemTap;
 
-  const _UrgentRequestsList({required this.onItemTap});
+  const _UrgentRequestsList({
+    required this.requests,
+    required this.onItemTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.isArabic;
 
-    final requests = [
-      {
-        'hospital': isAr ? 'مستشفى قصر العيني - طوارئ' : 'Kasr Al-Ainy Hospital - Emergency',
-        'bloodTypes': 'O-  A+  AB+',
-      },
-      {
-        'hospital': isAr ? 'مستشفى الدمرداش الجامعي' : 'Demerdash University Hospital',
-        'bloodTypes': 'O+  AB+',
-      },
-    ];
+    if (requests.isEmpty) {
+      return LifeLinkCard(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE8F5E9),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF2E7D32),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAr ? 'بنوك الدم في حالة استقرار' : 'Nearby Stock is Stable',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isAr
+                        ? 'لا توجد طلبات دم عاجلة لفصيلتك حالياً'
+                        : 'No urgent shortages matching your blood type',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.push('/donor/campaigns'),
+              child: Text(
+                isAr ? 'المراكز' : 'Centers',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final displayed = requests.take(3).toList();
 
     return Column(
-      children: requests.map((req) {
+      children: displayed.map((req) {
         return Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           child: LifeLinkCard(
             padding: const EdgeInsets.all(AppSpacing.md),
-            onTap: () => onItemTap(req['hospital']!),
+            onTap: () => onItemTap(req),
             child: Row(
               children: [
                 Expanded(
@@ -976,7 +1056,7 @@ class _UrgentRequestsList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        req['hospital']!,
+                        req.hospitalName,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -996,7 +1076,7 @@ class _UrgentRequestsList extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            req['bloodTypes']!,
+                            req.bloodType,
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -1004,32 +1084,42 @@ class _UrgentRequestsList extends StatelessWidget {
                               fontFamily: 'Cairo',
                             ),
                           ),
+                          if (req.distanceKm != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              '• ${req.distanceKm!.toStringAsFixed(1)} ${isAr ? 'كم' : 'km'}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textHint,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],
                   ),
                 ),
-
-                // Urgent Pill Tag (Static, dignified and clear)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFECEE),
-                    borderRadius: AppRadii.full,
-                  ),
-                  child: Text(
-                    isAr ? 'عاجل' : 'Urgent',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Cairo',
+                if (req.urgency)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFECEE),
+                      borderRadius: AppRadii.full,
+                    ),
+                    child: Text(
+                      isAr ? 'عاجل' : 'Urgent',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Cairo',
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

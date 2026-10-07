@@ -17,41 +17,8 @@ class TrackingRemoteDataSource {
         data: {'reference': reference},
       );
       return TrackingPublic.fromJson(response.data as Map<String, dynamic>);
-    } catch (e) {
-      if (reference.contains('3c72') ||
-          reference.contains('ed81') ||
-          reference.contains('REQ-2024') ||
-          reference.startsWith('REQ-') ||
-          e is DioException) {
-        return TrackingPublic(
-          reference: reference,
-          requestId: reference,
-          status: 'acknowledged',
-          bloodType: 'A+',
-          component: 'packed_rbc',
-          quantity: 2,
-          unitPrice: 350.0,
-          totalPrice: 700.0,
-          paymentStatus: 'pending',
-          bankName: 'بنك الدم المركزي (Central Blood Bank)',
-          bankLocation: 'مستشفيات جامعة القاهرة - المنيل',
-          lastUpdated: DateTime.now(),
-          patientName: 'كريم أحمد الصاوي',
-          medicalFileNumber: '#MED-8842',
-          patientAge: 42,
-          patientGender: 'ذكر',
-          hospitalName: 'مستشفى قصر العيني الفرنساوي',
-          department: 'العناية المركزة الجراحية (SICU)',
-          roomBed: 'جناح 3 - سرير 4',
-          attendingDoctor: 'د. أحمد كمال (استشاري جراحة الأوعية)',
-          diagnosis: 'نزيف حاد ما بعد الجراحة وتراجع نسبة الأكسجين',
-          currentHemoglobin: '7.2 g/dL',
-          urgencyLevel: 'حرج / طارئ (Stat)',
-          crossMatchStatus: 'تم فحص واختبار التوافق (متطابق مخبرياً)',
-          staffNotes: 'نقل المحلول تحت إشراف تمريض العناية، مع فحص العلامات الحيوية والضغط كل 15 دقيقة.',
-        );
-      }
-      rethrow;
+    } on DioException catch (e) {
+      throw _extractMessage(e);
     }
   }
 

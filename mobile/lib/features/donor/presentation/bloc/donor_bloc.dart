@@ -31,11 +31,16 @@ class DonorLoading extends DonorState {}
 class DonorLoaded extends DonorState {
   final DonorProfileModel profile;
   final List<DonationHistoryItem> history;
+  final List<NearbyBloodRequest> nearbyRequests;
 
-  DonorLoaded({required this.profile, required this.history});
+  DonorLoaded({
+    required this.profile,
+    required this.history,
+    this.nearbyRequests = const [],
+  });
 
   @override
-  List<Object?> get props => [profile, history];
+  List<Object?> get props => [profile, history, nearbyRequests];
 }
 
 class DonorError extends DonorState {
@@ -62,7 +67,15 @@ class DonorBloc extends Bloc<DonorEvent, DonorState> {
     try {
       final profile = await _dataSource.getProfile();
       final history = await _dataSource.getDonationHistory();
-      emit(DonorLoaded(profile: profile, history: history));
+      List<NearbyBloodRequest> nearby = [];
+      try {
+        nearby = await _dataSource.getNearbyRequests();
+      } catch (_) {}
+      emit(DonorLoaded(
+        profile: profile,
+        history: history,
+        nearbyRequests: nearby,
+      ));
     } catch (e) {
       emit(DonorError(friendlyErrorMessage(e)));
     }
@@ -77,7 +90,11 @@ class DonorBloc extends Bloc<DonorEvent, DonorState> {
     emit(DonorLoading());
     try {
       final profile = await _dataSource.updateAvailability(event.available);
-      emit(DonorLoaded(profile: profile, history: current.history));
+      emit(DonorLoaded(
+        profile: profile,
+        history: current.history,
+        nearbyRequests: current.nearbyRequests,
+      ));
     } catch (e) {
       emit(DonorError(friendlyErrorMessage(e)));
     }

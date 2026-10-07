@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/di/injection.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/lifelink_button.dart';
 import '../../../../core/widgets/lifelink_animations.dart';
 import '../../../../core/widgets/notification_badge_button.dart';
 import '../../../../core/localization/localization_extension.dart';
+import '../../data/tracking_remote_datasource.dart';
+import '../../domain/models/tracking_model.dart';
 
 /// Interactive Shipment Route Map Screen
 /// Displays the map route with the exact distance between the Blood Bank and the Hospital,
@@ -24,6 +27,7 @@ class _DeliveryRouteMapScreenState extends State<DeliveryRouteMapScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  TrackingPublic? _tracking;
 
   @override
   void initState() {
@@ -36,6 +40,21 @@ class _DeliveryRouteMapScreenState extends State<DeliveryRouteMapScreen>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    if (widget.requestId != null && widget.requestId!.isNotEmpty) {
+      _loadTracking(widget.requestId!);
+    }
+  }
+
+  Future<void> _loadTracking(String ref) async {
+    try {
+      final t = await getIt<TrackingRemoteDataSource>().getTrackingInfo(ref);
+      if (mounted) {
+        setState(() {
+          _tracking = t;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -339,9 +358,10 @@ class _DeliveryRouteMapScreenState extends State<DeliveryRouteMapScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isAr
-                                      ? 'بنك الدم المركزي الإقليمي (العباسية)'
-                                      : 'Regional Central Blood Bank (Abbassia)',
+                                  _tracking?.bankName ??
+                                      (isAr
+                                          ? 'بنك الدم المصدر'
+                                          : 'Origin Blood Bank'),
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
@@ -351,8 +371,8 @@ class _DeliveryRouteMapScreenState extends State<DeliveryRouteMapScreen>
                                 ),
                                 Text(
                                   isAr
-                                      ? 'تم التحرك والتسليم للكابتن • 02:15 م'
-                                      : 'Dispatched to courier • 02:15 PM',
+                                      ? 'تم التجهيز والتسليم للشحن'
+                                      : 'Prepared and handed over to courier',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: AppColors.textSecondary,
@@ -361,9 +381,10 @@ class _DeliveryRouteMapScreenState extends State<DeliveryRouteMapScreen>
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  isAr
-                                      ? 'مستشفى قصر العيني (مبنى الطوارئ)'
-                                      : 'Kasr Al-Ainy Hospital (ER Building)',
+                                  _tracking?.hospitalName ??
+                                      (isAr
+                                          ? 'المستشفى المستقبل'
+                                          : 'Destination Hospital'),
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
@@ -597,7 +618,7 @@ class _DeliveryRouteMapPainter extends CustomPainter {
       const Color(0xFFE53935),
     );
     drawMarkerLabel(
-      isArabic ? 'مستشفى قصر العيني (وصول)' : 'Kasr Al-Ainy (Dest)',
+      isArabic ? 'المستشفى (وصول)' : 'Hospital (Dest)',
       Offset(size.width * 0.05, 290),
       const Color(0xFF1976D2),
     );
