@@ -16,6 +16,7 @@ import { apiClient } from "@/shared/api/http-client";
 import { requestsApi } from "@/shared/api/requests.api";
 import { documentsApi } from "@/shared/api/documents.api";
 import { getAccessToken } from "@/shared/api/auth-token";
+import { resolveBloodBankCoordinates } from "@/features/hospital/lib/bank-coordinates";
 
 export const hospitalRequestKeys = {
   all: ["hospital", "requests"] as const,
@@ -87,18 +88,13 @@ export function useAvailableBloodBanks() {
                   ? ("warning" as const)
                   : ("critical" as const);
 
-            const lat =
-              typeof b.latitude === "number"
-                ? b.latitude
-                : bankId === "239d19f5-bcd5-482f-9b89-00a3fcab54ee"
-                  ? 30.076
-                  : (b.governorate?.toLowerCase() === "giza" ? 30.0131 : 30.0444);
-            const lon =
-              typeof b.longitude === "number"
-                ? b.longitude
-                : bankId === "239d19f5-bcd5-482f-9b89-00a3fcab54ee"
-                  ? 31.245
-                  : (b.governorate?.toLowerCase() === "giza" ? 31.2089 : 31.2357);
+            const coords = resolveBloodBankCoordinates(
+              b.name,
+              b.governorate,
+              b.id,
+              typeof b.latitude === "number" ? b.latitude : null,
+              typeof b.longitude === "number" ? b.longitude : null,
+            );
 
             return {
               id: b.id,
@@ -108,8 +104,8 @@ export function useAvailableBloodBanks() {
               address: b.address || "Central District",
               phone: b.phones?.[0] || "+20 2 3761 1111",
               status: b.status || "active",
-              latitude: lat,
-              longitude: lon,
+              latitude: coords.latitude,
+              longitude: coords.longitude,
               inventoryByType: inventoryByBank.get(bankId) || {},
               availabilitySummary: {
                 totalAvailable,

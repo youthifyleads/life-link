@@ -29,6 +29,10 @@ import {
 import { HospitalRequestQrModal } from "@/features/hospital/requests/hospital-request-qr-modal";
 import { formatOrganizationName } from "@/shared/lib/formatters";
 import {
+  calculateHaversineDistanceKm,
+  resolveBloodBankCoordinates,
+} from "@/features/hospital/lib/bank-coordinates";
+import {
   bloodComponentLabels,
   bloodComponents,
 } from "@/features/hospital/types/hospital.types";
@@ -90,24 +94,6 @@ const COMPATIBLE_RBC_DONORS: Record<string, string[]> = {
   "AB+": ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
 };
 
-function calculateHaversineDistanceKm(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
-  const R = 6371; // Earth radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c * 10) / 10;
-}
 
 function getDefaultRequiredAt() {
   const date = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -137,10 +123,19 @@ export function RequestForm() {
   const [searchQuery, setSearchQuery] = useState("");
   const [qrModalOpen, setQrModalOpen] = useState(false);
 
-  // Hospital coordinates (Shobra Hospital or Kasr Al-Ainy or Cairo center)
+  // Hospital coordinates (Shobra Hospital or active organization)
   const orgId = user?.active_organization_id?.toLowerCase() || "";
-  const hospitalLat = orgId === "c502917c-d942-4523-8420-d378414afc62" ? 30.073456 : 30.0444;
-  const hospitalLon = orgId === "c502917c-d942-4523-8420-d378414afc62" ? 31.252333 : 31.2357;
+  const activeOrg = user?.organizations?.find(
+    (o) => o.id?.toLowerCase() === orgId,
+  );
+  const hospitalCoords =
+    orgId === "c502917c-d942-4523-8420-d378414afc62" ||
+    activeOrg?.name?.toLowerCase().includes("shobra")
+      ? { latitude: 30.076, longitude: 31.245 }
+      : resolveBloodBankCoordinates(activeOrg?.name || "Hospital", "Cairo", orgId);
+
+  const hospitalLat = hospitalCoords.latitude;
+  const hospitalLon = hospitalCoords.longitude;
 
   const {
     register,
@@ -171,8 +166,15 @@ export function RequestForm() {
 
   const sortedBanks = useMemo(() => {
     const list = availableBanks.map((bank) => {
-      const bankLat = bank.latitude ?? 30.0444;
-      const bankLon = bank.longitude ?? 31.2357;
+      const bankCoords = resolveBloodBankCoordinates(
+        bank.name,
+        bank.governorate,
+        bank.id,
+        bank.latitude,
+        bank.longitude,
+      );
+      const bankLat = bankCoords.latitude;
+      const bankLon = bankCoords.longitude;
       const distanceKm = calculateHaversineDistanceKm(hospitalLat, hospitalLon, bankLat, bankLon);
 
       const matchingUnits = bank.inventoryByType?.[requestedBloodGroup] ?? 0;
@@ -595,18 +597,26 @@ export function RequestForm() {
                               </label>
 
                               {isTopRecommended && (
-                                <span className="inline-flex items-center gap-1 rounded bg-primary/10 border border-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
-                                  <Sparkles className="size-3 fill-primary text-primary" />
-                                  {isAr
-                                    ? `★ موصى به سريرياً (أقرب مسافة: ${bank.distanceKm} كم • ${bank.matchingUnits} وحدة ${requestedBloodGroup})`
-                                    : `★ Clinically Recommended (${bank.distanceKm} km • ${bank.matchingUnits} units ${requestedBloodGroup})`}
+                                <span
+                                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/25 px-2.5 py-0.5 text-xs font-semibold text-primary shadow-xs"
+                                  title={
+                                    isAr
+                                      ? `الخيار الأفضل سريرياً وجغرافياً (${bank.distanceKm <= 0.1 ? "داخل مجمع المستشفى" : `${bank.distanceKm} كم`} • ${bank.matchingUnits} وحدة متوفرة)`
+                                      : `Top Recommendation (${bank.distanceKm <= 0.1 ? "Hospital Campus" : `${bank.distanceKm} km`} • ${bank.matchingUnits} units available)`
+                                  }
+                                >
+                                  <Sparkles className="size-3.5 fill-primary text-primary" aria-hidden="true" />
+                                  <span>{isAr ? "موصى به" : "Recommended"}</span>
                                 </span>
                               )}
 
                               {!isTopRecommended && bank.isAffiliated && (
-                                <span className="inline-flex items-center gap-1 rounded bg-primary/10 border border-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
-                                  <Star className="size-3 fill-primary text-primary" />
-                                  {t("hospital.recommendedPartner", "بنك الدم المعتمد للمستشفى")}
+                                <span
+                                  className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400"
+                                  title={isAr ? "بنك الدم المعتمد التابع للمستشفى" : "Affiliated Hospital Blood Bank"}
+                                >
+                                  <Star className="size-3.5 fill-amber-500 text-amber-500" aria-hidden="true" />
+                                  <span>{isAr ? "معتمد" : "Affiliated"}</span>
                                 </span>
                               )}
 
