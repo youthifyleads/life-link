@@ -51,9 +51,33 @@ export function useAvailableBloodBanks() {
     queryFn: async () => {
       if (getAccessToken()) {
         try {
-          const { data } = await apiClient.get<any[]>("/blood-banks");
-          if (Array.isArray(data)) {
-            return data.map((b) => ({
+          const [banksRes, inventoryRes] = await Promise.all([
+            apiClient.get<any[]>("/blood-banks"),
+            apiClient.get<any[]>("/inventory").catch(() => ({ data: [] })),
+          ]);
+          const banks = Array.isArray(banksRes.data) ? banksRes.data : [];
+          const inventory = Array.isArray(inventoryRes.data) ? inventoryRes.data : [];
+
+          const unitsByBank = new Map<string, number>();
+          for (const item of inventory) {
+            if (item.is_available && item.blood_bank_id) {
+              const bankId = String(item.blood_bank_id).toLowerCase();
+              const qty = Number(item.quantity_units) || 1;
+              unitsByBank.set(bankId, (unitsByBank.get(bankId) || 0) + qty);
+            }
+          }
+
+          return banks.map((b) => {
+            const bankId = String(b.id || "").toLowerCase();
+            const totalAvailable = unitsByBank.get(bankId) ?? (b.available_units ?? 15);
+            const posture =
+              totalAvailable >= 10
+                ? ("optimal" as const)
+                : totalAvailable > 0
+                  ? ("warning" as const)
+                  : ("critical" as const);
+
+            return {
               id: b.id,
               name: b.name,
               facilityCode: b.facility_code || "BB-CTR",
@@ -62,12 +86,12 @@ export function useAvailableBloodBanks() {
               phone: b.phones?.[0] || "+20 2 3761 1111",
               status: b.status || "active",
               availabilitySummary: {
-                totalAvailable: b.available_units ?? 0,
-                posture: "optimal" as const,
+                totalAvailable,
+                posture,
                 lowStockGroupsCount: 0,
               },
-            }));
-          }
+            };
+          });
         } catch (err) {
           console.warn("Live blood banks fetch failed:", err);
           return [];

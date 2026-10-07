@@ -11,6 +11,9 @@ const hospitalArabicMap: Record<string, string> = {
   "demo-hospital": "المستشفى التجريبي",
 
   // Database Seed Hospitals (UUIDs & Names)
+  "C502917C-D942-4523-8420-D378414AFC62": "مستشفى شبرا العام",
+  "c502917c-d942-4523-8420-d378414afc62": "مستشفى شبرا العام",
+  "Shobra General Hospital": "مستشفى شبرا العام",
   "8F7601FE-35C2-426F-AB9D-E36D3DAA1CB9": "مستشفى قصر العيني",
   "8f7601fe-35c2-426f-ab9d-e36d3daa1cb9": "مستشفى قصر العيني",
   "Al-Qasr Al-Aini Hospital": "مستشفى قصر العيني",
@@ -32,6 +35,8 @@ const hospitalArabicMap: Record<string, string> = {
 
 const organizationArabicMap: Record<string, string> = {
   // Blood Banks by ID
+  "239D19F5-BCD5-482F-9B89-00A3FCAB54EE": "بنك دم مستشفى شبرا العام",
+  "239d19f5-bcd5-482f-9b89-00a3fcab54ee": "بنك دم مستشفى شبرا العام",
   "central-blood-bank": "بنك الدم المركزي",
   "nile-regional-blood-bank": "بنك دم النيل الإقليمي",
   "alex-central-blood-bank": "بنك دم ساحل الإسكندرية",
@@ -42,6 +47,7 @@ const organizationArabicMap: Record<string, string> = {
   "b2a5c911-381a-421f-811a-b1479831b002": "مركز خدمات نقل الدم الإقليمي بالعباسية",
 
   // Blood Banks by Name
+  "Shobra General Hospital Blood Bank": "بنك دم مستشفى شبرا العام",
   "Central Blood Bank": "بنك الدم المركزي",
   "Nile Regional Blood Bank": "بنك دم النيل الإقليمي",
   "Alexandria Coastal Blood Bank": "بنك دم ساحل الإسكندرية",

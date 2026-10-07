@@ -7,9 +7,11 @@ import {
   MapPin,
   Phone,
   QrCode,
+  Search,
   Send,
+  Star,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
@@ -21,6 +23,7 @@ import {
   useCreateHospitalRequest,
 } from "@/features/hospital/hooks/use-hospital-requests";
 import { HospitalRequestQrModal } from "@/features/hospital/requests/hospital-request-qr-modal";
+import { formatOrganizationName } from "@/shared/lib/formatters";
 import {
   bloodComponentLabels,
   bloodComponents,
@@ -94,6 +97,7 @@ export function RequestForm() {
   const [step, setStep] = useState<
     "details" | "blood_bank" | "review" | "success"
   >("details");
+  const [searchQuery, setSearchQuery] = useState("");
   const [qrModalOpen, setQrModalOpen] = useState(false);
 
   const {
@@ -120,9 +124,67 @@ export function RequestForm() {
   const selectedBloodBankId = watch("bloodBankId");
   const values = getValues();
   const availableBanks = bloodBanksQuery.data ?? [];
+
+  const sortedBanks = useMemo(() => {
+    return [...availableBanks].sort((a, b) => {
+      // 1. Shobra General Hospital Blood Bank (test blood bank account) is highest priority
+      const aIsAffiliated =
+        a.id.toLowerCase() === "239d19f5-bcd5-482f-9b89-00a3fcab54ee" ||
+        a.name.toLowerCase().includes("shobra");
+      const bIsAffiliated =
+        b.id.toLowerCase() === "239d19f5-bcd5-482f-9b89-00a3fcab54ee" ||
+        b.name.toLowerCase().includes("shobra");
+      if (aIsAffiliated && !bIsAffiliated) return -1;
+      if (!aIsAffiliated && bIsAffiliated) return 1;
+
+      // 2. Active banks over inactive
+      if (a.status !== "inactive" && b.status === "inactive") return -1;
+      if (a.status === "inactive" && b.status !== "inactive") return 1;
+
+      // 3. Available stock units descending
+      const aUnits = a.availabilitySummary?.totalAvailable ?? 0;
+      const bUnits = b.availabilitySummary?.totalAvailable ?? 0;
+      if (bUnits !== aUnits) return bUnits - aUnits;
+
+      return a.name.localeCompare(b.name);
+    });
+  }, [availableBanks]);
+
+  const filteredBanks = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return sortedBanks;
+    return sortedBanks.filter((bank) => {
+      const arName = formatOrganizationName(bank.name, bank.id).toLowerCase();
+      const enName = bank.name.toLowerCase();
+      const gov = (bank.governorate || "").toLowerCase();
+      const addr = (bank.address || "").toLowerCase();
+      const code = (bank.facilityCode || "").toLowerCase();
+      return (
+        arName.includes(q) ||
+        enName.includes(q) ||
+        gov.includes(q) ||
+        addr.includes(q) ||
+        code.includes(q)
+      );
+    });
+  }, [sortedBanks, searchQuery]);
+
+  useEffect(() => {
+    if (sortedBanks.length > 0) {
+      const currentId = getValues("bloodBankId");
+      if (
+        !currentId ||
+        currentId === "central-blood-bank" ||
+        !sortedBanks.some((b) => b.id === currentId)
+      ) {
+        setValue("bloodBankId", sortedBanks[0].id);
+      }
+    }
+  }, [sortedBanks, getValues, setValue]);
+
   const selectedBank =
-    availableBanks.find((b) => b.id === selectedBloodBankId) ??
-    availableBanks[0];
+    sortedBanks.find((b) => b.id === selectedBloodBankId) ??
+    sortedBanks[0];
 
   const proceedToBankSelection = handleSubmit(() => {
     mutation.reset();
@@ -131,7 +193,7 @@ export function RequestForm() {
 
   const proceedToReview = () => {
     if (!selectedBloodBankId) {
-      setValue("bloodBankId", availableBanks[0]?.id ?? "central-blood-bank");
+      setValue("bloodBankId", sortedBanks[0]?.id ?? "central-blood-bank");
     }
     mutation.reset();
     setStep("review");
@@ -375,102 +437,132 @@ export function RequestForm() {
         {/* STEP 2: Target Blood Bank Selection */}
         {step === "blood_bank" && (
           <div className="p-5 sm:p-6">
-            <div>
-              <h2 className="text-lg font-semibold">{t("hospital.selectTargetBank")}</h2>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                {t("hospital.recommendedBanks")}
-              </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">{t("hospital.selectTargetBank")}</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {t("hospital.recommendedBanks")}
+                </p>
+              </div>
+
+              {/* Search input */}
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t("hospital.searchBloodBanks", "بحث باسم البنك أو المحافظة...")}
+                  className="ps-9 bg-surface text-sm"
+                />
+              </div>
             </div>
 
             <div className="mt-6 space-y-4" role="radiogroup" aria-label={t("hospital.availableBloodBanks")}>
-              {availableBanks.map((bank) => {
-                const isSelected = selectedBloodBankId === bank.id;
-                const isInactive = bank.status === "inactive";
-                const posture = bank.availabilitySummary?.posture ?? "optimal";
+              {filteredBanks.length === 0 ? (
+                <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                  {t("hospital.noMatchingBanks", "لا توجد بنوك دم مطابقة لكلمات البحث.")}
+                </div>
+              ) : (
+                filteredBanks.map((bank) => {
+                  const isSelected = selectedBloodBankId === bank.id;
+                  const isInactive = bank.status === "inactive";
+                  const posture = bank.availabilitySummary?.posture ?? "optimal";
+                  const isAffiliated =
+                    bank.id.toLowerCase() === "239d19f5-bcd5-482f-9b89-00a3fcab54ee" ||
+                    bank.name.toLowerCase().includes("shobra");
+                  const displayName = formatOrganizationName(bank.name, bank.id);
 
-                return (
-                  <div
-                    key={bank.id}
-                    onClick={() => {
-                      if (!isInactive) {
-                        setValue("bloodBankId", bank.id);
-                      }
-                    }}
-                    className={`relative cursor-pointer border p-4 transition-colors sm:p-5 ${
-                      isSelected
-                        ? "border-primary bg-primary/5 ring-1 ring-primary"
-                        : "border-border bg-surface hover:border-border/80 hover:bg-surface-subtle"
-                    } ${isInactive ? "opacity-60 cursor-not-allowed" : ""}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="radio"
-                          id={`bank-${bank.id}`}
-                          name="bloodBankSelection"
-                          value={bank.id}
-                          checked={isSelected}
-                          disabled={isInactive}
-                          onChange={() => setValue("bloodBankId", bank.id)}
-                          className="mt-1 size-4 text-primary focus:ring-primary"
-                        />
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <label
-                              htmlFor={`bank-${bank.id}`}
-                              className="font-semibold text-foreground cursor-pointer"
-                            >
-                              {bank.name}
-                            </label>
-                            <span className="rounded bg-muted px-2 py-0.5 text-xs font-mono font-medium text-muted-foreground">
-                              <bdi dir="ltr">{bank.facilityCode}</bdi>
-                            </span>
-                            {isInactive ? (
-                              <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
-                                {t("common.inactive")}
+                  return (
+                    <div
+                      key={bank.id}
+                      onClick={() => {
+                        if (!isInactive) {
+                          setValue("bloodBankId", bank.id);
+                        }
+                      }}
+                      className={`relative cursor-pointer border p-4 transition-colors sm:p-5 ${
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "border-border bg-surface hover:border-border/80 hover:bg-surface-subtle"
+                      } ${isInactive ? "opacity-60 cursor-not-allowed" : ""}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="radio"
+                            id={`bank-${bank.id}`}
+                            name="bloodBankSelection"
+                            value={bank.id}
+                            checked={isSelected}
+                            disabled={isInactive}
+                            onChange={() => setValue("bloodBankId", bank.id)}
+                            className="mt-1 size-4 text-primary focus:ring-primary"
+                          />
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <label
+                                htmlFor={`bank-${bank.id}`}
+                                className="font-semibold text-foreground cursor-pointer"
+                              >
+                                {displayName}
+                              </label>
+                              {isAffiliated && (
+                                <span className="inline-flex items-center gap-1 rounded bg-primary/10 border border-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
+                                  <Star className="size-3 fill-primary text-primary" />
+                                  {t("hospital.recommendedPartner", "بنك الدم الموصى به للمستشفى")}
+                                </span>
+                              )}
+                              <span className="rounded bg-muted px-2 py-0.5 text-xs font-mono font-medium text-muted-foreground">
+                                <bdi dir="ltr">{bank.facilityCode}</bdi>
                               </span>
-                            ) : (
-                              <span className="rounded bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
-                                {t("common.active")}
-                              </span>
-                            )}
-                          </div>
+                              {isInactive ? (
+                                <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                                  {t("common.inactive")}
+                                </span>
+                              ) : (
+                                <span className="rounded bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
+                                  {t("common.active")}
+                                </span>
+                              )}
+                            </div>
 
-                          <div className="mt-2 flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="size-3.5" aria-hidden="true" />
-                              {bank.governorate} — {bank.address}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Phone className="size-3.5" aria-hidden="true" />
-                              <bdi dir="ltr">{bank.phone}</bdi>
-                            </span>
+                            <div className="mt-2 flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <MapPin className="size-3.5" aria-hidden="true" />
+                                {bank.governorate} — {bank.address}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Phone className="size-3.5" aria-hidden="true" />
+                                <bdi dir="ltr">{bank.phone}</bdi>
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Stock Posture Pill */}
-                      <div className="hidden text-end sm:block">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            posture === "optimal"
-                              ? "bg-success-subtle text-success border border-success/30"
-                              : posture === "warning"
-                                ? "bg-warning-subtle text-[#854d0e] border border-warning/30"
-                                : "bg-emergency-subtle text-destructive border border-destructive/30"
-                          }`}
-                        >
-                          {posture === "warning" && <AlertTriangle className="size-3" />}
-                          {bank.availabilitySummary.totalAvailable} {t("common.units")}
-                        </span>
-                        <p className="mt-1 text-[11px] text-muted-foreground capitalize">
-                          {posture}
-                        </p>
+                        {/* Stock Posture Pill */}
+                        <div className="hidden text-end sm:block">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              posture === "optimal"
+                                ? "bg-success-subtle text-success border border-success/30"
+                                : posture === "warning"
+                                  ? "bg-warning-subtle text-[#854d0e] border border-warning/30"
+                                  : "bg-emergency-subtle text-destructive border border-destructive/30"
+                            }`}
+                          >
+                            {posture === "warning" && <AlertTriangle className="size-3" />}
+                            {bank.availabilitySummary.totalAvailable} {t("common.units")}
+                          </span>
+                          <p className="mt-1 text-[11px] text-muted-foreground capitalize">
+                            {posture}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
             <div className="mt-7 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-between">

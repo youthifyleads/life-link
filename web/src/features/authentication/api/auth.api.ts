@@ -73,12 +73,17 @@ export function adaptBackendUser(data: unknown): AuthenticatedUser {
       : primaryRole === "blood_bank_staff"
         ? "blood_bank"
         : "platform";
+  const instId = String(raw.institution_id || "").toLowerCase();
   const orgName =
-    primaryRole === "hospital_staff" || primaryRole === "medical_lead"
-      ? "Al-Qasr Al-Aini Hospital"
-      : primaryRole === "blood_bank_staff"
-        ? "National Blood Transfusion Center"
-        : "Life Link Platform";
+    instId === "c502917c-d942-4523-8420-d378414afc62"
+      ? "Shobra General Hospital"
+      : instId === "239d19f5-bcd5-482f-9b89-00a3fcab54ee"
+        ? "Shobra General Hospital Blood Bank"
+        : primaryRole === "hospital_staff" || primaryRole === "medical_lead"
+          ? "Al-Qasr Al-Aini Hospital"
+          : primaryRole === "blood_bank_staff"
+            ? "National Blood Transfusion Center"
+            : "Life Link Platform";
   const orgId = String(raw.institution_id || `org-${raw.id || "default"}`);
 
   return {
