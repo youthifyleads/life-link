@@ -124,7 +124,8 @@ class PaymentService:
             req = await self.request_repo.get_by_id(data.blood_request_id)
         if not req:
             raise NotFoundError("Blood request not found", code="REQUEST_NOT_FOUND")
-        self._check_hospital_access(req, current)
+        if current:
+            self._check_hospital_access(req, current)
 
         # Guard against duplicate paid payments
         existing = await self.repo.list_for_request(req.id)

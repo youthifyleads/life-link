@@ -402,8 +402,9 @@ class _CaregiverHomeScreenState extends State<CaregiverHomeScreen> {
     bool isAr,
   ) {
     final patientName = tracking?.patientName ?? patient?.fullName ?? (isAr ? 'المريض' : 'Patient');
-    final age = tracking?.patientAge ?? patient?.age;
-    final gender = tracking?.patientGender ?? patient?.gender ?? '—';
+    final ageRaw = tracking?.patientAge ?? patient?.age;
+    final ageDisplay = ageRaw != null ? '$ageRaw ${isAr ? "سنة" : "yrs"}' : (isAr ? 'غير محدد' : 'N/A');
+    final gender = tracking?.patientGender ?? patient?.gender ?? (isAr ? 'غير محدد' : 'N/A');
     final hospName = tracking?.hospitalName ?? patient?.hospitalName ?? '—';
     final dept = tracking?.department ?? patient?.department ?? '—';
     final roomBed = tracking?.roomBed ?? patient?.roomBed ?? '—';
@@ -451,12 +452,16 @@ class _CaregiverHomeScreenState extends State<CaregiverHomeScreen> {
                 // Title and Close
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -482,18 +487,17 @@ class _CaregiverHomeScreenState extends State<CaregiverHomeScreen> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 8),
                               Text(
                                 reqRef,
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           Text(
                             isAr ? 'إذن صرف وتقرير الحالة السريرية' : 'Clinical Requisition & Patient File',
                             style: const TextStyle(
@@ -526,7 +530,7 @@ class _CaregiverHomeScreenState extends State<CaregiverHomeScreen> {
                         color: const Color(0xFF1976D2),
                         children: [
                           _buildModalRow(isAr ? 'اسم المريض' : 'Patient Name', patientName, isBold: true),
-                          _buildModalRow(isAr ? 'السن والنوع' : 'Age & Gender', '$age ${isAr ? "سنة" : "yrs"} • $gender'),
+                          _buildModalRow(isAr ? 'السن والنوع' : 'Age & Gender', '$ageDisplay • $gender'),
                           _buildModalRow(isAr ? 'رقم الملف الطبي' : 'Medical Record #', fileNo, isBold: true),
                           _buildModalRow(isAr ? 'الرقم القومي / المرجع' : 'National ID / Ref', patient?.id ?? tracking?.reference ?? '—'),
                         ],

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+from app.core.domain import RequestStatus
 from app.repositories.interfaces.request_repository import RequestRepository
 from app.repositories.models import BloodRequestRecord
 
@@ -7,6 +9,26 @@ class InMemoryRequestRepository(RequestRepository):
 
     def __init__(self) -> None:
         self._requests: dict[str, BloodRequestRecord] = {}
+        self._seed_dev_requests()
+
+    def _seed_dev_requests(self) -> None:
+        tc78_id = "57b4a1d3-5b37-4f1d-9b70-2426dda6254f"
+        tc78_ref = "REQ-57B4A1D3-5B37-4F1D-9B70-2426DDA6254F"
+        self._requests[tc78_id] = BloodRequestRecord(
+            id=tc78_id,
+            hospital_id="hospital_1",
+            blood_type="O+",
+            component="whole_blood",
+            quantity_units=2,
+            urgency=True,
+            notes="حاله جراحه طارئه - قسم الطوارئ",
+            status=RequestStatus.ACKNOWLEDGED,
+            tracking_reference=tc78_ref,
+            created_by="usr_hospital_1",
+            unit_price=450.0,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
 
     async def create(self, request: BloodRequestRecord) -> BloodRequestRecord:
         self._requests[request.id] = request

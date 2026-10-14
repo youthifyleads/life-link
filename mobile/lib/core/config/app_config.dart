@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// App-wide environment configuration.
 /// Switch between dev / staging / production without touching business logic.
 class AppConfig {
@@ -12,11 +14,19 @@ class AppConfig {
   static bool get isProduction => _env == 'production';
 
   // ─── Base URLs ───────────────────────────────────────────────
-  static const String _devBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue:
-        'https://lifelink-backend-dev-g7cwf7gsf3cxdaba.centralus-01.azurewebsites.net/api/v1',
-  );
+  static String get _localDevBaseUrl {
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000/api/v1';
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000/api/v1';
+    } else {
+      return 'http://127.0.0.1:8000/api/v1';
+    }
+  }
+
+  static const String _configuredBaseUrl =
+      String.fromEnvironment('API_BASE_URL');
+
   static const String _stagingBaseUrl =
       'https://lifelink-backend-staging.azurewebsites.net/api/v1';
   static const String _azureDevelopmentBaseUrl =
@@ -24,6 +34,9 @@ class AppConfig {
   static const String _productionBaseUrl = 'https://api.lifelink.org/api/v1';
 
   static String get baseUrl {
+    if (_configuredBaseUrl.isNotEmpty) {
+      return _configuredBaseUrl;
+    }
     switch (_env) {
       case 'production':
         return _productionBaseUrl;
@@ -31,8 +44,9 @@ class AppConfig {
         return _stagingBaseUrl;
       case 'azure':
         return _azureDevelopmentBaseUrl;
+      case 'dev':
       default:
-        return _devBaseUrl;
+        return _localDevBaseUrl;
     }
   }
 

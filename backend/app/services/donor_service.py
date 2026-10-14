@@ -24,7 +24,24 @@ class DonorService:
         self.voucher_service = voucher_service
 
     async def get_me(self, user_id):
-        return await self.repo.get_by_user_id(user_id)
+        profile = await self.repo.get_by_user_id(user_id)
+        if not profile:
+            user = await self.user_repo.get_by_id(user_id)
+            if user:
+                profile = DonorRecord(
+                    id=str(uuid4()),
+                    user_id=user_id,
+                    blood_type=getattr(user, "blood_type", "O+") or "O+",
+                    date_of_birth="2000-01-01",
+                    governorate="Cairo",
+                    eligibility_status="eligible",
+                    last_donation_date=None,
+                    latitude=30.0444,
+                    longitude=31.2357,
+                )
+                return await self.repo.create(profile)
+            raise NotFoundError("Donor profile not found", code="DONOR_NOT_FOUND")
+        return profile
 
     async def create_for_user(self, user_id, data):
         if await self.repo.get_by_user_id(user_id):

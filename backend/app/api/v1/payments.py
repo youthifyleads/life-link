@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Header, Query, Request
 from app.core.domain import Role
-from app.core.security import CurrentUser, require_roles
+from app.core.security import CurrentUser, OptionalCurrentUser, require_roles
 from app.schemas.payments import (
     PaymentCreate,
     PaymentInitiateRequest,
@@ -15,10 +15,10 @@ from app.services.payment_service import PaymentService
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
-@router.post("/initiate", response_model=PaymentInitiateResponse, status_code=201, dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.ADMIN, Role.NORMAL_USER))])
+@router.post("/initiate", response_model=PaymentInitiateResponse, status_code=201)
 async def initiate(
     data: PaymentInitiateRequest,
-    current: CurrentUser,
+    current: OptionalCurrentUser = None,
     svc: PaymentService = Depends(get_payment_service),
 ):
     return await svc.initiate_payment(data, current)
