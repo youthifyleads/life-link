@@ -75,7 +75,7 @@ export function mapBackendDtoToHospitalRequest(
   };
 
   const qty = dto.quantity_units || 1;
-  const unitP = dto.unit_price != null ? Number(dto.unit_price) : 350;
+  const unitP = dto.unit_price != null ? Number(dto.unit_price) : 450;
   const totalAmt = dto.total_amount != null ? Number(dto.total_amount) : unitP * qty;
 
   return {

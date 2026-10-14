@@ -62,6 +62,7 @@ class BloodRequestPublic extends Equatable {
   final String status;
   final String trackingReference;
   final DateTime createdAt;
+  final double? unitPrice;
 
   const BloodRequestPublic({
     required this.id,
@@ -75,6 +76,7 @@ class BloodRequestPublic extends Equatable {
     required this.status,
     required this.trackingReference,
     required this.createdAt,
+    this.unitPrice,
   });
 
   factory BloodRequestPublic.fromJson(Map<String, dynamic> json) {
@@ -119,6 +121,7 @@ class BloodRequestPublic extends Equatable {
       status: status,
       trackingReference: trackingReference,
       createdAt: parsedCreatedAt,
+      unitPrice: json['unit_price'] != null ? (json['unit_price'] as num).toDouble() : null,
     );
   }
 

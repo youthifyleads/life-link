@@ -102,6 +102,14 @@ class CaregiverService:
         if self.request_repo:
             request_record = await self.request_repo.get_by_tracking_reference(code)
             if not request_record:
+                clean_code = code
+                for prefix in ("SEC-DISP-", "SEC-REQ-", "REQ-", "req-", "BR-", "br-", "#"):
+                    if clean_code.startswith(prefix):
+                        clean_code = clean_code[len(prefix):]
+                if clean_code.endswith("-EGY"):
+                    clean_code = clean_code[:-len("-EGY")]
+                request_record = await self.request_repo.get_by_id(clean_code)
+            if not request_record:
                 from app.core.security import decode_tracking_reference
 
                 decoded = decode_tracking_reference(code)

@@ -18,6 +18,24 @@ class PaymentRepository {
     );
   }
 
+  Future<PaymentModel> payWithCard({
+    required String bloodRequestId,
+    required String cardNumber,
+    required String expiryDate,
+    required String cvv,
+    String? cardHolder,
+    String? otp,
+  }) {
+    return _remoteDataSource.payWithCard(
+      bloodRequestId: bloodRequestId,
+      cardNumber: cardNumber,
+      expiryDate: expiryDate,
+      cvv: cvv,
+      cardHolder: cardHolder,
+      otp: otp,
+    );
+  }
+
   Future<PaymentModel> getPayment(String paymentId) {
     return _remoteDataSource.getPayment(paymentId);
   }

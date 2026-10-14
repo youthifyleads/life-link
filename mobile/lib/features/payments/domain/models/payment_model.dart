@@ -15,6 +15,7 @@ class PaymentModel {
   final String? patientId;
   final String? allocationId;
   final String? bloodBagId;
+  final String? maskedCard;
 
   const PaymentModel({
     required this.paymentId,
@@ -33,6 +34,7 @@ class PaymentModel {
     this.patientId,
     this.allocationId,
     this.bloodBagId,
+    this.maskedCard,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
@@ -60,6 +62,7 @@ class PaymentModel {
       patientId: json['patient_id']?.toString(),
       allocationId: json['allocation_id']?.toString(),
       bloodBagId: json['blood_bag_id']?.toString(),
+      maskedCard: json['masked_card']?.toString(),
     );
   }
 

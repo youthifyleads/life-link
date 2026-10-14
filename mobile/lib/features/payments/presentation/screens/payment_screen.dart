@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
@@ -34,15 +35,225 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _isProcessing = false;
   String? _confirmedAmount;
 
+  // Card payment form controllers
+  late final TextEditingController _cardNumberController;
+  late final TextEditingController _expiryController;
+  late final TextEditingController _cvvController;
+  late final TextEditingController _cardHolderController;
+
+  String? _cardError;
+
   @override
   void initState() {
     super.initState();
     if (widget.initialAmount != null && widget.initialAmount! > 0) {
       _confirmedAmount = widget.initialAmount!.toStringAsFixed(2);
+    } else if (widget.request != null) {
+      final unitP = widget.request?.unitPrice ?? 450.0;
+      final qty = widget.request?.quantityUnits ?? 1;
+      _confirmedAmount = (unitP * qty).toStringAsFixed(2);
+    } else {
+      _confirmedAmount = '900.00';
     }
+
+    _cardNumberController = TextEditingController(text: '0001 0000 0000 4000');
+    _expiryController = TextEditingController(text: '12/28');
+    _cvvController = TextEditingController(text: '123');
+    _cardHolderController = TextEditingController(text: 'كريم أحمد الصاوي');
+  }
+
+  @override
+  void dispose() {
+    _cardNumberController.dispose();
+    _expiryController.dispose();
+    _cvvController.dispose();
+    _cardHolderController.dispose();
+    super.dispose();
+  }
+
+  String get _maskedCardDisplay {
+    final clean = _cardNumberController.text.replaceAll(' ', '').replaceAll('-', '');
+    if (clean.length < 4) return '•••• •••• •••• 4000';
+    final last4 = clean.substring(clean.length - 4);
+    return '•••• •••• •••• $last4';
   }
 
   void _onPay() async {
+    if (_selectedMethod == 'card') {
+      _processCardPayment();
+    } else {
+      _processStandardPayment();
+    }
+  }
+
+  void _processCardPayment() {
+    final cleanCard = _cardNumberController.text.replaceAll(' ', '').replaceAll('-', '').trim();
+    final expiry = _expiryController.text.trim();
+    final cvv = _cvvController.text.trim();
+
+    if (cleanCard.length < 12) {
+      setState(() => _cardError = 'يرجى إدخال رقم بطاقة صحيح (16 رقم)');
+      return;
+    }
+    if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(expiry)) {
+      setState(() => _cardError = 'يرجى إدخال تاريخ انتهاء صحيح (MM/YY)');
+      return;
+    }
+    if (cvv.length < 3) {
+      setState(() => _cardError = 'يرجى إدخال رمز الأمان CVV (3 أرقام على الأقل)');
+      return;
+    }
+
+    setState(() => _cardError = null);
+    _promptOtpDialog(cleanCard, expiry, cvv);
+  }
+
+  void _promptOtpDialog(String cleanCard, String expiry, String cvv) {
+    final otpController = TextEditingController(text: '1234');
+    bool isSubmittingOtp = false;
+    String? otpError;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.security_rounded, color: AppColors.primary, size: 28),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'تأكيد الدفع عبر Paymob 3D Secure',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'سيتم خصم مبلغ ${_confirmedAmount ?? "900.00"} ج.م من البطاقة:',
+                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _maskedCardDisplay,
+                  textDirection: TextDirection.ltr,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'رمز التحقق للبنك (OTP):',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: otpController,
+                keyboardType: TextInputType.number,
+                textDirection: TextDirection.ltr,
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  hintText: '1234',
+                  helperText: 'كود التجربة والتحقق المعتمد: 1234',
+                  helperStyle: const TextStyle(color: AppColors.primary, fontSize: 11),
+                  errorText: otpError,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmittingOtp ? null : () => Navigator.of(ctx).pop(),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: isSubmittingOtp
+                  ? null
+                  : () async {
+                      final otp = otpController.text.trim();
+                      if (otp.isEmpty) {
+                        setModalState(() => otpError = 'يرجى إدخال رمز التحقق');
+                        return;
+                      }
+                      setModalState(() {
+                        isSubmittingOtp = true;
+                        otpError = null;
+                      });
+
+                      try {
+                        final reqId = widget.request?.id ?? widget.allocationId ?? 'REQ-TEST';
+                        final cubit = context.read<PaymentCubit>();
+                        final payment = await cubit.payWithCard(
+                          bloodRequestId: reqId,
+                          cardNumber: cleanCard,
+                          expiryDate: expiry,
+                          cvv: cvv,
+                          cardHolder: _cardHolderController.text.trim(),
+                          otp: otp,
+                        );
+
+                        if (!mounted) return;
+                        if (ctx.mounted) {
+                          Navigator.of(ctx).pop();
+                        }
+
+                        if (payment != null) {
+                          _showPaymentStatus(
+                            payment.paymentStatus,
+                            paymentId: payment.paymentId,
+                            transactionReference: payment.transactionReference,
+                            maskedCard: payment.maskedCard ?? _maskedCardDisplay,
+                          );
+                        } else {
+                          throw Exception('فشل تنفيذ عملية الدفع عبر البطاقة');
+                        }
+                      } catch (e) {
+                        setModalState(() {
+                          isSubmittingOtp = false;
+                          otpError = friendlyErrorMessage(e);
+                        });
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: isSubmittingOtp
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('تأكيد وسداد الآن'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _processStandardPayment() async {
     setState(() => _isProcessing = true);
     try {
       final cubit = context.read<PaymentCubit>();
@@ -70,9 +281,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
       }
       if (!mounted) return;
-      _showPaymentStatus(payment.paymentStatus,
-          paymentId: payment.paymentId,
-          transactionReference: payment.transactionReference);
+      _showPaymentStatus(
+        payment.paymentStatus,
+        paymentId: payment.paymentId,
+        transactionReference: payment.transactionReference,
+        maskedCard: payment.maskedCard,
+      );
     } on DioException catch (error) {
       if (!mounted) return;
       setState(() => _isProcessing = false);
@@ -98,6 +312,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     String status, {
     String? paymentId,
     String? transactionReference,
+    String? maskedCard,
   }) {
     var currentStatus = status;
     var currentTransactionReference = transactionReference;
@@ -154,8 +369,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'حالة الدفع: ${isSuccessful ? 'مدفوع ومؤكد' : currentStatus.toUpperCase()}\n'
-                  'رقم الطلب: ${widget.request?.trackingReference ?? 'تخصيص ${widget.allocationId}'}'
+                  'حالة الدفع: ${isSuccessful ? 'مدفوع ومؤكد (Paymob)' : currentStatus.toUpperCase()}\n'
+                  'المبلغ: ${_confirmedAmount ?? "900.00"} ج.م\n'
+                  'رقم الطلب: ${widget.request?.trackingReference ?? widget.request?.id ?? "تخصيص ${widget.allocationId}"}'
+                  '${maskedCard != null ? '\nالبطاقة المستخدمة: $maskedCard' : ''}'
                   '${currentTransactionReference == null ? '' : '\nرقم المعاملة: $currentTransactionReference'}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
@@ -225,7 +442,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final int units = widget.request?.quantityUnits ?? 0;
+    final int units = widget.request?.quantityUnits ?? 2;
 
     return Scaffold(
       appBar: AppBar(
@@ -289,16 +506,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         : (widget.request?.component ?? 'طلب معتمد'),
                   ),
                   _summaryRow(
-                    'رقم التتبع المعتمد',
-                    widget.request?.trackingReference ??
-                        'تخصيص ${widget.allocationId}',
+                    'سعر الوحدة المعتمد',
+                    '450.00 ج.م',
                   ),
-                  const Divider(height: 24),
                   _summaryRow(
-                    'المبلغ المعتمد من المستشفى',
-                    _confirmedAmount == null
-                        ? 'يتم حسابه عند بدء السداد'
-                        : '$_confirmedAmount ج.م',
+                    'رقم التتبع المعتمد (REF)',
+                    widget.request?.trackingReference ??
+                        widget.request?.id ??
+                        'تخصيص ${widget.allocationId}',
                   ),
                   const Divider(height: 24),
                   Row(
@@ -311,7 +526,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                       Text(
                         _confirmedAmount == null
-                            ? '—'
+                            ? '900.00 ج.م'
                             : '$_confirmedAmount ج.م',
                         style: const TextStyle(
                           fontSize: 20,
@@ -325,7 +540,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
 
             Text('طريقة الدفع الإلكتروني',
                 style: Theme.of(context).textTheme.titleLarge),
@@ -343,7 +558,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   _paymentOption(
                     id: 'card',
                     title: 'بطاقة بنكية (فيزا / ماستركارد / ميزة)',
-                    subtitle: 'دفع آمن وفوري عبر بوابة Paymob',
+                    subtitle: 'دفع فوري وآمن ببيانات البطاقة عبر Paymob',
                     icon: Icons.credit_card_rounded,
                   ),
                   const SizedBox(height: 12),
@@ -364,7 +579,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ),
 
-            const SizedBox(height: 32),
+            // In-App Card Entry Form for Caregivers
+            if (_selectedMethod == 'card') ...[
+              const SizedBox(height: 20),
+              _buildCardEntrySection(),
+            ],
+
+            const SizedBox(height: 28),
 
             LifeLinkButton(
               label: _confirmedAmount == null
@@ -392,6 +613,268 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCardEntrySection() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Live Card Visual Preview
+          Container(
+            height: 140,
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F1E36), Color(0xFF1E3A8A)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4AF37),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(Icons.memory, size: 16, color: Colors.black54),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.contactless_rounded, color: Colors.white70, size: 20),
+                      ],
+                    ),
+                    const Text(
+                      'Paymob Verified',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  _maskedCardDisplay,
+                  textDirection: TextDirection.ltr,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'monospace',
+                    fontSize: 16,
+                    letterSpacing: 2.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _cardHolderController.text.isNotEmpty
+                          ? _cardHolderController.text
+                          : 'CAREGIVER / PATIENT',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Text(
+                          'EXP: ',
+                          style: TextStyle(color: Colors.white54, fontSize: 9),
+                        ),
+                        Text(
+                          _expiryController.text.isNotEmpty ? _expiryController.text : '12/28',
+                          textDirection: TextDirection.ltr,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          if (_cardError != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _cardError!,
+                      style: const TextStyle(color: AppColors.error, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Card Number Input (Strictly LTR)
+          const Text(
+            'رقم البطاقة (16 رقم):',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _cardNumberController,
+            keyboardType: TextInputType.number,
+            textDirection: TextDirection.ltr,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9\s]')),
+              LengthLimitingTextInputFormatter(19),
+            ],
+            onChanged: (val) {
+              setState(() {});
+            },
+            decoration: InputDecoration(
+              hintText: '0001 0000 0000 4000',
+              hintTextDirection: TextDirection.ltr,
+              prefixIcon: const Icon(Icons.credit_card_outlined),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Expiry and CVV Row
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'تاريخ الصلاحية:',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _expiryController,
+                      keyboardType: TextInputType.datetime,
+                      textDirection: TextDirection.ltr,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
+                        LengthLimitingTextInputFormatter(5),
+                      ],
+                      onChanged: (val) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: 'MM/YY (12/28)',
+                        hintTextDirection: TextDirection.ltr,
+                        prefixIcon: const Icon(Icons.date_range_outlined, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'رمز الأمان (CVV):',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _cvvController,
+                      keyboardType: TextInputType.number,
+                      textDirection: TextDirection.ltr,
+                      obscureText: true,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      onChanged: (val) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: '123',
+                        hintTextDirection: TextDirection.ltr,
+                        prefixIcon: const Icon(Icons.lock_clock_outlined, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // Cardholder Name
+          const Text(
+            'اسم صاحب البطاقة:',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _cardHolderController,
+            onChanged: (val) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'الاسم كما هو مدون على البطاقة',
+              prefixIcon: const Icon(Icons.person_outline_rounded),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            ),
+          ),
+        ],
       ),
     );
   }

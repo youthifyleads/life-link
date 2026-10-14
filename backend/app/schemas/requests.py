@@ -13,6 +13,7 @@ class BloodRequestCreate(BaseModel):
     urgency: bool = Field(default=False, description="Marks the request as urgent for escalation/notification purposes")
     notes: str | None = Field(default=None, max_length=1000)
     reason: str | None = Field(default=None, max_length=1000)
+    unit_price: float | None = Field(default=None, ge=0, description="Standard quoted unit price in EGP")
     required_by: datetime | None = Field(default=None, examples=["2026-12-31T23:59:59Z"])
 
     @field_validator("blood_type", mode="before")

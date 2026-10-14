@@ -50,8 +50,8 @@ export function HospitalRequestQrModal({
   const [qrPayload, setQrPayload] = useState(request.id);
   const [imageError, setImageError] = useState(false);
 
-  // Financial & clinical fallback values
-  const unitPrice = request.unitPrice ?? 350;
+  // Financial & clinical fallback values (aligned to 450 EGP standard catalog pricing)
+  const unitPrice = request.unitPrice ?? 450;
   const totalAmount = request.totalAmount ?? unitPrice * request.quantity;
   const patientName = request.patientName || "كريم أحمد الصاوي";
   const rawId = request.id.replace("REQ-", "").replace("BR-", "").replace("#", "");
@@ -65,21 +65,24 @@ export function HospitalRequestQrModal({
   const manualEntryCode = `REQ-${rawId.toUpperCase()}`;
   const displayReference = request.id || manualEntryCode;
 
-  // Load backend tracking payload when modal opens
+  // Load backend tracking payload when modal opens - ensure it embeds exact voucher reference
   useEffect(() => {
     if (open && request.id) {
+      setQrPayload(displayReference);
       void requestsApi
         .getRequestQR(request.id)
         .then((res) => {
-          if (res?.qr_payload || res?.reference) {
-            setQrPayload(res.qr_payload || res.reference);
+          if (res?.request_id) {
+            setQrPayload(res.request_id);
+          } else if (res?.reference && !res.reference.startsWith("eyJ")) {
+            setQrPayload(res.reference);
           }
         })
         .catch(() => {
-          // Keep initialized fallback
+          setQrPayload(displayReference);
         });
     }
-  }, [open, request.id]);
+  }, [open, request.id, displayReference]);
 
   const handleCopyManual = async () => {
     try {

@@ -19,13 +19,14 @@ class SQLAlchemyRequestRepository(RequestRepository):
         except (ValueError, TypeError):
             req_id = str(uuid.uuid4())
             request.id = req_id
+        unit_p = getattr(request, "unit_price", None)
 
         obj = BloodRequestModel(
             blood_request_id=req_id, hospital_id=request.hospital_id, created_by_user_id=request.created_by,
             blood_type=request.blood_type, requested_quantity=request.quantity_units,
             component=request.component or "whole_blood",
             urgency="urgent" if request.urgency else "normal", status=request.status.value, reason=request.notes,
-            unit_price=getattr(request, "unit_price", None),
+            unit_price=unit_p,
             created_at=request.created_at, required_by=request.required_by,
         )
         self.session.add(obj)
@@ -33,27 +34,29 @@ class SQLAlchemyRequestRepository(RequestRepository):
         return request
 
     async def get_by_id(self, request_id: str) -> BloodRequestRecord | None:
+        clean_id = str(request_id).replace("REQ-", "").replace("req-", "").replace("BR-", "").replace("br-", "").replace("#", "").strip()
+        ids_to_try = {str(request_id), clean_id, clean_id.lower(), clean_id.upper()}
         try:
             import uuid
-            uuid.UUID(str(request_id))
+            normalized = str(uuid.UUID(clean_id))
+            ids_to_try.add(normalized)
         except (ValueError, TypeError):
-            return None
-        result = await self.session.execute(select(BloodRequestModel).where(BloodRequestModel.blood_request_id == request_id))
+            pass
+
+        result = await self.session.execute(
+            select(BloodRequestModel).where(BloodRequestModel.blood_request_id.in_(list(ids_to_try)))
+        )
         obj = result.scalar_one_or_none()
         return request_to_record(obj) if obj else None
 
     async def get_by_tracking_reference(self, reference: str) -> BloodRequestRecord | None:
+        direct = await self.get_by_id(reference)
+        if direct:
+            return direct
         request_id = decode_tracking_reference(reference)
-        if request_id is None:
-            return None
-        try:
-            import uuid
-            uuid.UUID(str(request_id))
-        except (ValueError, TypeError):
-            return None
-        result = await self.session.execute(select(BloodRequestModel).where(BloodRequestModel.blood_request_id == request_id))
-        obj = result.scalar_one_or_none()
-        return request_to_record(obj) if obj else None
+        if request_id:
+            return await self.get_by_id(request_id)
+        return None
 
     async def list_all(self, hospital_id: str | None = None) -> list[BloodRequestRecord]:
         stmt = select(BloodRequestModel).order_by(BloodRequestModel.created_at.desc())

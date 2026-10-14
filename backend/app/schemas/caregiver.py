@@ -75,3 +75,9 @@ class PatientPublic(PatientCreate):
 class CaregiverPaymentInitiateRequest(BaseModel):
     allocation_id: str | None = None
     blood_request_id: str | None = None
+    payment_method: str | None = "card"
+    card_number: str | None = None
+    card_holder: str | None = None
+    expiry_date: str | None = None
+    cvv: str | None = None
+    otp: str | None = None

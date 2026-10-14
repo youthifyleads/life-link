@@ -52,6 +52,32 @@ class PaymentCubit extends Cubit<PaymentState> {
     }
   }
 
+  Future<PaymentModel?> payWithCard({
+    required String bloodRequestId,
+    required String cardNumber,
+    required String expiryDate,
+    required String cvv,
+    String? cardHolder,
+    String? otp,
+  }) async {
+    emit(state.copyWith(loading: true, error: null));
+    try {
+      final payment = await _repository.payWithCard(
+        bloodRequestId: bloodRequestId,
+        cardNumber: cardNumber,
+        expiryDate: expiryDate,
+        cvv: cvv,
+        cardHolder: cardHolder,
+        otp: otp,
+      );
+      emit(state.copyWith(loading: false, payment: payment));
+      return payment;
+    } catch (e) {
+      emit(state.copyWith(loading: false, error: friendlyErrorMessage(e)));
+      return null;
+    }
+  }
+
   Future<PaymentModel?> refresh(String paymentId) async {
     emit(state.copyWith(loading: true, error: null));
     try {

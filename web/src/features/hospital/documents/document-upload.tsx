@@ -51,6 +51,7 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
       if (nextProgress === 100) {
         if (timerRef.current) window.clearInterval(timerRef.current);
         timerRef.current = null;
+        const blobUrl = URL.createObjectURL(nextFile);
         onUploaded({
           id: `doc-${crypto.randomUUID()}`,
           name: nextFile.name,
@@ -59,6 +60,7 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
           uploadedAt: new Date().toISOString(),
           reviewStatus: "pending",
           source: "local_preview",
+          url: blobUrl,
         });
       }
     }, 180);

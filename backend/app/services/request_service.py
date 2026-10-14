@@ -64,6 +64,7 @@ class RequestService:
             status=RequestStatus.REQUESTED,
             tracking_reference=QRService.generate_reference(record_id),
             created_by=current_user.id,
+            unit_price=payload.unit_price,
         )
         created = await self._request_repo.create(record)
         if self._status_history_repo:

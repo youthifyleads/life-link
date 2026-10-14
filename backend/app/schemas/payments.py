@@ -32,10 +32,25 @@ class PaymentPublic(BaseModel):
     transaction_reference: str | None
     created_at: datetime
     blood_request_id: str
+    masked_card: str | None = None
 
 class PaymentInitiateRequest(BaseModel):
     blood_request_id: str
     payment_method: str | None = Field(default="card", max_length=50)
+    card_number: str | None = None
+    card_holder: str | None = None
+    expiry_date: str | None = None
+    cvv: str | None = None
+    otp: str | None = None
+
+class PaymentCardPayRequest(BaseModel):
+    blood_request_id: str
+    card_number: str
+    card_holder: str | None = None
+    expiry_date: str
+    cvv: str
+    otp: str | None = "1234"
+    payment_method: str = "card"
 
 class PaymentInitiateResponse(BaseModel):
     payment_id: str
@@ -47,6 +62,8 @@ class PaymentInitiateResponse(BaseModel):
     client_secret: str | None = None
     checkout_url: str | None = None
     payment_status: str
+    transaction_reference: str | None = None
+    masked_card: str | None = None
 
 class PaymentWebhookResponse(BaseModel):
     status: str

@@ -5,6 +5,7 @@ from app.schemas.payments import (
     PaymentCreate,
     PaymentInitiateRequest,
     PaymentInitiateResponse,
+    PaymentCardPayRequest,
     PaymentPublic,
     PaymentUpdate,
     PaymentWebhookResponse,
@@ -21,6 +22,14 @@ async def initiate(
     svc: PaymentService = Depends(get_payment_service),
 ):
     return await svc.initiate_payment(data, current)
+
+@router.post("/pay-card", response_model=PaymentInitiateResponse, status_code=201, dependencies=[Depends(require_roles(Role.HOSPITAL_USER, Role.ADMIN, Role.NORMAL_USER))])
+async def pay_card(
+    data: PaymentCardPayRequest,
+    current: CurrentUser,
+    svc: PaymentService = Depends(get_payment_service),
+):
+    return await svc.pay_card(data, current)
 
 @router.post("/webhook", response_model=PaymentWebhookResponse)
 async def webhook(

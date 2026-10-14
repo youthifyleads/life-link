@@ -51,24 +51,28 @@ class QRService:
             raise ForbiddenError("Not authorized to issue QR for this request", code="FORBIDDEN_QR_ACCESS")
 
         return QRIssueResponse(
-            reference=request.tracking_reference,
-            qr_payload=request.tracking_reference,
+            reference=request.id,
+            qr_payload=request.id,
             request_id=request.id,
         )
 
     async def resolve_reference(self, reference: str, current_user: UserRecord | None = None) -> TrackingPublic:
-        request = await self._request_repo.get_by_tracking_reference(reference)
-        if request is None and reference.startswith("SEC-DISP-"):
-            clean_ref = reference[len("SEC-DISP-"):]
+        ref = (reference or "").strip()
+        request = await self._request_repo.get_by_tracking_reference(ref)
+        if request is None:
+            clean_ref = ref
+            for prefix in ("SEC-DISP-", "SEC-REQ-", "REQ-", "req-", "BR-", "br-", "#"):
+                if clean_ref.startswith(prefix):
+                    clean_ref = clean_ref[len(prefix):]
             if clean_ref.endswith("-EGY"):
                 clean_ref = clean_ref[:-len("-EGY")]
             request = await self._request_repo.get_by_id(clean_ref)
         if request is None:
-            decoded = decode_tracking_reference(reference)
+            decoded = decode_tracking_reference(ref)
             if decoded:
                 request = await self._request_repo.get_by_id(decoded)
-            if request is None:
-                request = await self._request_repo.get_by_id(reference)
+        if request is None:
+            request = await self._request_repo.get_by_id(ref)
         if request is None:
             raise NotFoundError("Tracking reference was not found", code="REFERENCE_NOT_FOUND")
 

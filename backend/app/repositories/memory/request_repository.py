@@ -13,9 +13,21 @@ class InMemoryRequestRepository(RequestRepository):
         return request
 
     async def get_by_id(self, request_id: str) -> BloodRequestRecord | None:
-        return self._requests.get(request_id)
+        if not request_id:
+            return None
+        if request_id in self._requests:
+            return self._requests[request_id]
+        clean_id = str(request_id).replace("REQ-", "").replace("req-", "").replace("BR-", "").replace("br-", "").replace("#", "").strip().lower()
+        for k, req in self._requests.items():
+            k_clean = str(k).replace("REQ-", "").replace("req-", "").replace("BR-", "").replace("br-", "").replace("#", "").strip().lower()
+            if k_clean == clean_id:
+                return req
+        return None
 
     async def get_by_tracking_reference(self, reference: str) -> BloodRequestRecord | None:
+        direct = await self.get_by_id(reference)
+        if direct:
+            return direct
         for req in self._requests.values():
             if req.tracking_reference == reference:
                 return req

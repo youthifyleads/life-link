@@ -106,7 +106,15 @@ async def initiate_caregiver_payment(
         if not req_id:
             req_id = data.allocation_id
 
-    pay_payload = PaymentInitiateRequest(blood_request_id=req_id or "", payment_method="card")
+    pay_payload = PaymentInitiateRequest(
+        blood_request_id=req_id or "",
+        payment_method=data.payment_method or "card",
+        card_number=data.card_number,
+        card_holder=data.card_holder,
+        expiry_date=data.expiry_date,
+        cvv=data.cvv,
+        otp=data.otp,
+    )
     return await payment_svc.initiate_payment(pay_payload, current)
 
 

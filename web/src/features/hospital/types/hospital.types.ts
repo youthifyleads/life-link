@@ -32,6 +32,7 @@ export interface SupportingDocument {
   uploadedAt: string;
   reviewStatus: DocumentReviewStatus;
   source?: "fixture" | "local_preview";
+  url?: string;
 }
 
 export interface HospitalDocumentItem extends SupportingDocument {
