@@ -5,11 +5,13 @@ import {
   Eye,
   FileText,
   MessageSquareWarning,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DocumentUpload } from "@/features/hospital/documents/document-upload";
+import { useDeleteHospitalDocument } from "@/features/hospital/hooks/use-hospital-requests";
 import {
   formatDateTime,
   formatFileSize,
@@ -89,6 +91,28 @@ export function SupportingDocuments({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const deleteMutation = useDeleteHospitalDocument();
+
+  const handleDelete = (doc: SupportingDocument) => {
+    if (doc.reviewStatus === "accepted") {
+      alert(t("hospital.cannotDeleteAccepted", "لا يمكن حذف مستند تم اعتماده وقبوله من بنك الدم"));
+      return;
+    }
+    const confirmMsg = t(
+      "hospital.confirmDeleteDocument",
+      "هل أنت متأكد من رغبتك في إلغاء وحذف هذا المستند؟ لن يتمكن بنك الدم من مراجعته بعد الحذف.",
+    );
+    if (!window.confirm(confirmMsg)) return;
+
+    setDocuments((current) => current.filter((d) => d.id !== doc.id));
+    if (previewDoc?.id === doc.id) {
+      setPreviewDoc(null);
+    }
+    if (requestId) {
+      deleteMutation.mutate({ requestId, documentId: doc.id });
+    }
   };
 
   return (
@@ -173,6 +197,20 @@ export function SupportingDocuments({
                           <Download className="size-3.5" />
                           <span className="sr-only">تحميل</span>
                         </Button>
+                        {document.reviewStatus !== "accepted" && canUpload && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            onClick={() => handleDelete(document)}
+                            title={t("hospital.deleteDocument", "إلغاء وحذف الملف قبل اعتماده")}
+                            aria-label={t("hospital.deleteDocument", "إلغاء وحذف الملف قبل اعتماده")}
+                          >
+                            <Trash2 className="size-3.5" />
+                            <span className="sr-only">حذف المستند</span>
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </li>
@@ -268,17 +306,31 @@ export function SupportingDocuments({
               )}
             </div>
 
-            <DialogFooter className="border-t border-border pt-3 flex-row items-center justify-between">
-              <Button
-                type="button"
-                variant="default"
-                size="sm"
-                onClick={() => handleDownload(previewDoc)}
-                className="gap-1.5 text-xs font-semibold"
-              >
-                <Download className="size-3.5" />
-                <span>تحميل المستند</span>
-              </Button>
+            <DialogFooter className="border-t border-border pt-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleDownload(previewDoc)}
+                  className="gap-1.5 text-xs font-semibold"
+                >
+                  <Download className="size-3.5" />
+                  <span>تحميل المستند</span>
+                </Button>
+                {previewDoc.reviewStatus !== "accepted" && canUpload && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleDelete(previewDoc)}
+                    className="gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    <span>إلغاء وحذف هذا المستند</span>
+                  </Button>
+                )}
+              </div>
               <Button
                 type="button"
                 variant="secondary"

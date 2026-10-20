@@ -1,8 +1,9 @@
-import { FileUp, UploadCloud, X } from "lucide-react";
+import { FileUp, LoaderCircle, Trash2, UploadCloud, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { SupportingDocument } from "@/features/hospital/types/hospital.types";
+import { formatFileSize } from "@/features/hospital/components/hospital-formatters";
 import { Button } from "@/shared/components/ui/button";
 import { TechnicalText } from "@/shared/components/i18n/bidi-text";
 
@@ -21,6 +22,7 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<number | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,15 +40,23 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
 
     if (!nextFile) return;
     if (!allowedTypes.includes(nextFile.type)) {
-      setError(t("hospital.uploadTypeError"));
+      setError(t("hospital.uploadTypeError", "نوع الملف غير مدعوم. الصيغ المسموحة: PDF، JPEG، PNG"));
       return;
     }
     if (nextFile.size > maxFileSize) {
-      setError(t("hospital.uploadSizeError"));
+      setError(t("hospital.uploadSizeError", "حجم الملف يتجاوز الحد الأقصى (10 ميجابايت)"));
       return;
     }
 
     setFile(nextFile);
+    setIsUploading(false);
+    setProgress(0);
+  };
+
+  const startUpload = () => {
+    if (!file) return;
+    setIsUploading(true);
+    setError(null);
 
     if (requestId) {
       setProgress(40);
@@ -54,10 +64,10 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
         {
           requestId,
           file: {
-            name: nextFile.name,
-            sizeBytes: nextFile.size,
-            mimeType: nextFile.type,
-            rawFile: nextFile,
+            name: file.name,
+            sizeBytes: file.size,
+            mimeType: file.type,
+            rawFile: file,
           },
         },
         {
@@ -72,10 +82,14 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
               uploadedAt: doc.uploadedAt,
               reviewStatus: doc.reviewStatus,
               source: doc.source,
-              url: doc.url || URL.createObjectURL(nextFile),
+              url: doc.url || URL.createObjectURL(file),
             });
+            setTimeout(() => {
+              reset();
+            }, 1200);
           },
           onError: (err: any) => {
+            setIsUploading(false);
             setProgress(0);
             setError(
               err?.message ||
@@ -87,34 +101,38 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
       return;
     }
 
-    setProgress(12);
-    let nextProgress = 12;
+    setProgress(15);
+    let nextProgress = 15;
     timerRef.current = window.setInterval(() => {
-      nextProgress = Math.min(nextProgress + 22, 100);
+      nextProgress = Math.min(nextProgress + 25, 100);
       setProgress(nextProgress);
 
       if (nextProgress === 100) {
         if (timerRef.current) window.clearInterval(timerRef.current);
         timerRef.current = null;
-        const blobUrl = URL.createObjectURL(nextFile);
+        const blobUrl = URL.createObjectURL(file);
         onUploaded({
           id: `doc-${crypto.randomUUID()}`,
-          name: nextFile.name,
-          sizeBytes: nextFile.size,
-          mimeType: nextFile.type,
+          name: file.name,
+          sizeBytes: file.size,
+          mimeType: file.type,
           uploadedAt: new Date().toISOString(),
           reviewStatus: "pending",
           source: "local_preview",
           url: blobUrl,
         });
+        setTimeout(() => {
+          reset();
+        }, 1000);
       }
-    }, 180);
+    }, 150);
   };
 
   const reset = () => {
     if (timerRef.current) window.clearInterval(timerRef.current);
     timerRef.current = null;
     setFile(null);
+    setIsUploading(false);
     setProgress(0);
     setError(null);
     if (inputRef.current) inputRef.current.value = "";
@@ -133,7 +151,7 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
       {!file ? (
         <button
           type="button"
-          className="flex min-h-40 w-full flex-col items-center justify-center border border-dashed border-input bg-surface-subtle px-5 py-8 text-center transition-colors hover:border-primary hover:bg-secondary/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-h-36 w-full flex-col items-center justify-center rounded-lg border border-dashed border-input bg-surface-subtle px-5 py-7 text-center transition-colors hover:border-primary hover:bg-secondary/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={() => inputRef.current?.click()}
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => {
@@ -141,58 +159,102 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
             selectFile(event.dataTransfer.files[0]);
           }}
         >
-          <UploadCloud aria-hidden="true" className="size-7 text-primary" />
-          <span className="mt-3 text-sm font-semibold">
-            {t("hospital.chooseDocument")}
+          <UploadCloud aria-hidden="true" className="size-8 text-primary" />
+          <span className="mt-2.5 text-sm font-semibold">
+            {t("hospital.chooseDocument", "اختر ملف المستند السريري")}
           </span>
           <span className="mt-1 text-xs leading-5 text-muted-foreground">
-            {t("hospital.uploadRequirements")}
+            {t("hospital.uploadRequirements", "PDF، JPEG، PNG حتى 10 ميجابايت")}
           </span>
         </button>
       ) : (
-        <div className="border border-border bg-surface-subtle p-4">
+        <div className="rounded-lg border border-border bg-surface-subtle p-4 shadow-2xs space-y-3">
           <div className="flex items-start gap-3">
-            <FileUp aria-hidden="true" className="mt-0.5 size-5 text-primary" />
+            <div className="flex size-9 shrink-0 items-center justify-center rounded bg-primary/10 text-primary">
+              <FileUp aria-hidden="true" className="size-5" />
+            </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold"><TechnicalText>{file.name}</TechnicalText></p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {progress === 100
-                  ? (requestId
-                      ? t("hospital.uploadSuccess", "تم رفع الملف بنجاح وإرساله للمراجعة")
-                      : t("hospital.localPreviewComplete"))
-                  : t("hospital.preparingPreview", { progress })}
+              <p className="truncate text-sm font-semibold text-foreground">
+                <TechnicalText>{file.name}</TechnicalText>
               </p>
+              <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                {formatFileSize(file.size)} · {file.type || "application/octet-stream"}
+              </p>
+            </div>
+            {!isUploading && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8 text-muted-foreground hover:text-destructive"
+                aria-label={t("hospital.clearSelectedDocument", "إلغاء الملف المختار")}
+                onClick={reset}
+                title={t("hospital.cancelFile", "إلغاء الملف المختار")}
+              >
+                <X aria-hidden="true" className="size-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* Progress or confirmation action buttons */}
+          {isUploading ? (
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>
+                  {progress === 100
+                    ? t("hospital.uploadSuccess", "تم الرفع بنجاح!")
+                    : t("hospital.uploadingProgress", "جاري رفع الملف إلى الخادم...")}
+                </span>
+                <span className="font-mono font-medium">{progress}%</span>
+              </div>
               <div
-                className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"
+                className="h-2 overflow-hidden rounded-full bg-muted"
                 role="progressbar"
                 aria-label={t("hospital.preparingFilePreview", { name: file.name })}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={progress}
               >
-                <div className="flex h-full">
-                  <div
+                <div
                   className="h-full bg-primary transition-[width] duration-200"
                   style={{ width: `${progress}%` }}
-                  />
-                </div>
+                />
               </div>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={t("hospital.clearSelectedDocument")}
-              onClick={reset}
-            >
-              <X aria-hidden="true" />
-            </Button>
-          </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-border/60">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={reset}
+                className="gap-1.5 text-xs text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="size-3.5" />
+                <span>{t("hospital.cancelFileAction", "إلغاء وإزالة الملف")}</span>
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={startUpload}
+                disabled={uploadMutation.isPending}
+                className="gap-1.5 text-xs font-semibold shadow-xs"
+              >
+                {uploadMutation.isPending ? (
+                  <LoaderCircle className="size-3.5 animate-spin" />
+                ) : (
+                  <UploadCloud className="size-3.5" />
+                )}
+                <span>{t("hospital.confirmUploadAction", "تأكيد ورفع الملف")}</span>
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
       {error ? (
-        <p className="mt-2 text-sm text-destructive" role="alert">
+        <p className="mt-2 text-xs text-destructive bg-destructive/10 p-2.5 rounded border border-destructive/20" role="alert">
           {error}
         </p>
       ) : null}

@@ -8,6 +8,7 @@ import {
   getHospitalRequests,
   rerouteHospitalRequest,
   uploadHospitalDocumentToRequest,
+  deleteHospitalDocumentFromRequest,
 } from "@/features/hospital/requests/hospital-requests.mock";
 import type {
   BloodGroup,
@@ -245,6 +246,40 @@ export function useUploadHospitalDocument() {
           };
         });
       }
+      void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.detail(variables.requestId) });
+      void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.all });
+      void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.documents });
+    },
+  });
+}
+
+export function useDeleteHospitalDocument() {
+  return useMutation({
+    mutationFn: async ({
+      requestId,
+      documentId,
+    }: {
+      requestId: string;
+      documentId: string;
+    }) => {
+      if (getAccessToken()) {
+        try {
+          await documentsApi.deleteDocument(documentId, requestId);
+        } catch (err) {
+          console.warn("Live document delete failed:", err);
+        }
+      }
+      return deleteHospitalDocumentFromRequest(requestId, documentId);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.setQueryData(hospitalRequestKeys.detail(variables.requestId), (old: any) => {
+        if (!old) return old;
+        const prevDocs = Array.isArray(old.documents) ? old.documents : [];
+        return {
+          ...old,
+          documents: prevDocs.filter((d: any) => d.id !== variables.documentId),
+        };
+      });
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.detail(variables.requestId) });
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.all });
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.documents });

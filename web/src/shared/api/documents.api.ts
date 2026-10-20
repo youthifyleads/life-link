@@ -13,10 +13,14 @@ export interface BackendDocumentDTO {
   uploaded_by?: string;
   uploaded_at: string;
   download_url?: string;
+  file_path?: string;
 }
 
 export function mapBackendDtoToSupportingDocument(dto: BackendDocumentDTO): SupportingDocument {
   const statusStr = (dto.status || "").toLowerCase();
+  const rawUrl = dto.download_url || dto.file_path;
+  const isHttp = rawUrl ? (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) : false;
+
   return {
     id: dto.id,
     name: dto.file_name,
@@ -29,8 +33,8 @@ export function mapBackendDtoToSupportingDocument(dto: BackendDocumentDTO): Supp
         : statusStr === "rejected" || statusStr === "changes_requested"
           ? "changes_requested"
           : "pending",
-    source: dto.download_url ? "remote" : "uploaded",
-    url: dto.download_url,
+    source: isHttp ? "remote" : "uploaded",
+    url: isHttp ? rawUrl : dto.download_url,
   };
 }
 
@@ -107,6 +111,20 @@ export const documentsApi = {
     return {
       downloadUrl: data.download_url,
     };
+  },
+
+  async deleteDocument(documentId: string, requestId?: string): Promise<void> {
+    try {
+      await apiClient.delete(`/documents/${documentId}`);
+    } catch {
+      try {
+        if (requestId) {
+          await apiClient.delete(`/requests/${requestId}/documents/${documentId}`);
+        }
+      } catch {
+        // Silently handled
+      }
+    }
   },
 };
 

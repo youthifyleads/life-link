@@ -151,6 +151,8 @@ export interface BloodBankSupportingDocument {
   mimeType: string;
   uploadedAt: string;
   reviewStatus: DocumentReviewStatus;
+  url?: string;
+  source?: "remote" | "uploaded" | "local_preview";
 }
 
 export interface BloodBankDocumentItem extends BloodBankSupportingDocument {

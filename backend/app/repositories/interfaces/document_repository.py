@@ -14,3 +14,6 @@ class DocumentRepository(ABC):
 
     @abstractmethod
     async def update(self, document: SupportingDocumentRecord) -> SupportingDocumentRecord: ...
+
+    @abstractmethod
+    async def delete(self, document_id: str) -> bool: ...

@@ -605,3 +605,20 @@ export async function uploadHospitalDocumentToRequest(
 
   return { request: structuredClone(updated), document: docItem };
 }
+
+export async function deleteHospitalDocumentFromRequest(
+  requestId: string,
+  documentId: string,
+): Promise<{ success: boolean }> {
+  await wait(200);
+  const reqIndex = requests.findIndex((r) => r.id === requestId);
+  if (reqIndex >= 0) {
+    const current = requests[reqIndex];
+    const filteredDocs = (current.documents || []).filter((d) => d.id !== documentId);
+    requests[reqIndex] = {
+      ...current,
+      documents: filteredDocs,
+    };
+  }
+  return { success: true };
+}

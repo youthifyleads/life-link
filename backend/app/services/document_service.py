@@ -89,3 +89,19 @@ class DocumentService:
         doc.rejection_reason = None if approved else reason
         doc.reviewed_by_user_id = user.id
         return await self._repo.update(doc)
+
+    async def get_document(self, document_id: str, user: UserRecord):
+        doc = await self._repo.get_by_id(document_id)
+        if not doc:
+            raise NotFoundError("Supporting document was not found", code="DOCUMENT_NOT_FOUND")
+        await self.ensure_request_access(doc.blood_request_id, user)
+        return doc
+
+    async def delete(self, document_id: str, user: UserRecord):
+        doc = await self._repo.get_by_id(document_id)
+        if not doc:
+            raise NotFoundError("Supporting document was not found", code="DOCUMENT_NOT_FOUND")
+        if doc.status == "approved":
+            raise ValidationAppError("Cannot delete an already approved clinical document", code="DOCUMENT_ALREADY_APPROVED")
+        await self.ensure_request_access(doc.blood_request_id, user)
+        return await self._repo.delete(document_id)

@@ -43,3 +43,9 @@ class SQLAlchemyDocumentRepository(DocumentRepository):
         if o:
             o.status=document.status; o.reviewed_at=document.reviewed_at; o.rejection_reason=document.rejection_reason; o.reviewed_by_user_id=document.reviewed_by_user_id; await self.session.commit()
         return document
+
+    async def delete(self, document_id):
+        from sqlalchemy import delete as sql_delete
+        res = await self.session.execute(sql_delete(SupportingDocumentModel).where(SupportingDocumentModel.document_id==document_id))
+        await self.session.commit()
+        return (res.rowcount or 0) > 0

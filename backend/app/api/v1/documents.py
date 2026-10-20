@@ -40,3 +40,13 @@ async def review_document(
     service: DocumentService = Depends(get_document_service)
 ):
     return await service.review(document_id, user_record, payload.approved, payload.reason)
+
+
+@router.delete("/documents/{document_id}", status_code=204, summary="Delete an unapproved supporting document")
+async def delete_document(
+    document_id: str, 
+    current_user: CurrentUser, 
+    user_record=Depends(load_user_record), 
+    service: DocumentService = Depends(get_document_service)
+):
+    await service.delete(document_id, user_record)

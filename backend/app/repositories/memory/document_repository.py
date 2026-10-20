@@ -19,3 +19,6 @@ class InMemoryDocumentRepository(DocumentRepository):
     async def update(self, document):
         self._items[document.id] = document
         return document
+
+    async def delete(self, document_id):
+        return self._items.pop(document_id, None) is not None
