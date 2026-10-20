@@ -18,8 +18,17 @@ export interface BackendDocumentDTO {
 
 export function mapBackendDtoToSupportingDocument(dto: BackendDocumentDTO): SupportingDocument {
   const statusStr = (dto.status || "").toLowerCase();
-  const rawUrl = dto.download_url || dto.file_path;
-  const isHttp = rawUrl ? (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) : false;
+  let rawUrl = dto.download_url || dto.file_path;
+
+  // If Azure blob url is private (no SAS token query param ?sig=), route through the backend streaming endpoint
+  if (rawUrl && rawUrl.includes(".blob.core.windows.net") && !rawUrl.includes("?")) {
+    const baseUrl = apiClient.defaults.baseURL || "/api/v1";
+    rawUrl = `${baseUrl}/documents/${dto.id}/content`;
+  } else if (!rawUrl) {
+    const baseUrl = apiClient.defaults.baseURL || "/api/v1";
+    rawUrl = `${baseUrl}/documents/${dto.id}/content`;
+  }
+  const isHttp = rawUrl ? (rawUrl.startsWith("http://") || rawUrl.startsWith("https://") || rawUrl.startsWith("/")) : false;
 
   return {
     id: dto.id,
@@ -113,16 +122,57 @@ export const documentsApi = {
     };
   },
 
+  async fetchDocumentBlob(doc: { id: string; url?: string; name: string }): Promise<Blob> {
+    // If url is already an object URL
+    if (doc.url && doc.url.startsWith("blob:")) {
+      const res = await fetch(doc.url);
+      return await res.blob();
+    }
+    // If url has SAS token
+    if (doc.url && doc.url.includes("?sig=")) {
+      try {
+        const res = await fetch(doc.url);
+        if (res.ok) {
+          return await res.blob();
+        }
+      } catch {
+        // Fall back to backend content endpoint
+      }
+    }
+    // Fetch through backend API with auth token
+    const res = await apiClient.get<Blob>(`/documents/${doc.id}/content`, {
+      responseType: "blob",
+    });
+    return res.data;
+  },
+
+  async downloadDocument(doc: { id: string; url?: string; name: string }): Promise<void> {
+    try {
+      const blob = await this.fetchDocumentBlob(doc);
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = doc.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+    } catch (err) {
+      console.warn("Blob download failed, using direct url fallback:", err);
+      if (doc.url) {
+        window.open(doc.url, "_blank");
+      }
+    }
+  },
+
   async deleteDocument(documentId: string, requestId?: string): Promise<void> {
     try {
       await apiClient.delete(`/documents/${documentId}`);
-    } catch {
-      try {
-        if (requestId) {
-          await apiClient.delete(`/requests/${requestId}/documents/${documentId}`);
-        }
-      } catch {
-        // Silently handled
+    } catch (err) {
+      if (requestId) {
+        await apiClient.delete(`/requests/${requestId}/documents/${documentId}`);
+      } else {
+        throw err;
       }
     }
   },

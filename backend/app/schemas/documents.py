@@ -11,6 +11,7 @@ class DocumentPublic(BaseModel):
     uploaded_at: datetime
     file_type: str | None
     file_path: str
+    download_url: str | None = None
     reviewed_at: datetime | None
     rejection_reason: str | None
 

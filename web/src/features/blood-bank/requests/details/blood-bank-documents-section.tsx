@@ -7,9 +7,10 @@ import {
   LoaderCircle,
   MessageSquareWarning,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
+import { documentsApi } from "@/shared/api/documents.api";
 import {
   formatBloodBankDateTime,
   formatBloodBankFileSize,
@@ -67,28 +68,53 @@ export function BloodBankDocumentsSection({
   const { t } = useTranslation();
   const [activeDocId, setActiveDocId] = useState<string>();
   const [previewDoc, setPreviewDoc] = useState<BloodBankSupportingDocument | null>(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const safeDocs = Array.isArray(documents) ? documents : [];
+
+  useEffect(() => {
+    if (!previewDoc) {
+      setPreviewBlobUrl(null);
+      return;
+    }
+    let active = true;
+    let createdUrl: string | null = null;
+    setIsLoadingPreview(true);
+
+    documentsApi
+      .fetchDocumentBlob(previewDoc)
+      .then((blob) => {
+        if (!active) return;
+        createdUrl = URL.createObjectURL(blob);
+        setPreviewBlobUrl(createdUrl);
+      })
+      .catch((err) => {
+        console.warn("Could not fetch blob for preview:", err);
+        if (active) {
+          setPreviewBlobUrl(previewDoc.url || null);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoadingPreview(false);
+        }
+      });
+
+    return () => {
+      active = false;
+      if (createdUrl) {
+        URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [previewDoc]);
 
   const handleAction = (documentId: string, status: DocumentReviewStatus) => {
     setActiveDocId(documentId);
     onUpdateStatus(documentId, status);
   };
 
-  const getDocumentDownloadUrl = (doc: BloodBankSupportingDocument): string => {
-    if (doc.url) return doc.url;
-    const content = `Clinical Document: ${doc.name}\nUploaded: ${doc.uploadedAt}\nSize: ${doc.sizeBytes} bytes\nMIME: ${doc.mimeType || "application/pdf"}\nStatus: Verified Clinical Evidence`;
-    const blob = new Blob([content], { type: "text/plain" });
-    return URL.createObjectURL(blob);
-  };
-
-  const handleDownload = (doc: BloodBankSupportingDocument) => {
-    const downloadUrl = getDocumentDownloadUrl(doc);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = doc.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (doc: BloodBankSupportingDocument) => {
+    await documentsApi.downloadDocument(doc);
   };
 
   const isImageDoc = (doc: BloodBankSupportingDocument) =>
@@ -269,18 +295,23 @@ export function BloodBankDocumentsSection({
 
             {/* Viewer Display Body */}
             <div className="flex-1 overflow-auto py-3 min-h-[52vh] flex items-center justify-center bg-muted/20 rounded-lg border border-border">
-              {previewDoc.url ? (
+              {isLoadingPreview ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground gap-3">
+                  <LoaderCircle className="size-8 animate-spin text-primary" />
+                  <p className="text-xs font-medium">جاري فحص وتجهيز المستند للمعاينة السريرية...</p>
+                </div>
+              ) : (previewBlobUrl || previewDoc.url) ? (
                 isImageDoc(previewDoc) ? (
                   <div className="flex flex-col items-center justify-center p-2 max-h-[62vh] overflow-auto">
                     <img
-                      src={previewDoc.url}
+                      src={previewBlobUrl || previewDoc.url}
                       alt={previewDoc.name}
                       className="max-h-[58vh] max-w-full object-contain rounded shadow-sm border border-border/80 bg-background"
                     />
                   </div>
                 ) : isPdfDoc(previewDoc) ? (
                   <iframe
-                    src={previewDoc.url}
+                    src={previewBlobUrl || previewDoc.url}
                     title={previewDoc.name}
                     className="w-full h-[62vh] rounded border-0"
                   />

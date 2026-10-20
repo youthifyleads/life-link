@@ -263,11 +263,8 @@ export function useDeleteHospitalDocument() {
       documentId: string;
     }) => {
       if (getAccessToken()) {
-        try {
-          await documentsApi.deleteDocument(documentId, requestId);
-        } catch (err) {
-          console.warn("Live document delete failed:", err);
-        }
+        await documentsApi.deleteDocument(documentId, requestId);
+        return;
       }
       return deleteHospitalDocumentFromRequest(requestId, documentId);
     },
@@ -280,9 +277,19 @@ export function useDeleteHospitalDocument() {
           documents: prevDocs.filter((d: any) => d.id !== variables.documentId),
         };
       });
+      queryClient.setQueryData(["blood-bank", "requests", variables.requestId], (old: any) => {
+        if (!old) return old;
+        const prevDocs = Array.isArray(old.documents) ? old.documents : [];
+        return {
+          ...old,
+          documents: prevDocs.filter((d: any) => d.id !== variables.documentId),
+        };
+      });
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.detail(variables.requestId) });
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.all });
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.documents });
+      void queryClient.invalidateQueries({ queryKey: ["blood-bank", "requests", variables.requestId] });
+      void queryClient.invalidateQueries({ queryKey: ["blood-bank", "documents"] });
     },
   });
 }
