@@ -110,24 +110,25 @@ export function RequestDetailsPage() {
     );
   }
 
-  const currentStatus = statusOverride ?? request.status;
+  const currentStatus = statusOverride ?? request.status ?? "submitted";
   const canCancel = ["draft", "submitted", "acknowledged"].includes(
     currentStatus,
   );
   const canReroute = currentStatus === "rejected";
   const canTrack = ["confirmed", "preparing", "completed"].includes(currentStatus);
+  const rawHistory = Array.isArray(request.history) ? request.history : [];
   const displayedHistory = localCancellation
-    ? [...request.history, localCancellation]
-    : request.history;
+    ? [...rawHistory, localCancellation]
+    : rawHistory;
 
   const resolvedHistory: RequestHistoryEvent[] =
     displayedHistory.length > 0
       ? displayedHistory
       : [
           {
-            id: `evt-init-${request.id}`,
+            id: `evt-init-${request.id || "req"}`,
             status: "submitted",
-            occurredAt: request.createdAt,
+            occurredAt: request.createdAt || new Date().toISOString(),
             actor: request.createdBy || "طاقم مستشفى قصر العيني",
             note: t(
               "hospital.initSubmissionNote",
@@ -205,7 +206,7 @@ export function RequestDetailsPage() {
   };
 
   // Document and QR approval rules:
-  const docs: SupportingDocument[] = request.documents ?? [];
+  const docs: SupportingDocument[] = Array.isArray(request.documents) ? request.documents : [];
   const hasDocuments = docs.length > 0;
   const allDocumentsAccepted =
     hasDocuments && docs.every((d: SupportingDocument) => d.reviewStatus === "accepted");
@@ -468,7 +469,7 @@ export function RequestDetailsPage() {
           </section>
 
           <SupportingDocuments
-            initialDocuments={request.documents}
+            initialDocuments={Array.isArray(request.documents) ? request.documents : []}
             requestId={request.id}
             canUpload={
               !["completed", "cancelled", "rejected"].includes(currentStatus)

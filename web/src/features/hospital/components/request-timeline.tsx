@@ -10,9 +10,10 @@ interface RequestTimelineProps {
   events: RequestHistoryEvent[];
 }
 
-export function RequestTimeline({ events }: RequestTimelineProps) {
+export function RequestTimeline({ events = [] }: RequestTimelineProps) {
   const { t } = useTranslation();
-  if (events.length === 0) {
+  const safeEvents = Array.isArray(events) ? events : [];
+  if (safeEvents.length === 0) {
     return (
       <p className="rounded-lg border border-border/80 bg-surface p-5 text-center text-sm text-muted-foreground shadow-2xs">
         {t("hospital.timelineEmpty")}
@@ -22,7 +23,7 @@ export function RequestTimeline({ events }: RequestTimelineProps) {
 
   return (
     <ol className="relative ms-2 border-s border-border">
-      {events.map((event, index) => (
+      {safeEvents.map((event, index) => (
         <li key={event.id} className="relative pb-7 ps-7 last:pb-0">
           <span className="absolute -start-2.5 top-0 flex size-5 items-center justify-center rounded-full bg-background text-primary">
             {index === events.length - 1 ? (

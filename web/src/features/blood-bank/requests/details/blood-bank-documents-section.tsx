@@ -44,12 +44,13 @@ const reviewBadgeMap: Record<
 };
 
 export function BloodBankDocumentsSection({
-  documents,
+  documents = [],
   isPending,
   onUpdateStatus,
 }: BloodBankDocumentsSectionProps) {
   const { t } = useTranslation();
   const [activeDocId, setActiveDocId] = useState<string>();
+  const safeDocs = Array.isArray(documents) ? documents : [];
 
   const handleAction = (documentId: string, status: DocumentReviewStatus) => {
     setActiveDocId(documentId);
@@ -73,7 +74,7 @@ export function BloodBankDocumentsSection({
         </p>
       </div>
 
-      {documents.length === 0 ? (
+      {safeDocs.length === 0 ? (
         <div className="rounded border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
           {t(
             "bloodBank.noSupportingDocs",
@@ -82,7 +83,7 @@ export function BloodBankDocumentsSection({
         </div>
       ) : (
         <ul className="divide-y divide-border/70 rounded-lg border border-border/80 overflow-hidden shadow-2xs">
-          {documents.map((doc) => {
+          {safeDocs.map((doc) => {
             const reviewConfig = reviewBadgeMap[doc.reviewStatus];
             const isDocPending = isPending && activeDocId === doc.id;
 

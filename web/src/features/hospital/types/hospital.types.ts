@@ -4,6 +4,8 @@ import type {
   UrgencyLevel,
 } from "@/shared/components/clinical/clinical.types";
 
+export type { BloodGroup, RequestStatus, UrgencyLevel };
+
 export const bloodComponents = [
   "red_cells",
   "platelets",

@@ -129,9 +129,9 @@ export const requestsApi = {
     const req = mapBackendDtoToHospitalRequest(data);
     try {
       const docs = await documentsApi.getRequestDocuments(id);
-      req.documents = docs;
+      req.documents = Array.isArray(docs) ? docs : [];
     } catch {
-      // Fallback: retain default documents if any
+      req.documents = Array.isArray(req.documents) ? req.documents : [];
     }
     return req;
   },
@@ -244,9 +244,9 @@ export const requestsApi = {
     const req = mapBackendDtoToBloodBankRequest(data);
     try {
       const docs = await documentsApi.getRequestDocuments(id);
-      req.documents = docs as any;
+      req.documents = (Array.isArray(docs) ? docs : []) as any;
     } catch {
-      // Fallback: retain default documents if any
+      req.documents = Array.isArray(req.documents) ? req.documents : [];
     }
     return req;
   },

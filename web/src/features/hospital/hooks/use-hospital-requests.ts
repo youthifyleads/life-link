@@ -9,7 +9,11 @@ import {
   rerouteHospitalRequest,
   uploadHospitalDocumentToRequest,
 } from "@/features/hospital/requests/hospital-requests.mock";
-import type { HospitalRequestInput } from "@/features/hospital/types/hospital.types";
+import type {
+  BloodGroup,
+  HospitalRequest,
+  HospitalRequestInput,
+} from "@/features/hospital/types/hospital.types";
 import { queryClient } from "@/app/providers/query-client";
 
 import { apiClient } from "@/shared/api/http-client";
@@ -204,15 +208,22 @@ export function useUploadHospitalDocument() {
       if (getAccessToken() && file.rawFile) {
         try {
           const doc = await documentsApi.uploadDocument(requestId, file.rawFile, file.name);
+          let updatedRequest: HospitalRequest | null = null;
+          try {
+            updatedRequest = await requestsApi.getRequestById(requestId);
+          } catch {
+            // fallback
+          }
+
           return {
-            request: { id: requestId } as any,
+            request: updatedRequest,
             document: {
               ...doc,
               requestId,
-              bloodGroup: "A+",
-              component: "red_cells" as any,
-              urgency: "emergency" as any,
-              targetBloodBankName: "Central Blood Bank Facility",
+              bloodGroup: updatedRequest?.bloodGroup ?? ("A+" as BloodGroup),
+              component: updatedRequest?.component ?? ("red_cells" as any),
+              urgency: updatedRequest?.urgency ?? ("emergency" as any),
+              targetBloodBankName: updatedRequest?.targetBloodBank?.name ?? "Central Blood Bank Facility",
             },
           };
         } catch (err) {
@@ -221,10 +232,20 @@ export function useUploadHospitalDocument() {
       }
       return uploadHospitalDocumentToRequest(requestId, file);
     },
-    onSuccess: (result) => {
-      if (result.request?.id) {
-        queryClient.setQueryData(hospitalRequestKeys.detail(result.request.id), result.request);
+    onSuccess: (result, variables) => {
+      if (result.request && Array.isArray(result.request.history)) {
+        queryClient.setQueryData(hospitalRequestKeys.detail(variables.requestId), result.request);
+      } else {
+        queryClient.setQueryData(hospitalRequestKeys.detail(variables.requestId), (old: any) => {
+          if (!old) return old;
+          const prevDocs = Array.isArray(old.documents) ? old.documents : [];
+          return {
+            ...old,
+            documents: [...prevDocs, result.document],
+          };
+        });
       }
+      void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.detail(variables.requestId) });
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.all });
       void queryClient.invalidateQueries({ queryKey: hospitalRequestKeys.documents });
     },

@@ -337,6 +337,12 @@ export function useUpdateDocumentReviewStatus() {
         queryKey: bloodBankRequestKeys.documents,
       });
       void queryClient.invalidateQueries({
+        queryKey: bloodBankRequestKeys.detail(updatedRequest.id),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: bloodBankRequestKeys.all,
+      });
+      void queryClient.invalidateQueries({
         queryKey: hospitalRequestKeys.detail(updatedRequest.id),
       });
       void queryClient.invalidateQueries({

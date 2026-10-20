@@ -76,10 +76,14 @@ export const documentsApi = {
   async getRequestDocuments(requestId: string): Promise<SupportingDocument[]> {
     try {
       const { data } = await apiClient.get<BackendDocumentDTO[]>(`/requests/${requestId}/documents`);
-      return data.map(mapBackendDtoToSupportingDocument);
+      return Array.isArray(data) ? data.map(mapBackendDtoToSupportingDocument) : [];
     } catch {
-      const { data } = await apiClient.get<BackendDocumentDTO[]>(`/documents/request/${requestId}`);
-      return data.map(mapBackendDtoToSupportingDocument);
+      try {
+        const { data } = await apiClient.get<BackendDocumentDTO[]>(`/documents/request/${requestId}`);
+        return Array.isArray(data) ? data.map(mapBackendDtoToSupportingDocument) : [];
+      } catch {
+        return [];
+      }
     }
   },
 

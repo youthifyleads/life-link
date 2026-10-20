@@ -58,17 +58,19 @@ const reviewDefinitions: Record<
 };
 
 export function SupportingDocuments({
-  initialDocuments,
+  initialDocuments = [],
   canUpload = true,
   requestId,
   onDocumentUploaded,
 }: SupportingDocumentsProps) {
   const { t } = useTranslation();
-  const [documents, setDocuments] = useState(initialDocuments);
+  const [documents, setDocuments] = useState<SupportingDocument[]>(
+    Array.isArray(initialDocuments) ? initialDocuments : [],
+  );
   const [previewDoc, setPreviewDoc] = useState<SupportingDocument | null>(null);
 
   useEffect(() => {
-    setDocuments(initialDocuments);
+    setDocuments(Array.isArray(initialDocuments) ? initialDocuments : []);
   }, [initialDocuments]);
 
   const getDocumentDownloadUrl = (doc: SupportingDocument): string => {
@@ -107,13 +109,13 @@ export function SupportingDocuments({
               {t("hospital.documentRegister")}
             </h3>
           </div>
-          {documents.length === 0 ? (
+          {(documents?.length ?? 0) === 0 ? (
             <div className="px-5 py-8 text-sm text-muted-foreground">
               {t("hospital.noSupportingDocuments")}
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {documents.map((document) => {
+              {(documents ?? []).map((document) => {
                 const review = reviewDefinitions[document.reviewStatus];
                 const ReviewIcon = review.icon;
                 return (
@@ -189,7 +191,9 @@ export function SupportingDocuments({
             <DocumentUpload
               requestId={requestId}
               onUploaded={(document) => {
-                setDocuments((current) => [...current, document]);
+                setDocuments((current) =>
+                  Array.isArray(current) ? [...current, document] : [document],
+                );
                 onDocumentUploaded?.(document);
               }}
             />
