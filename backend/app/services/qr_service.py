@@ -1,7 +1,6 @@
 from app.core.security import create_tracking_reference, decode_tracking_reference
-
-from app.core.domain import Role, AuditAction
-from app.core.exceptions import ForbiddenError, NotFoundError
+from app.core.domain import Role, AuditAction, RequestStatus
+from app.core.exceptions import AppError, ForbiddenError, NotFoundError
 from app.repositories.interfaces.request_repository import RequestRepository
 from app.repositories.models import UserRecord
 from app.schemas.qr import QRIssueResponse, TrackingPublic
@@ -9,6 +8,7 @@ from app.services.audit_service import AuditService
 
 
 from app.repositories.interfaces.blood_bag_repository import BloodBagRepository
+from app.repositories.interfaces.document_repository import DocumentRepository
 from app.repositories.interfaces.institution_repository import InstitutionRepository
 from app.repositories.interfaces.payment_repository import PaymentRepository
 
@@ -30,12 +30,14 @@ class QRService:
         institution_repo: InstitutionRepository | None = None,
         payment_repo: PaymentRepository | None = None,
         blood_bag_repo: BloodBagRepository | None = None,
+        document_repo: DocumentRepository | None = None,
     ):
         self._request_repo = request_repo
         self._audit_service = audit_service
         self._institution_repo = institution_repo
         self._payment_repo = payment_repo
         self._blood_bag_repo = blood_bag_repo
+        self._document_repo = document_repo
 
     @staticmethod
     def generate_reference(request_id: str) -> str:
@@ -49,6 +51,29 @@ class QRService:
             raise NotFoundError("Blood request was not found", code="REQUEST_NOT_FOUND")
         if current_user.role == Role.HOSPITAL_USER and current_user.institution_id != request.hospital_id:
             raise ForbiddenError("Not authorized to issue QR for this request", code="FORBIDDEN_QR_ACCESS")
+
+        # Business Rule: Cannot issue voucher unless the blood bank has accepted the request!
+        if request.status not in {
+            RequestStatus.ACKNOWLEDGED,
+            RequestStatus.CONFIRMED,
+            RequestStatus.PREPARED,
+            RequestStatus.COMPLETED,
+        }:
+            raise AppError(
+                "Cannot issue QR voucher: Blood bank has not accepted the request yet",
+                code="REQUEST_NOT_ACCEPTED",
+                status_code=400,
+            )
+
+        # Business Rule: If documents exist, all must be approved/accepted
+        if self._document_repo:
+            docs = await self._document_repo.list_for_request(request_id)
+            if docs and any(getattr(d, "status", None) not in {"approved", "accepted"} for d in docs):
+                raise AppError(
+                    "Cannot issue QR voucher: Required supporting clinical documents must be uploaded and approved by the blood bank first",
+                    code="DOCUMENTS_NOT_APPROVED",
+                    status_code=400,
+                )
 
         return QRIssueResponse(
             reference=request.id,

@@ -7,7 +7,6 @@ import {
   MapPin,
   Navigation,
   Phone,
-  QrCode,
   Search,
   Send,
   Sparkles,
@@ -26,7 +25,6 @@ import {
   useAvailableBloodBanks,
   useCreateHospitalRequest,
 } from "@/features/hospital/hooks/use-hospital-requests";
-import { HospitalRequestQrModal } from "@/features/hospital/requests/hospital-request-qr-modal";
 import { formatOrganizationName } from "@/shared/lib/formatters";
 import {
   calculateHaversineDistanceKm,
@@ -121,7 +119,7 @@ export function RequestForm() {
     "details" | "blood_bank" | "review" | "success"
   >("details");
   const [searchQuery, setSearchQuery] = useState("");
-  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [onlyAvailableStock, setOnlyAvailableStock] = useState(true);
 
   // Hospital coordinates (Shobra Hospital or active organization)
   const orgId = user?.active_organization_id?.toLowerCase() || "";
@@ -241,24 +239,43 @@ export function RequestForm() {
     });
   }, [availableBanks, hospitalLat, hospitalLon, requestedBloodGroup, requestedQuantity]);
 
+  const banksWithStockCount = useMemo(
+    () => sortedBanks.filter((b) => b.matchingUnits > 0 || b.compatibleUnits > 0).length,
+    [sortedBanks],
+  );
+
+  const hasBanksWithStock = banksWithStockCount > 0;
+
   const filteredBanks = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return sortedBanks;
-    return sortedBanks.filter((bank) => {
-      const arName = formatOrganizationName(bank.name, bank.id).toLowerCase();
-      const enName = bank.name.toLowerCase();
-      const gov = (bank.governorate || "").toLowerCase();
-      const addr = (bank.address || "").toLowerCase();
-      const code = (bank.facilityCode || "").toLowerCase();
-      return (
-        arName.includes(q) ||
-        enName.includes(q) ||
-        gov.includes(q) ||
-        addr.includes(q) ||
-        code.includes(q)
-      );
-    });
-  }, [sortedBanks, searchQuery]);
+    let list = sortedBanks;
+
+    if (q) {
+      list = list.filter((bank) => {
+        const arName = formatOrganizationName(bank.name, bank.id).toLowerCase();
+        const enName = bank.name.toLowerCase();
+        const gov = (bank.governorate || "").toLowerCase();
+        const addr = (bank.address || "").toLowerCase();
+        const code = (bank.facilityCode || "").toLowerCase();
+        return (
+          arName.includes(q) ||
+          enName.includes(q) ||
+          gov.includes(q) ||
+          addr.includes(q) ||
+          code.includes(q)
+        );
+      });
+    } else if (onlyAvailableStock && hasBanksWithStock) {
+      list = list.filter((bank) => bank.matchingUnits > 0 || bank.compatibleUnits > 0);
+    }
+
+    return list;
+  }, [sortedBanks, searchQuery, onlyAvailableStock, hasBanksWithStock]);
+
+  const hiddenOutOfStockCount = useMemo(() => {
+    if (!hasBanksWithStock || !onlyAvailableStock || searchQuery.trim()) return 0;
+    return sortedBanks.length - filteredBanks.length;
+  }, [hasBanksWithStock, onlyAvailableStock, searchQuery, sortedBanks.length, filteredBanks.length]);
 
   useEffect(() => {
     if (sortedBanks.length > 0) {
@@ -321,16 +338,17 @@ export function RequestForm() {
           </strong>{" "}
           ({mutation.data.targetBloodBank?.governorate}).
         </p>
+        <div className="mt-4 rounded-md border border-warning/30 bg-warning-subtle/50 p-3 text-xs text-[#6f4a00]">
+          <p className="font-semibold">
+            {t(
+              "hospital.awaitingBankApprovalNotice",
+              "تم إرسال الطلب بنجاح إلى بنك الدم. سيتم إتاحة إصدار قسيمة الاستلام (QR) فور قبول بنك الدم للطلب واعتماد المستندات المطلوبة.",
+            )}
+          </p>
+        </div>
+
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button
-            type="button"
-            onClick={() => setQrModalOpen(true)}
-            className="gap-2 font-semibold shadow-sm"
-          >
-            <QrCode aria-hidden="true" className="size-4" />
-            <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
-          </Button>
-          <Button asChild variant="secondary">
+          <Button asChild variant="default">
             <Link to={`/hospital/requests/${mutation.data.id}`}>
               {t("common.viewDetails")}
               <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
@@ -340,12 +358,6 @@ export function RequestForm() {
             <Link to="/hospital/requests">{t("common.back")}</Link>
           </Button>
         </div>
-
-        <HospitalRequestQrModal
-          open={qrModalOpen}
-          onOpenChange={setQrModalOpen}
-          request={mutation.data}
-        />
       </section>
     );
   }
@@ -549,7 +561,57 @@ export function RequestForm() {
               </div>
             </div>
 
-            <div className="mt-6 space-y-4" role="radiogroup" aria-label={t("hospital.availableBloodBanks")}>
+            {/* Availability Filter Tabs */}
+            {hasBanksWithStock && !searchQuery.trim() && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-3">
+                <div className="flex items-center gap-1.5 p-0.5 bg-muted/40 rounded-lg border border-border/60">
+                  <button
+                    type="button"
+                    onClick={() => setOnlyAvailableStock(true)}
+                    className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-all ${
+                      onlyAvailableStock
+                        ? "bg-surface text-primary shadow-xs border border-border/80"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <CheckCircle2 className="size-3.5 text-success" />
+                    <span>{isAr ? "المتوفر فقط" : "In-Stock Only"}</span>
+                    <span className="ms-1 rounded bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                      {banksWithStockCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setOnlyAvailableStock(false)}
+                    className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-all ${
+                      !onlyAvailableStock
+                        ? "bg-surface text-primary shadow-xs border border-border/80"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span>{isAr ? "كافة البنوك" : "All Banks"}</span>
+                    <span className="ms-1 rounded bg-muted px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">
+                      {sortedBanks.length}
+                    </span>
+                  </button>
+                </div>
+
+                {hiddenOutOfStockCount > 0 && (
+                  <span className="text-[11.5px] text-muted-foreground">
+                    {isAr
+                      ? `(تم حجب ${hiddenOutOfStockCount} بنك لا يتوفر بها مخزون حالياً)`
+                      : `(${hiddenOutOfStockCount} out-of-stock banks hidden)`}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div
+              className="mt-4 max-h-[460px] overflow-y-auto pe-1 space-y-3.5 scrollbar-thin"
+              role="radiogroup"
+              aria-label={t("hospital.availableBloodBanks")}
+            >
               {filteredBanks.length === 0 ? (
                 <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                   {t("hospital.noMatchingBanks", "لا توجد بنوك دم مطابقة لكلمات البحث.")}
@@ -686,9 +748,25 @@ export function RequestForm() {
                   );
                 })
               )}
+
+              {hiddenOutOfStockCount > 0 && (
+                <div className="pt-2 pb-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setOnlyAvailableStock(false)}
+                    className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>
+                      {isAr
+                        ? `+ إظهار باقي البنوك غير المتوفرة (${hiddenOutOfStockCount} بنك)`
+                        : `+ Show other out-of-stock facilities (${hiddenOutOfStockCount})`}
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            <div className="mt-7 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-between">
+            <div className="mt-5 flex flex-col-reverse gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
               <Button
                 type="button"
                 variant="ghost"

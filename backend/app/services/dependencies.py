@@ -284,8 +284,9 @@ def get_qr_service(
     institution_repo: InstitutionRepository = Depends(get_institution_repository),
     payment_repo: PaymentRepository = Depends(get_payment_repository),
     blood_bag_repo: BloodBagRepository = Depends(get_blood_bag_repository),
+    document_repo: DocumentRepository = Depends(get_document_repository),
 ) -> QRService:
-    return QRService(request_repo, audit_service, institution_repo, payment_repo, blood_bag_repo)
+    return QRService(request_repo, audit_service, institution_repo, payment_repo, blood_bag_repo, document_repo)
 
 
 def get_request_service(

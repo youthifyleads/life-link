@@ -178,7 +178,7 @@ def test_scan_nonexistent_bag_returns_404(client, normal_user_token):
     assert resp.json()["error"]["code"] == "BLOOD_BAG_NOT_FOUND"
 
 
-def test_caregiver_scans_hospital_staff_generated_qr(client, hospital_token, normal_user_token):
+def test_caregiver_scans_hospital_staff_generated_qr(client, hospital_token, bloodbank_token, normal_user_token):
     # 1. Hospital staff creates a blood request
     req_resp = client.post(
         "/api/v1/requests",
@@ -194,7 +194,23 @@ def test_caregiver_scans_hospital_staff_generated_qr(client, hospital_token, nor
     assert req_resp.status_code == 201
     req_id = req_resp.json()["id"]
 
-    # 2. Hospital staff generates the QR for this request
+    # 2. Attempting to generate QR BEFORE blood bank accepts must fail
+    qr_premature_resp = client.post(
+        f"/api/v1/requests/{req_id}/qr",
+        headers=auth_headers(hospital_token),
+    )
+    assert qr_premature_resp.status_code == 400
+    assert qr_premature_resp.json()["error"]["code"] == "REQUEST_NOT_ACCEPTED"
+
+    # 3. Blood bank accepts and sets pricing
+    ack_resp = client.post(
+        f"/api/v1/requests/{req_id}/acknowledge",
+        headers=auth_headers(bloodbank_token),
+        json={"unit_price": 250.0},
+    )
+    assert ack_resp.status_code == 200
+
+    # 4. Now hospital staff can successfully generate the QR for this request
     qr_resp = client.post(
         f"/api/v1/requests/{req_id}/qr",
         headers=auth_headers(hospital_token),
@@ -204,7 +220,7 @@ def test_caregiver_scans_hospital_staff_generated_qr(client, hospital_token, nor
     qr_payload = qr_data["qr_payload"]
     assert qr_payload
 
-    # 3. Caregiver scans this hospital staff-generated QR via POST /caregiver/scan-bag
+    # 5. Caregiver scans this hospital staff-generated QR via POST /caregiver/scan-bag
     scan_resp = client.post(
         "/api/v1/caregiver/scan-bag",
         headers=auth_headers(normal_user_token),
@@ -213,7 +229,7 @@ def test_caregiver_scans_hospital_staff_generated_qr(client, hospital_token, nor
     assert scan_resp.status_code == 200, scan_resp.text
     body = scan_resp.json()
     assert body["blood_type"] == "AB+"
-    assert body["status"] == "requested"
+    assert body["status"] == "acknowledged"
     assert body["bank_name"] == "Central Blood Bank"
     assert "Cairo" in body["bank_location"]
     assert body["request_id"] == req_id
@@ -237,4 +253,4 @@ def test_caregiver_scans_hospital_staff_generated_qr(client, hospital_token, nor
     assert t_body["bank_name"] == "Central Blood Bank"
     assert "Cairo" in t_body["bank_location"]
     assert t_body["blood_type"] == "AB+"
-    assert t_body["status"] == "requested"
+    assert t_body["status"] == "acknowledged"

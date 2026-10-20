@@ -215,13 +215,33 @@ export function RequestDetailsPage() {
   const hasPendingDocs = docs.some((d) => d.reviewStatus === "pending");
 
   const isCancelledOrRejected = ["cancelled", "rejected"].includes(currentStatus);
-  const canGenerateQr = !isCancelledOrRejected && hasDocuments && allDocumentsAccepted;
+  // Blood bank acceptance rule: Request must be accepted/acknowledged, confirmed, or preparing/ready/completed
+  const isAcceptedByBloodBank = [
+    "acknowledged",
+    "confirmed",
+    "preparing",
+    "ready",
+    "completed",
+  ].includes(currentStatus);
+
+  // Business rule:
+  // Cannot issue QR voucher until the blood bank accepts the request AND approves all supporting documents!
+  const canGenerateQr =
+    !isCancelledOrRejected &&
+    isAcceptedByBloodBank &&
+    hasDocuments &&
+    allDocumentsAccepted;
 
   let qrDisabledReason = "";
   if (isCancelledOrRejected) {
     qrDisabledReason = t(
       "hospital.qrDisabledCancelled",
       "الطلب ملغي أو مرفوض لا يمكن إصدار تذكرة QR.",
+    );
+  } else if (!isAcceptedByBloodBank) {
+    qrDisabledReason = t(
+      "hospital.qrDisabledNotAccepted",
+      "لا يمكن إصدار قسيمة الاستلام (QR) حتى يوافق بنك الدم على الطلب ويحدد السعر أولاً.",
     );
   } else if (!hasDocuments) {
     qrDisabledReason = t(
@@ -424,6 +444,8 @@ export function RequestDetailsPage() {
               canCancel={canCancel}
               canReroute={canReroute}
               canTrack={canTrack}
+              canGenerateQr={canGenerateQr}
+              qrDisabledReason={qrDisabledReason}
               onCancel={cancelRequest}
               onReroute={() => setRerouteOpen(true)}
               onOpenQr={() => setQrModalOpen(true)}

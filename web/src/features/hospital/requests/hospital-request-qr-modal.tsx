@@ -290,22 +290,22 @@ export function HospitalRequestQrModal({
         `}</style>
 
         {/* ══════════════════════════════════════════════════════════════════════
-            1. ON-SCREEN VOUCHER VIEW (High-density, space-efficient, no clipping)
+            1. ON-SCREEN VOUCHER VIEW (Minimal, elegant, zero clutter, 100% data)
             ══════════════════════════════════════════════════════════════════════ */}
         <div className="screen-only-view space-y-4">
           {/* Header */}
-          <DialogHeader className="border-b border-border pb-3 text-start">
+          <DialogHeader className="border-b border-border/70 pb-3 text-start">
             <div className="flex flex-wrap items-center justify-between gap-2.5">
               <div className="flex items-center gap-2.5">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <QrCode className="size-5" aria-hidden="true" />
+                <div className="flex size-8 items-center justify-center rounded-md bg-muted text-foreground">
+                  <QrCode className="size-4.5" aria-hidden="true" />
                 </div>
                 <div>
-                  <DialogTitle className="text-base font-bold text-foreground sm:text-lg">
-                    {t("hospital.voucherTitle", "إذن صرف دم وتذكرة المريض المشفرة (QR Requisition Voucher)")}
+                  <DialogTitle className="text-base font-bold text-foreground">
+                    {t("hospital.voucherTitle", "قسيمة صرف ونقل الدم السريرية")}
                   </DialogTitle>
                   <DialogDescription className="text-xs text-muted-foreground">
-                    {t("hospital.voucherSubtitle", "وثيقة صرف رسمية معتمدة لسداد Paymob ومتابعة مسار النقل")}
+                    {t("hospital.voucherSubtitle", "إذن صرف إلكتروني رسمي وسجل تتبع الاستلام للدم ومشتقاته")}
                   </DialogDescription>
                 </div>
               </div>
@@ -318,106 +318,23 @@ export function HospitalRequestQrModal({
             </div>
           </DialogHeader>
 
-          {/* Core Two-Column Layout */}
-          <div className="grid gap-4 md:grid-cols-[14rem_minmax(0,1fr)] items-start">
-            {/* ── Left Sidebar: QR Matrix + Manual PIN + Paymob Fee ── */}
-            <div className="flex flex-col items-center justify-center rounded-xl border border-primary/20 bg-gradient-to-b from-primary/5 to-surface-subtle p-3 text-center space-y-2.5">
-              {/* QR Image Box */}
-              <div className="relative flex size-36 items-center justify-center rounded-lg border-2 border-primary/30 bg-white p-1.5 shadow-sm">
-                {!imageError ? (
-                  <img
-                    src={qrImageUrl}
-                    alt={`QR Code ${request.id}`}
-                    className="size-32 object-contain"
-                    onError={() => setImageError(true)}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-primary">
-                    <QrCode className="size-20" aria-hidden="true" />
-                    <span className="text-[10px] font-mono mt-1 text-muted-foreground">
-                      {request.id}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Active Verified Pill */}
-              <div className="flex items-center gap-1 text-[11px] font-semibold text-success">
-                <CheckCircle2 className="size-3" />
-                <span>{t("hospital.qrReady", "رمز نشط ومعتمد")}</span>
-              </div>
-
-              {/* ── PROMINENT MANUAL ENTRY CODE (كود الإدخال اليدوي للموبايل) ── */}
-              <div className="w-full rounded-lg border-2 border-dashed border-primary/40 bg-primary/10 p-2 text-center">
-                <span className="text-[10px] font-bold uppercase text-primary block">
-                  كود الإدخال اليدوي للموبايل
-                </span>
-                <div className="mt-1 flex items-center justify-center gap-1.5">
-                  <span
-                    className="font-mono text-base font-extrabold tracking-wider text-foreground select-all"
-                    dir="ltr"
-                  >
-                    {manualEntryCode}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => void handleCopyManual()}
-                    className="rounded p-1 text-primary hover:bg-primary/20 transition-colors"
-                    title={t("common.copy", "نسخ كود الإدخال اليدوي")}
-                  >
-                    {copiedManual ? (
-                      <Check className="size-3.5 text-success" />
-                    ) : (
-                      <Copy className="size-3.5" />
-                    )}
-                  </button>
-                </div>
-                <span className="text-[9.5px] text-muted-foreground block mt-0.5 leading-tight">
-                  في حال تعذر مسح الكاميرا، اكتب هذا الكود في تطبيق LifeLink
-                </span>
-              </div>
-
-              {/* Financial Box Under QR */}
-              <div className="w-full rounded-lg border border-border bg-surface p-2 text-center space-y-1">
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground border-b border-border/60 pb-1">
-                  <span>رسوم الصرف:</span>
-                  <span className="font-bold text-primary">Paymob</span>
-                </div>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="font-mono text-base font-extrabold text-foreground">
-                    {totalAmount.toFixed(2)}
-                  </span>
-                  <span className="text-[10px] font-bold text-muted-foreground">ج.م</span>
-                </div>
-                <span
-                  className={`inline-block rounded-full px-2 py-0.5 text-[9.5px] font-bold ${
-                    request.status === "completed"
-                      ? "bg-success-subtle text-success border border-success/30"
-                      : "bg-warning-subtle text-[#6f4a00] border border-warning/30"
-                  }`}
-                >
-                  {request.status === "completed"
-                    ? t("hospital.paid", "تم السداد")
-                    : t("hospital.pendingPayment", "بانتظار السداد عبر Paymob")}
-                </span>
-              </div>
-            </div>
-
-            {/* ── Right Main Column: Clinical & Blood Data (Full text, No Clipping!) ── */}
-            <div className="space-y-3">
+          {/* Core Two-Column Minimal Voucher Layout */}
+          <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_13.5rem] items-start pt-1">
+            {/* ── Clinical & Blood Requisition Panel ── */}
+            <div className="space-y-3.5">
               {/* 1. Patient & Medical Details */}
-              <div className="rounded-lg border border-border bg-surface p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between border-b border-border/70 pb-1.5">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <User className="size-4 text-primary" />
+                    <User className="size-3.5 text-primary" />
                     {t("hospital.patientDataTitle", "بيانات المريض والطلب السريري")}
                   </span>
-                  <span className="font-mono text-xs font-bold text-foreground bg-muted/60 px-2 py-0.5 rounded border border-border">
+                  <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/70">
                     <TechnicalText>{medicalRecordNumber}</TechnicalText>
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pt-1">
                   <div>
                     <span className="text-muted-foreground text-[11px] block">اسم المريض:</span>
                     <span className="font-bold text-foreground text-sm">
@@ -442,30 +359,28 @@ export function HospitalRequestQrModal({
                       {formatDateTime(request.createdAt)}
                     </span>
                   </div>
-                </div>
-
-                {/* Reason / Clinical Diagnosis (Full Text - No Truncation!) */}
-                <div className="pt-2 border-t border-border/60">
-                  <span className="text-[11px] text-muted-foreground block mb-1 font-semibold">
-                    التشخيص السريري / سبب طلب نقل الدم:
-                  </span>
-                  <div className="font-medium text-foreground bg-muted/30 px-3 py-2 rounded text-xs leading-relaxed">
-                    <BidiText>{request.reason || "طلب نقل دم سريري عاجل"}</BidiText>
+                  <div className="col-span-2 pt-1">
+                    <span className="text-muted-foreground text-[11px] block mb-0.5">التشخيص السريري / سبب طلب نقل الدم:</span>
+                    <div className="font-medium text-foreground text-xs leading-relaxed bg-muted/25 px-2.5 py-1.5 rounded border border-border/50">
+                      <BidiText>{request.reason || "طلب نقل دم سريري عاجل"}</BidiText>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* 2. Blood Requisition & Route (Spacious, Zero Text Clipping) */}
-              <div className="rounded-lg border border-border bg-surface p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between border-b border-border/70 pb-1.5">
+              <div className="h-px bg-border/60" />
+
+              {/* 2. Blood Requisition & Route */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <HeartPulse className="size-4 text-primary" />
+                    <HeartPulse className="size-3.5 text-primary" />
                     مواصفات الدم ومسار الإمداد
                   </span>
                   <BloodGroupBadge group={request.bloodGroup} />
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2 text-xs pt-1">
                   <div>
                     <span className="text-muted-foreground text-[11px] block">المكون المطلوب:</span>
                     <span className="font-semibold text-foreground">
@@ -484,19 +399,19 @@ export function HospitalRequestQrModal({
                       {request.quantity} {request.quantity === 1 ? "وحدة (Unit)" : "وحدات (Units)"}
                     </span>
                   </div>
-                  <div className="sm:col-span-2 pt-1 border-t border-border/50">
+                  <div className="sm:col-span-2">
                     <span className="text-muted-foreground text-[11px] block">بنك الدم المنفذ (نقطة الانطلاق):</span>
-                    <span className="font-bold text-foreground flex items-center gap-1 mt-0.5">
+                    <span className="font-semibold text-foreground flex items-center gap-1 mt-0.5">
                       <Building2 className="size-3.5 text-primary shrink-0" />
                       <BidiText>{request.targetBloodBank?.name || "Central Blood Bank Facility"}</BidiText>
                     </span>
                   </div>
                   <div className="sm:col-span-2">
                     <span className="text-muted-foreground text-[11px] block">جهة الوصول وسلسلة التبريد:</span>
-                    <span className="font-medium text-foreground flex items-center gap-1 mt-0.5">
+                    <span className="font-medium text-foreground flex flex-wrap items-center gap-1.5 mt-0.5">
                       <Truck className="size-3.5 text-primary shrink-0" />
                       <span>مستشفى قصر العيني الفرنساوي — الطوارئ والعناية المركزة</span>
-                      <span className="text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded ms-1">
+                      <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                         2°C - 6°C مبرد
                       </span>
                     </span>
@@ -504,32 +419,104 @@ export function HospitalRequestQrModal({
                 </div>
               </div>
 
-              {/* 3. Caregiver Mobile App Note */}
-              <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs flex items-start gap-2">
+              <div className="h-px bg-border/60" />
+
+              {/* 3. Caregiver Minimal Callout */}
+              <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
                 <CreditCard className="size-4 text-primary shrink-0 mt-0.5" />
-                <div className="text-[11px] leading-relaxed text-muted-foreground">
-                  <strong className="text-foreground">خطوة المرافق عبر تطبيق LifeLink: </strong>
-                  يمسح مرافق المريض الـ QR أعلاه بالكاميرا، أو يدخل الكود اليدوي{" "}
-                  <strong className="font-mono text-foreground font-bold">{manualEntryCode}</strong>{" "}
-                  لسداد الفاتورة عبر Paymob (ميزة / بطاقات بنكية / محافظ ذكية) وبدء تتبع وصول الدم لحظياً.
+                <p className="leading-relaxed text-[11.5px]">
+                  <strong className="text-foreground font-semibold">خطوة المرافق عبر تطبيق LifeLink: </strong>
+                  يمسح مرافق المريض الـ QR أو يدخل الكود اليدوي{" "}
+                  <strong className="font-mono text-foreground">{manualEntryCode}</strong>{" "}
+                  لسداد الفاتورة عبر Paymob (ميزة / بطاقات / محافظ ذكية) وبدء تتبع وصول الدم لحظياً.
+                </p>
+              </div>
+            </div>
+
+            {/* ── Right / Voucher Pass Column: QR + Code + Paymob ── */}
+            <div className="flex flex-col items-center justify-center rounded-xl border border-border/80 bg-surface-subtle/50 p-4 text-center space-y-3">
+              {/* QR Image Box */}
+              <div className="relative flex size-36 items-center justify-center rounded-lg border border-border bg-white p-2 shadow-xs">
+                {!imageError ? (
+                  <img
+                    src={qrImageUrl}
+                    alt={`QR Code ${request.id}`}
+                    className="size-32 object-contain"
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-primary">
+                    <QrCode className="size-20" aria-hidden="true" />
+                    <span className="text-[10px] font-mono mt-1 text-muted-foreground">
+                      {request.id}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Status Indicator */}
+              <div className="flex items-center gap-1 text-[11px] font-medium text-success">
+                <CheckCircle2 className="size-3.5" />
+                <span>{t("hospital.qrReady", "رمز الاستجابة السريعة جاهز")}</span>
+              </div>
+
+              {/* Clean Manual Code Entry */}
+              <div className="w-full rounded-md border border-border/80 bg-surface p-2 text-center">
+                <span className="text-[10px] font-semibold text-muted-foreground block">
+                  كود الإدخال اليدوي للموبايل
+                </span>
+                <div className="mt-1 flex items-center justify-center gap-1.5">
+                  <span
+                    className="font-mono text-xs font-bold tracking-wider text-foreground select-all"
+                    dir="ltr"
+                  >
+                    {manualEntryCode}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void handleCopyManual()}
+                    className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    title={t("common.copy", "نسخ كود الإدخال اليدوي")}
+                  >
+                    {copiedManual ? (
+                      <Check className="size-3.5 text-success" />
+                    ) : (
+                      <Copy className="size-3.5" />
+                    )}
+                  </button>
+                </div>
+                <span className="text-[9px] text-muted-foreground block mt-0.5">
+                  في حال تعذر مسح الكاميرا، اكتب هذا الكود في تطبيق LifeLink
+                </span>
+              </div>
+
+              {/* Paymob Fee */}
+              <div className="w-full border-t border-border/60 pt-2 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground text-[11px]">رسوم الصرف:</span>
+                <div className="text-end">
+                  <div className="flex items-baseline gap-1 justify-end">
+                    <span className="font-mono text-base font-extrabold text-foreground">
+                      {totalAmount.toFixed(2)}
+                    </span>
+                    <span className="text-[10px] font-bold text-muted-foreground">ج.م</span>
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground block">
+                    Paymob • {request.status === "completed" ? t("hospital.paid", "تم السداد") : t("hospital.pendingPayment", "في انتظار السداد")}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ── Compact Accreditation Bar (No Squishing, Short Clean REF) ── */}
-          <div className="rounded-lg border border-dashed border-border bg-muted/20 px-3.5 py-2.5 text-xs text-muted-foreground flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-[11px] shrink-0">
-              <FileCheck className="size-4 text-success shrink-0" />
-              <span className="font-semibold text-foreground">
-                إذن صرف مميكن ومعتمد من الهيئة العامة للمستشفيات وبنوك الدم القومية
-              </span>
+          {/* ── Compact Minimal Accreditation Reference Bar ── */}
+          <div className="rounded-md border border-border/60 bg-muted/30 px-3.5 py-2 text-xs text-muted-foreground flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-[11px]">
+              <FileCheck className="size-3.5 text-success shrink-0" />
+              <span>إذن صرف مميكن ومعتمد من الهيئة العامة للمستشفيات وبنوك الدم القومية</span>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0 ms-auto">
-              <span className="text-[10px] text-muted-foreground font-bold uppercase">REF:</span>
-              <span className="font-mono text-xs font-extrabold text-foreground bg-surface px-2.5 py-0.5 rounded border border-border/80 shadow-xs">
-                <bdi dir="ltr">{displayReference}</bdi>
-              </span>
+            <div className="flex items-center gap-1 font-mono text-xs font-semibold text-foreground">
+              <span className="text-muted-foreground text-[10px]">REF:</span>
+              <bdi dir="ltr">{displayReference}</bdi>
             </div>
           </div>
         </div>
@@ -694,25 +681,25 @@ export function HospitalRequestQrModal({
         </div>
 
         {/* ── Dialog Footer with Action Buttons ── */}
-        <DialogFooter className="screen-only-view border-t border-border pt-3 flex-row flex-wrap items-center justify-between gap-2">
+        <DialogFooter className="screen-only-view border-t border-border/70 pt-3 flex-row flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Button
               type="button"
               variant="default"
               size="sm"
               onClick={handlePrint}
-              className="gap-1.5 text-xs font-bold h-8 shadow-sm"
+              className="gap-1.5 text-xs font-semibold h-8.5 shadow-xs"
             >
               <Printer className="size-3.5" />
-              <span>{t("hospital.printVoucher", "طباعة إذن الصرف (ورق أبيض وأسود)")}</span>
+              <span>{t("hospital.printVoucher", "طباعة القسيمة السريرية")}</span>
             </Button>
 
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               size="sm"
               onClick={() => void handleCopyManual()}
-              className="gap-1.5 text-xs h-8 font-mono"
+              className="gap-1.5 text-xs h-8.5 font-mono"
             >
               {copiedManual ? (
                 <>
@@ -730,9 +717,9 @@ export function HospitalRequestQrModal({
 
           <Button
             type="button"
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            className="text-xs h-8"
+            className="text-xs h-8.5"
             onClick={() => onOpenChange(false)}
           >
             {t("common.close", "إغلاق")}
