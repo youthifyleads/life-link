@@ -404,16 +404,42 @@ export async function getBloodUnits(params?: {
   return waitForMock(structuredClone(result));
 }
 
+function getOrCreateMockRequest(requestId: string): { request: BloodBankRequest; index: number } {
+  let index = requests.findIndex((req) => req.id === requestId);
+  if (index < 0) {
+    const fallback: BloodBankRequest = {
+      id: requestId,
+      hospital: {
+        id: "hospital-01",
+        name: "Al-Qasr Al-Aini Hospital",
+        facilityCode: "HOSP-01",
+      },
+      bloodGroup: "O+",
+      component: "red_cells",
+      quantity: 1,
+      urgency: "routine",
+      status: "acknowledged",
+      createdAt: new Date().toISOString(),
+      requiredAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      reasonCategory: "Clinical Requisition",
+      clinicalReason: "Clinical blood requirement",
+      history: [],
+      documents: [],
+      allocatedUnitIds: [],
+    };
+    requests.push(fallback);
+    index = requests.length - 1;
+  }
+  return { request: requests[index], index };
+}
+
 export async function allocateUnitsToRequest(
   requestId: string,
   unitIds: string[],
 ): Promise<{ request: BloodBankRequest; units: BloodUnit[] }> {
-  const requestIndex = requests.findIndex((req) => req.id === requestId);
-  if (requestIndex < 0) {
-    throw new Error("Request not found in the demonstration queue.");
-  }
+  const { request: currentRequest, index: requestIndex } = getOrCreateMockRequest(requestId);
 
-  const currentRequest = requests[requestIndex];
   const updatedAllocatedIds = Array.from(
     new Set([...currentRequest.allocatedUnitIds, ...unitIds]),
   );
@@ -451,12 +477,8 @@ export async function reserveUnitsForRequest(
   requestId: string,
   unitIds: string[],
 ): Promise<{ request: BloodBankRequest; units: BloodUnit[] }> {
-  const requestIndex = requests.findIndex((req) => req.id === requestId);
-  if (requestIndex < 0) {
-    throw new Error("Request not found in the demonstration queue.");
-  }
+  const { request: currentRequest, index: requestIndex } = getOrCreateMockRequest(requestId);
 
-  const currentRequest = requests[requestIndex];
   const updatedAllocatedIds = Array.from(
     new Set([...currentRequest.allocatedUnitIds, ...unitIds]),
   );
@@ -494,12 +516,8 @@ export async function deallocateUnitFromRequest(
   requestId: string,
   unitId: string,
 ): Promise<{ request: BloodBankRequest; units: BloodUnit[] }> {
-  const requestIndex = requests.findIndex((req) => req.id === requestId);
-  if (requestIndex < 0) {
-    throw new Error("Request not found in the demonstration queue.");
-  }
+  const { request: currentRequest, index: requestIndex } = getOrCreateMockRequest(requestId);
 
-  const currentRequest = requests[requestIndex];
   const updatedAllocatedIds = currentRequest.allocatedUnitIds.filter(
     (id) => id !== unitId,
   );
@@ -538,15 +556,24 @@ export async function updateDocumentReviewStatus(
   documentId: string,
   status: DocumentReviewStatus,
 ): Promise<BloodBankRequest> {
-  const requestIndex = requests.findIndex((req) => req.id === requestId);
-  if (requestIndex < 0) {
-    throw new Error("Request not found in the demonstration queue.");
-  }
+  const { request: currentRequest, index: requestIndex } = getOrCreateMockRequest(requestId);
 
-  const currentRequest = requests[requestIndex];
-  const updatedDocuments = currentRequest.documents.map((doc) =>
-    doc.id === documentId ? { ...doc, reviewStatus: status } : doc,
-  );
+  const hasDoc = currentRequest.documents.some((d) => d.id === documentId);
+  const updatedDocuments = hasDoc
+    ? currentRequest.documents.map((doc) =>
+        doc.id === documentId ? { ...doc, reviewStatus: status } : doc,
+      )
+    : [
+        ...currentRequest.documents,
+        {
+          id: documentId,
+          name: "Clinical Document",
+          sizeBytes: 245000,
+          mimeType: "application/pdf",
+          uploadedAt: new Date().toISOString(),
+          reviewStatus: status,
+        },
+      ];
 
   const occurredAt = new Date().toISOString();
   const statusLabel =
@@ -594,18 +621,9 @@ export async function transitionBloodBankRequest(
   action: BloodBankRequestAction,
   options?: { note?: string; rejectReason?: string },
 ) {
-  const requestIndex = requests.findIndex(
-    (request) => request.id === requestId,
-  );
+  const { request, index: requestIndex } = getOrCreateMockRequest(requestId);
   const transition = actionTransitions[action];
 
-  if (requestIndex < 0) {
-    throw new Error(
-      "The request no longer exists in this demonstration queue.",
-    );
-  }
-
-  const request = requests[requestIndex];
   if (!transition.from.includes(request.status)) {
     throw new Error(
       `This request cannot be moved from ${request.status} using that action. Refresh the queue and try again.`,

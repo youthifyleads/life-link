@@ -171,6 +171,12 @@ export function useTransitionBloodBankRequest() {
             res = await apiClient.post(`/requests/${requestId}/cancel`, { reason: note || "Cancelled" });
           }
           if (res?.data) {
+            try {
+              const fresh = await requestsApi.getBloodBankRequestById(requestId);
+              if (fresh) return fresh;
+            } catch {
+              // fallback to mapped DTO
+            }
             return mapBackendDtoToBloodBankRequest(res.data);
           }
         } catch (err) {
@@ -303,24 +309,54 @@ export function useUpdateDocumentReviewStatus() {
       requestId,
       documentId,
       status,
+      reason,
     }: {
       requestId: string;
       documentId: string;
       status: DocumentReviewStatus;
+      reason?: string;
     }) => {
       if (getAccessToken()) {
         try {
           await documentsApi.reviewDocument(
             documentId,
             status === "accepted",
-            status === "changes_requested"
-              ? "Changes requested by blood bank staff"
-              : undefined,
+            reason ||
+              (status === "changes_requested"
+                ? "Changes requested by blood bank staff"
+                : undefined),
           );
+
+          try {
+            const refreshed = await requestsApi.getBloodBankRequestById(requestId);
+            if (refreshed) {
+              return refreshed;
+            }
+          } catch (fetchErr) {
+            console.warn("Failed to fetch refreshed request after doc review:", fetchErr);
+          }
+
+          const existing = queryClient.getQueryData<BloodBankRequest>(
+            bloodBankRequestKeys.detail(requestId),
+          );
+          if (existing) {
+            const updatedDocs = (existing.documents || []).map((doc) =>
+              doc.id === documentId ? { ...doc, reviewStatus: status } : doc,
+            );
+            return {
+              ...existing,
+              documents: updatedDocs,
+              updatedAt: new Date().toISOString(),
+            };
+          }
         } catch (err) {
-          console.warn("Live document review failed, using mock/local fallback:", err);
+          console.warn("Live document review failed:", err);
+          if (import.meta.env.MODE !== "test") {
+            throw err;
+          }
         }
       }
+
       return updateDocumentReviewStatus(requestId, documentId, status);
     },
     onSuccess: (updatedRequest) => {

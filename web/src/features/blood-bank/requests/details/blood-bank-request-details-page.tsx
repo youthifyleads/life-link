@@ -182,9 +182,19 @@ export function BloodBankRequestDetailsPage() {
         note: options?.note,
         rejectReason: options?.rejectReason,
       });
+      const statusLabels: Record<string, string> = {
+        acknowledged: "تم تأكيد استلام الطلب",
+        confirmed: "تم تأكيد التخصيص والمطابقة",
+        preparing: "بدأ تجهيز وحدات الدم",
+        completed: "تم إكمال الطلب وتسليمه",
+        rejected: "تم رفض الطلب",
+        cancelled: "تم إلغاء الطلب",
+      };
       setFeedback({
         tone: "success",
-        message: `Status transitioned to "${updated.status.replaceAll("_", " ")}" in this local preview. No remote database was altered.`,
+        message:
+          statusLabels[updated.status] ||
+          `تم تحديث حالة الطلب بنجاح إلى "${updated.status}".`,
       });
     } catch (err) {
       setFeedback({
@@ -192,7 +202,7 @@ export function BloodBankRequestDetailsPage() {
         message:
           err instanceof Error
             ? err.message
-            : "Could not transition status. Please try again.",
+            : "تعذر تحديث حالة الطلب، يُرجى المحاولة مرة أخرى.",
       });
     }
   };
@@ -206,13 +216,13 @@ export function BloodBankRequestDetailsPage() {
       });
       setFeedback({
         tone: "success",
-        message: `Allocated ${unitIds.length} blood unit(s) to requisition ${request.id}.`,
+        message: `تم تخصيص ${unitIds.length} وحدة دم للطلب بنجاح.`,
       });
     } catch (err) {
       setFeedback({
         tone: "error",
         message:
-          err instanceof Error ? err.message : "Failed to allocate units.",
+          err instanceof Error ? err.message : "فشل في تخصيص الوحدات.",
       });
     }
   };
@@ -226,13 +236,13 @@ export function BloodBankRequestDetailsPage() {
       });
       setFeedback({
         tone: "success",
-        message: `Reserved ${unitIds.length} blood unit(s) for requisition ${request.id}.`,
+        message: `تم حجز ${unitIds.length} وحدة دم لإجراء اختبار المطابقة والتوافق.`,
       });
     } catch (err) {
       setFeedback({
         tone: "error",
         message:
-          err instanceof Error ? err.message : "Failed to reserve units.",
+          err instanceof Error ? err.message : "فشل في حجز الوحدات.",
       });
     }
   };
@@ -247,12 +257,12 @@ export function BloodBankRequestDetailsPage() {
       });
       setFeedback({
         tone: "success",
-        message: `Unit ${unitId} unallocated from requisition ${request.id}.`,
+        message: `تم إلغاء تخصيص وحدة الدم (${unitId}) من الطلب.`,
       });
     } catch (err) {
       setFeedback({
         tone: "error",
-        message: err instanceof Error ? err.message : "Failed to remove unit.",
+        message: err instanceof Error ? err.message : "فشل في إلغاء التخصيص.",
       });
     } finally {
       setActiveUnitId(undefined);
@@ -272,7 +282,10 @@ export function BloodBankRequestDetailsPage() {
       });
       setFeedback({
         tone: "success",
-        message: `Document status marked as "${status.replaceAll("_", " ")}".`,
+        message:
+          status === "accepted"
+            ? "تم قبول المستند السريري واعتماده بنجاح."
+            : "تم تسجيل طلب التعديل على المستند بنجاح.",
       });
     } catch (err) {
       setFeedback({
@@ -280,7 +293,7 @@ export function BloodBankRequestDetailsPage() {
         message:
           err instanceof Error
             ? err.message
-            : "Failed to update document status.",
+            : "فشل في تحديث حالة مراجعة المستند.",
       });
     }
   };
