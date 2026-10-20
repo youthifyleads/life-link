@@ -31,7 +31,7 @@ export interface SupportingDocument {
   mimeType: string;
   uploadedAt: string;
   reviewStatus: DocumentReviewStatus;
-  source?: "fixture" | "local_preview";
+  source?: "fixture" | "local_preview" | "remote" | "uploaded";
   url?: string;
 }
 

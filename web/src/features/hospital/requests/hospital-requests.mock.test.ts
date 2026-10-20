@@ -106,6 +106,7 @@ describe("hospital-requests.mock", () => {
       sizeBytes: 104800,
       mimeType: "application/pdf",
     });
+    expect(dynamicUpload.document.name).toBe("lab-compat-report.pdf");
     // Verify document visibility in Blood Bank portal
     const { getBloodBankRequestById } = await import(
       "@/features/blood-bank/requests/blood-bank-requests.mock"

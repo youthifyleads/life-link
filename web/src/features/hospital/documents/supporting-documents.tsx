@@ -6,7 +6,7 @@ import {
   FileText,
   MessageSquareWarning,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DocumentUpload } from "@/features/hospital/documents/document-upload";

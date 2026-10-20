@@ -23,7 +23,6 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [isCompleted, setIsCompleted] = useState(false);
 
   const uploadMutation = useUploadHospitalDocument();
 
@@ -36,7 +35,6 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
 
   const selectFile = (nextFile?: File) => {
     setError(null);
-    setIsCompleted(false);
 
     if (!nextFile) return;
     if (!allowedTypes.includes(nextFile.type)) {
@@ -65,7 +63,6 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
         {
           onSuccess: (result) => {
             setProgress(100);
-            setIsCompleted(true);
             const doc = result.document;
             onUploaded({
               id: doc.id,
@@ -99,7 +96,6 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
       if (nextProgress === 100) {
         if (timerRef.current) window.clearInterval(timerRef.current);
         timerRef.current = null;
-        setIsCompleted(true);
         const blobUrl = URL.createObjectURL(nextFile);
         onUploaded({
           id: `doc-${crypto.randomUUID()}`,
@@ -121,7 +117,6 @@ export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
     setFile(null);
     setProgress(0);
     setError(null);
-    setIsCompleted(false);
     if (inputRef.current) inputRef.current.value = "";
   };
 

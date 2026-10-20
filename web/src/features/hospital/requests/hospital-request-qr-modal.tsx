@@ -696,7 +696,7 @@ export function HospitalRequestQrModal({
 
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => void handleCopyManual()}
               className="gap-1.5 text-xs h-8.5 font-mono"

@@ -25,7 +25,7 @@ import { HospitalDeliveryTrackingDialog } from "@/features/hospital/requests/hos
 import { HospitalRequestQrModal } from "@/features/hospital/requests/hospital-request-qr-modal";
 import { RerouteRequestDialog } from "@/features/hospital/requests/reroute-request-dialog";
 import { bloodComponentLabels } from "@/features/hospital/types/hospital.types";
-import type { RequestHistoryEvent } from "@/features/hospital/types/hospital.types";
+import type { RequestHistoryEvent, SupportingDocument } from "@/features/hospital/types/hospital.types";
 import { BloodGroupBadge } from "@/shared/components/clinical/blood-group-badge";
 import type { RequestStatus } from "@/shared/components/clinical/clinical.types";
 import { RequestStatusBadge } from "@/shared/components/clinical/request-status-badge";
@@ -205,14 +205,14 @@ export function RequestDetailsPage() {
   };
 
   // Document and QR approval rules:
-  const docs = request.documents ?? [];
+  const docs: SupportingDocument[] = request.documents ?? [];
   const hasDocuments = docs.length > 0;
   const allDocumentsAccepted =
-    hasDocuments && docs.every((d) => d.reviewStatus === "accepted");
+    hasDocuments && docs.every((d: SupportingDocument) => d.reviewStatus === "accepted");
   const hasChangesRequested = docs.some(
-    (d) => d.reviewStatus === "changes_requested",
+    (d: SupportingDocument) => d.reviewStatus === "changes_requested",
   );
-  const hasPendingDocs = docs.some((d) => d.reviewStatus === "pending");
+  const hasPendingDocs = docs.some((d: SupportingDocument) => d.reviewStatus === "pending");
 
   const isCancelledOrRejected = ["cancelled", "rejected"].includes(currentStatus);
   // Blood bank acceptance rule: Request must be accepted/acknowledged, confirmed, or preparing/ready/completed
