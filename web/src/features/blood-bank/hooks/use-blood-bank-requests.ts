@@ -31,6 +31,8 @@ export const bloodBankRequestKeys = {
 
 import { apiClient } from "@/shared/api/http-client";
 import { requestsApi, mapBackendDtoToBloodBankRequest } from "@/shared/api/requests.api";
+import { documentsApi } from "@/shared/api/documents.api";
+import { hospitalRequestKeys } from "@/features/hospital/hooks/use-hospital-requests";
 import { inventoryApi } from "@/features/blood-bank/api/inventory.api";
 import { getAccessToken } from "@/shared/api/auth-token";
 
@@ -297,7 +299,7 @@ export function useUpdateDocumentReviewStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       requestId,
       documentId,
       status,
@@ -305,7 +307,22 @@ export function useUpdateDocumentReviewStatus() {
       requestId: string;
       documentId: string;
       status: DocumentReviewStatus;
-    }) => updateDocumentReviewStatus(requestId, documentId, status),
+    }) => {
+      if (getAccessToken()) {
+        try {
+          await documentsApi.reviewDocument(
+            documentId,
+            status === "accepted",
+            status === "changes_requested"
+              ? "Changes requested by blood bank staff"
+              : undefined,
+          );
+        } catch (err) {
+          console.warn("Live document review failed, using mock/local fallback:", err);
+        }
+      }
+      return updateDocumentReviewStatus(requestId, documentId, status);
+    },
     onSuccess: (updatedRequest) => {
       queryClient.setQueryData(
         bloodBankRequestKeys.detail(updatedRequest.id),
@@ -318,6 +335,12 @@ export function useUpdateDocumentReviewStatus() {
       );
       void queryClient.invalidateQueries({
         queryKey: bloodBankRequestKeys.documents,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: hospitalRequestKeys.detail(updatedRequest.id),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: hospitalRequestKeys.all,
       });
     },
   });

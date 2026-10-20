@@ -677,3 +677,62 @@ export function resetBloodBankMockRequests() {
   requests = structuredClone(initialRequests);
   resetInventoryMock();
 }
+
+export function syncMockDocumentToBloodBank(
+  requestId: string,
+  doc: {
+    id: string;
+    name: string;
+    sizeBytes: number;
+    mimeType: string;
+    uploadedAt: string;
+    reviewStatus?: DocumentReviewStatus;
+  },
+) {
+  let found = requests.find((r) => r.id === requestId);
+  if (!found) {
+    const newReq: BloodBankRequest = {
+      id: requestId,
+      hospital: hospitals.cairoGeneral,
+      bloodGroup: "O+",
+      component: "red_cells",
+      quantity: 1,
+      urgency: "emergency",
+      status: "submitted",
+      createdAt: new Date().toISOString(),
+      requiredAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      reasonCategory: "Clinical Requisition",
+      clinicalReason: "Clinical blood requirement",
+      history: [
+        {
+          id: `event-${requestId}-1`,
+          status: "submitted",
+          occurredAt: new Date().toISOString(),
+          actor: "Hospital Staff",
+          note: "Requisition submitted with supporting documents.",
+        },
+      ],
+      documents: [],
+      allocatedUnitIds: [],
+    };
+    requests.push(newReq);
+    found = newReq;
+  }
+
+  const existingIdx = found.documents.findIndex((d) => d.id === doc.id);
+  const bloodBankDoc = {
+    id: doc.id,
+    name: doc.name,
+    sizeBytes: doc.sizeBytes,
+    mimeType: doc.mimeType,
+    uploadedAt: doc.uploadedAt,
+    reviewStatus: (doc.reviewStatus || "pending") as DocumentReviewStatus,
+  };
+
+  if (existingIdx >= 0) {
+    found.documents[existingIdx] = bloodBankDoc;
+  } else {
+    found.documents.push(bloodBankDoc);
+  }
+}

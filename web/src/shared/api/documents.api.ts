@@ -16,6 +16,7 @@ export interface BackendDocumentDTO {
 }
 
 export function mapBackendDtoToSupportingDocument(dto: BackendDocumentDTO): SupportingDocument {
+  const statusStr = (dto.status || "").toLowerCase();
   return {
     id: dto.id,
     name: dto.file_name,
@@ -23,12 +24,13 @@ export function mapBackendDtoToSupportingDocument(dto: BackendDocumentDTO): Supp
     mimeType: dto.file_type || "application/pdf",
     uploadedAt: dto.uploaded_at,
     reviewStatus:
-      dto.status?.toLowerCase() === "accepted"
+      statusStr === "accepted" || statusStr === "approved"
         ? "accepted"
-        : dto.status?.toLowerCase() === "rejected"
+        : statusStr === "rejected" || statusStr === "changes_requested"
           ? "changes_requested"
           : "pending",
-    source: "local_preview",
+    source: dto.download_url ? "remote" : "uploaded",
+    url: dto.download_url,
   };
 }
 
@@ -79,6 +81,21 @@ export const documentsApi = {
       const { data } = await apiClient.get<BackendDocumentDTO[]>(`/documents/request/${requestId}`);
       return data.map(mapBackendDtoToSupportingDocument);
     }
+  },
+
+  async reviewDocument(
+    documentId: string,
+    approved: boolean,
+    reason?: string,
+  ): Promise<SupportingDocument> {
+    const { data } = await apiClient.post<BackendDocumentDTO>(
+      `/documents/${documentId}/review`,
+      {
+        approved,
+        reason: approved ? (reason || null) : (reason || "Changes requested by blood bank staff"),
+      },
+    );
+    return mapBackendDtoToSupportingDocument(data);
   },
 
   async getDocumentDownloadUrl(documentId: string): Promise<{ downloadUrl: string }> {

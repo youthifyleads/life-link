@@ -32,6 +32,8 @@ import {
 interface SupportingDocumentsProps {
   initialDocuments: SupportingDocument[];
   canUpload?: boolean;
+  requestId?: string;
+  onDocumentUploaded?: (document: SupportingDocument) => void;
 }
 
 const reviewDefinitions: Record<
@@ -58,10 +60,16 @@ const reviewDefinitions: Record<
 export function SupportingDocuments({
   initialDocuments,
   canUpload = true,
+  requestId,
+  onDocumentUploaded,
 }: SupportingDocumentsProps) {
   const { t } = useTranslation();
   const [documents, setDocuments] = useState(initialDocuments);
   const [previewDoc, setPreviewDoc] = useState<SupportingDocument | null>(null);
+
+  useEffect(() => {
+    setDocuments(initialDocuments);
+  }, [initialDocuments]);
 
   const getDocumentDownloadUrl = (doc: SupportingDocument): string => {
     if (doc.url) return doc.url;
@@ -179,9 +187,11 @@ export function SupportingDocuments({
           </p>
           {canUpload ? (
             <DocumentUpload
-              onUploaded={(document) =>
-                setDocuments((current) => [...current, document])
-              }
+              requestId={requestId}
+              onUploaded={(document) => {
+                setDocuments((current) => [...current, document]);
+                onDocumentUploaded?.(document);
+              }}
             />
           ) : (
             <p className="rounded-lg border border-border/80 bg-surface-subtle p-4 text-sm text-muted-foreground">

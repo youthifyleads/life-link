@@ -1,5 +1,6 @@
 import { apiClient } from "@/shared/api/http-client";
 import { normalizeBackendRequestStatus } from "@/shared/adapters/status-adapter";
+import { documentsApi } from "@/shared/api/documents.api";
 import type {
   HospitalRequest,
   HospitalRequestInput,
@@ -125,7 +126,14 @@ export const requestsApi = {
 
   async getRequestById(id: string): Promise<HospitalRequest> {
     const { data } = await apiClient.get<BackendBloodRequestDTO>(`/requests/${id}`);
-    return mapBackendDtoToHospitalRequest(data);
+    const req = mapBackendDtoToHospitalRequest(data);
+    try {
+      const docs = await documentsApi.getRequestDocuments(id);
+      req.documents = docs;
+    } catch {
+      // Fallback: retain default documents if any
+    }
+    return req;
   },
 
   async createRequest(input: HospitalRequestInput): Promise<HospitalRequest> {
@@ -233,7 +241,14 @@ export const requestsApi = {
 
   async getBloodBankRequestById(id: string): Promise<BloodBankRequest> {
     const { data } = await apiClient.get<any>(`/requests/${id}`);
-    return mapBackendDtoToBloodBankRequest(data);
+    const req = mapBackendDtoToBloodBankRequest(data);
+    try {
+      const docs = await documentsApi.getRequestDocuments(id);
+      req.documents = docs as any;
+    } catch {
+      // Fallback: retain default documents if any
+    }
+    return req;
   },
 };
 

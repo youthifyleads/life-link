@@ -2,6 +2,7 @@ import {
   AlertOctagon,
   Ban,
   Building2,
+  Clock3,
   CopyPlus,
   FileText,
   MapPin,
@@ -203,6 +204,42 @@ export function RequestDetailsPage() {
     void requestQuery.refetch();
   };
 
+  // Document and QR approval rules:
+  const docs = request.documents ?? [];
+  const hasDocuments = docs.length > 0;
+  const allDocumentsAccepted =
+    hasDocuments && docs.every((d) => d.reviewStatus === "accepted");
+  const hasChangesRequested = docs.some(
+    (d) => d.reviewStatus === "changes_requested",
+  );
+  const hasPendingDocs = docs.some((d) => d.reviewStatus === "pending");
+
+  const isCancelledOrRejected = ["cancelled", "rejected"].includes(currentStatus);
+  const canGenerateQr = !isCancelledOrRejected && hasDocuments && allDocumentsAccepted;
+
+  let qrDisabledReason = "";
+  if (isCancelledOrRejected) {
+    qrDisabledReason = t(
+      "hospital.qrDisabledCancelled",
+      "الطلب ملغي أو مرفوض لا يمكن إصدار تذكرة QR.",
+    );
+  } else if (!hasDocuments) {
+    qrDisabledReason = t(
+      "hospital.qrDisabledNoDocs",
+      "يتطلب رفع المستندات الطبية واعتمادها من بنك الدم أولاً لإصدار رمز QR.",
+    );
+  } else if (hasChangesRequested) {
+    qrDisabledReason = t(
+      "hospital.qrDisabledChangesRequested",
+      "طلب بنك الدم تعديل على المستندات. يرجى مراجعة الملاحظات ورفع المستندات المطلوبة قبل إصدار QR.",
+    );
+  } else if (hasPendingDocs || !allDocumentsAccepted) {
+    qrDisabledReason = t(
+      "hospital.qrDisabledPendingApproval",
+      "بانتظار موافقة واعتماد بنك الدم على الملفات والمستندات الطبية قبل إتاحة إصدار رمز QR.",
+    );
+  }
+
   return (
     <HospitalPageFrame
       breadcrumbs={[
@@ -215,15 +252,21 @@ export function RequestDetailsPage() {
       context={<RequestStatusBadge status={currentStatus} />}
       actions={
         <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            type="button"
-            variant="default"
-            onClick={() => setQrModalOpen(true)}
-            className="gap-2 font-semibold shadow-sm"
-          >
-            <QrCode aria-hidden="true" className="size-4" />
-            <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
-          </Button>
+          <div className="relative group">
+            <Button
+              type="button"
+              variant={canGenerateQr ? "default" : "secondary"}
+              disabled={!canGenerateQr}
+              onClick={() => {
+                if (canGenerateQr) setQrModalOpen(true);
+              }}
+              className={`gap-2 font-semibold shadow-sm ${!canGenerateQr ? "opacity-60 cursor-not-allowed" : ""}`}
+              title={!canGenerateQr ? qrDisabledReason : undefined}
+            >
+              <QrCode aria-hidden="true" className="size-4" />
+              <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
+            </Button>
+          </div>
           <Button asChild variant="secondary">
             <Link to="/hospital/requests/create">
               <CopyPlus aria-hidden="true" />
@@ -240,6 +283,18 @@ export function RequestDetailsPage() {
         >
           <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           <p>{actionMessage}</p>
+        </div>
+      ) : null}
+
+      {!canGenerateQr && !isCancelledOrRejected ? (
+        <div
+          className="mb-5 flex items-start gap-3 border border-warning/30 bg-warning-subtle/50 px-4 py-3 text-xs text-[#6f4a00]"
+          role="status"
+        >
+          <Clock3 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-warning" />
+          <p className="leading-relaxed font-medium">
+            {qrDisabledReason}
+          </p>
         </div>
       ) : null}
 
@@ -392,9 +447,13 @@ export function RequestDetailsPage() {
 
           <SupportingDocuments
             initialDocuments={request.documents}
+            requestId={request.id}
             canUpload={
               !["completed", "cancelled", "rejected"].includes(currentStatus)
             }
+            onDocumentUploaded={() => {
+              void requestQuery.refetch();
+            }}
           />
         </div>
 
@@ -403,6 +462,8 @@ export function RequestDetailsPage() {
             canCancel={canCancel}
             canReroute={canReroute}
             canTrack={canTrack}
+            canGenerateQr={canGenerateQr}
+            qrDisabledReason={qrDisabledReason}
             onCancel={cancelRequest}
             onReroute={() => setRerouteOpen(true)}
             onOpenQr={() => setQrModalOpen(true)}
@@ -428,7 +489,7 @@ export function RequestDetailsPage() {
         open={trackingModalOpen}
         onOpenChange={setTrackingModalOpen}
         request={request}
-        onOpenQr={() => setQrModalOpen(true)}
+        onOpenQr={canGenerateQr ? () => setQrModalOpen(true) : undefined}
       />
     </HospitalPageFrame>
   );
@@ -438,6 +499,8 @@ function RequestActions({
   canCancel,
   canReroute,
   canTrack,
+  canGenerateQr,
+  qrDisabledReason,
   onCancel,
   onReroute,
   onOpenQr,
@@ -446,6 +509,8 @@ function RequestActions({
   canCancel: boolean;
   canReroute: boolean;
   canTrack: boolean;
+  canGenerateQr: boolean;
+  qrDisabledReason: string;
   onCancel: () => void;
   onReroute: () => void;
   onOpenQr: () => void;
@@ -462,15 +527,26 @@ function RequestActions({
         </p>
       </div>
       <div className="space-y-3 p-5">
-        <Button
-          type="button"
-          variant="default"
-          className="w-full justify-start gap-2 font-semibold text-xs py-2.5"
-          onClick={onOpenQr}
-        >
-          <QrCode aria-hidden="true" className="size-4" />
-          <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
-        </Button>
+        <div className="space-y-1">
+          <Button
+            type="button"
+            variant={canGenerateQr ? "default" : "secondary"}
+            disabled={!canGenerateQr}
+            className={`w-full justify-start gap-2 font-semibold text-xs py-2.5 ${!canGenerateQr ? "opacity-60 cursor-not-allowed" : ""}`}
+            onClick={() => {
+              if (canGenerateQr) onOpenQr();
+            }}
+            title={!canGenerateQr ? qrDisabledReason : undefined}
+          >
+            <QrCode aria-hidden="true" className="size-4" />
+            <span>{t("hospital.generateQrVoucher", "إصدار تذكرة QR للمريض والسداد")}</span>
+          </Button>
+          {!canGenerateQr && qrDisabledReason ? (
+            <p className="text-[11px] leading-relaxed text-muted-foreground bg-surface-subtle p-2 border border-border/70 rounded">
+              ⚠️ {qrDisabledReason}
+            </p>
+          ) : null}
+        </div>
         {canReroute ? (
           <Button
             type="button"

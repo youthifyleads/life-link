@@ -6,20 +6,26 @@ import type { SupportingDocument } from "@/features/hospital/types/hospital.type
 import { Button } from "@/shared/components/ui/button";
 import { TechnicalText } from "@/shared/components/i18n/bidi-text";
 
+import { useUploadHospitalDocument } from "@/features/hospital/hooks/use-hospital-requests";
+
 const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
 const maxFileSize = 10 * 1024 * 1024;
 
 interface DocumentUploadProps {
+  requestId?: string;
   onUploaded: (document: SupportingDocument) => void;
 }
 
-export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
+export function DocumentUpload({ requestId, onUploaded }: DocumentUploadProps) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<number | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  const uploadMutation = useUploadHospitalDocument();
 
   useEffect(
     () => () => {
@@ -30,6 +36,7 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
 
   const selectFile = (nextFile?: File) => {
     setError(null);
+    setIsCompleted(false);
 
     if (!nextFile) return;
     if (!allowedTypes.includes(nextFile.type)) {
@@ -42,6 +49,47 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
     }
 
     setFile(nextFile);
+
+    if (requestId) {
+      setProgress(40);
+      uploadMutation.mutate(
+        {
+          requestId,
+          file: {
+            name: nextFile.name,
+            sizeBytes: nextFile.size,
+            mimeType: nextFile.type,
+            rawFile: nextFile,
+          },
+        },
+        {
+          onSuccess: (result) => {
+            setProgress(100);
+            setIsCompleted(true);
+            const doc = result.document;
+            onUploaded({
+              id: doc.id,
+              name: doc.name,
+              sizeBytes: doc.sizeBytes,
+              mimeType: doc.mimeType,
+              uploadedAt: doc.uploadedAt,
+              reviewStatus: doc.reviewStatus,
+              source: doc.source,
+              url: doc.url || URL.createObjectURL(nextFile),
+            });
+          },
+          onError: (err: any) => {
+            setProgress(0);
+            setError(
+              err?.message ||
+                t("hospital.uploadFailed", "فشل رفع الملف إلى الخادم. يرجى المحاولة مرة أخرى."),
+            );
+          },
+        },
+      );
+      return;
+    }
+
     setProgress(12);
     let nextProgress = 12;
     timerRef.current = window.setInterval(() => {
@@ -51,6 +99,7 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
       if (nextProgress === 100) {
         if (timerRef.current) window.clearInterval(timerRef.current);
         timerRef.current = null;
+        setIsCompleted(true);
         const blobUrl = URL.createObjectURL(nextFile);
         onUploaded({
           id: `doc-${crypto.randomUUID()}`,
@@ -72,6 +121,7 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
     setFile(null);
     setProgress(0);
     setError(null);
+    setIsCompleted(false);
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -112,7 +162,9 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
               <p className="truncate text-sm font-semibold"><TechnicalText>{file.name}</TechnicalText></p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {progress === 100
-                  ? t("hospital.localPreviewComplete")
+                  ? (requestId
+                      ? t("hospital.uploadSuccess", "تم رفع الملف بنجاح وإرساله للمراجعة")
+                      : t("hospital.localPreviewComplete"))
                   : t("hospital.preparingPreview", { progress })}
               </p>
               <div

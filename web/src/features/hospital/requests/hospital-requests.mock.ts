@@ -5,6 +5,7 @@ import type {
   SupportingDocument,
   TargetBloodBank,
 } from "@/features/hospital/types/hospital.types";
+import { syncMockDocumentToBloodBank } from "@/features/blood-bank/requests/blood-bank-requests.mock";
 
 export const availableBloodBanks: TargetBloodBank[] = [
   {
@@ -572,6 +573,8 @@ export async function uploadHospitalDocumentToRequest(
     reviewStatus: "pending",
     source: "local_preview",
   };
+
+  syncMockDocumentToBloodBank(requestId, newDoc);
 
   const updated: HospitalRequest = {
     ...current,

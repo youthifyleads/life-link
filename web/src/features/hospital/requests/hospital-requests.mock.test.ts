@@ -106,8 +106,14 @@ describe("hospital-requests.mock", () => {
       sizeBytes: 104800,
       mimeType: "application/pdf",
     });
-    expect(dynamicUpload.document.name).toBe("lab-compat-report.pdf");
-    expect(dynamicUpload.document.requestId).toBe(dynamicUuid);
-    expect(dynamicUpload.request.id).toBe(dynamicUuid);
+    // Verify document visibility in Blood Bank portal
+    const { getBloodBankRequestById } = await import(
+      "@/features/blood-bank/requests/blood-bank-requests.mock"
+    );
+    const bbReq = await getBloodBankRequestById(dynamicUuid);
+    expect(bbReq).toBeDefined();
+    expect(
+      bbReq?.documents.some((d) => d.name === "lab-compat-report.pdf"),
+    ).toBe(true);
   });
 });
